@@ -19,14 +19,18 @@ export function conditionalCsrf(req: Request, res: Response, next: NextFunction)
   // Skip CSRF for API routes that are protected by other means
   const skipPaths = [
     '/api/auth/google/sync', // Uses bearer token
+    '/api/auth/workos', // WorkOS SSO initiation
+    '/api/auth/workos/callback', // WorkOS SSO callback
     '/api/healthz', // Liveness probe
     '/api/readyz', // Readiness probe (aggregated health)
     '/api/auth/login', // Login endpoint needs to work without CSRF
-    '/api/auth/logout', // Logout is safe without CSRF
+    '/api/auth/logout', // Logout endpoint is safe without CSRF
     '/api/hubspot/push-quote', // Protected by requireAuth middleware
     '/api/hubspot/update-quote', // Protected by requireAuth middleware
     '/api/create-user', // User creation endpoint for testing
     '/api/login', // Simple login endpoint
+    '/api/logout', // Session logout endpoint (handled by setupAuth)
+    '/api/register', // Registration endpoint (handled by setupAuth)
   ];
 
   // Skip CSRF for preflight requests
@@ -34,14 +38,19 @@ export function conditionalCsrf(req: Request, res: Response, next: NextFunction)
     return next();
   }
 
-  // Skip CSRF for specific paths
+  // Always run CSRF middleware for safe methods so token is generated/exposed
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return csrfProtection(req, res, next);
+  }
+
+  // For unsafe methods, allow explicit skips for specific paths
   if (skipPaths.some(path => req.path.startsWith(path))) {
     return next();
   }
 
-  // Skip CSRF for authenticated API requests with valid session
+  // For unsafe methods: skip CSRF for authenticated API requests with valid session
   if (req.path.startsWith('/api/') && req.isAuthenticated && req.isAuthenticated()) {
-    // For authenticated API requests, CSRF is less critical due to SameSite=strict cookies
+    // Authenticated API requests rely on session cookies; CSRF enforcement is skipped here by policy
     return next();
   }
 

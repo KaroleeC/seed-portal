@@ -64,6 +64,32 @@ export default function AuthPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* WorkOS SSO Button */}
+            <div className="mb-6">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+                onClick={() => {
+                  window.location.href = 'https://seed-portal-api.fly.dev/api/auth/workos';
+                }}
+                data-testid="button-workos-sso"
+              >
+                Sign in with WorkOS SSO
+              </Button>
+            </div>
+
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-muted-foreground">
+                  Or continue with email
+                </span>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
