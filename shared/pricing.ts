@@ -208,9 +208,8 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
   // Calculate raw fee
   const rawFee = (base + entityUpcharge + stateUpcharge + intlUpcharge + ownerUpcharge + bookUpcharge + personal1040) * industryMult * revenueMult;
 
-  // Apply Seed Bookkeeping discount if applicable (50% discount)
-  const isBookkeepingClient = data.alreadyOnSeedBookkeeping;
-  const monthlyFee = roundToNearest25(isBookkeepingClient ? rawFee * 0.50 : rawFee);
+  // No discount applied here - will be handled in calculateCombinedFees for bundle scenarios
+  const monthlyFee = roundToNearest25(rawFee);
 
   // Setup fee: prior years unfiled * $2100 per year
   const setupFee = (data.priorYearsUnfiled || 0) * 2100;
@@ -229,8 +228,16 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   const includesTaas = data.includesTaas === true;
 
   // Calculate individual service fees
-  const bookkeepingFees = includesBookkeeping ? calculateBookkeepingFees(data) : { monthlyFee: 0, setupFee: 0 };
+  let bookkeepingFees = includesBookkeeping ? calculateBookkeepingFees(data) : { monthlyFee: 0, setupFee: 0 };
   const taasFees = includesTaas ? calculateTaaSFees(data) : { monthlyFee: 0, setupFee: 0 };
+
+  // Apply Seed Bookkeeping Package discount (50% off bookkeeping when both services are selected)
+  if (includesBookkeeping && includesTaas && data.alreadyOnSeedBookkeeping) {
+    bookkeepingFees = {
+      monthlyFee: roundToNearest25(bookkeepingFees.monthlyFee * 0.50),
+      setupFee: bookkeepingFees.setupFee // Setup fee is not discounted
+    };
+  }
 
   // Combined totals
   const combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee;

@@ -3423,7 +3423,7 @@ export default function Home() {
                                     </div>
                                     {feeCalculation.taas.breakdown.seedDiscount > 0 && (
                                       <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>Seed Bookkeeping Discount (15%):</span>
+                                        <span>Seed Bookkeeping Discount (50%):</span>
                                         <span className="text-green-600">-${feeCalculation.taas.breakdown.seedDiscount.toLocaleString()}</span>
                                       </div>
                                     )}
