@@ -1734,18 +1734,18 @@ export function AdminCommissionTracker() {
                     <div className="grid grid-cols-2 gap-4 mt-2">
                       <div className="p-3 bg-green-50 rounded-lg">
                         <p className="text-sm text-gray-600">Setup Fee Commission (20%)</p>
-                        <p className="text-lg font-bold text-green-600">${selectedDeal.setupFee.toLocaleString()}</p>
-                        <p className="text-xs text-gray-500">20% of setup fee</p>
+                        <p className="text-lg font-bold text-green-600">${(selectedDeal.setupFee * 0.20).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <p className="text-xs text-gray-500">20% of ${selectedDeal.setupFee.toLocaleString()} setup fee</p>
                       </div>
                       <div className="p-3 bg-blue-50 rounded-lg">
                         <p className="text-sm text-gray-600">First Month Commission (40%)</p>
-                        <p className="text-lg font-bold text-blue-600">${selectedDeal.monthlyFee.toLocaleString()}</p>
-                        <p className="text-xs text-gray-500">40% of monthly fee</p>
+                        <p className="text-lg font-bold text-blue-600">${(selectedDeal.monthlyFee * 0.40).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        <p className="text-xs text-gray-500">40% of ${selectedDeal.monthlyFee.toLocaleString()} monthly fee</p>
                       </div>
                       <div className="p-3 bg-purple-50 rounded-lg col-span-2">
                         <p className="text-sm text-gray-600">Total First Month Commission</p>
                         <p className="text-xl font-bold text-purple-600">
-                          ${(selectedDeal.setupFee + selectedDeal.monthlyFee).toLocaleString()}
+                          ${((selectedDeal.setupFee * 0.20) + (selectedDeal.monthlyFee * 0.40)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                       </div>
                     </div>
