@@ -136,14 +136,26 @@ export function AdminCommissionTracker() {
   // Calculate current commission period dynamically
   const getCurrentPeriod = () => {
     const now = new Date();
+    const currentDay = now.getDate();
     const currentMonth = now.getMonth(); // 0-based (0 = January, 7 = August)
     const currentYear = now.getFullYear();
     
-    // Commission period runs from 14th of previous month to 13th of current month
-    // Payment date is 15th of current month
-    const periodStart = new Date(currentYear, currentMonth - 1, 14);
-    const periodEnd = new Date(currentYear, currentMonth, 13);
-    const paymentDate = new Date(currentYear, currentMonth, 15);
+    // Commission period runs from 14th to 13th of the next month
+    // If today is the 14th or later, we're in the new period
+    // If today is before the 14th, we're still in the previous period
+    let periodStart, periodEnd, paymentDate;
+    
+    if (currentDay >= 14) {
+      // We're in the period that started on the 14th of this month
+      periodStart = new Date(currentYear, currentMonth, 14);
+      periodEnd = new Date(currentYear, currentMonth + 1, 13);
+      paymentDate = new Date(currentYear, currentMonth + 1, 15);
+    } else {
+      // We're still in the period that started on the 14th of last month
+      periodStart = new Date(currentYear, currentMonth - 1, 14);
+      periodEnd = new Date(currentYear, currentMonth, 13);
+      paymentDate = new Date(currentYear, currentMonth, 15);
+    }
     
     return {
       periodStart: periodStart.toISOString().split('T')[0],
@@ -384,7 +396,7 @@ export function AdminCommissionTracker() {
 
   // Data is now fetched via useQuery hooks above
 
-  // Filter commissions based on current filters
+  // Filter commissions based on current filters AND current period
   const filteredCommissions = commissions.filter(commission => {
     const matchesStatus = filterStatus === 'all' || commission.status === filterStatus;
     const matchesSalesRep = filterSalesRep === 'all' || commission.salesRep === filterSalesRep;
@@ -393,7 +405,11 @@ export function AdminCommissionTracker() {
       commission.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       commission.salesRep.toLowerCase().includes(searchTerm.toLowerCase());
     
-    return matchesStatus && matchesSalesRep && matchesSearch;
+    // Also filter by current period
+    const matchesPeriod = commission.dateEarned >= currentPeriod.periodStart && 
+      commission.dateEarned <= currentPeriod.periodEnd;
+    
+    return matchesStatus && matchesSalesRep && matchesSearch && matchesPeriod;
   });
 
   // Calculate metrics

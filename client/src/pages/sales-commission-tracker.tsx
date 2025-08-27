@@ -100,14 +100,26 @@ export function SalesCommissionTracker() {
   // Helper function to get current period dates (14th to 13th)
   const getCurrentPeriod = () => {
     const now = new Date();
+    const currentDay = now.getDate();
     const currentMonth = now.getMonth(); // 0-based (0 = January, 7 = August)
     const currentYear = now.getFullYear();
     
-    // Commission period runs from 14th of previous month to 13th of current month
-    // Payment date is 15th of current month
-    const periodStart = new Date(currentYear, currentMonth - 1, 14);
-    const periodEnd = new Date(currentYear, currentMonth, 13);
-    const paymentDate = new Date(currentYear, currentMonth, 15);
+    // Commission period runs from 14th to 13th of the next month
+    // If today is the 14th or later, we're in the new period
+    // If today is before the 14th, we're still in the previous period
+    let periodStart, periodEnd, paymentDate;
+    
+    if (currentDay >= 14) {
+      // We're in the period that started on the 14th of this month
+      periodStart = new Date(currentYear, currentMonth, 14);
+      periodEnd = new Date(currentYear, currentMonth + 1, 13);
+      paymentDate = new Date(currentYear, currentMonth + 1, 15);
+    } else {
+      // We're still in the period that started on the 14th of last month
+      periodStart = new Date(currentYear, currentMonth - 1, 14);
+      periodEnd = new Date(currentYear, currentMonth, 13);
+      paymentDate = new Date(currentYear, currentMonth, 15);
+    }
     
     return {
       periodStart: periodStart.toISOString().split('T')[0],
@@ -134,7 +146,6 @@ export function SalesCommissionTracker() {
   }, []);
 
   // State
-  const [commissions, setCommissions] = useState<Commission[]>([]);
   const [salesRepStats, setSalesRepStats] = useState<SalesRepStats>({
     totalCommissionsEarned: 0,
     totalClientsClosedMonthly: 0,
@@ -272,7 +283,10 @@ export function SalesCommissionTracker() {
   // Directly use processed commissions instead of causing cascading state updates
   // Remove the useEffect that was causing infinite loops
   // setCommissions is now only used by user actions, not automatic updates
-  const displayCommissions = processedCommissions;
+  // Filter to only show current period commissions in the main table
+  const displayCommissions = processedCommissions.filter(c => 
+    c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd
+  );
 
   // Memoized stats calculation
   const calculatedStats = useMemo(() => {
@@ -783,7 +797,7 @@ export function SalesCommissionTracker() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {commissions.map((commission) => (
+                    {processedCommissions.map((commission) => (
                       <TableRow key={commission.id}>
                         <TableCell className="font-medium">
                           <div>
