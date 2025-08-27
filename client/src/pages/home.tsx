@@ -3404,6 +3404,12 @@ export default function Home() {
                                         <span>+$80</span>
                                       </div>
                                     )}
+                                    {feeCalculation.includesTaas && form.watch('alreadyOnSeedBookkeeping') && (
+                                      <div className="flex justify-between pl-4 text-xs text-green-600">
+                                        <span>Seed Bookkeeping Discount (50%):</span>
+                                        <span className="text-green-600">-${feeCalculation.bookkeeping.monthlyFee.toLocaleString()}</span>
+                                      </div>
+                                    )}
                                   </>
                                 )}
                               </div>
