@@ -97,8 +97,8 @@ export function SalesCommissionTracker() {
   const { user } = useAuth();
   const [location, navigate] = useLocation();
 
-  // Helper function to get current period dates (13th to 12th) - memoized to prevent infinite loops
-  const currentPeriod = useMemo(() => {
+  // Helper function to get current period dates (14th to 13th)
+  const getCurrentPeriod = () => {
     const now = new Date();
     const currentMonth = now.getMonth(); // 0-based (0 = January, 7 = August)
     const currentYear = now.getFullYear();
@@ -114,6 +114,23 @@ export function SalesCommissionTracker() {
       periodEnd: periodEnd.toISOString().split('T')[0], 
       paymentDate: paymentDate.toISOString().split('T')[0]
     };
+  };
+
+  const [currentPeriod, setCurrentPeriod] = useState(getCurrentPeriod());
+
+  // Update current period on mount and when date changes
+  useEffect(() => {
+    // Check if period needs updating every time component mounts
+    const newPeriod = getCurrentPeriod();
+    setCurrentPeriod(newPeriod);
+    
+    // Also check periodically (every minute) in case date changes while page is open
+    const interval = setInterval(() => {
+      const updatedPeriod = getCurrentPeriod();
+      setCurrentPeriod(updatedPeriod);
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
   }, []);
 
   // State
