@@ -321,7 +321,7 @@ function calculateFees(data: Partial<FormData>) {
   
   // Add QBO Subscription fee if selected
   if (data.qboSubscription) {
-    monthlyFee += 80;
+    monthlyFee += 60;
   }
   
   // Use the actual cleanup months value (override just allows values below normal minimum)
@@ -2767,7 +2767,7 @@ export default function Home() {
                             <div className="space-y-1 leading-none">
                               <FormLabel>Add QBO Subscription?</FormLabel>
                               <p className="text-sm text-gray-500">
-                                Adds $80/month to the bookkeeping monthly fee
+                                Adds $60/month to the bookkeeping monthly fee
                               </p>
                             </div>
                           </FormItem>
@@ -3317,7 +3317,7 @@ export default function Home() {
                                     {form.watch('qboSubscription') && (
                                       <div className="flex justify-between pl-4 text-xs text-green-600">
                                         <span>QBO Subscription:</span>
-                                        <span>+$80</span>
+                                        <span>+$60</span>
                                       </div>
                                     )}
                                     {feeCalculation.includesTaas && form.watch('alreadyOnSeedBookkeeping') && (

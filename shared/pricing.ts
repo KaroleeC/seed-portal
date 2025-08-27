@@ -111,7 +111,7 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
   
   // Add QBO Subscription fee if selected
   if (data.qboSubscription) {
-    monthlyFee += 80;
+    monthlyFee += 60;
   }
   
   // Use the actual cleanup months value (override just allows values below normal minimum)
