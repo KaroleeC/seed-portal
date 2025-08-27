@@ -222,7 +222,7 @@ export function TaasSection({ control, currentFormView }: TaasSectionProps) {
               />
             </FormControl>
             <div className="space-y-1 leading-none">
-              <FormLabel>Already on Seed Bookkeeping (15% discount)</FormLabel>
+              <FormLabel>Already on Seed Bookkeeping (50% discount)</FormLabel>
             </div>
           </FormItem>
         )}

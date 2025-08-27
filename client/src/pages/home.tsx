@@ -3239,7 +3239,7 @@ export default function Home() {
                               <p className={`text-sm ${!feeCalculation.includesBookkeeping ? "text-gray-300" : "text-gray-500"}`}>
                                 {!feeCalculation.includesBookkeeping 
                                   ? "Only available when bookkeeping service is selected"
-                                  : "Check if client is interested in or already using Seed Bookkeeping services (provides 15% discount)"
+                                  : "Check if client is interested in or already using Seed Bookkeeping services (provides 50% discount)"
                                 }
                               </p>
                             </div>
