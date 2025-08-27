@@ -120,9 +120,9 @@ export class HubSpotCommissionSync {
     try {
       console.log('🔄 Syncing invoices from HubSpot...');
       
-      // Get invoices from HubSpot with ALL needed data
+      // Get invoices from HubSpot with ALL needed data including balance_due for discounts
       const invoicesResponse = await this.hubspotService.makeRequest(
-        '/crm/v3/objects/invoices?limit=100&properties=hs_createdate,hs_lastmodifieddate,hs_object_id,hs_invoice_amount,hs_invoice_number,hs_invoice_status,hs_deal_id,hs_deal_name,company_name,hs_company_name,recipient_company_name,billing_contact_name&associations=line_items,deals,companies,contacts'
+        '/crm/v3/objects/invoices?limit=100&properties=hs_createdate,hs_lastmodifieddate,hs_object_id,hs_invoice_amount,hs_balance_due,hs_invoice_number,hs_invoice_status,hs_deal_id,hs_deal_name,company_name,hs_company_name,recipient_company_name,billing_contact_name&associations=line_items,deals,companies,contacts'
       );
       
       console.log(`📋 Found ${invoicesResponse.results.length} invoices in HubSpot`);
@@ -236,6 +236,23 @@ export class HubSpotCommissionSync {
    * Process an invoice with its line items
    */
   private async processInvoiceWithLineItems(invoice: any, lineItems: any[], totalAmount: number): Promise<void> {
+    // Check for invoice discounts - use balance_due if less than invoice_amount
+    const invoiceAmount = parseFloat(invoice.properties.hs_invoice_amount || '0');
+    const balanceDue = parseFloat(invoice.properties.hs_balance_due || invoice.properties.hs_invoice_amount || '0');
+    
+    // If balance_due is less than invoice_amount, a discount was applied
+    const hasDiscount = balanceDue < invoiceAmount;
+    const actualPaidAmount = hasDiscount ? balanceDue : totalAmount;
+    const discountRatio = actualPaidAmount / (totalAmount || 1); // Ratio to apply to line items
+    
+    if (hasDiscount) {
+      console.log(`💸 Invoice ${invoice.id} has discount applied:`);
+      console.log(`   Original amount: $${invoiceAmount.toFixed(2)}`);
+      console.log(`   Balance due: $${balanceDue.toFixed(2)}`);
+      console.log(`   Discount: $${(invoiceAmount - balanceDue).toFixed(2)}`);
+      console.log(`   Discount ratio: ${(discountRatio * 100).toFixed(1)}%`);
+      console.log(`   Using discounted amounts for commission calculation`);
+    }
     // Check if invoice already exists in our database
     const existingInvoice = await db.execute(sql`
       SELECT id FROM hubspot_invoices WHERE hubspot_invoice_id = ${invoice.id} LIMIT 1
@@ -321,7 +338,7 @@ export class HubSpotCommissionSync {
           ${`INV-${invoice.id}`},
           ${invoice.properties.hs_invoice_status || 'paid'},
           ${totalAmount},
-          ${totalAmount}, -- Assuming fully paid since status is paid
+          ${actualPaidAmount}, -- Actual paid amount after discounts
           ${invoice.properties.hs_createdate}::date,
           ${invoice.properties.hs_createdate}::date,
           ${companyName},
@@ -365,8 +382,14 @@ export class HubSpotCommissionSync {
       
       console.log(`✅ Created invoice ${invoice.id} with ${lineItems.length} line items - $${totalAmount}`);
       
-      // Generate commissions based on line items
-      await this.generateCommissionsForInvoice(hubspotInvoiceId, salesRepId, salesRepName, lineItems, invoice.properties.hs_createdate);
+      // Generate commissions based on line items (apply discount ratio if needed)
+      const adjustedLineItems = hasDiscount ? lineItems.map(item => ({
+        ...item,
+        amount: item.amount * discountRatio,
+        price: item.price * discountRatio
+      })) : lineItems;
+      
+      await this.generateCommissionsForInvoice(hubspotInvoiceId, salesRepId, salesRepName, adjustedLineItems, invoice.properties.hs_createdate);
       
     } else {
       console.log(`🔄 Invoice ${invoice.id} already exists, skipping`);
@@ -490,9 +513,9 @@ export class HubSpotCommissionSync {
       
       console.log(`💼 Processing line items for invoice ${hubspotInvoiceId}:`)
       for (const item of lineItems) {
-        console.log(`  - ${item.name}: $${item.amount}`);
+        console.log(`  - ${item.name}: $${item.amount.toFixed(2)}`);
       }
-      console.log(`📊 Setup fee: $${setupFee}, Monthly value: $${monthlyValue}`);
+      console.log(`📊 Setup fee: $${setupFee.toFixed(2)}, Monthly value: $${monthlyValue.toFixed(2)}`);
       
       // Generate setup commission (20% of setup fee)
       if (setupFee > 0) {
@@ -521,7 +544,7 @@ export class HubSpotCommissionSync {
             NOW()
           )
         `);
-        console.log(`✅ Setup commission: $${setupFee * 0.2} (20% of $${setupFee})`);
+        console.log(`✅ Setup commission: $${(setupFee * 0.2).toFixed(2)} (20% of $${setupFee.toFixed(2)})`);
       }
       
       // Generate month 1 commission (40% of first month MRR)
@@ -551,7 +574,7 @@ export class HubSpotCommissionSync {
             NOW()
           )
         `);
-        console.log(`✅ Month 1 commission: $${monthlyValue * 0.4} (40% of $${monthlyValue})`);
+        console.log(`✅ Month 1 commission: $${(monthlyValue * 0.4).toFixed(2)} (40% of $${monthlyValue.toFixed(2)})`);
         
         // Note: Residual commissions (months 2-12) will be generated when actual subscription payments are received
       }
