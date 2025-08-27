@@ -427,7 +427,7 @@ function calculateTaaSFees(data: Partial<FormData>, existingBookkeepingFees?: { 
   
   // Bookkeeping quality upcharge
   const bookUpcharge = data.bookkeepingQuality === 'Clean (Seed)' ? 0 : 
-                       data.bookkeepingQuality === 'Outside CPA' ? 75 : 150;
+                       data.bookkeepingQuality === 'Clean / New' ? 0 : 25;
   
   // Personal 1040s
   const personal1040 = data.include1040s ? effectiveNumBusinessOwners * 25 : 0;
@@ -3130,8 +3130,7 @@ export default function Home() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="Outside CPA">Outside CPA</SelectItem>
-                                <SelectItem value="Self-Managed">Self-Managed</SelectItem>
+                                <SelectItem value="Clean / New">Clean / New</SelectItem>
                                 <SelectItem value="Not Done / Behind">Not Done / Behind</SelectItem>
                               </SelectContent>
                             </Select>

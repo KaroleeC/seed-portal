@@ -173,7 +173,7 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
   
   // Bookkeeping quality upcharge
   const bookUpcharge = data.bookkeepingQuality === 'Clean (Seed)' ? 0 : 
-                       data.bookkeepingQuality === 'Outside CPA' ? 75 : 150;
+                       data.bookkeepingQuality === 'Clean / New' ? 0 : 25;
   
   // Personal 1040s
   const personal1040 = data.include1040s ? effectiveNumBusinessOwners * 25 : 0;
