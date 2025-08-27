@@ -208,9 +208,9 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
   // Calculate raw fee
   const rawFee = (base + entityUpcharge + stateUpcharge + intlUpcharge + ownerUpcharge + bookUpcharge + personal1040) * industryMult * revenueMult;
 
-  // Apply Seed Bookkeeping discount if applicable (15% discount)
+  // Apply Seed Bookkeeping discount if applicable (50% discount)
   const isBookkeepingClient = data.alreadyOnSeedBookkeeping;
-  const monthlyFee = roundToNearest25(isBookkeepingClient ? rawFee * 0.85 : rawFee);
+  const monthlyFee = roundToNearest25(isBookkeepingClient ? rawFee * 0.50 : rawFee);
 
   // Setup fee: prior years unfiled * $2100 per year
   const setupFee = (data.priorYearsUnfiled || 0) * 2100;
