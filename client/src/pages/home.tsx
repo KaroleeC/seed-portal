@@ -489,10 +489,10 @@ function calculateTaaSFees(data: Partial<FormData>, existingBookkeepingFees?: { 
   const beforeMultipliers = base + entityUpcharge + stateUpcharge + intlUpcharge + ownerUpcharge + bookUpcharge + personal1040;
   const afterMultipliers = beforeMultipliers * industryMult * revenueMult;
 
-  // Apply Seed Bookkeeping discount if applicable (15% for existing clients)
-  const isBookkeepingClient = data.alreadyOnSeedBookkeeping;
-  const seedDiscount = isBookkeepingClient ? afterMultipliers * 0.15 : 0;
-  const discountedFee = afterMultipliers - seedDiscount;
+  // No discount applied to TaaS - discount is applied to bookkeeping in combined packages
+  const isBookkeepingClient = false; // Always false for TaaS-only calculations
+  const seedDiscount = 0; // No discount for TaaS
+  const discountedFee = afterMultipliers;
   const monthlyFee = Math.max(150, Math.round(discountedFee / 5) * 5);
 
   // Setup fee calculation - 0.5 × monthly × 12 with $1000 minimum per year
@@ -515,7 +515,7 @@ function calculateTaaSFees(data: Partial<FormData>, existingBookkeepingFees?: { 
     afterIndustryMult: Math.round(afterIndustryMult),
     revenueMult,
     afterMultipliers: Math.round(afterMultipliers),
-    seedDiscount: Math.round(seedDiscount),
+    seedDiscount: 0, // No TaaS discount
     finalMonthly: monthlyFee,
     priorYearsUnfiled: data.priorYearsUnfiled,
     perYearFee: Math.round(perYearFee),
@@ -550,6 +550,15 @@ function calculateCombinedFees(data: Partial<FormData>) {
   
   if (includesTaas) {
     taasFees = calculateTaaSFees(data);
+  }
+  
+  // Apply Seed Bookkeeping Package discount (50% off bookkeeping when both services are selected)
+  if (includesBookkeeping && includesTaas && data.alreadyOnSeedBookkeeping) {
+    bookkeepingFees = {
+      ...bookkeepingFees,
+      monthlyFee: Math.round(bookkeepingFees.monthlyFee * 0.50),
+      // Setup fee is not discounted
+    };
   }
   
   return {
