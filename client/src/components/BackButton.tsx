@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-// import { useBackNavigation } from '@/hooks/use-navigation-history';
+import { useBackNavigation } from '@/hooks/use-navigation-history';
 import { cn } from '@/lib/utils';
 
 interface BackButtonProps {
@@ -21,14 +21,13 @@ export function BackButton({
   showText = true,
   customText = 'Back'
 }: BackButtonProps) {
-  // const { goBack, canGoBack, previousPage } = useBackNavigation();
-  // Temporarily disabled navigation history
-  const canGoBack = false;
-  const previousPage = null;
+  const { goBack, canGoBack, previousPage } = useBackNavigation();
 
   const handleClick = () => {
-    // Simple back using browser history or fallback
-    if (window.history.length > 1) {
+    // Use navigation history if available, otherwise fallback to browser history
+    if (canGoBack) {
+      goBack();
+    } else if (window.history.length > 1) {
       window.history.back();
     } else if (fallbackPath) {
       window.location.href = fallbackPath;
@@ -72,20 +71,7 @@ function getPageTitle(path: string): string {
 
 // Breadcrumb component that shows the navigation path
 export function NavigationBreadcrumb({ className }: { className?: string }) {
-  const { history, currentIndex } = useNavigationHistory();
-  
-  if (history.length <= 1) return null;
-
-  return (
-    <div className={cn("flex items-center space-x-2 text-sm text-gray-500", className)}>
-      {history.slice(0, currentIndex + 1).map((path: string, index: number) => (
-        <React.Fragment key={path}>
-          {index > 0 && <span className="text-gray-300">/</span>}
-          <span className={index === currentIndex ? "text-gray-900 font-medium" : "text-gray-500"}>
-            {getPageTitle(path)}
-          </span>
-        </React.Fragment>
-      ))}
-    </div>
-  );
+  // The useBackNavigation hook doesn't expose history directly, 
+  // so we'll need to import and use useNavigationHistory for this component
+  return null; // Temporarily disabled until we properly implement navigation history
 }

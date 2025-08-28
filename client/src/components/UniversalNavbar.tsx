@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { ArrowLeft, Bell, User, Settings, LogOut, Shield, UserMinus } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BackButton } from "@/components/BackButton";
-// import { useBackNavigation } from "@/hooks/use-navigation-history";
+import { useBackNavigation } from "@/hooks/use-navigation-history";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -22,8 +22,7 @@ export function UniversalNavbar({
 }: UniversalNavbarProps) {
   const { user: dbUser, logoutMutation } = useAuth();
   const [location, setLocation] = useLocation();
-  // const { canGoBack } = useBackNavigation();
-  const canGoBack = false; // Temporarily disabled
+  const { canGoBack } = useBackNavigation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -105,8 +104,12 @@ export function UniversalNavbar({
     stopImpersonationMutation.mutate();
   }, [stopImpersonationMutation]);
 
-  // Only show back button if there's history or if explicitly requested
-  const shouldShowBackButton = showBackButton && (canGoBack || location !== '/');
+  // Define main dashboard routes that should not show back button
+  const mainDashboardRoutes = ['/', '/admin', '/sales-dashboard', '/service-dashboard'];
+  const isMainDashboard = mainDashboardRoutes.includes(location);
+  
+  // Only show back button if there's history and not on a main dashboard
+  const shouldShowBackButton = showBackButton && canGoBack && !isMainDashboard;
 
   return (
     <header className="bg-transparent z-50 py-4 relative">
