@@ -381,7 +381,7 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Sales Enablement Dashboard */}
+        {/* Sales Enablement Dashboard */
         <div className="grid grid-cols-3 gap-8 mb-16">
           {/* Left Column - Sales Resources */}
           <div className="col-span-2 space-y-6">
@@ -536,4 +536,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
