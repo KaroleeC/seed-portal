@@ -845,7 +845,7 @@ export function SalesCommissionTracker() {
             <DialogFooter>
               <div className="flex items-center justify-between w-full">
                 <div className="text-sm text-gray-500">
-                  Total: {commissions.length} commission entries
+                  Total: {processedCommissions.length} commission entries
                 </div>
                 <Button onClick={() => setCommissionHistoryModalOpen(false)}>
                   Close
