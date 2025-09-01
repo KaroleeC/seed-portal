@@ -3291,8 +3291,8 @@ function HomePage() {
 
         {/* Redesigned Modern Pricing Summary Card */}
         {showClientDetails && (
-          <div className="flex-1 ml-6">
-          <Card className="bg-gradient-to-br from-white to-gray-50 shadow-2xl border-0 quote-card lg:flex-1 overflow-hidden" style={{ flex: '1', minWidth: 0 }}>
+          <div className="flex-1 ml-6" style={{ minWidth: '500px', maxWidth: '600px' }}>
+          <Card className="bg-gradient-to-br from-white to-gray-50 shadow-2xl border-0 quote-card w-full overflow-hidden">
             <div className="bg-gradient-to-r from-[#e24c00] to-[#ff6b35] p-1">
               <div className="bg-white rounded-t-lg">
                 <CardContent className="p-6 sm:p-8">
@@ -3356,33 +3356,55 @@ function HomePage() {
                             </h4>
                             <div className="space-y-3">
                               {/* Bookkeeping Breakdown */}
-                              {feeCalculation.includesBookkeeping && (
-                                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                                  <h5 className="font-medium text-green-800 mb-2">Bookkeeping Service</h5>
-                                  <div className="space-y-1 text-sm">
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Base monthly fee:</span>
-                                      <span className="font-medium">${feeCalculation.bookkeeping.baseFee}</span>
-                                    </div>
-                                    {feeCalculation.bookkeeping.cleanupFee > 0 && (
+                              {feeCalculation.includesBookkeeping && (() => {
+                                // Calculate the breakdown details
+                                const baseFee = 150;
+                                const hasDiscount = feeCalculation.includesBookkeeping && feeCalculation.includesTaas && form.watch('alreadyOnSeedBookkeeping');
+                                const originalFee = feeCalculation.bookkeeping.monthlyFee * (hasDiscount ? 2 : 1); // Reverse calculate original if discounted
+                                const discountAmount = hasDiscount ? originalFee * 0.5 : 0;
+                                
+                                return (
+                                  <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                                    <h5 className="font-medium text-green-800 mb-2">Bookkeeping Service</h5>
+                                    <div className="space-y-1 text-sm">
                                       <div className="flex justify-between">
-                                        <span className="text-gray-600">Cleanup fee ({form.watch('cleanupMonths')} months):</span>
-                                        <span className="font-medium">${feeCalculation.bookkeeping.cleanupFee}</span>
+                                        <span className="text-gray-600">Base monthly fee:</span>
+                                        <span className="font-medium">$150</span>
                                       </div>
-                                    )}
-                                    <div className="border-t pt-1 flex justify-between font-semibold">
-                                      <span>Monthly total:</span>
-                                      <span className="text-green-700">${feeCalculation.bookkeeping.monthlyFee}</span>
+                                      
+                                      {/* Show calculated fees breakdown */}
+                                      {originalFee > baseFee && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">After adjustments:</span>
+                                          <span className="font-medium">${hasDiscount ? originalFee : feeCalculation.bookkeeping.monthlyFee}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {/* Show discount if applicable */}
+                                      {hasDiscount && (
+                                        <>
+                                          <div className="flex justify-between text-green-600">
+                                            <span>Seed Bookkeeping Package (50% off):</span>
+                                            <span className="font-medium">-${discountAmount}</span>
+                                          </div>
+                                        </>
+                                      )}
+                                      
+                                      <div className="border-t pt-1 flex justify-between font-semibold">
+                                        <span>Monthly total:</span>
+                                        <span className="text-green-700">${feeCalculation.bookkeeping.monthlyFee}</span>
+                                      </div>
+                                      
+                                      {feeCalculation.bookkeeping.setupFee > 0 && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Setup fee:</span>
+                                          <span className="font-medium">${feeCalculation.bookkeeping.setupFee}</span>
+                                        </div>
+                                      )}
                                     </div>
-                                    {feeCalculation.bookkeeping.setupFee > 0 && (
-                                      <div className="flex justify-between">
-                                        <span className="text-gray-600">Setup fee:</span>
-                                        <span className="font-medium">${feeCalculation.bookkeeping.setupFee}</span>
-                                      </div>
-                                    )}
                                   </div>
-                                </div>
-                              )}
+                                );
+                              })()}
 
                               {/* TaaS Breakdown */}
                               {feeCalculation.includesTaas && (
