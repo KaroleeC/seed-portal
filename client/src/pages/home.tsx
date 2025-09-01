@@ -3533,6 +3533,79 @@ function HomePage() {
             </Card>
           );
         })()}
+
+        {/* Existing Quotes Modal */}
+        <Dialog open={showExistingQuotesModal} onOpenChange={setShowExistingQuotesModal}>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {existingQuotesForEmail.length > 0 ? "Existing Quotes Found" : "Create New Quote"}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedContact && existingQuotesForEmail.length > 0 
+                  ? `Found ${existingQuotesForEmail.length} existing quotes for ${selectedContact.properties.firstname} ${selectedContact.properties.lastname} (${selectedContact.properties.email})`
+                  : selectedContact 
+                    ? `Create a new quote for ${selectedContact.properties.firstname} ${selectedContact.properties.lastname} (${selectedContact.properties.email})`
+                    : "Create a new quote for this contact"
+                }
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {existingQuotesForEmail.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Select an existing quote to edit:</h4>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {existingQuotesForEmail.map((quote) => (
+                      <Card key={quote.id} className="cursor-pointer hover:bg-blue-50 transition-colors"
+                            onClick={() => {
+                              loadQuoteIntoForm(quote);
+                              setShowExistingQuotesModal(false);
+                              setShowClientDetails(true);
+                            }}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-gray-900">${parseFloat(quote.monthlyFee).toLocaleString()}/month</p>
+                              <p className="text-sm text-gray-600">
+                                Services: {[
+                                  quote.includesBookkeeping && "Bookkeeping",
+                                  quote.includesTaas && "TaaS", 
+                                  quote.servicePayroll && "Payroll",
+                                  quote.serviceApArLite && "AP/AR Lite",
+                                  quote.serviceFpaLite && "FP&A Lite"
+                                ].filter(Boolean).join(", ")}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Updated: {new Date(quote.updatedAt || quote.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <Button size="sm" variant="ghost">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="border-t pt-4">
+                <Button 
+                  onClick={() => {
+                    setShowExistingQuotesModal(false);
+                    proceedToClientDetails(selectedContact);
+                  }}
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+                >
+                  {existingQuotesForEmail.length > 0 ? "Create New Quote Instead" : "Create New Quote"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </div>
   );
