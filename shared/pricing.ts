@@ -10,6 +10,8 @@ export interface PricingData {
   cleanupOverride?: boolean;
   overrideReason?: string | null;
   customSetupFee?: string;
+  // Service tier
+  serviceTier?: string;
   // TaaS specific fields
   includesTaas?: boolean;
   numEntities?: number;
@@ -112,13 +114,6 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
   // Add QBO Subscription fee if selected
   if (data.qboSubscription) {
     monthlyFee += 60;
-  }
-  
-  // Add service tier upgrade fees
-  if ((data as any).serviceTier === "Guided") {
-    monthlyFee += 79;
-  } else if ((data as any).serviceTier === "Concierge") {
-    monthlyFee += 249;
   }
   
   // Use the actual cleanup months value (override just allows values below normal minimum)
@@ -246,8 +241,16 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     };
   }
 
+  // Calculate service tier fees
+  let serviceTierFee = 0;
+  if (data.serviceTier === 'Guided') {
+    serviceTierFee = 79;
+  } else if (data.serviceTier === 'Concierge') {
+    serviceTierFee = 249;
+  }
+
   // Combined totals
-  const combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee;
+  const combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee;
   const combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee;
 
   return {

@@ -564,11 +564,19 @@ function calculateCombinedFees(data: Partial<FormData>) {
     };
   }
   
+  // Calculate service tier fees
+  let serviceTierFee = 0;
+  if (data.serviceTier === 'Guided') {
+    serviceTierFee = 79;
+  } else if (data.serviceTier === 'Concierge') {
+    serviceTierFee = 249;
+  }
+  
   return {
     bookkeeping: bookkeepingFees,
     taas: taasFees,
     combined: {
-      monthlyFee: bookkeepingFees.monthlyFee + taasFees.monthlyFee,
+      monthlyFee: bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee,
       setupFee: bookkeepingFees.setupFee + taasFees.setupFee
     },
     includesBookkeeping,
