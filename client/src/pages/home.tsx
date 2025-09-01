@@ -584,7 +584,7 @@ function calculateCombinedFees(data: Partial<FormData>) {
   };
 }
 
-export default function Home() {
+function HomePage() {
   const { toast } = useToast();
   const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
@@ -2832,8 +2832,11 @@ export default function Home() {
                               </FormItem>
                             )}
                           />
+                        </>
+                      )}
                       
-                          {/* Custom Setup Fee when "Other" is selected */}
+                      {/* Custom Setup Fee when "Other" is selected */}
+                      {form.watch("cleanupOverride") && form.watch("overrideReason") === "Other" && (
                           <FormField
                             control={form.control}
                             name="customSetupFee"
@@ -2873,7 +2876,6 @@ export default function Home() {
                               </FormItem>
                             )}
                           />
-                        </>
                       )}
 
                       {/* QBO Subscription Checkbox */}
@@ -3283,568 +3285,143 @@ export default function Home() {
               </Form>
             </CardContent>
           </Card>
-          {/* Pricing Summary Card */}
-          <Card className="bg-white shadow-xl border-0 quote-card lg:flex-1" style={{ flex: '1', minWidth: 0 }}>
-            <CardContent className="p-6 sm:p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-[#e24c00] to-[#ff6b35] rounded-lg">
-                  <DollarSign className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">
-                    Pricing Summary
-                  </h2>
-                  <p className="text-sm text-gray-500">Your calculated quote breakdown</p>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                {/* Combined Total Card */}
-                {(feeCalculation.includesBookkeeping && feeCalculation.includesTaas) && (
-                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center">
-                          <Calculator className="h-4 w-4 text-white" />
+        </div>
+        </>
+        )}
+
+        {/* Redesigned Modern Pricing Summary Card */}
+        {showClientDetails && (
+          <div className="flex-1">
+          <Card className="bg-gradient-to-br from-white to-gray-50 shadow-2xl border-0 quote-card lg:flex-1 overflow-hidden" style={{ flex: '1', minWidth: 0 }}>
+            <div className="bg-gradient-to-r from-[#e24c00] to-[#ff6b35] p-1">
+              <div className="bg-white rounded-t-lg">
+                <CardContent className="p-6 sm:p-8">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-[#e24c00] to-[#ff6b35] rounded-xl shadow-lg">
+                      <DollarSign className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-800">
+                        Pricing Summary
+                      </h2>
+                      <p className="text-sm text-gray-600">Your calculated quote breakdown</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    {/* Main Total Display - Always show the combined total */}
+                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas) && (
+                      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-2 mb-2">
+                            <Calculator className="h-5 w-5 text-blue-600" />
+                            <span className="text-sm font-medium text-blue-600 uppercase tracking-wide">Total Monthly Fee</span>
+                          </div>
+                          <div className="text-4xl font-bold text-blue-800 mb-2">
+                            ${feeCalculation.combined.monthlyFee.toLocaleString()}
+                            <span className="text-lg font-medium text-blue-600">/month</span>
+                          </div>
+                          {feeCalculation.combined.setupFee > 0 && (
+                            <div className="text-lg text-blue-700">
+                              <span className="font-semibold">${feeCalculation.combined.setupFee.toLocaleString()}</span>
+                              <span className="text-sm"> setup fee</span>
+                            </div>
+                          )}
+                          <div className="mt-3 text-xs text-blue-600">
+                            Monthly bookkeeping, cleanup, and financial management
+                          </div>
                         </div>
-                        <h4 className="font-semibold text-purple-800">Combined Total</h4>
                       </div>
+                    )}
 
-                    </div>
-                    <div className="text-3xl font-bold text-purple-800 mb-2">
-                      ${feeCalculation.combined.monthlyFee.toLocaleString()} / mo
-                    </div>
-                    <div className="text-xl font-semibold text-purple-700 mb-2">
-                      ${feeCalculation.combined.setupFee.toLocaleString()} total setup
-                    </div>
-                    <p className="text-sm text-purple-600">
-                      Complete bookkeeping and tax services package
-                    </p>
-                  </div>
-                )}
-
-                {/* Single Service Total */}
-                {(feeCalculation.includesBookkeeping && !feeCalculation.includesTaas) && (
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-semibold text-green-800">Bookkeeping Package Total</h4>
-
-                    </div>
-                    <div className="text-2xl font-bold text-green-800 mb-1">
-                      ${feeCalculation.bookkeeping.monthlyFee.toLocaleString()} / mo
-                    </div>
-                    <div className="text-lg font-semibold text-green-700 mb-2">
-                      ${feeCalculation.bookkeeping.setupFee.toLocaleString()} setup fee
-                    </div>
-                    <p className="text-sm text-green-600">
-                      Monthly bookkeeping, cleanup, and financial management
-                    </p>
-                  </div>
-                )}
-
-                {(!feeCalculation.includesBookkeeping && feeCalculation.includesTaas) && (
-                  <div className="bg-gradient-to-br from-blue-50 to-sky-50 border-2 border-blue-200 rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-semibold text-blue-800">TaaS Package Total</h4>
-
-                    </div>
-                    <div className="text-3xl font-bold text-blue-800 mb-2">
-                      ${feeCalculation.taas.monthlyFee.toLocaleString()} / mo
-                    </div>
-                    <div className="text-xl font-semibold text-blue-700">
-                      ${feeCalculation.taas.setupFee.toLocaleString()} prior years fee
-                    </div>
-                  </div>
-                )}
-
-                {/* No Services Selected */}
-                {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas) && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-                    <div className="text-gray-500 mb-2">
-                      <Calculator className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    </div>
-                    <h4 className="font-semibold text-gray-600 mb-1">No Services Selected</h4>
-                    <p className="text-sm text-gray-500">Click on the service cards above to start building your quote</p>
-                  </div>
-                )}
-
-                {/* Calculation Breakdown */}
-                {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas) && (
-                  <div className="border-t pt-6">
-                    <button
-                      type="button"
-                      onClick={() => setIsBreakdownExpanded(!isBreakdownExpanded)}
-                      className="flex items-center gap-2 mb-4 w-full text-left hover:bg-gray-50 p-2 rounded-md transition-colors"
-                    >
-                      <Sparkles className="h-5 w-5 text-purple-500" />
-                      <h3 className="text-lg font-bold text-gray-800 flex-1">
-                        Calculation Breakdown
-                      </h3>
-                      <div className={`transition-transform duration-200 ${isBreakdownExpanded ? 'rotate-180' : ''}`}>
-                        <ArrowUpDown className="h-4 w-4 text-gray-500" />
-                      </div>
-                    </button>
-                    
-                    {isBreakdownExpanded && (
-                      <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
-                        {feeCalculation.includesBookkeeping && (
-                          <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4 shadow-sm">
-                            <div className="font-semibold text-green-800 mb-3 text-lg border-b border-green-200 pb-2">📊 Bookkeeping Service</div>
-                            <div className="space-y-2 text-sm">
-                              <div className="space-y-1">
-                                <div className="flex justify-between font-medium">
-                                  <span className="text-green-700">Monthly Fee:</span>
-                                  <span className="text-green-800">${feeCalculation.bookkeeping.monthlyFee.toLocaleString()}</span>
-                                </div>
-                                {feeCalculation.bookkeeping.breakdown && (
-                                  <>
-                                    <div className="flex justify-between pl-4 text-xs text-green-600">
-                                      <span>Base Fee:</span>
-                                      <span>${feeCalculation.bookkeeping.breakdown.baseFee.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between pl-4 text-xs text-green-600">
-                                      <span>Revenue Multiplier ({feeCalculation.bookkeeping.breakdown.revenueMultiplier.toFixed(1)}x):</span>
-                                      <span>${feeCalculation.bookkeeping.breakdown.afterRevenue.toLocaleString()}</span>
-                                    </div>
-                                    {feeCalculation.bookkeeping.breakdown.txFee > 0 && (
-                                      <div className="flex justify-between pl-4 text-xs text-green-600">
-                                        <span>Transaction Surcharge:</span>
-                                        <span>+${feeCalculation.bookkeeping.breakdown.txFee.toLocaleString()}</span>
-                                      </div>
-                                    )}
-                                    {feeCalculation.bookkeeping.breakdown.industryMultiplier !== 1 && (
-                                      <div className="flex justify-between pl-4 text-xs text-green-600">
-                                        <span>Industry Multiplier ({feeCalculation.bookkeeping.breakdown.industryMultiplier.toFixed(1)}x):</span>
-                                        <span>${feeCalculation.bookkeeping.breakdown.finalMonthly.toLocaleString()}</span>
-                                      </div>
-                                    )}
-                                    {form.watch('qboSubscription') && (
-                                      <div className="flex justify-between pl-4 text-xs text-green-600">
-                                        <span>QBO Subscription:</span>
-                                        <span>+$60</span>
-                                      </div>
-                                    )}
-                                    {feeCalculation.includesTaas && form.watch('alreadyOnSeedBookkeeping') && (
-                                      <div className="flex justify-between pl-4 text-xs text-green-600">
-                                        <span>Seed Bookkeeping Discount (50%):</span>
-                                        <span className="text-green-600">-${feeCalculation.bookkeeping.monthlyFee.toLocaleString()}</span>
-                                      </div>
-                                    )}
-                                  </>
-                                )}
+                    {/* Service Breakdown Cards */}
+                    <div className="grid gap-4">
+                      {/* Bookkeeping Service Card */}
+                      {feeCalculation.includesBookkeeping && (
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">📊</span>
                               </div>
-                              {feeCalculation.bookkeeping.setupFee > 0 && (
-                                <div className="border-t border-green-200 pt-2">
-                                  <div className="flex justify-between font-medium">
-                                    <span className="text-green-700">Setup/Cleanup Fee:</span>
-                                    <span className="text-green-800">${feeCalculation.bookkeeping.setupFee.toLocaleString()}</span>
-                                  </div>
-                                  {feeCalculation.bookkeeping.breakdown && feeCalculation.bookkeeping.setupFee > 0 && (
-                                    <div className="space-y-1">
-                                      <div className="flex justify-between pl-4 text-xs text-green-600">
-                                        <span>Setup Base (Monthly Fee):</span>
-                                        <span>${feeCalculation.bookkeeping.breakdown.finalMonthly.toLocaleString()}</span>
-                                      </div>
-                                      <div className="flex justify-between pl-4 text-xs text-green-600">
-                                        <span>× Complexity ({feeCalculation.bookkeeping.breakdown.cleanupComplexity.toFixed(0)}%):</span>
-                                        <span>${Math.round(feeCalculation.bookkeeping.breakdown.finalMonthly * (feeCalculation.bookkeeping.breakdown.cleanupComplexity / 100)).toLocaleString()}</span>
-                                      </div>
-                                      <div className="flex justify-between pl-4 text-xs text-green-600">
-                                        <span>× {feeCalculation.bookkeeping.breakdown.cleanupMonths} months:</span>
-                                        <span>${feeCalculation.bookkeeping.breakdown.setupCalc.toLocaleString()}</span>
-                                      </div>
-                                      <div className="flex justify-between pl-4 text-xs text-green-600 font-medium border-t border-green-300 pt-1">
-                                        <span>Final (Max of calculated vs monthly):</span>
-                                        <span>${feeCalculation.bookkeeping.setupFee.toLocaleString()}</span>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Service Tier Section - Separate from services */}
-                        {form.watch('serviceTier') && form.watch('serviceTier') !== 'Standard' && (
-                          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-300 rounded-lg p-4 shadow-sm">
-                            <div className="font-semibold text-purple-800 mb-3 text-lg border-b border-purple-200 pb-2">🎯 Service Tier Upgrade</div>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between font-medium">
-                                <span className="text-purple-700">Tier Selected:</span>
-                                <span className="text-purple-800">{form.watch('serviceTier')}</span>
-                              </div>
-                              <div className="flex justify-between font-medium">
-                                <span className="text-purple-700">Monthly Upgrade Fee:</span>
-                                <span className="text-purple-800">+${form.watch('serviceTier') === 'Guided' ? '79' : '249'}</span>
-                              </div>
-                              <div className="text-xs text-purple-600 mt-2 p-2 bg-purple-100 rounded">
-                                {form.watch('serviceTier') === 'Guided' ? 
-                                  '• Enhanced support and guidance throughout your engagement' :
-                                  '• White-glove service with dedicated account management and priority support'
-                                }
+                              <div>
+                                <h4 className="font-semibold text-green-800">Bookkeeping Service</h4>
+                                <p className="text-xs text-green-600">Monthly financial management</p>
                               </div>
                             </div>
-                          </div>
-                        )}
-                        
-                        {feeCalculation.includesTaas && (
-                          <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 shadow-sm">
-                            <div className="font-semibold text-blue-800 mb-3 text-lg border-b border-blue-200 pb-2">📋 Tax as a Service (TaaS)</div>
-                            <div className="space-y-2 text-sm">
-                              <div className="space-y-1">
-                                <div className="flex justify-between font-medium">
-                                  <span className="text-blue-700">Monthly Fee:</span>
-                                  <span className="text-blue-800">${feeCalculation.taas.monthlyFee.toLocaleString()}</span>
-                                </div>
-                                {feeCalculation.taas.breakdown && (
-                                  <>
-                                    <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                      <span>Base Fee:</span>
-                                      <span>${feeCalculation.taas.breakdown.base.toLocaleString()}</span>
-                                    </div>
-                                    {feeCalculation.taas.breakdown.entityUpcharge > 0 && (
-                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>Entity Upcharge ({(form.watch('customNumEntities') || form.watch('numEntities'))} entities):</span>
-                                        <span>+${feeCalculation.taas.breakdown.entityUpcharge.toLocaleString()}</span>
-                                      </div>
-                                    )}
-                                    {feeCalculation.taas.breakdown.stateUpcharge > 0 && (
-                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>State Upcharge ({(form.watch('customStatesFiled') || form.watch('statesFiled'))} states):</span>
-                                        <span>+${feeCalculation.taas.breakdown.stateUpcharge.toLocaleString()}</span>
-                                      </div>
-                                    )}
-                                    {feeCalculation.taas.breakdown.intlUpcharge > 0 && (
-                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>International Filing:</span>
-                                        <span>+${feeCalculation.taas.breakdown.intlUpcharge.toLocaleString()}</span>
-                                      </div>
-                                    )}
-                                    {feeCalculation.taas.breakdown.ownerUpcharge > 0 && (
-                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>Owner Upcharge ({(form.watch('customNumBusinessOwners') || form.watch('numBusinessOwners'))} owners):</span>
-                                        <span>+${feeCalculation.taas.breakdown.ownerUpcharge.toLocaleString()}</span>
-                                      </div>
-                                    )}
-                                    {feeCalculation.taas.breakdown.bookUpcharge > 0 && (
-                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>Bookkeeping Quality:</span>
-                                        <span>+${feeCalculation.taas.breakdown.bookUpcharge.toLocaleString()}</span>
-                                      </div>
-                                    )}
-                                    {feeCalculation.taas.breakdown.personal1040 > 0 && (
-                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>Personal 1040s:</span>
-                                        <span>+${feeCalculation.taas.breakdown.personal1040.toLocaleString()}</span>
-                                      </div>
-                                    )}
-                                    <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                      <span>Before Multipliers:</span>
-                                      <span>${feeCalculation.taas.breakdown.beforeMultipliers.toLocaleString()}</span>
-                                    </div>
-                                    {feeCalculation.taas.breakdown.industryMult !== 1 && (
-                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>Industry Multiplier ({feeCalculation.taas.breakdown.industryMult.toFixed(1)}x):</span>
-                                        <span>${feeCalculation.taas.breakdown.afterIndustryMult?.toLocaleString() || feeCalculation.taas.breakdown.beforeMultipliers.toLocaleString()}</span>
-                                      </div>
-                                    )}
-                                    <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                      <span>Revenue Multiplier ({feeCalculation.taas.breakdown.revenueMult.toFixed(1)}x):</span>
-                                      <span>${feeCalculation.taas.breakdown.afterMultipliers.toLocaleString()}</span>
-                                    </div>
-                                    {feeCalculation.taas.breakdown.seedDiscount > 0 && (
-                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>Seed Bookkeeping Discount (50%):</span>
-                                        <span className="text-green-600">-${feeCalculation.taas.breakdown.seedDiscount.toLocaleString()}</span>
-                                      </div>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                              {feeCalculation.taas.setupFee > 0 && (
-                                <div className="border-t border-blue-200 pt-2">
-                                  <div className="flex justify-between font-medium">
-                                    <span className="text-blue-700">Prior Years Fee:</span>
-                                    <span className="text-blue-800">${feeCalculation.taas.setupFee.toLocaleString()}</span>
-                                  </div>
-                                  {feeCalculation.taas.breakdown && (
-                                    <>
-                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>Unfiled Years: {feeCalculation.taas.breakdown.priorYearsUnfiled}</span>
-                                        <span>✓</span>
-                                      </div>
-                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>Per Year Fee:</span>
-                                        <span>${feeCalculation.taas.breakdown.perYearFee.toLocaleString()}</span>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-                              )}
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-green-800">${feeCalculation.bookkeeping.monthlyFee}</div>
+                              <div className="text-xs text-green-600">per month</div>
                             </div>
                           </div>
-                        )}
+                        </div>
+                      )}
+
+                      {/* TaaS Service Card */}
+                      {feeCalculation.includesTaas && (
+                        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">📋</span>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-blue-800">Tax as a Service</h4>
+                                <p className="text-xs text-blue-600">Comprehensive tax management</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-blue-800">${feeCalculation.taas.monthlyFee}</div>
+                              <div className="text-xs text-blue-600">per month</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Service Tier Upgrade Card */}
+                      {form.watch('serviceTier') && form.watch('serviceTier') !== 'Standard' && (
+                        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">🎯</span>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-purple-800">Service Tier: {form.watch('serviceTier')}</h4>
+                                <p className="text-xs text-purple-600">
+                                  {form.watch('serviceTier') === 'Guided' ? 'Enhanced support & guidance' : 'White-glove premium service'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-purple-800">+${form.watch('serviceTier') === 'Guided' ? '79' : '249'}</div>
+                              <div className="text-xs text-purple-600">per month</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* No Services Selected */}
+                    {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas) && (
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
+                        <div className="text-gray-500 mb-2">
+                          <Calculator className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        </div>
+                        <h4 className="font-semibold text-gray-600 mb-1">No Services Selected</h4>
+                        <p className="text-sm text-gray-500">Click on the service cards above to start building your quote</p>
                       </div>
                     )}
                   </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="pt-6 space-y-3">
-                  <div className="flex gap-3">
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        console.log('Save button clicked');
-                        console.log('Form values:', form.getValues());
-                        console.log('Form errors:', form.formState.errors);
-                        form.handleSubmit(onSubmit)();
-                      }}
-                      disabled={createQuoteMutation.isPending || !isCalculated}
-                      className="flex-1 bg-[#253e31] text-white font-semibold py-4 px-6 rounded-lg hover:bg-[#253e31]/90 active:bg-[#253e31]/80 focus:ring-2 focus:ring-[#e24c00] focus:ring-offset-2 button-shimmer transition-all duration-300"
-                    >
-                      <Save className="w-4 h-4 mr-2" />
-                      {createQuoteMutation.isPending ? 'Saving...' : (editingQuoteId ? 'Update Quote' : 'Save Quote')}
-                    </Button>
-                    
-                    <Button
-                      type="button"
-                      onClick={resetForm}
-                      variant="outline"
-                      className="px-4 py-4 border-gray-300 text-gray-700 hover:bg-gray-50"
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                  
-                  {/* HubSpot Integration Button */}
-                  {isCalculated && (
-                    <div className="flex gap-3">
-                      <Button
-                        type="button"
-                        onClick={async () => {
-                          console.log('🔵 Push to HubSpot button clicked');
-                          console.log('🔵 editingQuoteId:', editingQuoteId);
-                          console.log('🔵 hasUnsavedChanges:', hasUnsavedChanges);
-                          console.log('🔵 allQuotes length:', allQuotes?.length);
-                          console.log('🔵 form contact email:', form.getValues().contactEmail);
-                          
-                          // Check if current quote has HubSpot IDs
-                          const currentQuote = editingQuoteId ? allQuotes?.find((q: Quote) => q.id === editingQuoteId) : null;
-                          const hasHubSpotIds = currentQuote?.hubspotQuoteId && currentQuote?.hubspotDealId;
-                          
-                          console.log('🔵 currentQuote:', currentQuote);
-                          console.log('🔵 hasHubSpotIds:', hasHubSpotIds);
-                          
-                          if (!editingQuoteId && hasUnsavedChanges) {
-                            console.log('🟡 PATH: Auto-save then push to HubSpot');
-                            // Auto-save the quote first, then push to HubSpot
-                            const formData = form.getValues();
-                            try {
-                              await new Promise((resolve, reject) => {
-                                createQuoteMutation.mutate(formData, {
-                                  onSuccess: (savedQuote) => {
-                                    console.log('🟢 Quote saved, now pushing to HubSpot with ID:', savedQuote.id);
-                                    // Now push to HubSpot
-                                    pushToHubSpotMutation.mutate(savedQuote.id);
-                                    resolve(savedQuote);
-                                  },
-                                  onError: reject
-                                });
-                              });
-                            } catch (error) {
-                              console.error('Failed to save quote before pushing to HubSpot:', error);
-                            }
-                          } else if (hasHubSpotIds) {
-                            // Update existing quote in HubSpot
-                            const quoteId = editingQuoteId || currentQuote?.id;
-                            if (quoteId && hasUnsavedChanges) {
-                              // Auto-save the form changes first (editingQuoteId is already set)
-                              const formData = form.getValues();
-                              try {
-                                await new Promise((resolve, reject) => {
-                                  createQuoteMutation.mutate(formData, {
-                                    onSuccess: (savedQuote) => {
-                                      // Now update in HubSpot
-                                      updateHubSpotMutation.mutate(quoteId);
-                                      resolve(savedQuote);
-                                    },
-                                    onError: reject
-                                  });
-                                });
-                              } catch (error) {
-                                console.error('Failed to save quote before updating HubSpot:', error);
-                              }
-                            } else if (quoteId) {
-                              // No unsaved changes, just update HubSpot
-                              updateHubSpotMutation.mutate(quoteId);
-                            }
-                          } else if (editingQuoteId) {
-                            // Editing a quote that hasn't been pushed to HubSpot yet
-                            if (hasUnsavedChanges) {
-                              // Auto-save first, then push to HubSpot
-                              const formData = form.getValues();
-                              try {
-                                await new Promise((resolve, reject) => {
-                                  createQuoteMutation.mutate(formData, {
-                                    onSuccess: (savedQuote) => {
-                                      // Now push to HubSpot
-                                      pushToHubSpotMutation.mutate(editingQuoteId);
-                                      resolve(savedQuote);
-                                    },
-                                    onError: reject
-                                  });
-                                });
-                              } catch (error) {
-                                console.error('Failed to save quote before pushing to HubSpot:', error);
-                              }
-                            } else {
-                              // No unsaved changes, just push to HubSpot
-                              pushToHubSpotMutation.mutate(editingQuoteId);
-                            }
-                          } else {
-                            console.log('🟡 PATH: Find most recent quote and push');
-                            // Find the most recent quote for this contact and push it
-                            const mostRecentQuote = allQuotes?.find((q: Quote) => 
-                              q.contactEmail === form.getValues().contactEmail
-                            );
-                            
-                            console.log('🔵 mostRecentQuote found:', mostRecentQuote);
-                            
-                            if (mostRecentQuote && mostRecentQuote.id) {
-                              console.log('🟢 Pushing quote to HubSpot with ID:', mostRecentQuote.id);
-                              pushToHubSpotMutation.mutate(mostRecentQuote.id);
-                            } else {
-                              console.log('🔴 No recent quote found, showing error');
-                              toast({
-                                title: "Error",
-                                description: "Please save the quote first before pushing to HubSpot.",
-                                variant: "destructive",
-                              });
-                            }
-                          }
-                        }}
-                        disabled={(() => {
-                          const formValues = form.getValues();
-                          const requiredFieldsValidation = validateRequiredFields(formValues);
-                          
-                          return (
-                            !isCalculated || 
-                            hubspotVerificationStatus !== 'verified' || 
-                            !requiredFieldsValidation.isValid ||
-                            pushToHubSpotMutation.isPending || 
-                            updateHubSpotMutation.isPending ||
-                            createQuoteMutation.isPending ||
-                            // Disable if override requires approval but not yet approved
-                            (form.watch("cleanupOverride") && !isApproved && (() => {
-                              const overrideReason = form.watch("overrideReason");
-                              const customSetupFee = form.watch("customSetupFee");
-                              const cleanupMonths = form.watch("cleanupMonths");
-                              
-                              if (overrideReason === "Other") {
-                                // For "Other" - requires approval if custom setup fee OR cleanup months reduced
-                                return (customSetupFee && parseFloat(customSetupFee) > 0) || cleanupMonths < currentMonth;
-                              } else {
-                                // For other reasons - only requires approval if cleanup months reduced
-                                return cleanupMonths < currentMonth;
-                              }
-                            })())
-                          );
-                        })()}
-                        className="flex-1 bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-orange-700 active:bg-orange-800 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 button-shimmer transition-all duration-300"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        {pushToHubSpotMutation.isPending || updateHubSpotMutation.isPending || (createQuoteMutation.isPending && !editingQuoteId)
-                          ? 'Pushing to HubSpot...' 
-                          : (() => {
-                              // Check if current quote has HubSpot IDs
-                              const currentQuote = editingQuoteId ? allQuotes?.find((q: Quote) => q.id === editingQuoteId) : null;
-                              const hasHubSpotIds = currentQuote?.hubspotQuoteId && currentQuote?.hubspotDealId;
-                              return (editingQuoteId || hasHubSpotIds) ? 'Update in HubSpot' : 'Push to HubSpot';
-                            })()
-                        }
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {hubspotVerificationStatus === 'not-found' && isCalculated && (
-                    <Alert className="border-amber-200 bg-amber-50">
-                      <AlertCircle className="h-4 w-4 text-amber-600" />
-                      <AlertDescription className="text-amber-800">
-                        Contact not found in HubSpot. Please verify the email address or add the contact to HubSpot before pushing.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  {/* Show missing required fields alert */}
-                  {(() => {
-                    const formValues = form.getValues();
-                    
-                    // Show missing fields alert when any service is engaged and there are missing fields
-                    if (formValues.serviceBookkeeping || formValues.serviceTaas) {
-                      const requiredFieldsValidation = validateRequiredFields(formValues);
-                      
-                      if (!requiredFieldsValidation.isValid) {
-                        return (
-                          <Alert className="border-red-200 bg-red-50">
-                            <AlertCircle className="h-4 w-4 text-red-600" />
-                            <AlertDescription className="text-red-800">
-                              <div className="font-medium mb-1">Missing required fields:</div>
-                              <ul className="list-disc list-inside text-sm">
-                                {requiredFieldsValidation.missingFields.map((field, index) => (
-                                  <li key={index}>{field}</li>
-                                ))}
-                              </ul>
-                            </AlertDescription>
-                          </Alert>
-                        );
-                      }
-                    }
-                    return null;
-                  })()}
-                  
-                  {editingQuoteId && (
-                    <Alert>
-                      <Edit className="h-4 w-4" />
-                      <AlertDescription>
-                        Editing existing quote (ID: {editingQuoteId}). Changes will update the original quote.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  {hasUnsavedChanges && !editingQuoteId && (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        You have unsaved changes. Remember to save your quote before leaving.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <div className="text-center bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border">
-                    <div className="flex items-center justify-center gap-2 mb-1">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                      <p className="text-xs font-medium text-gray-600">
-                        Quote valid for 30 days
-                      </p>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Generated on {new Date().toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                </div>
+                </CardContent>
               </div>
-            </CardContent>
+            </div>
           </Card>
-        </div>
-        
+          </div>
+        )}
+
         {/* Commission Tracking Section */}
-        {isCalculated && (() => {
+        {showClientDetails && isCalculated && (() => {
           // Calculate commissions properly accounting for custom setup fees and combined services
           const totalSetupFee = setupFee;
           const totalMonthlyFee = monthlyFee;
@@ -3882,11 +3459,11 @@ export default function Home() {
                   <div className="bg-white rounded-lg p-6 shadow-md border border-green-100">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-semibold text-gray-800">Month 1 Commission</h3>
-                      <div className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                        First Month
+                      <div className="text-2xl font-bold text-green-600">
+                        ${totalMonth1Commission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {totalSetupFee > 0 && (
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Setup Fee (20%):</span>
@@ -3903,8 +3480,8 @@ export default function Home() {
                       </div>
                       <div className="border-t pt-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-base font-semibold text-gray-800">Total Month 1:</span>
-                          <span className="text-xl font-bold text-green-600">
+                          <span className="text-sm font-semibold text-gray-700">Total Month 1:</span>
+                          <span className="text-lg font-bold text-green-600">
                             ${totalMonth1Commission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         </div>
@@ -3915,28 +3492,23 @@ export default function Home() {
                   {/* Ongoing Commission */}
                   <div className="bg-white rounded-lg p-6 shadow-md border border-green-100">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-800">Ongoing Commission</h3>
-                      <div className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                        Months 2-12
+                      <h3 className="text-lg font-semibold text-gray-800">Ongoing Monthly</h3>
+                      <div className="text-2xl font-bold text-green-600">
+                        ${ongoingMonthlyCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Monthly Fee (10%):</span>
                         <span className="font-semibold text-gray-800">
                           ${ongoingMonthlyCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">× 11 months:</span>
-                        <span className="font-semibold text-gray-800">
-                          ${totalOngoingCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </span>
-                      </div>
+                      <div className="text-xs text-gray-500">Months 2-12 (11 payments)</div>
                       <div className="border-t pt-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-base font-semibold text-gray-800">Total Months 2-12:</span>
-                          <span className="text-xl font-bold text-blue-600">
+                          <span className="text-sm font-semibold text-gray-700">Total Ongoing:</span>
+                          <span className="text-lg font-bold text-green-600">
                             ${totalOngoingCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         </div>
@@ -3945,314 +3517,25 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Total Annual Commission */}
-                <div className="mt-6 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg p-6 border border-amber-200">
-                  <div className="flex items-center justify-between">
+                {/* Total First Year Commission */}
+                <div className="mt-6 bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-6 border-2 border-green-200">
+                  <div className="flex justify-between items-center">
                     <div>
                       <h3 className="text-xl font-bold text-gray-800">Total First Year Commission</h3>
-                      <p className="text-sm text-gray-600 mt-1">Complete earnings potential from this client</p>
+                      <p className="text-sm text-gray-600 mt-1">Combined earnings for months 1-12</p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-3xl font-bold text-amber-600">
-                        ${totalFirstYearCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </div>
-                      <div className="text-sm text-gray-500 mt-1">
-                        Based on current quote
-                      </div>
+                    <div className="text-3xl font-bold text-green-700">
+                      ${totalFirstYearCommission.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </div>
-                  
-                  {/* Breakdown for combined services */}
-                  {(feeCalculation.includesBookkeeping && feeCalculation.includesTaas) && (
-                    <div className="mt-4 pt-4 border-t border-amber-200">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <div className="text-gray-600 mb-1">Bookkeeping Service:</div>
-                          <div className="text-gray-800">
-                            Monthly: ${feeCalculation.bookkeeping.monthlyFee.toLocaleString()}
-                            {feeCalculation.bookkeeping.setupFee > 0 && (
-                              <span> | Setup: ${feeCalculation.bookkeeping.setupFee.toLocaleString()}</span>
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-gray-600 mb-1">TaaS Service:</div>
-                          <div className="text-gray-800">
-                            Monthly: ${feeCalculation.taas.monthlyFee.toLocaleString()}
-                            {feeCalculation.taas.setupFee > 0 && (
-                              <span> | Setup: ${feeCalculation.taas.setupFee.toLocaleString()}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
           );
         })()}
-        
-        </>
-        )}
-
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-white text-sm opacity-80">
-            Internal Tool • Seed Financial Sales Team
-          </p>
-        </div>
-        
-        {/* Approval Code Dialog */}
-      <Dialog open={isApprovalDialogOpen} onOpenChange={setIsApprovalDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Enter Approval Code</DialogTitle>
-            <DialogDescription>
-              Enter the 4-digit approval code from Slack to unlock cleanup month editing.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="approvalCode" className="block text-sm font-medium text-gray-700 mb-2">
-                Approval Code
-              </label>
-              <Input
-                id="approvalCode"
-                type="text"
-                maxLength={4}
-                placeholder="0000"
-                value={approvalCode}
-                onChange={(e) => {
-                  // Only allow numbers
-                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                  setApprovalCode(value);
-                }}
-                className="text-center text-2xl tracking-widest font-mono"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && approvalCode.length === 4) {
-                    validateApprovalCode();
-                  }
-                }}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsApprovalDialogOpen(false);
-                  setApprovalCode("");
-                }}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={validateApprovalCode}
-                disabled={isValidatingCode || approvalCode.length !== 4}
-                className="flex-1"
-              >
-                {isValidatingCode ? "Validating..." : "Validate Code"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Existing Quotes Modal */}
-      <Dialog open={showExistingQuotesModal} onOpenChange={setShowExistingQuotesModal}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {existingQuotesForEmail.length > 0 ? "Existing Quotes Found" : "Create New Quote"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedContact && existingQuotesForEmail.length > 0 
-                ? `Found ${existingQuotesForEmail.length} existing quotes for ${selectedContact.properties.firstname} ${selectedContact.properties.lastname} (${selectedContact.properties.email})`
-                : selectedContact 
-                  ? `Create a new quote for ${selectedContact.properties.firstname} ${selectedContact.properties.lastname} (${selectedContact.properties.email})`
-                  : "Create a new quote for this contact"
-              }
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            {existingQuotesForEmail.length > 0 && (
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Select an existing quote to edit:</h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {existingQuotesForEmail.map((quote) => (
-                    <Card key={quote.id} className="cursor-pointer hover:bg-blue-50 transition-colors"
-                          onClick={() => {
-                            loadQuoteIntoForm(quote);
-                            setShowExistingQuotesModal(false);
-                            setShowClientDetails(true);
-                          }}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-gray-900">${parseFloat(quote.monthlyFee).toLocaleString()}/month</p>
-                            <p className="text-sm text-gray-600">
-                              Services: {[
-                                quote.includesBookkeeping && "Bookkeeping",
-                                quote.includesTaas && "TaaS", 
-                                quote.includesPayroll && "Payroll",
-                                quote.includesApArLite && "AP/AR Lite",
-                                quote.includesFpaLite && "FP&A Lite"
-                              ].filter(Boolean).join(", ")}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Updated: {new Date(quote.updatedAt || quote.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <Button size="sm" variant="ghost">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <div className="border-t pt-4">
-              <Button 
-                onClick={() => {
-                  setShowExistingQuotesModal(false);
-                  proceedToClientDetails(selectedContact);
-                }}
-                className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
-              >
-                {existingQuotesForEmail.length > 0 ? "Create New Quote Instead" : "Create New Quote"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Archive Confirmation Dialog */}
-      <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Archive Quote</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to archive the quote for {selectedQuoteForArchive?.email}? 
-              This will hide it from the main list but preserve it for auditing.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          
-          <div className="flex items-center space-x-2 my-4">
-            <Checkbox
-              id="dontShowAgain"
-              checked={dontShowArchiveDialog}
-              onCheckedChange={handleArchiveDialogDontShow}
-            />
-            <label
-              htmlFor="dontShowAgain"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Don't show this dialog again
-            </label>
-          </div>
-          
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setArchiveDialogOpen(false);
-              setSelectedQuoteForArchive(null);
-            }}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmArchive}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-            >
-              Archive Quote
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Reset Confirmation Dialog */}
-      <AlertDialog open={resetConfirmDialog} onOpenChange={setResetConfirmDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Start New Quote</AlertDialogTitle>
-            <AlertDialogDescription>
-              {hasUnsavedChanges 
-                ? "You have unsaved changes. Are you sure you want to start a new quote? All current data will be lost."
-                : "Are you sure you want to start a new quote? This will clear all current data."
-              }
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
-                setResetConfirmDialog(false);
-                doResetForm();
-              }}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-            >
-              Start New Quote
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Discard Changes Dialog */}
-      <AlertDialog open={discardChangesDialog} onOpenChange={setDiscardChangesDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Load Quote</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved changes. Are you sure you want to load this quote? All current data will be lost.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingQuoteToLoad(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
-                setDiscardChangesDialog(false);
-                if (pendingQuoteToLoad) {
-                  doLoadQuote(pendingQuoteToLoad);
-                  setPendingQuoteToLoad(null);
-                }
-              }}
-              className="bg-orange-600 hover:bg-orange-700 focus:ring-orange-600"
-            >
-              Load Quote
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Unlock Confirmation Dialog */}
-      <AlertDialog open={unlockConfirmDialog} onOpenChange={setUnlockConfirmDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-500" />
-              Unlock Setup Fee Fields?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to unlock the setup fee fields? This will allow you to make changes, but you'll need to request a new approval code before saving any quote with overrides, regardless of whether you increase or decrease the values.
-              <br /><br />
-              <strong>Note:</strong> The override checkbox will remain locked to prevent accidental changes.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmUnlockFields}
-              className="bg-amber-600 hover:bg-amber-700 focus:ring-amber-600"
-            >
-              Yes, Unlock Fields
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       </div>
     </div>
   );
 }
+
+export default HomePage;
