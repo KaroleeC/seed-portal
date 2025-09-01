@@ -3424,12 +3424,6 @@ export default function Home() {
                                         <span>+$60</span>
                                       </div>
                                     )}
-                                    {form.watch('serviceTier') && form.watch('serviceTier') !== 'Standard' && (
-                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
-                                        <span>Service Tier ({form.watch('serviceTier')}):</span>
-                                        <span>+${form.watch('serviceTier') === 'Guided' ? '79' : '249'}</span>
-                                      </div>
-                                    )}
                                     {feeCalculation.includesTaas && form.watch('alreadyOnSeedBookkeeping') && (
                                       <div className="flex justify-between pl-4 text-xs text-green-600">
                                         <span>Seed Bookkeeping Discount (50%):</span>
@@ -3467,6 +3461,29 @@ export default function Home() {
                                   )}
                                 </div>
                               )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Service Tier Section - Separate from services */}
+                        {form.watch('serviceTier') && form.watch('serviceTier') !== 'Standard' && (
+                          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-300 rounded-lg p-4 shadow-sm">
+                            <div className="font-semibold text-purple-800 mb-3 text-lg border-b border-purple-200 pb-2">🎯 Service Tier Upgrade</div>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between font-medium">
+                                <span className="text-purple-700">Tier Selected:</span>
+                                <span className="text-purple-800">{form.watch('serviceTier')}</span>
+                              </div>
+                              <div className="flex justify-between font-medium">
+                                <span className="text-purple-700">Monthly Upgrade Fee:</span>
+                                <span className="text-purple-800">+${form.watch('serviceTier') === 'Guided' ? '79' : '249'}</span>
+                              </div>
+                              <div className="text-xs text-purple-600 mt-2 p-2 bg-purple-100 rounded">
+                                {form.watch('serviceTier') === 'Guided' ? 
+                                  '• Enhanced support and guidance throughout your engagement' :
+                                  '• White-glove service with dedicated account management and priority support'
+                                }
+                              </div>
                             </div>
                           </div>
                         )}
