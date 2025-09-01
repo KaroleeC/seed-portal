@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { Copy, Save, Check, Search, ArrowUpDown, Edit, AlertCircle, Archive, CheckCircle, XCircle, Loader2, Upload, User, LogOut, Calculator, FileText, Sparkles, DollarSign, X, Plus, ChevronLeft, ChevronRight, HelpCircle, Bell, Settings, Lock, Unlock, Building, Users, CreditCard } from "lucide-react";
+import { Copy, Save, Check, Search, ArrowUpDown, Edit, AlertCircle, Archive, CheckCircle, XCircle, Loader2, Upload, User, LogOut, Calculator, FileText, Sparkles, DollarSign, X, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, HelpCircle, Bell, Settings, Lock, Unlock, Building, Users, CreditCard } from "lucide-react";
 import { useLocation } from "wouter";
 import { insertQuoteSchema, type Quote } from "@shared/schema";
 
@@ -3291,7 +3291,7 @@ function HomePage() {
 
         {/* Redesigned Modern Pricing Summary Card */}
         {showClientDetails && (
-          <div className="flex-1">
+          <div className="flex-1 ml-6">
           <Card className="bg-gradient-to-br from-white to-gray-50 shadow-2xl border-0 quote-card lg:flex-1 overflow-hidden" style={{ flex: '1', minWidth: 0 }}>
             <div className="bg-gradient-to-r from-[#e24c00] to-[#ff6b35] p-1">
               <div className="bg-white rounded-t-lg">
@@ -3309,29 +3309,130 @@ function HomePage() {
                   </div>
                   
                   <div className="space-y-6">
-                    {/* Main Total Display - Always show the combined total */}
+                    {/* Main Total Display - Clickable for detailed breakdown */}
                     {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas) && (
-                      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg">
-                        <div className="text-center">
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            <Calculator className="h-5 w-5 text-blue-600" />
-                            <span className="text-sm font-medium text-blue-600 uppercase tracking-wide">Total Monthly Fee</span>
-                          </div>
-                          <div className="text-4xl font-bold text-blue-800 mb-2">
-                            ${feeCalculation.combined.monthlyFee.toLocaleString()}
-                            <span className="text-lg font-medium text-blue-600">/month</span>
-                          </div>
-                          {feeCalculation.combined.setupFee > 0 && (
-                            <div className="text-lg text-blue-700">
-                              <span className="font-semibold">${feeCalculation.combined.setupFee.toLocaleString()}</span>
-                              <span className="text-sm"> setup fee</span>
+                      <>
+                        <div 
+                          className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:from-blue-100 hover:to-indigo-200"
+                          onClick={() => setIsBreakdownExpanded(!isBreakdownExpanded)}
+                        >
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                              <Calculator className="h-5 w-5 text-blue-600" />
+                              <span className="text-sm font-medium text-blue-600 uppercase tracking-wide">Total Monthly Fee</span>
+                              <button 
+                                className="ml-2 p-1 rounded-full hover:bg-blue-200/50 transition-colors"
+                                title={isBreakdownExpanded ? "Hide breakdown" : "Show detailed breakdown"}
+                              >
+                                {isBreakdownExpanded ? (
+                                  <ChevronUp className="h-4 w-4 text-blue-600" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4 text-blue-600" />
+                                )}
+                              </button>
                             </div>
-                          )}
-                          <div className="mt-3 text-xs text-blue-600">
-                            Monthly bookkeeping, cleanup, and financial management
+                            <div className="text-4xl font-bold text-blue-800 mb-2">
+                              ${feeCalculation.combined.monthlyFee.toLocaleString()}
+                              <span className="text-lg font-medium text-blue-600">/month</span>
+                            </div>
+                            {feeCalculation.combined.setupFee > 0 && (
+                              <div className="text-lg text-blue-700">
+                                <span className="font-semibold">${feeCalculation.combined.setupFee.toLocaleString()}</span>
+                                <span className="text-sm"> setup fee</span>
+                              </div>
+                            )}
+                            <div className="mt-3 text-xs text-blue-600">
+                              {isBreakdownExpanded ? "Click to hide detailed breakdown" : "Click to see detailed breakdown"}
+                            </div>
                           </div>
                         </div>
-                      </div>
+
+                        {/* Detailed Breakdown Accordion */}
+                        {isBreakdownExpanded && (
+                          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                            <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                              <FileText className="h-4 w-4" />
+                              Detailed Breakdown
+                            </h4>
+                            <div className="space-y-3">
+                              {/* Bookkeeping Breakdown */}
+                              {feeCalculation.includesBookkeeping && (
+                                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                                  <h5 className="font-medium text-green-800 mb-2">Bookkeeping Service</h5>
+                                  <div className="space-y-1 text-sm">
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Base monthly fee:</span>
+                                      <span className="font-medium">${feeCalculation.bookkeeping.baseFee}</span>
+                                    </div>
+                                    {feeCalculation.bookkeeping.cleanupFee > 0 && (
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Cleanup fee ({form.watch('cleanupMonths')} months):</span>
+                                        <span className="font-medium">${feeCalculation.bookkeeping.cleanupFee}</span>
+                                      </div>
+                                    )}
+                                    <div className="border-t pt-1 flex justify-between font-semibold">
+                                      <span>Monthly total:</span>
+                                      <span className="text-green-700">${feeCalculation.bookkeeping.monthlyFee}</span>
+                                    </div>
+                                    {feeCalculation.bookkeeping.setupFee > 0 && (
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Setup fee:</span>
+                                        <span className="font-medium">${feeCalculation.bookkeeping.setupFee}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* TaaS Breakdown */}
+                              {feeCalculation.includesTaas && (
+                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                  <h5 className="font-medium text-blue-800 mb-2">Tax as a Service</h5>
+                                  <div className="space-y-1 text-sm">
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Monthly TaaS fee:</span>
+                                      <span className="font-medium">${feeCalculation.taas.monthlyFee}</span>
+                                    </div>
+                                    {feeCalculation.taas.priorYearsFee > 0 && (
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Prior years filing:</span>
+                                        <span className="font-medium">${feeCalculation.taas.priorYearsFee}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Service Tier Breakdown */}
+                              {form.watch('serviceTier') && form.watch('serviceTier') !== 'Standard' && (
+                                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                                  <h5 className="font-medium text-purple-800 mb-2">Service Tier Upgrade</h5>
+                                  <div className="space-y-1 text-sm">
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">{form.watch('serviceTier')} tier:</span>
+                                      <span className="font-medium">+${form.watch('serviceTier') === 'Guided' ? '79' : '249'}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Combined Total */}
+                              <div className="bg-gray-50 rounded-lg p-4 border-t-2 border-blue-500">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-semibold text-gray-800">Total Monthly Fee:</span>
+                                  <span className="text-xl font-bold text-blue-700">${feeCalculation.combined.monthlyFee.toLocaleString()}</span>
+                                </div>
+                                {feeCalculation.combined.setupFee > 0 && (
+                                  <div className="flex justify-between items-center mt-2">
+                                    <span className="font-semibold text-gray-800">Total Setup Fee:</span>
+                                    <span className="text-lg font-bold text-blue-700">${feeCalculation.combined.setupFee.toLocaleString()}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {/* Service Breakdown Cards */}
