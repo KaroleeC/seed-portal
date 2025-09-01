@@ -1187,7 +1187,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         parseFloat(quote.setupFee),
         ownerId || undefined,
         dealIncludesBookkeeping,
-        dealIncludesTaas
+        dealIncludesTaas,
+        quote.serviceTier || 'Standard'
       );
 
       if (!deal) {

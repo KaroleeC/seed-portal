@@ -26,6 +26,12 @@ export interface HubSpotDeal {
 
 import { cache, CacheTTL, CachePrefix } from "./cache.js";
 
+// HubSpot Product Record IDs for Service Tiers
+const HUBSPOT_PRODUCT_IDS = {
+  GUIDED_SERVICE_TIER: "28884795543",
+  CONCIERGE_SERVICE_TIER: "28891925782"
+} as const;
+
 export class HubSpotService {
   private accessToken: string;
   private baseUrl = "https://api.hubapi.com";
@@ -557,6 +563,7 @@ export class HubSpotService {
     ownerId?: string,
     includesBookkeeping?: boolean,
     includesTaas?: boolean,
+    serviceTier?: string,
   ): Promise<HubSpotDeal | null> {
     try {
       // Generate dynamic deal name based on services

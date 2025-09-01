@@ -28,6 +28,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { UniversalNavbar } from "@/components/UniversalNavbar";
+import { ServiceTierCards } from "@/components/quote-form/ServiceTierCards";
 
 // Get current month number (1-12)
 const currentMonth = new Date().getMonth() + 1;
@@ -2213,10 +2214,16 @@ export default function Home() {
                   </div>
                 </div>
                 </div>
+
+                {/* Service Tier Selection */}
+                <div className="mt-8 p-6 bg-white rounded-lg shadow-sm border">
+                  <ServiceTierCards form={form} />
+                </div>
               </CardContent>
             </Form>
           </Card>
         )}
+
 
         {/* Enhanced 5-Service Card System */}
         {showClientDetails && (
@@ -2884,29 +2891,6 @@ export default function Home() {
                         )}
                       />
 
-                      {/* Service Tier Selection */}
-                      <FormField
-                        control={form.control}
-                        name="serviceTier"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Service Tier</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || "Standard"}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                                  <SelectValue placeholder="Select service tier" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="Standard">Standard - Base service level</SelectItem>
-                                <SelectItem value="Guided">Guided - +$79/month - Enhanced support and guidance</SelectItem>
-                                <SelectItem value="Concierge">Concierge - +$249/month - Premium white-glove service</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
                       {/* Additional Information Section */}
                       <div className="border-t pt-6 space-y-6">
@@ -3430,6 +3414,12 @@ export default function Home() {
                                       <div className="flex justify-between pl-4 text-xs text-green-600">
                                         <span>QBO Subscription:</span>
                                         <span>+$60</span>
+                                      </div>
+                                    )}
+                                    {form.watch('serviceTier') && form.watch('serviceTier') !== 'Standard' && (
+                                      <div className="flex justify-between pl-4 text-xs text-blue-600">
+                                        <span>Service Tier ({form.watch('serviceTier')}):</span>
+                                        <span>+${form.watch('serviceTier') === 'Guided' ? '79' : '249'}</span>
                                       </div>
                                     )}
                                     {feeCalculation.includesTaas && form.watch('alreadyOnSeedBookkeeping') && (
