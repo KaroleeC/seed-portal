@@ -37,6 +37,8 @@ const validateRequiredFields = (formValues: any): { isValid: boolean; missingFie
   const missingFields: string[] = [];
   
   // Always required fields (for any quote)
+  if (!formValues.contactFirstName) missingFields.push("First Name");
+  if (!formValues.contactLastName) missingFields.push("Last Name");
   if (!formValues.industry) missingFields.push("Industry");
   if (!formValues.monthlyRevenueRange) missingFields.push("Monthly Revenue Range");
   if (!formValues.entityType) missingFields.push("Entity Type");
@@ -49,7 +51,7 @@ const validateRequiredFields = (formValues: any): { isValid: boolean; missingFie
   // Only validate service-specific fields if that service is actually engaged
   if (formValues.serviceBookkeeping) {
     if (!formValues.monthlyTransactions) missingFields.push("Monthly Transactions");
-    if (!formValues.cleanupComplexity) missingFields.push("Cleanup Complexity");
+    if (!formValues.cleanupComplexity) missingFields.push("Initial Cleanup Complexity");
     if (!formValues.accountingBasis) missingFields.push("Accounting Basis");
   }
   
@@ -176,7 +178,7 @@ const formSchema = insertQuoteSchema.omit({
     }
   }
   
-  // If override is not checked or not approved, enforce minimum cleanup months (only for bookkeeping)
+  // If override is not checked or not approved, enforce minimum initial cleanup months (only for bookkeeping)
   if (data.quoteType === 'bookkeeping' && !data.cleanupOverride && data.cleanupMonths < currentMonth) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -325,7 +327,7 @@ function calculateFees(data: Partial<FormData>) {
     };
   }
   
-  // If cleanup months is 0, cleanup complexity is not required
+  // If initial cleanup months is 0, initial cleanup complexity is not required
   if (data.cleanupMonths > 0 && !data.cleanupComplexity) {
     return { 
       monthlyFee: 0, 
@@ -1331,7 +1333,7 @@ export default function Home() {
       contactFirstName: quote.contactFirstName || "",
       contactLastName: quote.contactLastName || "",
       monthlyRevenueRange: quote.monthlyRevenueRange || "",
-      entityType: quote.entityType || "LLC",
+      entityType: quote.entityType || "S-Corp",
       clientStreetAddress: quote.clientStreetAddress || "",
       clientCity: quote.clientCity || "",
       clientState: quote.clientState || "",
@@ -1445,7 +1447,7 @@ export default function Home() {
       includesBookkeeping: true,
       includesTaas: false,
       // TaaS defaults
-      entityType: "LLC",
+      entityType: "S-Corp",
       numEntities: 1,
       statesFiled: 1,
       internationalFiling: false,
@@ -1931,7 +1933,7 @@ export default function Home() {
                     name="contactFirstName"
                     render={({ field }) => (
                       <FormItem>
-                        <label className="text-gray-700 font-medium text-sm block mb-2">First Name</label>
+                        <label className="text-gray-700 font-medium text-sm block mb-2">First Name <span className="text-red-500">*</span></label>
                         <FormControl>
                           <div className="flex gap-2">
                             <Input 
@@ -1965,7 +1967,7 @@ export default function Home() {
                     name="contactLastName"
                     render={({ field }) => (
                       <FormItem>
-                        <label className="text-gray-700 font-medium text-sm block mb-2">Last Name</label>
+                        <label className="text-gray-700 font-medium text-sm block mb-2">Last Name <span className="text-red-500">*</span></label>
                         <FormControl>
                           <div className="flex gap-2">
                             <Input 
@@ -2089,7 +2091,7 @@ export default function Home() {
                     name="entityType"
                     render={({ field }) => (
                       <FormItem>
-                        <label className="text-gray-700 font-medium text-sm block mb-2">Entity Type <span className="text-red-500">*</span></label>
+                        <label className="text-gray-700 font-medium text-sm block mb-2">Entity Type (Tax Classification) <span className="text-red-500">*</span></label>
                         <Select onValueChange={field.onChange} value={field.value || ""}>
                           <FormControl>
                             <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
@@ -2097,7 +2099,6 @@ export default function Home() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="LLC">LLC</SelectItem>
                             <SelectItem value="C-Corp">C-Corp</SelectItem>
                             <SelectItem value="S-Corp">S-Corp</SelectItem>
                             <SelectItem value="Partnership">Partnership</SelectItem>
@@ -2634,7 +2635,7 @@ export default function Home() {
                         name="cleanupComplexity"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Cleanup Complexity <span className="text-red-500">*</span></FormLabel>
+                            <FormLabel>Initial Cleanup Complexity <span className="text-red-500">*</span></FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
@@ -2658,7 +2659,7 @@ export default function Home() {
                         name="cleanupMonths"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Months of Cleanup Required</FormLabel>
+                            <FormLabel>Months of Initial Cleanup Required</FormLabel>
                             <FormControl>
                               <Input 
                                 type="number"
@@ -2712,7 +2713,7 @@ export default function Home() {
                               </FormControl>
                               <div className="space-y-1 leading-none">
                                 <FormLabel>
-                                  Override Minimum Cleanup
+                                  Override Minimum Initial Cleanup
                                 </FormLabel>
                               </div>
                             </div>
@@ -3950,148 +3951,6 @@ export default function Home() {
           );
         })()}
         
-        {/* Quote History Section */}
-        <Card className="bg-white shadow-xl mt-8 border-0 quote-card">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
-                <FileText className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-2xl font-bold text-gray-800">
-                  Saved Quotes
-                </CardTitle>
-                <p className="text-sm text-gray-500 mt-1">Manage and review your quote history</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 mt-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by contact email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-10 bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-3 h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Clear search"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              {dontShowArchiveDialog && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setDontShowArchiveDialog(false);
-                    localStorage.removeItem('dontShowArchiveDialog');
-                    toast({
-                      title: "Archive Confirmations Enabled",
-                      description: "Archive confirmation dialogs will now be shown again.",
-                    });
-                  }}
-                  className="text-xs"
-                >
-                  Enable Archive Confirmations
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {allQuotes.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>No quotes found. Create your first quote above!</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead 
-                        className="cursor-pointer hover:bg-gray-50 select-none"
-                        onClick={() => handleSort('contactEmail')}
-                      >
-                        <div className="flex items-center gap-1">
-                          Contact Email
-                          <ArrowUpDown className="h-4 w-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead 
-                        className="cursor-pointer hover:bg-gray-50 select-none"
-                        onClick={() => handleSort('updatedAt')}
-                      >
-                        <div className="flex items-center gap-1">
-                          Last Updated
-                          <ArrowUpDown className="h-4 w-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead 
-                        className="cursor-pointer hover:bg-gray-50 select-none"
-                        onClick={() => handleSort('monthlyFee')}
-                      >
-                        <div className="flex items-center gap-1">
-                          Monthly Fee
-                          <ArrowUpDown className="h-4 w-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead 
-                        className="cursor-pointer hover:bg-gray-50 select-none"
-                        onClick={() => handleSort('setupFee')}
-                      >
-                        <div className="flex items-center gap-1">
-                          Setup Fee
-                          <ArrowUpDown className="h-4 w-4" />
-                        </div>
-                      </TableHead>
-                      <TableHead>Industry</TableHead>
-                      <TableHead className="w-16">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allQuotes.map((quote) => (
-                      <TableRow 
-                        key={quote.id} 
-                        className="cursor-pointer quote-table-row"
-                        onClick={() => loadQuoteIntoForm(quote)}
-                      >
-                        <TableCell className="font-medium">{quote.contactEmail}</TableCell>
-                        <TableCell>
-                          {new Date(quote.updatedAt || quote.createdAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: 'numeric',
-                            minute: '2-digit'
-                          })}
-                        </TableCell>
-                        <TableCell className="font-semibold">${parseFloat(quote.monthlyFee).toLocaleString()}</TableCell>
-                        <TableCell className="font-semibold text-[#e24c00]">${parseFloat(quote.setupFee).toLocaleString()}</TableCell>
-                        <TableCell>{quote.industry}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => handleArchiveQuote(quote.id, quote.contactEmail, e)}
-                            disabled={archiveQuoteMutation.isPending}
-                            className="text-gray-500 hover:text-red-600 hover:bg-red-50"
-                            title="Archive Quote"
-                          >
-                            <Archive className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
         </>
         )}
 

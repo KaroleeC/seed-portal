@@ -97,7 +97,7 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
     return { monthlyFee: 0, setupFee: 0 };
   }
   
-  // If cleanup months is 0, cleanup complexity is not required
+  // If initial cleanup months is 0, initial cleanup complexity is not required
   if (data.cleanupMonths > 0 && !data.cleanupComplexity) {
     return { monthlyFee: 0, setupFee: 0 };
   }

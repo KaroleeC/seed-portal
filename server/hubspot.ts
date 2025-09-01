@@ -2730,7 +2730,7 @@ Generated: ${new Date().toLocaleDateString()}`;
         `• Monthly Transactions: ${quoteData.monthlyTransactions || "Not specified"}`,
       );
       assumptions.push(
-        `• Months of Cleanup Required: ${quoteData.cleanupMonths || 0}`,
+        `• Months of Initial Cleanup Required: ${quoteData.cleanupMonths || 0}`,
       );
       assumptions.push(
         `• Accounting Basis: ${quoteData.accountingBasis || "Not specified"}`,

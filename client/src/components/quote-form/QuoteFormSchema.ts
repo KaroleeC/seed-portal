@@ -16,6 +16,8 @@ export const formSchema = insertQuoteSchema.omit({
   hubspotContactVerified: true,
 }).extend({
   contactEmail: z.string().min(1, "Email is required").email("Please enter a valid email address"),
+  contactFirstName: z.string().min(1, "First name is required"),
+  contactLastName: z.string().min(1, "Last name is required"),
   cleanupMonths: z.number().min(0, "Cannot be negative"),
   cleanupOverride: z.boolean().default(false),
   overrideReason: z.string().optional(),
@@ -51,7 +53,7 @@ export const formSchema = insertQuoteSchema.omit({
     });
   }
   
-  // If override is not checked or not approved, enforce minimum cleanup months (only for bookkeeping)
+  // If override is not checked or not approved, enforce minimum initial cleanup months (only for bookkeeping)
   if (data.quoteType === 'bookkeeping' && !data.cleanupOverride && data.cleanupMonths < currentMonth) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,

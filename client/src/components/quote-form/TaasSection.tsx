@@ -22,7 +22,7 @@ export function TaasSection({ control, currentFormView }: TaasSectionProps) {
         name="entityType"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Entity Type</FormLabel>
+            <FormLabel>Entity Type (Tax Classification)</FormLabel>
             <Select onValueChange={field.onChange} value={field.value || ""}>
               <FormControl>
                 <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
@@ -30,7 +30,6 @@ export function TaasSection({ control, currentFormView }: TaasSectionProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="LLC">LLC</SelectItem>
                 <SelectItem value="C-Corp">C-Corp</SelectItem>
                 <SelectItem value="S-Corp">S-Corp</SelectItem>
                 <SelectItem value="Partnership">Partnership</SelectItem>
