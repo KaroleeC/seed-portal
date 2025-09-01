@@ -1,0 +1,23 @@
+- Require code to create new quote if quote already exists
+- Need to verify that first and last name are added as a requirement to push to the quote. And add it to the ‘Missing Required Fields” area
+- Add “(Tax Classification)” to entity type and remove LLC
+- Ensure that info syncs back to hubspot
+    - Name, Industry, Revenue, Entity, & Address all sync back to contact
+- Instead of having Payroll, AP/AR Lite, and FP&A Lite - have a Add New Service button that opens modal to select services - modal selection would include the following:
+    - Core Services: TaaS, Monthly Bookkeeping, Prior Years Tax Filings, Bookkeeping Cleanup Project, CFO Advisory Services
+    - Add-On Services (Requires a core service): OPERATIONAL SERVICES (Payroll, AP/AR Lite, AP/AR Advanced); FINANCIAL PLANNING & ANALYSIS (FP&A Lite, FP&A Advanced); COMPLIANCE & ADVISORY SERVICES (Agent of Service, Nexus Study, Entity Optimization); SPECIALIZED SERVICES (Cost Segregation Study, R&D Credit Analysis, Real Estate Advisory)
+- Include Service Tier upgrade options: Guided $79/mo and Concierge $249/mo
+- Remove the quote history table at the bottom
+
+BOOKKEEPING - 
+- Need to separate out Monthly bookkeeping (plus initial cleanup - this year only) and a cleanup project that is needed 
+    - Cleanup project service selection - date picker style selector for months of cleanup needed in order to transfer better data to clickup accounting team
+- “Months of cleanup required” change to “months of initial cleanup required”
+- “Cleanup Complexity” change to “Initial Cleanup Complexity”
+- “Override Minimum Cleanup” change to “Override Minimum Initial Cleanup”
+- Properties to sync to deal -> Accounting Basis = Deal property accounting_basis (cash, accrual); Business Loans = Deal property business_loans (true, false); Months of Initial Cleanup Required = Deal property initial_clean_up_months (#); 
+
+TAAS - 
+- Need to separate out Prior Year filings project from monthly TaaS
+- If ‘Seed Bookkeeping Package’ is selected then Bookkeeping Quality is defaulted to ‘Clean/New’ and the field gets disabled/greyed out
+- Properties to sync to deal -> Number of Entities = Deal property number_of_entities (#); States Filed = Deal property number_of_state_filings (#); Number of Business Owners = Deal property number_of_owners_partners (#); Include Personal 1040s = Deal property include_personal_1040s (true, false); Internal Filing Required = Deal property international_filing (true, false)
