@@ -3291,7 +3291,7 @@ function HomePage() {
 
         {/* Redesigned Modern Pricing Summary Card */}
         {showClientDetails && (
-          <div className="flex-1 ml-6" style={{ minWidth: '500px', maxWidth: '600px' }}>
+          <div className="max-w-6xl mx-auto mb-8">
           <Card className="bg-gradient-to-br from-white to-gray-50 shadow-2xl border-0 quote-card w-full overflow-hidden">
             <div className="bg-gradient-to-r from-[#e24c00] to-[#ff6b35] p-1">
               <div className="bg-white rounded-t-lg">
