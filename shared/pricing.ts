@@ -114,6 +114,13 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
     monthlyFee += 60;
   }
   
+  // Add service tier upgrade fees
+  if ((data as any).serviceTier === "Guided") {
+    monthlyFee += 79;
+  } else if ((data as any).serviceTier === "Concierge") {
+    monthlyFee += 249;
+  }
+  
   // Use the actual cleanup months value (override just allows values below normal minimum)
   const effectiveCleanupMonths = data.cleanupMonths;
   

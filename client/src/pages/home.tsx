@@ -685,6 +685,7 @@ export default function Home() {
       priorYearsUnfiled: 0,
       alreadyOnSeedBookkeeping: false,
       qboSubscription: false,
+      serviceTier: "Standard",
     },
   });
 
@@ -1334,6 +1335,7 @@ export default function Home() {
       contactLastName: quote.contactLastName || "",
       monthlyRevenueRange: quote.monthlyRevenueRange || "",
       entityType: quote.entityType || "S-Corp",
+      serviceTier: quote.serviceTier || "Standard",
       clientStreetAddress: quote.clientStreetAddress || "",
       clientCity: quote.clientCity || "",
       clientState: quote.clientState || "",
@@ -1456,6 +1458,7 @@ export default function Home() {
       include1040s: false,
       priorYearsUnfiled: 0,
       alreadyOnSeedBookkeeping: false,
+      serviceTier: "Standard",
     });
     
     // Reset all HubSpot verification state
@@ -2877,6 +2880,30 @@ export default function Home() {
                                 Adds $60/month to the bookkeeping monthly fee
                               </p>
                             </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Service Tier Selection */}
+                      <FormField
+                        control={form.control}
+                        name="serviceTier"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Service Tier</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || "Standard"}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                                  <SelectValue placeholder="Select service tier" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Standard">Standard - Base service level</SelectItem>
+                                <SelectItem value="Guided">Guided - +$79/month - Enhanced support and guidance</SelectItem>
+                                <SelectItem value="Concierge">Concierge - +$249/month - Premium white-glove service</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
