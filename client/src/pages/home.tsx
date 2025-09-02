@@ -2428,48 +2428,258 @@ function HomePage() {
             {(form.watch('serviceMonthlyBookkeeping') || form.watch('serviceCleanupProjects') || form.watch('serviceBookkeeping')) && (
               <div className="max-w-6xl mx-auto mt-8">
                 <Card className="bg-white shadow-lg border border-gray-200">
-                  <CardContent className="p-6">
+                  <CardContent className="p-8">
                     <Form {...form}>
-                    <div className="space-y-6 border-t pt-6">
-                      <h3 className="text-lg font-semibold text-gray-800">Bookkeeping Service Details</h3>
+                    <div className="space-y-8">
+                      <h3 className="text-xl font-semibold text-gray-900 border-b pb-4">Bookkeeping Service Details</h3>
                       
-                      {/* Monthly Revenue Range - CRITICAL for pricing */}
+                      {/* Current Bookkeeping Software */}
                       <FormField
                         control={form.control}
-                        name="monthlyRevenueRange"
+                        name="currentBookkeepingSoftware"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Monthly Revenue Range <span className="text-red-500">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                                  <SelectValue placeholder="Select monthly revenue range" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="<$10K">&lt;$10K</SelectItem>
-                                <SelectItem value="10K-25K">$10K-$25K</SelectItem>
-                                <SelectItem value="25K-75K">$25K-$75K</SelectItem>
-                                <SelectItem value="75K-250K">$75K-$250K</SelectItem>
-                                <SelectItem value="250K-1M">$250K-$1M</SelectItem>
-                                <SelectItem value="1M+">$1M+</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormLabel className="text-lg font-medium text-gray-800">Current Bookkeeping Software</FormLabel>
+                            <div className="grid grid-cols-3 gap-4 mt-3">
+                              {['QuickBooks Online', 'QuickBooks Desktop', 'Xero', 'NetSuite', 'Other', 'None'].map((software) => (
+                                <button
+                                  key={software}
+                                  type="button"
+                                  onClick={() => field.onChange(software)}
+                                  className={`p-4 border-2 rounded-lg text-center font-medium transition-all hover:shadow-md ${
+                                    field.value === software
+                                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                  }`}
+                                >
+                                  {software}
+                                </button>
+                              ))}
+                            </div>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      {/* Monthly Transactions - CRITICAL for pricing */}
+                      {/* Add Seed Managed QBO Subscription */}
+                      <FormField
+                        control={form.control}
+                        name="qboSubscription"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-x-3 space-y-0 bg-blue-50 p-4 rounded-lg">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-lg font-medium text-gray-800">Add Seed Managed QBO Subscription (+$60/month)</FormLabel>
+                              <p className="text-sm text-gray-600">We'll set up and manage QuickBooks Online for your client</p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Current Primary Bank */}
+                      <FormField
+                        control={form.control}
+                        name="primaryBank"
+                        render={({ field }) => {
+                          const [showAllBanks, setShowAllBanks] = useState(false);
+                          const topBanks = ['Chase', 'Bank of America', 'Wells Fargo', 'Citibank', 'US Bank'];
+                          const allBanks = [
+                            'Chase', 'Bank of America', 'Wells Fargo', 'Citibank', 'US Bank',
+                            'PNC Bank', 'Capital One', 'TD Bank', 'Truist', 'Fifth Third Bank',
+                            'Regions Bank', 'KeyBank', 'M&T Bank', 'Huntington Bank', 'First Republic',
+                            'Ally Bank', 'Other'
+                          ];
+                          const banksToShow = showAllBanks ? allBanks : topBanks;
+                          
+                          return (
+                            <FormItem>
+                              <FormLabel className="text-lg font-medium text-gray-800">Current Primary Bank</FormLabel>
+                              {!field.value ? (
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-5 gap-3 mt-3">
+                                    {banksToShow.map((bank) => (
+                                      <button
+                                        key={bank}
+                                        type="button"
+                                        onClick={() => field.onChange(bank)}
+                                        className="p-3 border-2 border-gray-200 rounded-lg text-center font-medium text-gray-700 transition-all hover:border-gray-300 hover:shadow-md bg-white"
+                                      >
+                                        {bank}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  {!showAllBanks && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowAllBanks(true)}
+                                      className="text-blue-600 hover:text-blue-800 font-medium"
+                                    >
+                                      Show more banks →
+                                    </button>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="flex items-center space-x-3 mt-3">
+                                  <div className="p-3 border-2 border-blue-500 bg-blue-50 rounded-lg text-blue-700 font-medium">
+                                    {field.value}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => field.onChange('')}
+                                    className="text-gray-500 hover:text-gray-700"
+                                  >
+                                    Change
+                                  </button>
+                                </div>
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
+                      />
+
+                      {/* Additional Banks/Credit Cards */}
+                      <FormField
+                        control={form.control}
+                        name="additionalBanks"
+                        render={({ field }) => {
+                          const [isAdding, setIsAdding] = useState(false);
+                          const currentBanks = field.value || [];
+                          
+                          const allBanks = [
+                            'Chase', 'Bank of America', 'Wells Fargo', 'Citibank', 'US Bank',
+                            'PNC Bank', 'Capital One', 'TD Bank', 'Truist', 'Fifth Third Bank',
+                            'Regions Bank', 'KeyBank', 'M&T Bank', 'Huntington Bank', 'First Republic',
+                            'Ally Bank', 'Other'
+                          ];
+                          
+                          const addBank = (bank: string) => {
+                            const updated = [...currentBanks, bank];
+                            field.onChange(updated);
+                            setIsAdding(false);
+                          };
+                          
+                          const removeBank = (index: number) => {
+                            const updated = currentBanks.filter((_: any, i: number) => i !== index);
+                            field.onChange(updated);
+                          };
+                          
+                          return (
+                            <FormItem>
+                              <FormLabel className="text-lg font-medium text-gray-800">Additional Banks or Credit Card Providers</FormLabel>
+                              
+                              {currentBanks.length > 0 && (
+                                <div className="space-y-2 mt-3">
+                                  {currentBanks.map((bank: string, index: number) => (
+                                    <div key={index} className="flex items-center space-x-3">
+                                      <div className="p-2 border-2 border-green-500 bg-green-50 rounded-lg text-green-700 font-medium">
+                                        {bank}
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeBank(index)}
+                                        className="text-red-500 hover:text-red-700"
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {!isAdding ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsAdding(true)}
+                                  className="mt-3 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-800 font-medium"
+                                >
+                                  + Add Another Bank or Credit Card Provider
+                                </button>
+                              ) : (
+                                <div className="space-y-3 mt-3">
+                                  <div className="grid grid-cols-5 gap-3">
+                                    {allBanks.map((bank) => (
+                                      <button
+                                        key={bank}
+                                        type="button"
+                                        onClick={() => addBank(bank)}
+                                        className="p-3 border-2 border-gray-200 rounded-lg text-center font-medium text-gray-700 transition-all hover:border-gray-300 hover:shadow-md bg-white"
+                                      >
+                                        {bank}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsAdding(false)}
+                                    className="text-gray-500 hover:text-gray-700"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
+                      />
+
+                      {/* Merchant Providers */}
+                      <FormField
+                        control={form.control}
+                        name="merchantProviders"
+                        render={({ field }) => {
+                          const merchants = ['Stripe', 'Square', 'PayPal', 'Authorize.Net', 'Clover', 'Toast', 'Other'];
+                          const currentMerchants = field.value || [];
+                          
+                          const toggleMerchant = (merchant: string) => {
+                            const updated = currentMerchants.includes(merchant)
+                              ? currentMerchants.filter((m: string) => m !== merchant)
+                              : [...currentMerchants, merchant];
+                            field.onChange(updated);
+                          };
+                          
+                          return (
+                            <FormItem>
+                              <FormLabel className="text-lg font-medium text-gray-800">Merchant Providers</FormLabel>
+                              <div className="grid grid-cols-4 gap-3 mt-3">
+                                {merchants.map((merchant) => (
+                                  <button
+                                    key={merchant}
+                                    type="button"
+                                    onClick={() => toggleMerchant(merchant)}
+                                    className={`p-3 border-2 rounded-lg text-center font-medium transition-all hover:shadow-md ${
+                                      currentMerchants.includes(merchant)
+                                        ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                    }`}
+                                  >
+                                    {merchant}
+                                  </button>
+                                ))}
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
+                      />
+
+                      {/* Monthly Transaction Volume */}
                       <FormField
                         control={form.control}
                         name="monthlyTransactions"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Monthly Transaction Volume <span className="text-red-500">*</span></FormLabel>
+                            <FormLabel className="text-lg font-medium text-gray-800">Monthly Transaction Volume</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500 h-12">
                                   <SelectValue placeholder="Select transaction volume" />
                                 </SelectTrigger>
                               </FormControl>
@@ -2487,131 +2697,29 @@ function HomePage() {
                         )}
                       />
 
-                      {/* Industry - CRITICAL for pricing */}
-                      <FormField
-                        control={form.control}
-                        name="industry"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Industry <span className="text-red-500">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                                  <SelectValue placeholder="Select industry" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="Software/SaaS">Software/SaaS</SelectItem>
-                                <SelectItem value="Professional Services">Professional Services</SelectItem>
-                                <SelectItem value="Consulting">Consulting</SelectItem>
-                                <SelectItem value="Healthcare/Medical">Healthcare/Medical</SelectItem>
-                                <SelectItem value="Real Estate">Real Estate</SelectItem>
-                                <SelectItem value="Property Management">Property Management</SelectItem>
-                                <SelectItem value="E-commerce/Retail">E-commerce/Retail</SelectItem>
-                                <SelectItem value="Restaurant/Food Service">Restaurant/Food Service</SelectItem>
-                                <SelectItem value="Hospitality">Hospitality</SelectItem>
-                                <SelectItem value="Construction/Trades">Construction/Trades</SelectItem>
-                                <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Cleanup Months - CRITICAL for pricing */}
-                      <FormField
-                        control={form.control}
-                        name="cleanupMonths"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Cleanup Months Required</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                                  <SelectValue placeholder="Select cleanup months" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="0">0 - No cleanup needed</SelectItem>
-                                <SelectItem value="1">1 month</SelectItem>
-                                <SelectItem value="2">2 months</SelectItem>
-                                <SelectItem value="3">3 months</SelectItem>
-                                <SelectItem value="6">6 months</SelectItem>
-                                <SelectItem value="12">12 months</SelectItem>
-                                <SelectItem value="24">24+ months</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Cleanup Complexity - CRITICAL for pricing when cleanup > 0 */}
-                      {form.watch('cleanupMonths') > 0 && (
-                        <FormField
-                          control={form.control}
-                          name="cleanupComplexity"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Cleanup Complexity <span className="text-red-500">*</span></FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                                    <SelectValue placeholder="Select complexity level" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="0.75">Basic - Simple transactions</SelectItem>
-                                  <SelectItem value="1.0">Standard - Moderate complexity</SelectItem>
-                                  <SelectItem value="1.25">Complex - High complexity</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
-
-                      {/* QBO Subscription */}
-                      <FormField
-                        control={form.control}
-                        name="qboSubscription"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Add QuickBooks Online Subscription (+$60/month)</FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-
                       {/* Accounting Basis */}
                       <FormField
                         control={form.control}
                         name="accountingBasis"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Accounting Basis</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                                  <SelectValue placeholder="Select accounting basis" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="Cash">Cash Basis</SelectItem>
-                                <SelectItem value="Accrual">Accrual Basis</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormLabel className="text-lg font-medium text-gray-800">Accounting Basis</FormLabel>
+                            <div className="grid grid-cols-2 gap-4 mt-3">
+                              {['Cash', 'Accrual'].map((basis) => (
+                                <button
+                                  key={basis}
+                                  type="button"
+                                  onClick={() => field.onChange(basis)}
+                                  className={`p-4 border-2 rounded-lg text-center font-medium transition-all hover:shadow-md ${
+                                    field.value === basis
+                                      ? 'border-green-500 bg-green-50 text-green-700'
+                                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                  }`}
+                                >
+                                  {basis} Basis
+                                </button>
+                              ))}
+                            </div>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -2622,142 +2730,31 @@ function HomePage() {
                         control={form.control}
                         name="businessLoans"
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Business has loans or complex financing</FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Service Tier */}
-                      <FormField
-                        control={form.control}
-                        name="serviceTier"
-                        render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Service Tier</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                                  <SelectValue placeholder="Select service tier" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="Standard">Standard (No additional fee)</SelectItem>
-                                <SelectItem value="Guided">Guided (+$79/month)</SelectItem>
-                                <SelectItem value="Concierge">Concierge (+$249/month)</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormLabel className="text-lg font-medium text-gray-800">Business Loans or Financing</FormLabel>
+                            <div className="grid grid-cols-2 gap-4 mt-3">
+                              {[
+                                { value: false, label: 'No business loans or financing' },
+                                { value: true, label: 'Yes, has business loans or financing' }
+                              ].map((option) => (
+                                <button
+                                  key={option.label}
+                                  type="button"
+                                  onClick={() => field.onChange(option.value)}
+                                  className={`p-4 border-2 rounded-lg text-center font-medium transition-all hover:shadow-md ${
+                                    field.value === option.value
+                                      ? 'border-orange-500 bg-orange-50 text-orange-700'
+                                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                  }`}
+                                >
+                                  {option.label}
+                                </button>
+                              ))}
+                            </div>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-
-                      {/* Cleanup Override Section */}
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="cleanupOverride"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  className="data-[state=checked]:bg-yellow-500 data-[state=checked]:border-yellow-500"
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="font-semibold">Override Cleanup Minimum (Admin Only)</FormLabel>
-                                <p className="text-sm text-yellow-700">Allow cleanup months below calendar year minimum</p>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Override Reason - only show if override is checked */}
-                        {form.watch('cleanupOverride') && (
-                          <>
-                            <FormField
-                              control={form.control}
-                              name="overrideReason"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Override Reason <span className="text-red-500">*</span></FormLabel>
-                                  <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger className="bg-white border-yellow-300 focus:ring-yellow-500 focus:border-yellow-500">
-                                        <SelectValue placeholder="Select override reason" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      <SelectItem value="Client Request">Client Request</SelectItem>
-                                      <SelectItem value="Competitive Pricing">Competitive Pricing</SelectItem>
-                                      <SelectItem value="Strategic Account">Strategic Account</SelectItem>
-                                      <SelectItem value="Other">Other (specify below)</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            {/* Custom Override Reason - only show if "Other" is selected */}
-                            {form.watch('overrideReason') === 'Other' && (
-                              <FormField
-                                control={form.control}
-                                name="customOverrideReason"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Custom Override Reason <span className="text-red-500">*</span></FormLabel>
-                                    <FormControl>
-                                      <textarea
-                                        {...field}
-                                        className="w-full min-h-[80px] px-3 py-2 border border-yellow-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
-                                        placeholder="Provide detailed reason for override..."
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            )}
-
-                            {/* Custom Setup Fee - only show if override reason is "Other" */}
-                            {form.watch('overrideReason') === 'Other' && (
-                              <FormField
-                                control={form.control}
-                                name="customSetupFee"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Custom Setup Fee (Optional)</FormLabel>
-                                    <FormControl>
-                                      <input
-                                        {...field}
-                                        type="number"
-                                        min="0"
-                                        step="25"
-                                        className="w-full px-3 py-2 border border-yellow-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
-                                        placeholder="Enter custom setup fee..."
-                                      />
-                                    </FormControl>
-                                    <p className="text-sm text-yellow-600">Leave blank to use standard calculation</p>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            )}
-                          </>
-                        )}
-                      </div>
                     </div>
                     </Form>
                   </CardContent>
