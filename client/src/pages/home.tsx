@@ -3560,6 +3560,175 @@ function HomePage() {
                       </div>
                     )}
                   </div>
+
+                {/* Action Buttons */}
+                <div className="pt-6 space-y-3">
+                  <div className="flex gap-3">
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        console.log('Save button clicked');
+                        console.log('Form values:', form.getValues());
+                        console.log('Form errors:', form.formState.errors);
+                        form.handleSubmit(onSubmit)();
+                      }}
+                      disabled={createQuoteMutation.isPending || !isCalculated}
+                      className="flex-1 bg-[#253e31] text-white font-semibold py-4 px-6 rounded-lg hover:bg-[#253e31]/90 active:bg-[#253e31]/80 focus:ring-2 focus:ring-[#e24c00] focus:ring-offset-2 button-shimmer transition-all duration-300"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {createQuoteMutation.isPending ? 'Saving...' : (editingQuoteId ? 'Update Quote' : 'Save Quote')}
+                    </Button>
+                    
+                    <Button
+                      type="button"
+                      onClick={resetForm}
+                      variant="outline"
+                      className="px-4 py-4 border-gray-300 text-gray-700 hover:bg-gray-50"
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                  
+                  {/* HubSpot Integration Button */}
+                  {isCalculated && (
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        onClick={async () => {
+                          // Check if current quote has HubSpot IDs
+                          const currentQuote = editingQuoteId ? allQuotes?.find((q: Quote) => q.id === editingQuoteId) : null;
+                          const hasHubSpotIds = currentQuote?.hubspotQuoteId && currentQuote?.hubspotDealId;
+                          
+                          if (!editingQuoteId && hasUnsavedChanges) {
+                            // Auto-save the quote first, then push to HubSpot
+                            const formData = form.getValues();
+                            try {
+                              await new Promise((resolve, reject) => {
+                                createQuoteMutation.mutate(formData, {
+                                  onSuccess: (savedQuote) => {
+                                    // Now push to HubSpot
+                                    pushToHubSpotMutation.mutate(savedQuote.id);
+                                    resolve(savedQuote);
+                                  },
+                                  onError: reject
+                                });
+                              });
+                            } catch (error) {
+                              console.error('Failed to save quote before pushing to HubSpot:', error);
+                            }
+                          } else if (editingQuoteId || hasHubSpotIds) {
+                            // Update existing quote - auto-save first, then update HubSpot
+                            const quoteId = editingQuoteId || currentQuote?.id;
+                            if (quoteId && hasUnsavedChanges) {
+                              // Auto-save the form changes first (editingQuoteId is already set)
+                              const formData = form.getValues();
+                              try {
+                                await new Promise((resolve, reject) => {
+                                  createQuoteMutation.mutate(formData, {
+                                    onSuccess: (savedQuote) => {
+                                      // Now update in HubSpot
+                                      updateHubSpotMutation.mutate(quoteId);
+                                      resolve(savedQuote);
+                                    },
+                                    onError: reject
+                                  });
+                                });
+                              } catch (error) {
+                                console.error('Failed to save quote before updating HubSpot:', error);
+                              }
+                            } else if (quoteId) {
+                              // No unsaved changes, just update HubSpot
+                              updateHubSpotMutation.mutate(quoteId);
+                            }
+                          } else {
+                            // This should not happen in normal flow, but handle as fallback
+                            toast({
+                              title: "Error",
+                              description: "Please save the quote first before pushing to HubSpot.",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        disabled={
+                          !isCalculated || 
+                          hubspotVerificationStatus !== 'verified' || 
+                          pushToHubSpotMutation.isPending || 
+                          updateHubSpotMutation.isPending ||
+                          createQuoteMutation.isPending ||
+                          // Disable if override requires approval but not yet approved
+                          (form.watch("cleanupOverride") && !isApproved && (() => {
+                            const overrideReason = form.watch("overrideReason");
+                            const customSetupFee = form.watch("customSetupFee");
+                            const cleanupMonths = form.watch("cleanupMonths");
+                            
+                            if (overrideReason === "Other") {
+                              // For "Other" - requires approval if custom setup fee OR cleanup months reduced
+                              return (customSetupFee && parseFloat(customSetupFee) > 0) || cleanupMonths < currentMonth;
+                            } else {
+                              // For other reasons - only requires approval if cleanup months reduced
+                              return cleanupMonths < currentMonth;
+                            }
+                          })())
+                        }
+                        className="flex-1 bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-orange-700 active:bg-orange-800 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 button-shimmer transition-all duration-300"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        {pushToHubSpotMutation.isPending || updateHubSpotMutation.isPending || (createQuoteMutation.isPending && !editingQuoteId)
+                          ? 'Pushing to HubSpot...' 
+                          : (() => {
+                              // Check if current quote has HubSpot IDs
+                              const currentQuote = editingQuoteId ? allQuotes?.find((q: Quote) => q.id === editingQuoteId) : null;
+                              const hasHubSpotIds = currentQuote?.hubspotQuoteId && currentQuote?.hubspotDealId;
+                              return (editingQuoteId || hasHubSpotIds) ? 'Update in HubSpot' : 'Push to HubSpot';
+                            })()
+                        }
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {hubspotVerificationStatus === 'not-found' && isCalculated && (
+                    <Alert className="border-amber-200 bg-amber-50">
+                      <AlertCircle className="h-4 w-4 text-amber-600" />
+                      <AlertDescription className="text-amber-800">
+                        Contact not found in HubSpot. Please verify the email address or add the contact to HubSpot before pushing.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {editingQuoteId && (
+                    <Alert>
+                      <Edit className="h-4 w-4" />
+                      <AlertDescription>
+                        Editing existing quote (ID: {editingQuoteId}). Changes will update the original quote.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {hasUnsavedChanges && !editingQuoteId && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        You have unsaved changes. Remember to save your quote before leaving.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  <div className="text-center bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                      <p className="text-xs font-medium text-gray-600">
+                        Quote valid for 30 days
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Generated on {new Date().toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                </div>
                 </CardContent>
               </div>
             </div>
