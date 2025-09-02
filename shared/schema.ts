@@ -38,7 +38,7 @@ export const quotes = pgTable("quotes", {
   priorYearsUnfiled: integer("prior_years_unfiled"),
   alreadyOnSeedBookkeeping: boolean("already_on_seed_bookkeeping"),
   qboSubscription: boolean("qbo_subscription").default(false),
-  serviceTier: text("service_tier").default("Standard"), // Standard, Guided, Concierge
+  serviceTier: text("service_tier").default("Automated"), // Automated, Guided, Concierge
   // Bookkeeping-specific information fields (do not impact pricing)
   accountingBasis: text("accounting_basis"), // Cash, Accrual
   businessLoans: boolean("business_loans"),

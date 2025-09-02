@@ -40,7 +40,7 @@ export const formSchema = insertQuoteSchema.omit({
   // Bookkeeping information fields
   accountingBasis: z.string().optional(),
   businessLoans: z.boolean().optional(),
-  serviceTier: z.string().default("Standard"),
+  serviceTier: z.string().default("Automated"),
 }).superRefine((data, ctx) => {
   // If cleanup override is checked, require a reason
   if (data.cleanupOverride && !data.overrideReason) {

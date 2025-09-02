@@ -537,6 +537,8 @@ function calculateCombinedFees(data: Partial<FormData>) {
     serviceTierFee = 79;
   } else if (data.serviceTier === 'Concierge') {
     serviceTierFee = 249;
+  } else if (data.serviceTier === 'Automated' || !data.serviceTier) {
+    serviceTierFee = 0; // Automated tier is free
   }
   
   return {
@@ -3015,7 +3017,7 @@ function HomePage() {
                               )}
 
                               {/* Service Tier Breakdown */}
-                              {form.watch('serviceTier') && form.watch('serviceTier') !== 'Standard' && (
+                              {form.watch('serviceTier') && form.watch('serviceTier') !== 'Automated' && (
                                 <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
                                   <h5 className="font-medium text-purple-800 mb-2">Service Tier Upgrade</h5>
                                   <div className="space-y-1 text-sm">
@@ -3091,7 +3093,7 @@ function HomePage() {
                       )}
 
                       {/* Service Tier Upgrade Card */}
-                      {form.watch('serviceTier') && form.watch('serviceTier') !== 'Standard' && (
+                      {form.watch('serviceTier') && form.watch('serviceTier') !== 'Automated' && (
                         <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-4 shadow-sm">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">

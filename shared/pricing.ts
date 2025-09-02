@@ -240,6 +240,8 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     serviceTierFee = 79;
   } else if (data.serviceTier === 'Concierge') {
     serviceTierFee = 249;
+  } else if (data.serviceTier === 'Automated' || !data.serviceTier) {
+    serviceTierFee = 0; // Automated tier is free
   }
 
   // Combined totals
