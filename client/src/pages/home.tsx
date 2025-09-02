@@ -1763,7 +1763,8 @@ function HomePage() {
   // Remove the old breakdown function since it's now handled in the calculation logic above
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a] py-8 px-4 sm:px-6 lg:px-8">
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <UniversalNavbar 
           showBackButton={true} 
@@ -1859,15 +1860,11 @@ function HomePage() {
           </Card>
         )}
 
-        {/* HubSpot Contact Search Modal */}
-        <Dialog open={showContactSearch} onOpenChange={setShowContactSearch}>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Search HubSpot Contacts</DialogTitle>
-              <DialogDescription>
-                Find an existing contact or create a new quote for "{triggerEmail}"
-              </DialogDescription>
-            </DialogHeader>
+        {/* All Content and Dialogs */}
+        {showClientDetails && (
+          <Card className="max-w-6xl mx-auto mb-8 bg-white/95 backdrop-blur-sm shadow-xl border-0">
+            <Form {...form}>
+              <CardContent className="p-6">
             
             <div className="space-y-4">
               <div className="relative">
@@ -4145,7 +4142,7 @@ function HomePage() {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </>
   );
 }
 
