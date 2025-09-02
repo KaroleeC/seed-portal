@@ -109,29 +109,17 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
   const industryData = PRICING_CONSTANTS.industryMultipliers[data.industry as keyof typeof PRICING_CONSTANTS.industryMultipliers] || { monthly: 1, cleanup: 1 };
   
   // Dynamic calculation: base fee * revenue multiplier + transaction surcharge, then apply industry multiplier
-  let monthlyFee = Math.round((PRICING_CONSTANTS.baseMonthlyFee * revenueMultiplier + txFee) * industryData.monthly);
+  const monthlyFeeBeforeQBO = Math.round((PRICING_CONSTANTS.baseMonthlyFee * revenueMultiplier + txFee) * industryData.monthly);
   
   // Add QBO Subscription fee if selected
+  let monthlyFee = monthlyFeeBeforeQBO;
   if (data.qboSubscription) {
     monthlyFee += 60;
   }
   
-  // Use the actual cleanup months value (override just allows values below normal minimum)
-  const effectiveCleanupMonths = data.cleanupMonths;
-  
-  // Calculate setup fee with custom override logic
-  let setupFee = 0;
-  
-  // Check for custom setup fee override first (always takes precedence)
-  const customSetupFee = (data as any).customSetupFee;
-  if (data.cleanupOverride && (data as any).overrideReason === "Other" && customSetupFee && parseFloat(customSetupFee) > 0) {
-    setupFee = parseFloat(customSetupFee);
-  } else if (effectiveCleanupMonths > 0) {
-    // Standard cleanup calculation only if no custom override
-    const cleanupMultiplier = parseFloat(data.cleanupComplexity || "0.75") * industryData.cleanup;
-    setupFee = roundToNearest25(Math.max(monthlyFee, monthlyFee * cleanupMultiplier * effectiveCleanupMonths));
-  }
-  // If cleanup months is 0 and no custom override, setup fee remains 0
+  // Calculate setup fee using new formula: monthly fee before discount * current month * 0.25
+  const currentMonth = new Date().getMonth() + 1; // Get current month (1-12)
+  const setupFee = Math.round(monthlyFeeBeforeQBO * currentMonth * 0.25);
   
   return { monthlyFee, setupFee };
 }
