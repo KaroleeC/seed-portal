@@ -50,43 +50,42 @@ export function ServiceSelectionModal({
 
   const serviceCategories = [
     {
-      title: "Bookkeeping Services",
+      title: "Core Services",
       icon: Calculator,
-      color: "bg-blue-500",
+      color: "bg-blue-600",
       services: [
+        {
+          key: "serviceTaasMonthly" as const,
+          name: "TaaS",
+          description: "Tax as a Service - comprehensive tax advisory and preparation"
+        },
         {
           key: "serviceMonthlyBookkeeping" as const,
           name: "Monthly Bookkeeping",
           description: "Ongoing monthly bookkeeping and financial statements"
         },
         {
-          key: "serviceCleanupProjects" as const,
-          name: "Cleanup Projects",
-          description: "One-time bookkeeping cleanup and catch-up work"
-        }
-      ]
-    },
-    {
-      title: "Tax & Advisory Services",
-      icon: FileText,
-      color: "bg-green-500",
-      services: [
-        {
-          key: "serviceTaasMonthly" as const,
-          name: "Monthly Tax Advisory",
-          description: "Ongoing monthly tax planning and advisory services"
+          key: "servicePriorYearFilings" as const,
+          name: "Prior Years Tax Filings",
+          description: "Catch-up tax filings for previous years"
         },
         {
-          key: "servicePriorYearFilings" as const,
-          name: "Prior Year Filings",
-          description: "Catch-up tax filings for previous years"
+          key: "serviceCleanupProjects" as const,
+          name: "Bookkeeping Cleanup Project",
+          description: "One-time bookkeeping cleanup and catch-up work"
+        },
+        {
+          key: "serviceFpaLite" as const,
+          name: "CFO Advisory Services",
+          description: "Strategic financial planning and CFO-level advisory"
         }
       ]
     },
     {
-      title: "Additional Services",
-      icon: Settings,
-      color: "bg-purple-500",
+      title: "Operational Services",
+      subtitle: "(Requires a core service)",
+      icon: Users,
+      color: "bg-green-600", 
       services: [
         {
           key: "servicePayroll" as const,
@@ -96,13 +95,41 @@ export function ServiceSelectionModal({
         {
           key: "serviceApArLite" as const,
           name: "AP/AR Lite",
-          description: "Accounts payable and receivable management"
-        },
+          description: "Basic accounts payable and receivable management"
+        }
+      ]
+    },
+    {
+      title: "Financial Planning & Analysis",
+      subtitle: "(Requires a core service)",
+      icon: TrendingUp,
+      color: "bg-purple-600",
+      services: [
         {
           key: "serviceFpaLite" as const,
-          name: "FP&A Lite",
-          description: "Financial planning and analysis services"
+          name: "FP&A Lite", 
+          description: "Essential financial planning and analysis services"
         }
+      ]
+    },
+    {
+      title: "Compliance & Advisory Services", 
+      subtitle: "(Requires a core service)",
+      icon: FileText,
+      color: "bg-orange-600",
+      services: [
+        // Note: These would need new database fields to be added
+        // Keeping existing serviceApArLite as placeholder for now
+      ]
+    },
+    {
+      title: "Specialized Services",
+      subtitle: "(Requires a core service)", 
+      icon: Settings,
+      color: "bg-gray-600",
+      services: [
+        // Note: These would need new database fields to be added
+        // Keeping existing services as placeholders for now
       ]
     }
   ];

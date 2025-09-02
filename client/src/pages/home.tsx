@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { UniversalNavbar } from "@/components/UniversalNavbar";
 import { ServiceTierCards } from "@/components/quote-form/ServiceTierCards";
+import { ServiceCards } from "@/components/quote-form/ServiceCards";
 
 // Get current month number (1-12)
 const currentMonth = new Date().getMonth() + 1;
@@ -2335,17 +2336,58 @@ function HomePage() {
         )}
 
 
-        {/* Enhanced 5-Service Card System */}
+        {/* New Service Selection Modal System */}
         {showClientDetails && (
         <>
-        <div className="max-w-6xl mx-auto mb-8">
+        <div className="max-w-4xl mx-auto mb-8">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-white mb-2">Select Services</h2>
             <p className="text-white/80">Choose the services you'd like to include in this quote</p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Bookkeeping Service Card */}
+          <ServiceCards
+            selectedServices={{
+              serviceMonthlyBookkeeping: form.watch('serviceBookkeeping') || false,
+              serviceCleanupProjects: false, // New field, default to false for now
+              serviceTaasMonthly: form.watch('serviceTaas') || false,
+              servicePriorYearFilings: false, // New field, default to false for now
+              servicePayroll: form.watch('servicePayroll') || false,
+              serviceApArLite: form.watch('serviceApArLite') || false,
+              serviceFpaLite: form.watch('serviceFpaLite') || false
+            }}
+            onServiceChange={(services) => {
+              // Map new service structure back to existing form fields for backwards compatibility
+              if (services.serviceMonthlyBookkeeping !== undefined) {
+                form.setValue('serviceBookkeeping', services.serviceMonthlyBookkeeping);
+              }
+              if (services.serviceTaasMonthly !== undefined) {
+                form.setValue('serviceTaas', services.serviceTaasMonthly);
+              }
+              if (services.servicePayroll !== undefined) {
+                form.setValue('servicePayroll', services.servicePayroll);
+              }
+              if (services.serviceApArLite !== undefined) {
+                form.setValue('serviceApArLite', services.serviceApArLite);
+              }
+              if (services.serviceFpaLite !== undefined) {
+                form.setValue('serviceFpaLite', services.serviceFpaLite);
+              }
+              form.trigger();
+              
+              // Update current form view to first selected service
+              const activeServices = getActiveServices();
+              if (activeServices.length > 0) {
+                setCurrentFormView(activeServices[0]);
+              } else {
+                setCurrentFormView('placeholder');
+              }
+            }}
+          />
+        </div>
+        </>
+        )}
+
+        {/* Quote builder section */}
             <Card 
               className={`
                 cursor-pointer transition-all duration-300 hover:scale-105 border-2 shadow-lg
