@@ -23,6 +23,7 @@ export const formSchema = insertQuoteSchema.omit({
   overrideReason: z.string().optional(),
   customOverrideReason: z.string().optional(),
   companyName: z.string().optional(),
+  approvalCode: z.string().optional(), // For duplicate quote approval
   // TaaS fields
   numEntities: z.number().min(1, "Must have at least 1 entity").optional(),
   statesFiled: z.number().min(1, "Must file in at least 1 state").optional(),

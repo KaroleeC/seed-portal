@@ -1073,11 +1073,10 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       
       // Send Slack notification using existing system
       try {
-        await sendSystemAlert(
-          type === 'duplicate_quote' ? 'Duplicate Quote Request' : 'Approval Request',
-          `Approval code: ${approvalCode}\nContact: ${contactName} (${email})\nRequested by: ${requestedBy}\nReason: ${reason}`,
-          'medium'
-        );
+        await sendSlackMessage({
+          channel: 'C096HE4MDPD',
+          text: `🔄 **${type === 'duplicate_quote' ? 'Duplicate Quote Request' : 'Approval Request'}**\n\nApproval code: ${approvalCode}\nContact: ${contactName} (${email})\nRequested by: ${requestedBy}\nReason: ${reason}`
+        });
       } catch (slackError) {
         console.error('Failed to send Slack notification:', slackError);
       }

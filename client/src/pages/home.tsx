@@ -1659,8 +1659,48 @@ function HomePage() {
     });
   };
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     console.log('onSubmit called with data:', data);
+    
+    // Check if approval code is required and validate it
+    if (existingQuotesForEmail.length > 0) {
+      if (!data.approvalCode || data.approvalCode.length !== 4) {
+        toast({
+          title: "Approval Code Required",
+          description: "Please enter the 4-digit approval code received via Slack to create an additional quote for this contact.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Validate the approval code
+      try {
+        const result = await apiRequest("/api/approval/validate", {
+          method: "POST",
+          body: JSON.stringify({
+            code: data.approvalCode,
+            contactEmail: data.contactEmail
+          })
+        });
+        
+        if (!result.valid) {
+          toast({
+            title: "Invalid Approval Code",
+            description: result.message || "The approval code is invalid or has expired.",
+            variant: "destructive",
+          });
+          return;
+        }
+      } catch (error) {
+        toast({
+          title: "Validation Error",
+          description: "Failed to validate approval code. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     if (!isCalculated) {
       console.log('Form not calculated, isCalculated:', isCalculated);
       toast({
@@ -2904,6 +2944,31 @@ function HomePage() {
                               </FormItem>
                             )}
                           />
+                      )}
+                      
+                      {/* Approval Code for Duplicate Quotes */}
+                      {existingQuotesForEmail.length > 0 && (
+                        <FormField
+                          control={form.control}
+                          name="approvalCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Approval Code</FormLabel>
+                              <FormDescription>
+                                Enter the approval code received via Slack to create an additional quote for this contact.
+                              </FormDescription>
+                              <FormControl>
+                                <Input
+                                  placeholder="Enter 4-digit approval code..."
+                                  className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent"
+                                  {...field}
+                                  maxLength={4}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       )}
 
                       {/* QBO Subscription Checkbox */}
