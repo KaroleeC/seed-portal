@@ -1,0 +1,34 @@
+React is not defined
+React is not defined
+The above error occurred in the <Controller> component:
+
+    at Controller (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-4BFJKWC4.js?v=9d5470e4:298:35)
+    at FormField (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/src/components/ui/form.tsx:33:6)
+    at div
+    at div
+    at form
+    at FormProvider (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-4BFJKWC4.js?v=9d5470e4:102:11)
+    at div
+    at _c9 (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at HomePage (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/src/pages/home.tsx:486:21)
+    at Route (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=9d5470e4:323:16)
+    at ProtectedRoute (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=9d5470e4:379:17)
+    at ErrorBoundary (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/src/components/error-boundary.tsx:10:5)
+    at Router (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/src/App.tsx?v=FmzUlL0ud-Dgh5hYwTCRq:49:3)
+    at NavigationHistoryProvider (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/src/hooks/use-navigation-history.tsx:75:45)
+    at AuthProvider (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=9d5470e4:2805:3)
+    at ErrorBoundary (https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/src/components/error-boundary.tsx:10:5)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+Error caught by boundary: 
+ReferenceError {}
+ 
+Object {componentStack: "↵    at Controller…"}
