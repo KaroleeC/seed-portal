@@ -1,71 +1,86 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calculator, FileText, Sparkles } from "lucide-react";
+import { ServiceSelectionModal } from "./ServiceSelectionModal";
 
 interface ServiceCardsProps {
-  feeCalculation: {
+  selectedServices: {
+    serviceMonthlyBookkeeping: boolean;
+    serviceCleanupProjects: boolean;
+    serviceTaasMonthly: boolean;
+    servicePriorYearFilings: boolean;
+    servicePayroll: boolean;
+    serviceApArLite: boolean;
+    serviceFpaLite: boolean;
+  };
+  onServiceChange: (services: Partial<ServiceCardsProps['selectedServices']>) => void;
+  // Backwards compatibility props for existing legacy logic
+  feeCalculation?: {
     includesBookkeeping: boolean;
     includesTaas: boolean;
   };
-  onServiceChange: (bookkeeping: boolean, taas: boolean) => void;
+  onLegacyServiceChange?: (bookkeeping: boolean, taas: boolean) => void;
 }
 
-export function ServiceCards({ feeCalculation, onServiceChange }: ServiceCardsProps) {
-  const handleServiceClick = (service: 'bookkeeping' | 'taas' | 'other') => {
-    if (service === 'bookkeeping') {
-      onServiceChange(true, false);
-    } else if (service === 'taas') {
-      onServiceChange(false, true);
-    }
-    // Note: 'other' services would be handled separately
+export function ServiceCards({ 
+  selectedServices, 
+  onServiceChange,
+  feeCalculation,
+  onLegacyServiceChange 
+}: ServiceCardsProps) {
+  
+  const getSelectedCount = () => {
+    return Object.values(selectedServices).filter(Boolean).length;
   };
 
+  const getSelectedServiceNames = () => {
+    const serviceNames: string[] = [];
+    if (selectedServices.serviceMonthlyBookkeeping) serviceNames.push("Monthly Bookkeeping");
+    if (selectedServices.serviceCleanupProjects) serviceNames.push("Cleanup Projects");
+    if (selectedServices.serviceTaasMonthly) serviceNames.push("Tax Advisory");
+    if (selectedServices.servicePriorYearFilings) serviceNames.push("Prior Year Filings");
+    if (selectedServices.servicePayroll) serviceNames.push("Payroll");
+    if (selectedServices.serviceApArLite) serviceNames.push("AP/AR Lite");
+    if (selectedServices.serviceFpaLite) serviceNames.push("FP&A Lite");
+    return serviceNames;
+  };
+
+  const selectedCount = getSelectedCount();
+  const selectedNames = getSelectedServiceNames();
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      {/* Bookkeeping Service */}
-      <Card 
-        className={`cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
-          feeCalculation.includesBookkeeping && !feeCalculation.includesTaas
-            ? 'border-[#e24c00] bg-orange-50' 
-            : 'border-gray-200 hover:border-[#e24c00]'
-        }`}
-        onClick={() => handleServiceClick('bookkeeping')}
-      >
-        <CardContent className="p-6 text-center">
-          <div className="w-12 h-12 bg-[#e24c00] rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Calculator className="w-6 h-6 text-white" />
-          </div>
-          <h3 className="font-semibold text-lg text-gray-800 mb-2">Bookkeeping</h3>
-          <p className="text-sm text-gray-600">Monthly bookkeeping, cleanup, and financial statements</p>
-        </CardContent>
-      </Card>
+    <div className="mb-8">
+      <Card className="border-2 border-dashed border-gray-300 hover:border-[#e24c00] transition-all duration-200">
+        <CardContent className="p-6">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 bg-[#e24c00] rounded-lg flex items-center justify-center mx-auto">
+              <span className="text-2xl font-bold text-white">{selectedCount}</span>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold text-lg text-gray-800 mb-2">
+                {selectedCount === 0 ? "Select Services" : `${selectedCount} Service${selectedCount !== 1 ? 's' : ''} Selected`}
+              </h3>
+              
+              {selectedCount > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">
+                    {selectedNames.slice(0, 2).join(", ")}
+                    {selectedNames.length > 2 && ` +${selectedNames.length - 2} more`}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">
+                  Choose from bookkeeping, tax services, payroll, and more
+                </p>
+              )}
+            </div>
 
-      {/* Tax Service */}
-      <Card 
-        className={`cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
-          feeCalculation.includesTaas && !feeCalculation.includesBookkeeping
-            ? 'border-[#e24c00] bg-orange-50' 
-            : 'border-gray-200 hover:border-[#e24c00]'
-        }`}
-        onClick={() => handleServiceClick('taas')}
-      >
-        <CardContent className="p-6 text-center">
-          <div className="w-12 h-12 bg-[#e24c00] rounded-lg flex items-center justify-center mx-auto mb-4">
-            <FileText className="w-6 h-6 text-white" />
+            <ServiceSelectionModal
+              selectedServices={selectedServices}
+              onServiceChange={onServiceChange}
+              triggerText={selectedCount === 0 ? "Choose Services" : "Modify Selection"}
+            />
           </div>
-          <h3 className="font-semibold text-lg text-gray-800 mb-2">Tax Service</h3>
-          <p className="text-sm text-gray-600">Tax preparation, filing and planning services</p>
-        </CardContent>
-      </Card>
-
-      {/* Other Services */}
-      <Card className="cursor-pointer transition-all duration-200 hover:shadow-lg border-2 border-gray-200 hover:border-[#e24c00]">
-        <CardContent className="p-6 text-center">
-          <div className="w-12 h-12 bg-gray-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="w-6 h-6 text-white" />
-          </div>
-          <h3 className="font-semibold text-lg text-gray-800 mb-2">Other Services</h3>
-          <p className="text-sm text-gray-600">Payroll, FP&A Lite, AP/AR Lite, and more</p>
         </CardContent>
       </Card>
     </div>

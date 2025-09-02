@@ -42,12 +42,18 @@ export const quotes = pgTable("quotes", {
   // Bookkeeping-specific information fields (do not impact pricing)
   accountingBasis: text("accounting_basis"), // Cash, Accrual
   businessLoans: boolean("business_loans"),
-  // Service selections - new 5-card system
+  // Service selections - new 5-card system (preserved for backwards compatibility)
   serviceBookkeeping: boolean("service_bookkeeping").default(false),
   serviceTaas: boolean("service_taas").default(false), 
   servicePayroll: boolean("service_payroll").default(false),
   serviceApArLite: boolean("service_ap_ar_lite").default(false),
   serviceFpaLite: boolean("service_fpa_lite").default(false),
+  
+  // New separated service selections
+  serviceMonthlyBookkeeping: boolean("service_monthly_bookkeeping").default(false),
+  serviceCleanupProjects: boolean("service_cleanup_projects").default(false),
+  serviceTaasMonthly: boolean("service_taas_monthly").default(false),
+  servicePriorYearFilings: boolean("service_prior_year_filings").default(false),
   // Client address information for MSA generation
   clientStreetAddress: text("client_street_address"),
   clientCity: text("client_city"),

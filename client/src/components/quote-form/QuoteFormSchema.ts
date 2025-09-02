@@ -24,6 +24,11 @@ export const formSchema = insertQuoteSchema.omit({
   customOverrideReason: z.string().optional(),
   companyName: z.string().optional(),
   approvalCode: z.string().optional(), // For duplicate quote approval
+  // New separated service selections
+  serviceMonthlyBookkeeping: z.boolean().default(false),
+  serviceCleanupProjects: z.boolean().default(false),
+  serviceTaasMonthly: z.boolean().default(false),
+  servicePriorYearFilings: z.boolean().default(false),
   // TaaS fields
   numEntities: z.number().min(1, "Must have at least 1 entity").optional(),
   statesFiled: z.number().min(1, "Must file in at least 1 state").optional(),
