@@ -2553,8 +2553,6 @@ function HomePage() {
         )}
 
         {showClientDetails && (
-        <>
-        {/* Quote builder section */}
         <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
           <style>{`.quote-layout { display: flex; flex-direction: column; } @media (min-width: 1024px) { .quote-layout { flex-direction: row; } }`}</style>
           {/* Quote Builder Form Card */}
@@ -4099,7 +4097,6 @@ function HomePage() {
             </div>
           </DialogContent>
         </Dialog>
-        </>
         )}
       </div>
     </>
