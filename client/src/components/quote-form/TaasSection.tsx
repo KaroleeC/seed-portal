@@ -31,6 +31,33 @@ export function TaasSection({ control, currentFormView, form }: TaasSectionProps
     <div className="space-y-6 border-t pt-6">
       <h3 className="text-lg font-semibold text-gray-800">Tax Service Details</h3>
       
+      {/* Monthly Revenue Range - CRITICAL for TaaS pricing */}
+      <FormField
+        control={control}
+        name="monthlyRevenueRange"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Monthly Revenue Range <span className="text-red-500">*</span></FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                  <SelectValue placeholder="Select monthly revenue range" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="<$10K">&lt;$10K</SelectItem>
+                <SelectItem value="10K-25K">$10K-$25K</SelectItem>
+                <SelectItem value="25K-75K">$25K-$75K</SelectItem>
+                <SelectItem value="75K-250K">$75K-$250K</SelectItem>
+                <SelectItem value="250K-1M">$250K-$1M</SelectItem>
+                <SelectItem value="1M+">$1M+</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       {/* Entity Type */}
       <FormField
         control={control}

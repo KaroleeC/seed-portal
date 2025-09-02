@@ -2593,6 +2593,171 @@ function HomePage() {
                           </FormItem>
                         )}
                       />
+
+                      {/* Accounting Basis */}
+                      <FormField
+                        control={form.control}
+                        name="accountingBasis"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Accounting Basis</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                  <SelectValue placeholder="Select accounting basis" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Cash">Cash Basis</SelectItem>
+                                <SelectItem value="Accrual">Accrual Basis</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Business Loans */}
+                      <FormField
+                        control={form.control}
+                        name="businessLoans"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Business has loans or complex financing</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Service Tier */}
+                      <FormField
+                        control={form.control}
+                        name="serviceTier"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Service Tier</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                  <SelectValue placeholder="Select service tier" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Standard">Standard (No additional fee)</SelectItem>
+                                <SelectItem value="Guided">Guided (+$79/month)</SelectItem>
+                                <SelectItem value="Concierge">Concierge (+$249/month)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Cleanup Override Section */}
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="cleanupOverride"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-yellow-500 data-[state=checked]:border-yellow-500"
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-semibold">Override Cleanup Minimum (Admin Only)</FormLabel>
+                                <p className="text-sm text-yellow-700">Allow cleanup months below calendar year minimum</p>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Override Reason - only show if override is checked */}
+                        {form.watch('cleanupOverride') && (
+                          <>
+                            <FormField
+                              control={form.control}
+                              name="overrideReason"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Override Reason <span className="text-red-500">*</span></FormLabel>
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger className="bg-white border-yellow-300 focus:ring-yellow-500 focus:border-yellow-500">
+                                        <SelectValue placeholder="Select override reason" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="Client Request">Client Request</SelectItem>
+                                      <SelectItem value="Competitive Pricing">Competitive Pricing</SelectItem>
+                                      <SelectItem value="Strategic Account">Strategic Account</SelectItem>
+                                      <SelectItem value="Other">Other (specify below)</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            {/* Custom Override Reason - only show if "Other" is selected */}
+                            {form.watch('overrideReason') === 'Other' && (
+                              <FormField
+                                control={form.control}
+                                name="customOverrideReason"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Custom Override Reason <span className="text-red-500">*</span></FormLabel>
+                                    <FormControl>
+                                      <textarea
+                                        {...field}
+                                        className="w-full min-h-[80px] px-3 py-2 border border-yellow-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
+                                        placeholder="Provide detailed reason for override..."
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            )}
+
+                            {/* Custom Setup Fee - only show if override reason is "Other" */}
+                            {form.watch('overrideReason') === 'Other' && (
+                              <FormField
+                                control={form.control}
+                                name="customSetupFee"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Custom Setup Fee (Optional)</FormLabel>
+                                    <FormControl>
+                                      <input
+                                        {...field}
+                                        type="number"
+                                        min="0"
+                                        step="25"
+                                        className="w-full px-3 py-2 border border-yellow-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
+                                        placeholder="Enter custom setup fee..."
+                                      />
+                                    </FormControl>
+                                    <p className="text-sm text-yellow-600">Leave blank to use standard calculation</p>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     </Form>
                   </CardContent>
