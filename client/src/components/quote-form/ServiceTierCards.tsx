@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Crown, Star, Users } from "lucide-react";
 import { FormControl, FormField, FormItem } from "@/components/ui/form";
