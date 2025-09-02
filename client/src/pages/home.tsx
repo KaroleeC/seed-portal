@@ -31,6 +31,7 @@ import { UniversalNavbar } from "@/components/UniversalNavbar";
 import { ServiceTierCards } from "@/components/quote-form/ServiceTierCards";
 import { ServiceCards } from "@/components/quote-form/ServiceCards";
 import { TaasSection } from "@/components/quote-form/TaasSection";
+import { PriorYearFilingsSection } from "@/components/quote-form/PriorYearFilingsSection";
 
 // Get current month number (1-12)
 const currentMonth = new Date().getMonth() + 1;
@@ -151,6 +152,7 @@ const formSchema = insertQuoteSchema.omit({
   customNumBusinessOwners: z.number().min(6, "Custom owners must be at least 6").optional(),
   include1040s: z.boolean().optional(),
   priorYearsUnfiled: z.number().min(0, "Cannot be negative").max(5, "Maximum 5 years").optional(),
+  priorYearFilings: z.array(z.number()).optional(),
   alreadyOnSeedBookkeeping: z.boolean().optional(),
   qboSubscription: z.boolean().optional(),
 }).superRefine((data, ctx) => {
@@ -224,6 +226,17 @@ const formSchema = insertQuoteSchema.omit({
     }
     // Include 1040s is handled by toggle switch with default value
     // Prior years unfiled and seed bookkeeping checkbox removed from UI
+  }
+  
+  // Prior Year Filings validation
+  if (data.servicePriorYearFilings) {
+    if (!data.priorYearFilings || data.priorYearFilings.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please select at least one prior year for filing",
+        path: ["priorYearFilings"],
+      });
+    }
   }
 });
 
@@ -517,15 +530,22 @@ function calculateCombinedFees(data: Partial<FormData>) {
     serviceTierFee = 0; // Automated tier is free
   }
   
+  // Calculate Prior Year Filings fees
+  let priorYearFilingsFee = 0;
+  if (data.priorYearFilings && Array.isArray(data.priorYearFilings)) {
+    priorYearFilingsFee = data.priorYearFilings.length * 1500; // $1,500 per year
+  }
+  
   return {
     bookkeeping: bookkeepingFees,
     taas: taasFees,
     combined: {
       monthlyFee: bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee,
-      setupFee: bookkeepingFees.setupFee + taasFees.setupFee
+      setupFee: bookkeepingFees.setupFee + taasFees.setupFee + priorYearFilingsFee
     },
     includesBookkeeping,
-    includesTaas
+    includesTaas,
+    priorYearFilingsFee
   };
 }
 
@@ -2362,6 +2382,10 @@ function HomePage() {
                         currentFormView="taas" 
                         form={form}
                       />
+                      <PriorYearFilingsSection 
+                        control={form.control} 
+                        form={form}
+                      />
                     </Form>
                   </CardContent>
                 </Card>
@@ -3069,6 +3093,41 @@ function HomePage() {
                                           </div>
                                         </div>
                                       )}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
+                              {/* Prior Year Filings Breakdown */}
+                              {(() => {
+                                const selectedYears = form.watch('priorYearFilings') || [];
+                                if (selectedYears.length === 0) return null;
+                                
+                                const totalCost = selectedYears.length * 1500;
+                                
+                                return (
+                                  <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                                    <h5 className="font-medium text-orange-800 mb-2">Prior Year Filings Breakdown</h5>
+                                    <div className="space-y-1 text-sm">
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Selected years:</span>
+                                        <span className="font-medium">{selectedYears.sort((a, b) => b - a).join(', ')}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Number of years:</span>
+                                        <span className="font-medium">{selectedYears.length}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Cost per year:</span>
+                                        <span className="font-medium">$1,500</span>
+                                      </div>
+                                      
+                                      <div className="border-t border-orange-200 pt-2 mt-2">
+                                        <div className="flex justify-between font-semibold">
+                                          <span className="text-orange-800">Prior Years Total:</span>
+                                          <span className="text-orange-700">${totalCost.toLocaleString()}</span>
+                                        </div>
+                                      </div>
                                     </div>
                                   </div>
                                 );
