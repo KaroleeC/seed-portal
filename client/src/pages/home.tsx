@@ -357,35 +357,20 @@ function calculateFees(data: Partial<FormData>) {
   // Step-by-step calculation for breakdown
   const afterRevenue = baseMonthlyFee * revenueMultiplier;
   const afterTx = afterRevenue + txFee;
-  let monthlyFee = Math.round(afterTx * industryData.monthly);
+  const monthlyFeeBeforeQBO = Math.round(afterTx * industryData.monthly);
   
   // Add QBO Subscription fee if selected
+  let monthlyFee = monthlyFeeBeforeQBO;
   if (data.qboSubscription) {
     monthlyFee += 60;
   }
   
-  // Use the actual cleanup months value (override just allows values below normal minimum)
-  const effectiveCleanupMonths = data.cleanupMonths;
+  // Calculate setup fee using new formula: monthly fee before discount * current month * 0.25
+  const currentMonth = new Date().getMonth() + 1; // Get current month (1-12)
+  const setupFee = Math.round(monthlyFeeBeforeQBO * currentMonth * 0.25);
   
-  // Calculate setup fee - custom setup fee ALWAYS overrides calculated values
-  let setupFee = 0;
-  let setupCalc = 0;
-  const cleanupComplexityMultiplier = parseFloat(data.cleanupComplexity || "0.5");
-  let industryCleanupMultiplier = 1;
-  let cleanupBeforeIndustry = 0;
-  
-  // Check for custom setup fee override first (takes precedence regardless of cleanup months)
-  if (data.overrideReason === "Other" && data.customSetupFee && parseFloat(data.customSetupFee) > 0) {
-    setupFee = parseFloat(data.customSetupFee);
-  } else if (effectiveCleanupMonths > 0) {
-    // Standard cleanup calculation only if no custom override
-    industryCleanupMultiplier = industryData.cleanup;
-    cleanupBeforeIndustry = monthlyFee * cleanupComplexityMultiplier * effectiveCleanupMonths;
-    const cleanupMultiplier = cleanupComplexityMultiplier * industryData.cleanup;
-    setupCalc = monthlyFee * cleanupMultiplier * effectiveCleanupMonths;
-    setupFee = roundToNearest25(Math.max(monthlyFee, setupCalc));
-  }
-  // If cleanup months is 0 and no custom override, setup fee remains 0
+  // For breakdown display
+  const setupCalc = setupFee;
   
   return { 
     monthlyFee, 
@@ -398,11 +383,11 @@ function calculateFees(data: Partial<FormData>) {
       afterTx: Math.round(afterTx),
       industryMultiplier: industryData.monthly,
       finalMonthly: monthlyFee,
-      cleanupComplexity: cleanupComplexityMultiplier * 100, // As percentage
-      cleanupMonths: effectiveCleanupMonths,
+      cleanupComplexity: 0, // Not used in new formula
+      cleanupMonths: currentMonth, // Current month number for setup fee
       setupCalc: Math.round(setupCalc),
-      cleanupBeforeIndustry: Math.round(cleanupBeforeIndustry),
-      industryCleanupMultiplier
+      cleanupBeforeIndustry: Math.round(monthlyFeeBeforeQBO), // Monthly fee before QBO
+      industryCleanupMultiplier: 0.25 // The 0.25 multiplier from new formula
     }
   };
 }
