@@ -1256,7 +1256,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         quote.taasPriorYearsFee ? parseFloat(quote.taasPriorYearsFee) : undefined,
         bookkeepingMonthlyFee,
         bookkeepingSetupFee,
-        quote // Pass the complete quote data for scope assumptions
+        quote, // Pass the complete quote data for scope assumptions
+        quote.serviceTier || 'Automated' // Pass the service tier
       );
 
       if (!hubspotQuote) {

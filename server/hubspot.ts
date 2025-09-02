@@ -657,6 +657,7 @@ export class HubSpotService {
     bookkeepingMonthlyFee?: number,
     bookkeepingSetupFee?: number,
     quoteData?: any,
+    serviceTier?: string,
   ): Promise<{ id: string; title: string } | null> {
     try {
       // Create a proper HubSpot quote using the quotes API
@@ -775,6 +776,7 @@ Services Include:
           taasPriorYearsFee || 0,
           bookkeepingMonthlyFee,
           bookkeepingSetupFee,
+          serviceTier,
         );
         console.log("📋 Line items added successfully to quote");
       } catch (lineItemError) {
@@ -820,6 +822,7 @@ Services Include:
     taasPriorYearsFee?: number,
     bookkeepingMonthlyFee?: number,
     bookkeepingSetupFee?: number,
+    serviceTier?: string,
   ): Promise<void> {
     try {
       console.log("🔧 STARTING LINE ITEM CREATION");
@@ -834,6 +837,9 @@ Services Include:
       console.log(
         `📊 Individual Fees - BK Monthly: $${bookkeepingMonthlyFee || monthlyFee}, BK Setup: $${bookkeepingSetupFee || setupFee}`,
       );
+      console.log(
+        `🎯 Service Tier: ${serviceTier || 'Automated'} - Will add service tier line items if applicable`,
+      );
 
       // Use the generic service management system for initial quote creation
       await this.createInitialServiceLineItems(quoteId, {
@@ -843,6 +849,7 @@ Services Include:
         taasPriorYearsFee: taasPriorYearsFee || 0,
         bookkeepingMonthlyFee: bookkeepingMonthlyFee || monthlyFee,
         bookkeepingSetupFee: bookkeepingSetupFee || setupFee,
+        serviceTier: serviceTier,
       });
 
       console.log("✅ LINE ITEM CREATION COMPLETED SUCCESSFULLY");
@@ -867,6 +874,7 @@ Services Include:
       taasPriorYearsFee: number;
       bookkeepingMonthlyFee: number;
       bookkeepingSetupFee: number;
+      serviceTier?: string;
     },
   ): Promise<void> {
     try {
@@ -922,6 +930,26 @@ Services Include:
               price: serviceConfig.taasPriorYearsFee,
               productId: productIds.cleanup, // Using cleanup product ID as placeholder
               description: "Seed Financial TaaS Prior Years (Custom)",
+            },
+          ],
+        },
+        // Service tier upgrades (Guided and Concierge)
+        serviceTier: {
+          shouldInclude: serviceConfig.serviceTier && serviceConfig.serviceTier !== 'Automated',
+          lineItems: [
+            {
+              condition: serviceConfig.serviceTier === 'Guided',
+              name: "Guided Service Tier",
+              price: 79,
+              productId: HUBSPOT_PRODUCT_IDS.GUIDED_SERVICE_TIER,
+              description: "Enhanced support with kickoff calls, dedicated Slack channel, and quarterly strategy sessions",
+            },
+            {
+              condition: serviceConfig.serviceTier === 'Concierge',
+              name: "Concierge Service Tier",
+              price: 249,
+              productId: HUBSPOT_PRODUCT_IDS.CONCIERGE_SERVICE_TIER,
+              description: "Premium white-glove service with dedicated controller, custom deliverables, and priority support",
             },
           ],
         },
