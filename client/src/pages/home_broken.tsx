@@ -4145,7 +4145,6 @@ function HomePage() {
           </DialogContent>
         </Dialog>
 
-        </div>
       </div>
     </div>
   );
