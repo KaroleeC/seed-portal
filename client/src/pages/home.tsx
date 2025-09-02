@@ -2413,6 +2413,7 @@ function HomePage() {
               <div className="max-w-6xl mx-auto mt-8">
                 <Card className="bg-white shadow-lg border border-gray-200">
                   <CardContent className="p-6">
+                    <Form {...form}>
                     <div className="space-y-6 border-t pt-6">
                       <h3 className="text-lg font-semibold text-gray-800">Tax Service Details</h3>
                       
@@ -2585,6 +2586,7 @@ function HomePage() {
                         )}
                       />
                     </div>
+                    </Form>
                   </CardContent>
                 </Card>
               </div>
@@ -2595,6 +2597,7 @@ function HomePage() {
               <div className="max-w-6xl mx-auto mt-8">
                 <Card className="bg-white shadow-lg border border-gray-200">
                   <CardContent className="p-6">
+                    <Form {...form}>
                     <div className="space-y-6 border-t pt-6">
                       <h3 className="text-lg font-semibold text-gray-800">Bookkeeping Service Details</h3>
                       
@@ -2679,6 +2682,7 @@ function HomePage() {
                         />
                       )}
                     </div>
+                    </Form>
                   </CardContent>
                 </Card>
               </div>
