@@ -364,6 +364,8 @@ function calculateFees(data: Partial<FormData>) {
 
 // TaaS-specific calculation function based on provided logic
 function calculateTaaSFees(data: Partial<FormData>, existingBookkeepingFees?: { monthlyFee: number; setupFee: number }) {
+  // Check if this is Prior Year Filings only (no TaaS Monthly service)
+  const isPriorYearFilingsOnly = data.servicePriorYearFilings && !data.serviceTaasMonthly;
   if (!data.monthlyRevenueRange || !data.industry || !data.numEntities || !data.statesFiled || 
       data.internationalFiling === undefined || !data.numBusinessOwners || 
       data.include1040s === undefined) {
@@ -481,6 +483,18 @@ function calculateTaaSFees(data: Partial<FormData>, existingBookkeepingFees?: { 
     perYearFee: Math.round(perYearFee),
     setupFee
   };
+
+  // If this is Prior Year Filings only, return zero monthly fees
+  if (isPriorYearFilingsOnly) {
+    return {
+      monthlyFee: 0,
+      setupFee: 0,
+      breakdown: {
+        ...breakdown,
+        finalMonthly: 0
+      }
+    };
+  }
 
   // If we have existing bookkeeping fees, add them on top
   if (existingBookkeepingFees) {
@@ -2371,8 +2385,8 @@ function HomePage() {
               }}
             />
 
-            {/* Show detailed TaaS configuration when TaaS Monthly service is selected */}
-            {(form.watch('serviceTaasMonthly') || form.watch('serviceTaas')) && (
+            {/* Show detailed TaaS configuration when TaaS services are selected */}
+            {(form.watch('serviceTaasMonthly') || form.watch('servicePriorYearFilings') || form.watch('serviceTaas')) && (
               <div className="max-w-6xl mx-auto mt-8">
                 <Card className="bg-white shadow-lg border border-gray-200">
                   <CardContent className="p-6">
