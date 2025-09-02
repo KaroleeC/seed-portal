@@ -2343,69 +2343,79 @@ function HomePage() {
         <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
           <style>{`.quote-layout { display: flex; flex-direction: column; } @media (min-width: 1024px) { .quote-layout { flex-direction: row; } }`}</style>
           <div className="w-full">
-            {/* Service Selection Modal */}
-            <ServiceCards
-              selectedServices={{
-                serviceMonthlyBookkeeping: form.watch('serviceMonthlyBookkeeping') || false,
-                serviceCleanupProjects: form.watch('serviceCleanupProjects') || false,
-                serviceTaasMonthly: form.watch('serviceTaasMonthly') || false,
-                servicePriorYearFilings: form.watch('servicePriorYearFilings') || false,
-                servicePayroll: form.watch('servicePayroll') || false,
-                serviceApArLite: form.watch('serviceApArLite') || false,
-                serviceFpaLite: form.watch('serviceFpaLite') || false,
-              }}
-              onServiceChange={(updatedServices) => {
-                // Set the new service fields
-                Object.entries(updatedServices).forEach(([key, value]) => {
-                  form.setValue(key as any, value);
-                });
-                
-                // Also update legacy fields for backward compatibility with pricing logic
-                const hasBookkeeping = updatedServices.serviceMonthlyBookkeeping || updatedServices.serviceCleanupProjects;
-                const hasTaas = updatedServices.serviceTaasMonthly || updatedServices.servicePriorYearFilings;
-                
-                form.setValue('serviceBookkeeping', hasBookkeeping);
-                form.setValue('serviceTaas', hasTaas);
-                form.setValue('includesBookkeeping', hasBookkeeping);
-                form.setValue('includesTaas', hasTaas);
-                
-                form.trigger();
-                
-                // Update current form view based on selected services
-                const selectedServiceKeys = Object.entries(updatedServices).filter(([_, value]) => value).map(([key]) => key);
-                if (selectedServiceKeys.length > 0) {
-                  // Map new service field names to legacy form view names
-                  const serviceMap: Record<string, string> = {
-                    serviceMonthlyBookkeeping: 'bookkeeping',
-                    serviceCleanupProjects: 'bookkeeping',
-                    serviceTaasMonthly: 'taas',
-                    servicePriorYearFilings: 'taas',
-                    servicePayroll: 'payroll',
-                    serviceApArLite: 'aparlite',
-                    serviceFpaLite: 'fpalite'
-                  };
-                  const firstSelectedView = serviceMap[selectedServiceKeys[0]];
-                  if (firstSelectedView) {
-                    setCurrentFormView(firstSelectedView);
-                  }
-                } else {
+            
+            {/* Individual Service Cards - Core Services */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              
+              {/* Tax Advisory Service Card */}
+              <Card className={`cursor-pointer transition-all duration-200 transform hover:scale-105 ${
+                form.watch('serviceTaas') ? 'ring-2 ring-blue-500 shadow-lg' : 'hover:shadow-md'
+              }`} onClick={() => {
+                const currentValue = form.watch('serviceTaas');
+                form.setValue('serviceTaas', !currentValue);
+                form.setValue('includesTaas', !currentValue);
+                if (!currentValue) {
+                  setCurrentFormView('taas');
+                } else if (!form.watch('serviceBookkeeping')) {
                   setCurrentFormView('placeholder');
                 }
-              }}
-              // Legacy compatibility for existing fee calculation logic
-              feeCalculation={{
-                includesBookkeeping: form.watch('serviceMonthlyBookkeeping') || form.watch('serviceCleanupProjects') || false,
-                includesTaas: form.watch('serviceTaasMonthly') || form.watch('servicePriorYearFilings') || false,
-              }}
-              onLegacyServiceChange={(bookkeeping: boolean, taas: boolean) => {
-                // Update legacy fields for backward compatibility
-                form.setValue('serviceBookkeeping', bookkeeping);
-                form.setValue('serviceTaas', taas);
-                form.setValue('includesBookkeeping', bookkeeping);
-                form.setValue('includesTaas', taas);
                 form.trigger();
-              }}
-            />
+              }}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${form.watch('serviceTaas') ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                        <Calculator className={`h-5 w-5 ${form.watch('serviceTaas') ? 'text-blue-600' : 'text-gray-600'}`} />
+                      </div>
+                      <h3 className="font-semibold text-lg">Tax Advisory</h3>
+                    </div>
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      form.watch('serviceTaas') ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                    }`}>
+                      {form.watch('serviceTaas') && <Check className="h-4 w-4 text-white" />}
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-sm">
+                    Complete tax compliance and advisory services for your business
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Monthly Bookkeeping Service Card */}
+              <Card className={`cursor-pointer transition-all duration-200 transform hover:scale-105 ${
+                form.watch('serviceBookkeeping') ? 'ring-2 ring-green-500 shadow-lg' : 'hover:shadow-md'
+              }`} onClick={() => {
+                const currentValue = form.watch('serviceBookkeeping');
+                form.setValue('serviceBookkeeping', !currentValue);
+                form.setValue('includesBookkeeping', !currentValue);
+                if (!currentValue) {
+                  setCurrentFormView('bookkeeping');
+                } else if (!form.watch('serviceTaas')) {
+                  setCurrentFormView('placeholder');
+                }
+                form.trigger();
+              }}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${form.watch('serviceBookkeeping') ? 'bg-green-100' : 'bg-gray-100'}`}>
+                        <BookOpen className={`h-5 w-5 ${form.watch('serviceBookkeeping') ? 'text-green-600' : 'text-gray-600'}`} />
+                      </div>
+                      <h3 className="font-semibold text-lg">Monthly Bookkeeping</h3>
+                    </div>
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                      form.watch('serviceBookkeeping') ? 'bg-green-500 border-green-500' : 'border-gray-300'
+                    }`}>
+                      {form.watch('serviceBookkeeping') && <Check className="h-4 w-4 text-white" />}
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-sm">
+                    Monthly bookkeeping services to keep your financials organized
+                  </p>
+                </CardContent>
+              </Card>
+
+            </div>
           </div>
         </div>
         )}
