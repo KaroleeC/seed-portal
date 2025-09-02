@@ -1644,11 +1644,24 @@ function HomePage() {
 
     setIsValidatingCode(true);
     try {
+      // Get the email from form or selectedContact
+      const contactEmail = form.getValues().contactEmail || selectedContact?.properties?.email;
+      
+      if (!contactEmail) {
+        toast({
+          title: "Error",
+          description: "Contact email is required for validation.",
+          variant: "destructive",
+        });
+        setIsValidatingCode(false);
+        return;
+      }
+
       const result = await apiRequest("/api/approval/validate", {
         method: "POST",
         body: JSON.stringify({
           code: approvalCode,
-          contactEmail: form.getValues().contactEmail
+          contactEmail: contactEmail
         })
       });
       
