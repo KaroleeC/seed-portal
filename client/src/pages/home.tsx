@@ -2674,7 +2674,7 @@ function HomePage() {
                                 <button
                                   type="button"
                                   onClick={() => setIsAdding(true)}
-                                  className="mt-3 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-800 font-medium"
+                                  className="mt-6 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-800 font-medium"
                                 >
                                   + Add Another Bank or Credit Card Provider
                                 </button>
