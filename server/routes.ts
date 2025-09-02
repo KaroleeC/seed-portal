@@ -797,35 +797,35 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         cleanupMonths: req.body.cleanupMonths || 0,
       };
       
-      // Check for existing quotes before allowing creation - UNIQUE CODE VALIDATION
-      const { contactEmail, uniqueCode } = req.body;
+      // Check for existing quotes - use approval system if needed
+      const { contactEmail, approvalCode } = req.body;
       if (contactEmail) {
         const existingQuotes = await storage.getQuotesByEmail(contactEmail);
         
         if (existingQuotes.length > 0) {
-          // Existing quotes found - require unique code validation
-          if (!uniqueCode) {
+          // Existing quotes found - require approval code validation (same as cleanup override)
+          if (!approvalCode) {
             res.status(400).json({ 
-              message: "Unique code required",
-              requiresUniqueCode: true,
+              message: "Approval code required for creating additional quotes",
+              requiresApproval: true,
               existingQuotesCount: existingQuotes.length
             });
             return;
           }
           
-          // Validate the unique code
-          const isValidCode = await storage.validateApprovalCode(uniqueCode, contactEmail);
+          // Validate the approval code using existing system
+          const isValidCode = await storage.validateApprovalCode(approvalCode, contactEmail);
           if (!isValidCode) {
             res.status(400).json({ 
-              message: "Invalid or expired unique code",
-              requiresUniqueCode: true
+              message: "Invalid or expired approval code",
+              requiresApproval: true
             });
             return;
           }
           
           // Mark code as used
-          await storage.markApprovalCodeUsed(uniqueCode, contactEmail);
-          console.log(`✅ Unique code validated for ${contactEmail}`);
+          await storage.markApprovalCodeUsed(approvalCode, contactEmail);
+          console.log(`✅ Approval code validated for duplicate quote: ${contactEmail}`);
         }
       }
       

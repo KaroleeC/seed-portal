@@ -72,11 +72,11 @@ export function useQuoteManagement() {
     onError: (error: any) => {
       console.error('Quote save error:', error);
       
-      // Handle unique code validation errors
-      if (error.requiresUniqueCode) {
+      // Handle approval-based validation errors
+      if (error.requiresApproval) {
         toast({
-          title: "Unique Code Required",
-          description: error.message || "A unique code is required to create additional quotes for this contact.",
+          title: "Approval Required",
+          description: error.message || "Approval is required to create additional quotes for this contact.",
           variant: "destructive",
         });
       } else {

@@ -1062,6 +1062,34 @@ function HomePage() {
     }
   };
 
+  // Request approval for creating new quote when existing quotes exist
+  const requestNewQuoteApproval = async (contact: any) => {
+    try {
+      await apiRequest('POST', '/api/approval-request', {
+        type: 'duplicate_quote',
+        email: contact.properties.email,
+        contactName: `${contact.properties.firstname || ''} ${contact.properties.lastname || ''}`.trim() || contact.properties.email,
+        requestedBy: user?.email,
+        reason: `Creating additional quote for existing contact: ${contact.properties.email}`,
+        contactData: contact
+      });
+      
+      toast({
+        title: "Approval Requested",
+        description: "A request for creating an additional quote has been sent to administrators. You'll receive a code via Slack to proceed.",
+      });
+      
+      setShowExistingQuotesModal(false);
+    } catch (error) {
+      console.error('Approval request failed:', error);
+      toast({
+        title: "Request Failed",
+        description: "Failed to request approval. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Function to populate form and proceed to client details
   const proceedToClientDetails = (contact: any) => {
     console.log('proceedToClientDetails called with contact:', contact);
@@ -3910,12 +3938,18 @@ function HomePage() {
               <div className="border-t pt-4">
                 <Button 
                   onClick={() => {
-                    setShowExistingQuotesModal(false);
-                    proceedToClientDetails(selectedContact);
+                    if (existingQuotesForEmail.length > 0) {
+                      // Request approval for creating additional quote
+                      requestNewQuoteApproval(selectedContact);
+                    } else {
+                      // No existing quotes, proceed normally
+                      setShowExistingQuotesModal(false);
+                      proceedToClientDetails(selectedContact);
+                    }
                   }}
                   className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
                 >
-                  {existingQuotesForEmail.length > 0 ? "Create New Quote Instead" : "Create New Quote"}
+                  {existingQuotesForEmail.length > 0 ? "Request Approval for New Quote" : "Create New Quote"}
                 </Button>
               </div>
             </div>
