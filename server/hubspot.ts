@@ -564,6 +564,7 @@ export class HubSpotService {
     includesBookkeeping?: boolean,
     includesTaas?: boolean,
     serviceTier?: string,
+    quoteData?: any,
   ): Promise<HubSpotDeal | null> {
     try {
       // Generate dynamic deal name based on services
@@ -593,6 +594,18 @@ export class HubSpotService {
           pipeline: pipelineInfo.pipelineId,
           dealtype: "newbusiness", // Deal Type: New Business
           ...(ownerId && { hubspot_owner_id: ownerId }), // Set deal owner
+          
+          // New bookkeeping deal properties
+          ...(quoteData?.accountingBasis && { accounting_basis: quoteData.accountingBasis }),
+          ...(quoteData?.businessLoans !== undefined && { business_loans: quoteData.businessLoans ? 'Yes' : 'No' }),
+          ...(quoteData?.cleanupMonths && { initial_clean_up_months: quoteData.cleanupMonths.toString() }),
+          
+          // New TaaS deal properties
+          ...(quoteData?.numEntities && { number_of_entities: quoteData.numEntities.toString() }),
+          ...(quoteData?.statesFiled && { number_of_state_filings: quoteData.statesFiled.toString() }),
+          ...(quoteData?.numBusinessOwners && { number_of_owners_partners: quoteData.numBusinessOwners.toString() }),
+          ...(quoteData?.include1040s !== undefined && { include_personal_1040s: quoteData.include1040s ? 'Yes' : 'No' }),
+          ...(quoteData?.internationalFiling !== undefined && { international_filing: quoteData.internationalFiling ? 'Yes' : 'No' }),
         },
         associations: [
           {
@@ -2680,6 +2693,18 @@ Generated: ${new Date().toLocaleDateString()}`;
           properties: {
             amount: totalAmount.toString(),
             dealname: dealName,
+            
+            // New bookkeeping deal properties for existing deals
+            ...(quoteData?.accountingBasis && { accounting_basis: quoteData.accountingBasis }),
+            ...(quoteData?.businessLoans !== undefined && { business_loans: quoteData.businessLoans ? 'Yes' : 'No' }),
+            ...(quoteData?.cleanupMonths && { initial_clean_up_months: quoteData.cleanupMonths.toString() }),
+            
+            // New TaaS deal properties for existing deals
+            ...(quoteData?.numEntities && { number_of_entities: quoteData.numEntities.toString() }),
+            ...(quoteData?.statesFiled && { number_of_state_filings: quoteData.statesFiled.toString() }),
+            ...(quoteData?.numBusinessOwners && { number_of_owners_partners: quoteData.numBusinessOwners.toString() }),
+            ...(quoteData?.include1040s !== undefined && { include_personal_1040s: quoteData.include1040s ? 'Yes' : 'No' }),
+            ...(quoteData?.internationalFiling !== undefined && { international_filing: quoteData.internationalFiling ? 'Yes' : 'No' }),
           },
         };
 

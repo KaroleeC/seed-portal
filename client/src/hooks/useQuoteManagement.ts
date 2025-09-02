@@ -69,13 +69,23 @@ export function useQuoteManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
       refetchQuotes();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Quote save error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save quote. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Handle unique code validation errors
+      if (error.requiresUniqueCode) {
+        toast({
+          title: "Unique Code Required",
+          description: error.message || "A unique code is required to create additional quotes for this contact.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to save quote. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 

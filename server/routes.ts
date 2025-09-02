@@ -797,6 +797,38 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         cleanupMonths: req.body.cleanupMonths || 0,
       };
       
+      // Check for existing quotes before allowing creation - UNIQUE CODE VALIDATION
+      const { contactEmail, uniqueCode } = req.body;
+      if (contactEmail) {
+        const existingQuotes = await storage.getQuotesByEmail(contactEmail);
+        
+        if (existingQuotes.length > 0) {
+          // Existing quotes found - require unique code validation
+          if (!uniqueCode) {
+            res.status(400).json({ 
+              message: "Unique code required",
+              requiresUniqueCode: true,
+              existingQuotesCount: existingQuotes.length
+            });
+            return;
+          }
+          
+          // Validate the unique code
+          const isValidCode = await storage.validateApprovalCode(uniqueCode, contactEmail);
+          if (!isValidCode) {
+            res.status(400).json({ 
+              message: "Invalid or expired unique code",
+              requiresUniqueCode: true
+            });
+            return;
+          }
+          
+          // Mark code as used
+          await storage.markApprovalCodeUsed(uniqueCode, contactEmail);
+          console.log(`✅ Unique code validated for ${contactEmail}`);
+        }
+      }
+      
       console.log('Processing quote data for:', req.body.contactEmail);
       console.log('Validation data (first 500 chars):', JSON.stringify(validationData).substring(0, 500));
       
@@ -968,6 +1000,49 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       res.json(quote);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch quote" });
+    }
+  });
+
+  // Request unique code for duplicate quote creation
+  app.post("/api/unique-code/request", requireAuth, async (req, res) => {
+    try {
+      const { contactEmail, reason } = req.body;
+      
+      if (!contactEmail) {
+        res.status(400).json({ message: "Contact email is required" });
+        return;
+      }
+
+      // Generate a 4-digit unique code
+      const uniqueCode = generateApprovalCode();
+      
+      // Set expiration to 1 hour from now
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 1);
+
+      // Store the unique code
+      await storage.createApprovalCode({
+        code: uniqueCode,
+        contactEmail,
+        used: false,
+        expiresAt
+      });
+
+      // Send Slack notification with unique code
+      try {
+        await sendSystemAlert(
+          'Duplicate Quote Request',
+          `Unique code: ${uniqueCode}\nContact: ${contactEmail}\nReason: ${reason || 'User needs to create additional quote for existing contact'}\nRequested by: ${req.user?.email}`,
+          'medium'
+        );
+      } catch (slackError) {
+        console.error('Failed to send Slack notification:', slackError);
+      }
+
+      res.json({ message: "Unique code request sent. Check Slack for the code." });
+    } catch (error) {
+      console.error('Error requesting unique code:', error);
+      res.status(500).json({ message: "Failed to request unique code" });
     }
   });
 
@@ -1189,7 +1264,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         ownerId || undefined,
         dealIncludesBookkeeping,
         dealIncludesTaas,
-        quote.serviceTier || 'Standard'
+        quote.serviceTier || 'Standard',
+        quote // Pass the complete quote data for property mapping
       );
 
       if (!deal) {
