@@ -1763,9 +1763,8 @@ function HomePage() {
   // Remove the old breakdown function since it's now handled in the calculation logic above
 
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a] py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a] py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
         <UniversalNavbar 
           showBackButton={true} 
           backButtonText="Back to Portal" 
@@ -4145,9 +4144,8 @@ function HomePage() {
             </div>
           </DialogContent>
         </Dialog>
-        </div>
       </div>
-    </>
+    </div>
   );
 }
 
