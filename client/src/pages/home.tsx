@@ -2342,213 +2342,59 @@ function HomePage() {
         {showClientDetails && (
         <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
           <style>{`.quote-layout { display: flex; flex-direction: column; } @media (min-width: 1024px) { .quote-layout { flex-direction: row; } }`}</style>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-          {/* Quote Builder Form Card */}
-          <Card 
-              className={`
-                cursor-pointer transition-all duration-300 hover:scale-105 border-2 shadow-lg
-                ${form.watch('serviceBookkeeping')
-                  ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-400 shadow-green-200' 
-                  : 'bg-white/95 backdrop-blur-sm border-gray-200 hover:border-green-300 hover:shadow-xl'
-                }
-              `}
-              onClick={() => {
-                const newValue = !form.watch('serviceBookkeeping');
-                form.setValue('serviceBookkeeping', newValue);
+          <div className="w-full">
+            {/* Service Selection Modal */}
+            <ServiceCards
+              selectedServices={{
+                serviceMonthlyBookkeeping: form.watch('serviceMonthlyBookkeeping') || false,
+                serviceCleanupProjects: form.watch('serviceCleanupProjects') || false,
+                serviceTaasMonthly: form.watch('serviceTaasMonthly') || false,
+                servicePriorYearFilings: form.watch('servicePriorYearFilings') || false,
+                servicePayroll: form.watch('servicePayroll') || false,
+                serviceApArLite: form.watch('serviceApArLite') || false,
+                serviceFpaLite: form.watch('serviceFpaLite') || false,
+              }}
+              onServiceChange={(updatedServices) => {
+                Object.entries(updatedServices).forEach(([key, value]) => {
+                  form.setValue(key as any, value);
+                });
                 form.trigger();
                 
-                // Update form view when service is selected
-                if (newValue) {
-                  setCurrentFormView('bookkeeping');
+                // Update current form view based on selected services
+                const selectedServiceKeys = Object.entries(updatedServices).filter(([_, value]) => value).map(([key]) => key);
+                if (selectedServiceKeys.length > 0) {
+                  // Map new service field names to legacy form view names
+                  const serviceMap: Record<string, string> = {
+                    serviceMonthlyBookkeeping: 'bookkeeping',
+                    serviceCleanupProjects: 'bookkeeping',
+                    serviceTaasMonthly: 'taas',
+                    servicePriorYearFilings: 'taas',
+                    servicePayroll: 'payroll',
+                    serviceApArLite: 'aparlite',
+                    serviceFpaLite: 'fpalite'
+                  };
+                  const firstSelectedView = serviceMap[selectedServiceKeys[0]];
+                  if (firstSelectedView) {
+                    setCurrentFormView(firstSelectedView);
+                  }
                 } else {
-                  // If deselecting and this was the current view, switch to another active service or placeholder
-                  setTimeout(() => {
-                    const activeServices = getActiveServices();
-                    const remainingServices = activeServices.filter(s => s !== 'bookkeeping');
-                    if (remainingServices.length > 0) {
-                      setCurrentFormView(remainingServices[0]);
-                    } else {
-                      setCurrentFormView('placeholder');
-                    }
-                  }, 50); // Small delay to let form values update
+                  setCurrentFormView('placeholder');
                 }
               }}
-            >
-              <CardContent className="p-6 text-center">
-                <div className={`w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 transition-all duration-300 ${
-                  form.watch('serviceBookkeeping') ? 'bg-green-500 shadow-lg' : 'bg-gray-300'
-                }`}>
-                  {form.watch('serviceBookkeeping') ? 
-                    <Check className="h-8 w-8 text-white" /> : 
-                    <Calculator className="h-8 w-8 text-gray-500" />
-                  }
-                </div>
-                <h4 className={`font-bold text-lg mb-2 ${
-                  form.watch('serviceBookkeeping') ? 'text-green-800' : 'text-gray-700'
-                }`}>
-                  Bookkeeping
-                </h4>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Monthly books, cleanup & financial statements
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* TaaS Service Card */}
-            <Card 
-              className={`
-                cursor-pointer transition-all duration-300 hover:scale-105 border-2 shadow-lg
-                ${form.watch('serviceTaas')
-                  ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-400 shadow-blue-200' 
-                  : 'bg-white/95 backdrop-blur-sm border-gray-200 hover:border-blue-300 hover:shadow-xl'
-                }
-              `}
-              onClick={() => {
-                const newValue = !form.watch('serviceTaas');
-                form.setValue('serviceTaas', newValue);
-                form.trigger();
-                
-                // Update form view when service is selected
-                if (newValue) {
-                  setCurrentFormView('taas');
-                } else {
-                  // If deselecting and this was the current view, switch to another active service or placeholder
-                  setTimeout(() => {
-                    const activeServices = getActiveServices();
-                    const remainingServices = activeServices.filter(s => s !== 'taas');
-                    if (remainingServices.length > 0) {
-                      setCurrentFormView(remainingServices[0]);
-                    } else {
-                      setCurrentFormView('placeholder');
-                    }
-                  }, 50); // Small delay to let form values update
-                }
+              // Legacy compatibility for existing fee calculation logic
+              feeCalculation={{
+                includesBookkeeping: form.watch('serviceMonthlyBookkeeping') || form.watch('serviceCleanupProjects') || false,
+                includesTaas: form.watch('serviceTaasMonthly') || form.watch('servicePriorYearFilings') || false,
               }}
-            >
-              <CardContent className="p-6 text-center">
-                <div className={`w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 transition-all duration-300 ${
-                  form.watch('serviceTaas') ? 'bg-blue-500 shadow-lg' : 'bg-gray-300'
-                }`}>
-                  {form.watch('serviceTaas') ? 
-                    <Check className="h-8 w-8 text-white" /> : 
-                    <FileText className="h-8 w-8 text-gray-500" />
-                  }
-                </div>
-                <h4 className={`font-bold text-lg mb-2 ${
-                  form.watch('serviceTaas') ? 'text-blue-800' : 'text-gray-700'
-                }`}>
-                  TaaS
-                </h4>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Tax preparation, filing & planning services
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Payroll Service Card */}
-            <Card 
-              className={`
-                cursor-pointer transition-all duration-300 hover:scale-105 border-2 shadow-lg
-                ${form.watch('servicePayroll')
-                  ? 'bg-gradient-to-br from-purple-50 to-violet-50 border-purple-400 shadow-purple-200' 
-                  : 'bg-white/95 backdrop-blur-sm border-gray-200 hover:border-purple-300 hover:shadow-xl'
-                }
-              `}
-              onClick={() => {
-                const newValue = !form.watch('servicePayroll');
-                form.setValue('servicePayroll', newValue);
+              onLegacyServiceChange={(bookkeeping: boolean, taas: boolean) => {
+                // Update legacy fields for backward compatibility
+                form.setValue('serviceBookkeeping', bookkeeping);
+                form.setValue('serviceTaas', taas);
+                form.setValue('includesBookkeeping', bookkeeping);
+                form.setValue('includesTaas', taas);
                 form.trigger();
               }}
-            >
-              <CardContent className="p-6 text-center">
-                <div className={`w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 transition-all duration-300 ${
-                  form.watch('servicePayroll') ? 'bg-purple-500 shadow-lg' : 'bg-gray-300'
-                }`}>
-                  {form.watch('servicePayroll') ? 
-                    <Check className="h-8 w-8 text-white" /> : 
-                    <User className="h-8 w-8 text-gray-500" />
-                  }
-                </div>
-                <h4 className={`font-bold text-lg mb-2 ${
-                  form.watch('servicePayroll') ? 'text-purple-800' : 'text-gray-700'
-                }`}>
-                  Payroll
-                </h4>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Employee payroll processing & tax filings
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* AP/AR Lite Service Card */}
-            <Card 
-              className={`
-                cursor-pointer transition-all duration-300 hover:scale-105 border-2 shadow-lg
-                ${form.watch('serviceApArLite')
-                  ? 'bg-gradient-to-br from-orange-50 to-amber-50 border-orange-400 shadow-orange-200' 
-                  : 'bg-white/95 backdrop-blur-sm border-gray-200 hover:border-orange-300 hover:shadow-xl'
-                }
-              `}
-              onClick={() => {
-                const newValue = !form.watch('serviceApArLite');
-                form.setValue('serviceApArLite', newValue);
-                form.trigger();
-              }}
-            >
-              <CardContent className="p-6 text-center">
-                <div className={`w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 transition-all duration-300 ${
-                  form.watch('serviceApArLite') ? 'bg-orange-500 shadow-lg' : 'bg-gray-300'
-                }`}>
-                  {form.watch('serviceApArLite') ? 
-                    <Check className="h-8 w-8 text-white" /> : 
-                    <ArrowUpDown className="h-8 w-8 text-gray-500" />
-                  }
-                </div>
-                <h4 className={`font-bold text-lg mb-2 ${
-                  form.watch('serviceApArLite') ? 'text-orange-800' : 'text-gray-700'
-                }`}>
-                  AP/AR Lite
-                </h4>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Accounts payable & receivable management
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* FP&A Lite Service Card */}
-            <Card 
-              className={`
-                cursor-pointer transition-all duration-300 hover:scale-105 border-2 shadow-lg
-                ${form.watch('serviceFpaLite')
-                  ? 'bg-gradient-to-br from-teal-50 to-cyan-50 border-teal-400 shadow-teal-200' 
-                  : 'bg-white/95 backdrop-blur-sm border-gray-200 hover:border-teal-300 hover:shadow-xl'
-                }
-              `}
-              onClick={() => {
-                const newValue = !form.watch('serviceFpaLite');
-                form.setValue('serviceFpaLite', newValue);
-                form.trigger();
-              }}
-            >
-              <CardContent className="p-6 text-center">
-                <div className={`w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 transition-all duration-300 ${
-                  form.watch('serviceFpaLite') ? 'bg-teal-500 shadow-lg' : 'bg-gray-300'
-                }`}>
-                  {form.watch('serviceFpaLite') ? 
-                    <Check className="h-8 w-8 text-white" /> : 
-                    <Sparkles className="h-8 w-8 text-gray-500" />
-                  }
-                </div>
-                <h4 className={`font-bold text-lg mb-2 ${
-                  form.watch('serviceFpaLite') ? 'text-teal-800' : 'text-gray-700'
-                }`}>
-                  FP&A Lite
-                </h4>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Financial planning & analysis support
-                </p>
-              </CardContent>
-            </Card>
+            />
           </div>
         </div>
         )}
