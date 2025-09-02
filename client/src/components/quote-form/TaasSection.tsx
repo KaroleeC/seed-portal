@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { Control, useWatch } from "react-hook-form";
 import { FormData } from "./QuoteFormSchema";
 
@@ -14,272 +15,251 @@ interface TaasSectionProps {
 export function TaasSection({ control, currentFormView, form }: TaasSectionProps) {
   if (currentFormView !== 'taas') return null;
 
-  // Watch the alreadyOnSeedBookkeeping value to conditionally handle bookkeeping quality
-  const alreadyOnSeedBookkeeping = useWatch({
-    control,
-    name: 'alreadyOnSeedBookkeeping'
-  });
+  // Watch values for conditional logic
+  const numEntities = useWatch({ control, name: 'numEntities' });
+  const statesFiled = useWatch({ control, name: 'statesFiled' });
+  const includesBookkeeping = useWatch({ control, name: 'serviceMonthlyBookkeeping' });
+  
+  // State for custom inputs
+  const [showCustomEntities, setShowCustomEntities] = useState(false);
+  const [showCustomStates, setShowCustomStates] = useState(false);
 
-  // Auto-set bookkeeping quality when Seed Bookkeeping Package is selected
-  useEffect(() => {
-    if (alreadyOnSeedBookkeeping) {
-      form.setValue('bookkeepingQuality', 'Clean / New');
+  // Handle tile selections with custom inputs
+  const handleEntitiesSelect = (value: number) => {
+    if (value === 5) {
+      setShowCustomEntities(true);
+      form.setValue('numEntities', 5); // Start with 5 as minimum
+    } else {
+      setShowCustomEntities(false);
+      form.setValue('numEntities', value);
     }
-  }, [alreadyOnSeedBookkeeping, form]);
+  };
+
+  const handleStatesSelect = (value: number) => {
+    if (value === 5) {
+      setShowCustomStates(true);
+      form.setValue('statesFiled', 5); // Start with 5 as minimum
+    } else {
+      setShowCustomStates(false);
+      form.setValue('statesFiled', value);
+    }
+  };
 
   return (
-    <div className="space-y-6 border-t pt-6">
-      <h3 className="text-lg font-semibold text-gray-800">Tax Service Details</h3>
+    <div className="space-y-8 border-t pt-8">
+      <div>
+        <h3 className="text-xl font-semibold text-gray-800 mb-2">Tax Service Details</h3>
+        <p className="text-gray-600 text-sm">Configure your tax service requirements</p>
+      </div>
       
-      {/* Monthly Revenue Range - CRITICAL for TaaS pricing */}
-      <FormField
-        control={control}
-        name="monthlyRevenueRange"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Monthly Revenue Range <span className="text-red-500">*</span></FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                  <SelectValue placeholder="Select monthly revenue range" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="<$10K">&lt;$10K</SelectItem>
-                <SelectItem value="10K-25K">$10K-$25K</SelectItem>
-                <SelectItem value="25K-75K">$25K-$75K</SelectItem>
-                <SelectItem value="75K-250K">$75K-$250K</SelectItem>
-                <SelectItem value="250K-1M">$250K-$1M</SelectItem>
-                <SelectItem value="1M+">$1M+</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
+      {/* Number of Entities - Tile Selection */}
+      <div className="space-y-4">
+        <FormLabel className="text-base font-medium text-gray-700">Number of Entities <span className="text-red-500">*</span></FormLabel>
+        <div className="grid grid-cols-5 gap-3">
+          {[1, 2, 3, 4, 5].map((num) => (
+            <button
+              key={num}
+              type="button"
+              onClick={() => handleEntitiesSelect(num)}
+              className={`p-4 rounded-lg border-2 text-center transition-all duration-200 ${
+                (numEntities === num || (num === 5 && showCustomEntities))
+                  ? 'border-[#e24c00] bg-orange-50 text-[#e24c00]'
+                  : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
+              }`}
+              data-testid={`tile-entities-${num === 5 ? 'custom' : num}`}
+            >
+              <div className="font-semibold text-lg">{num === 5 ? '5+' : num}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {num === 1 ? 'Entity' : 'Entities'}
+              </div>
+            </button>
+          ))}
+        </div>
+        
+        {/* Custom Entities Input */}
+        {showCustomEntities && (
+          <FormField
+            control={control}
+            name="numEntities"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Exact Number of Entities</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="5"
+                    placeholder="Enter exact number (5 or more)"
+                    value={field.value || ''}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 5)}
+                    className="max-w-xs"
+                    data-testid="input-custom-entities"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         )}
-      />
+      </div>
 
-      {/* Entity Type */}
-      <FormField
-        control={control}
-        name="entityType"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Entity Type (Tax Classification)</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value || ""}>
-              <FormControl>
-                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                  <SelectValue placeholder="Select entity type" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="C-Corp">C-Corp</SelectItem>
-                <SelectItem value="S-Corp">S-Corp</SelectItem>
-                <SelectItem value="Partnership">Partnership</SelectItem>
-                <SelectItem value="Sole Proprietorship">Sole Proprietorship</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
+      {/* States Filed - Tile Selection */}
+      <div className="space-y-4">
+        <FormLabel className="text-base font-medium text-gray-700">States Filed <span className="text-red-500">*</span></FormLabel>
+        <div className="grid grid-cols-5 gap-3">
+          {[1, 2, 3, 4, 5].map((num) => (
+            <button
+              key={num}
+              type="button"
+              onClick={() => handleStatesSelect(num)}
+              className={`p-4 rounded-lg border-2 text-center transition-all duration-200 ${
+                (statesFiled === num || (num === 5 && showCustomStates))
+                  ? 'border-[#e24c00] bg-orange-50 text-[#e24c00]'
+                  : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
+              }`}
+              data-testid={`tile-states-${num === 5 ? 'custom' : num}`}
+            >
+              <div className="font-semibold text-lg">{num === 5 ? '5+' : num}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {num === 1 ? 'State' : 'States'}
+              </div>
+            </button>
+          ))}
+        </div>
+        
+        {/* Custom States Input */}
+        {showCustomStates && (
+          <FormField
+            control={control}
+            name="statesFiled"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Exact Number of States</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="5"
+                    placeholder="Enter exact number (5 or more)"
+                    value={field.value || ''}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 5)}
+                    className="max-w-xs"
+                    data-testid="input-custom-states"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         )}
-      />
+      </div>
 
-      {/* Number of Entities */}
-      <FormField
-        control={control}
-        name="numEntities"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Number of Entities</FormLabel>
-            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
-              <FormControl>
-                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                  <SelectValue placeholder="Select number of entities" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-                <SelectItem value="5">5+</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {/* Number of Business Owners - Tile Selection */}
+      <div className="space-y-4">
+        <FormLabel className="text-base font-medium text-gray-700">Number of Business Owners <span className="text-red-500">*</span></FormLabel>
+        <div className="grid grid-cols-5 gap-3">
+          {[1, 2, 3, 4, 5].map((num) => (
+            <FormField
+              key={num}
+              control={control}
+              name="numBusinessOwners"
+              render={({ field }) => (
+                <button
+                  type="button"
+                  onClick={() => field.onChange(num)}
+                  className={`p-4 rounded-lg border-2 text-center transition-all duration-200 ${
+                    field.value === num
+                      ? 'border-[#e24c00] bg-orange-50 text-[#e24c00]'
+                      : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
+                  }`}
+                  data-testid={`tile-owners-${num === 5 ? 'custom' : num}`}
+                >
+                  <div className="font-semibold text-lg">{num === 5 ? '5+' : num}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {num === 1 ? 'Owner' : 'Owners'}
+                  </div>
+                </button>
+              )}
+            />
+          ))}
+        </div>
+      </div>
 
-      {/* States Filed */}
-      <FormField
-        control={control}
-        name="statesFiled"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>States Filed</FormLabel>
-            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
-              <FormControl>
-                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                  <SelectValue placeholder="Select number of states" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-                <SelectItem value="5">5+</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* International Filing */}
+      {/* International Filing - Toggle Switch */}
       <FormField
         control={control}
         name="internationalFiling"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-white">
+            <div className="space-y-0.5">
+              <FormLabel className="text-base font-medium text-gray-700">
+                International Filing Required
+              </FormLabel>
+              <div className="text-sm text-gray-500">
+                Additional complexity for international tax requirements
+              </div>
+            </div>
             <FormControl>
-              <Checkbox
+              <Switch
                 checked={field.value}
                 onCheckedChange={field.onChange}
+                data-testid="switch-international-filing"
               />
             </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel>International Filing Required</FormLabel>
-            </div>
           </FormItem>
         )}
       />
 
-      {/* Number of Business Owners */}
-      <FormField
-        control={control}
-        name="numBusinessOwners"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Number of Business Owners</FormLabel>
-            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
-              <FormControl>
-                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                  <SelectValue placeholder="Select number of owners" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-                <SelectItem value="5">5+</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Bookkeeping Quality */}
-      <FormField
-        control={control}
-        name="bookkeepingQuality"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Current Bookkeeping Quality</FormLabel>
-            <Select 
-              onValueChange={field.onChange} 
-              value={field.value || ""} 
-              disabled={alreadyOnSeedBookkeeping}
-            >
-              <FormControl>
-                <SelectTrigger className={`border-gray-300 focus:ring-[#e24c00] focus:border-transparent ${
-                  alreadyOnSeedBookkeeping 
-                    ? 'bg-gray-100 text-gray-500 cursor-not-allowed' 
-                    : 'bg-white'
-                }`}>
-                  <SelectValue placeholder="Select bookkeeping quality" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="Clean / New">Clean / New</SelectItem>
-                <SelectItem value="Not Done / Behind">Not Done / Behind</SelectItem>
-              </SelectContent>
-            </Select>
-            {alreadyOnSeedBookkeeping && (
-              <p className="text-sm text-gray-500 mt-1">
-                Quality is automatically set to "Clean / New" when using Seed Bookkeeping Package
-              </p>
-            )}
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Include 1040s */}
+      {/* Include Personal 1040s - Toggle Switch */}
       <FormField
         control={control}
         name="include1040s"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-white">
+            <div className="space-y-0.5">
+              <FormLabel className="text-base font-medium text-gray-700">
+                Include Personal 1040 Tax Returns
+              </FormLabel>
+              <div className="text-sm text-gray-500">
+                Add personal tax return preparation to the service
+              </div>
+            </div>
             <FormControl>
-              <Checkbox
+              <Switch
                 checked={field.value}
                 onCheckedChange={field.onChange}
+                data-testid="switch-include-1040s"
               />
             </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel>Include Personal 1040 Tax Returns</FormLabel>
-            </div>
           </FormItem>
         )}
       />
 
-      {/* Prior Years Unfiled */}
-      <FormField
-        control={control}
-        name="priorYearsUnfiled"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Prior Years Unfiled</FormLabel>
-            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
-              <FormControl>
-                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                  <SelectValue placeholder="Select number of years" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="0">0</SelectItem>
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-                <SelectItem value="5">5</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Already on Seed Bookkeeping */}
-      <FormField
-        control={control}
-        name="alreadyOnSeedBookkeeping"
-        render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-            <FormControl>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel>Already on Seed Bookkeeping (50% discount)</FormLabel>
-            </div>
-          </FormItem>
-        )}
-      />
+      {/* Current Bookkeeping Quality - Conditional on NOT having bookkeeping service */}
+      {!includesBookkeeping && (
+        <FormField
+          control={control}
+          name="bookkeepingQuality"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-base font-medium text-gray-700">Current Bookkeeping Quality <span className="text-red-500">*</span></FormLabel>
+              <div className="text-sm text-gray-500 mb-3">
+                This affects the complexity of tax preparation work required
+              </div>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
+                <FormControl>
+                  <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent" data-testid="select-bookkeeping-quality">
+                    <SelectValue placeholder="Select bookkeeping quality" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Clean / New">Clean / New</SelectItem>
+                  <SelectItem value="Not Done / Behind">Not Done / Behind</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
     </div>
   );
 }
