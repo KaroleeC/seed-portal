@@ -1064,22 +1064,32 @@ function HomePage() {
 
   // Request approval for creating new quote when existing quotes exist
   const requestNewQuoteApproval = async (contact: any) => {
+    setIsRequestingApproval(true);
     try {
-      await apiRequest('POST', '/api/approval-request', {
-        type: 'duplicate_quote',
-        email: contact.properties.email,
-        contactName: `${contact.properties.firstname || ''} ${contact.properties.lastname || ''}`.trim() || contact.properties.email,
-        requestedBy: user?.email,
-        reason: `Creating additional quote for existing contact: ${contact.properties.email}`,
-        contactData: contact
+      const result = await apiRequest("/api/approval-request", {
+        method: "POST",
+        body: JSON.stringify({
+          type: 'duplicate_quote',
+          email: contact.properties.email,
+          contactName: `${contact.properties.firstname || ''} ${contact.properties.lastname || ''}`.trim() || contact.properties.email,
+          requestedBy: currentUser?.email,
+          reason: `Creating additional quote for existing contact: ${contact.properties.email}`,
+          contactData: contact
+        })
       });
       
-      toast({
-        title: "Approval Requested",
-        description: "A request for creating an additional quote has been sent to administrators. You'll receive a code via Slack to proceed.",
-      });
+      if (result.success) {
+        setHasRequestedApproval(true);
+        setIsApprovalDialogOpen(true);
+        setShowExistingQuotesModal(false);
+        toast({
+          title: "Approval Requested",
+          description: "Request sent to admins. Check Slack for approval code.",
+        });
+      } else {
+        throw new Error(result.message || "Failed to send approval request");
+      }
       
-      setShowExistingQuotesModal(false);
     } catch (error) {
       console.error('Approval request failed:', error);
       toast({
@@ -1087,6 +1097,8 @@ function HomePage() {
         description: "Failed to request approval. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsRequestingApproval(false);
     }
   };
 
