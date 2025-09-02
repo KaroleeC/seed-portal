@@ -3214,8 +3214,8 @@ function HomePage() {
                         </div>
                       )}
 
-                      {/* TaaS Service Card */}
-                      {feeCalculation.includesTaas && (
+                      {/* TaaS Service Card - Only show for TaaS Monthly, not Prior Year Filings only */}
+                      {feeCalculation.includesTaas && form.watch('serviceTaasMonthly') && (
                         <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4 shadow-sm">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -3230,6 +3230,29 @@ function HomePage() {
                             <div className="text-right">
                               <div className="text-lg font-bold text-blue-800">${feeCalculation.taas.monthlyFee}</div>
                               <div className="text-xs text-blue-600">per month</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Prior Year Filings Service Card */}
+                      {form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0 && (
+                        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">📄</span>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-amber-800">Prior Year Filings</h4>
+                                <p className="text-xs text-amber-600">
+                                  {form.watch('priorYearFilings')?.length || 0} year{(form.watch('priorYearFilings')?.length || 0) !== 1 ? 's' : ''} selected
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-amber-800">${feeCalculation.priorYearFilingsFee}</div>
+                              <div className="text-xs text-amber-600">one-time setup</div>
                             </div>
                           </div>
                         </div>
