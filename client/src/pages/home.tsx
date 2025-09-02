@@ -2974,23 +2974,105 @@ function HomePage() {
                               })()}
 
                               {/* TaaS Breakdown */}
-                              {feeCalculation.includesTaas && (
-                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                  <h5 className="font-medium text-blue-800 mb-2">Tax as a Service</h5>
-                                  <div className="space-y-1 text-sm">
-                                    <div className="flex justify-between">
-                                      <span className="text-gray-600">Monthly TaaS fee:</span>
-                                      <span className="font-medium">${feeCalculation.taas.monthlyFee}</span>
-                                    </div>
-                                    {feeCalculation.taas.priorYearsFee > 0 && (
+                              {feeCalculation.includesTaas && (() => {
+                                // Get the breakdown data from the TaaS calculation
+                                const breakdown = (feeCalculation.taas as any).breakdown;
+                                
+                                return (
+                                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                    <h5 className="font-medium text-blue-800 mb-3">Tax as a Service Breakdown</h5>
+                                    <div className="space-y-2 text-sm">
                                       <div className="flex justify-between">
-                                        <span className="text-gray-600">Prior years filing:</span>
-                                        <span className="font-medium">${feeCalculation.taas.priorYearsFee}</span>
+                                        <span className="text-gray-600">Base monthly fee:</span>
+                                        <span className="font-medium">${breakdown?.base || 150}</span>
                                       </div>
-                                    )}
+                                      
+                                      {breakdown?.entityUpcharge > 0 && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Entity upcharge ({form.watch('customNumEntities') || form.watch('numEntities')} entities):</span>
+                                          <span className="font-medium">+${breakdown.entityUpcharge}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {breakdown?.stateUpcharge > 0 && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">State upcharge ({form.watch('customStatesFiled') || form.watch('statesFiled')} states):</span>
+                                          <span className="font-medium">+${breakdown.stateUpcharge}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {breakdown?.intlUpcharge > 0 && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">International filing:</span>
+                                          <span className="font-medium">+${breakdown.intlUpcharge}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {breakdown?.ownerUpcharge > 0 && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Owner upcharge ({form.watch('customNumBusinessOwners') || form.watch('numBusinessOwners')} owners):</span>
+                                          <span className="font-medium">+${breakdown.ownerUpcharge}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {breakdown?.bookUpcharge > 0 && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Bookkeeping quality upcharge:</span>
+                                          <span className="font-medium">+${breakdown.bookUpcharge}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {breakdown?.personal1040 > 0 && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Personal 1040s ({form.watch('customNumBusinessOwners') || form.watch('numBusinessOwners')} × $25):</span>
+                                          <span className="font-medium">+${breakdown.personal1040}</span>
+                                        </div>
+                                      )}
+                                      
+                                      <div className="border-t border-blue-200 pt-2 mt-2">
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Before multipliers:</span>
+                                          <span className="font-medium">${breakdown?.beforeMultipliers || 0}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Industry multiplier ({form.watch('industry')}):</span>
+                                          <span className="font-medium">{breakdown?.industryMult || 1}x</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Revenue multiplier ({form.watch('monthlyRevenueRange')}):</span>
+                                          <span className="font-medium">{breakdown?.revenueMult || 1}x</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">After multipliers:</span>
+                                          <span className="font-medium">${breakdown?.afterMultipliers || 0}</span>
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="border-t border-blue-200 pt-2 mt-2">
+                                        <div className="flex justify-between font-semibold">
+                                          <span className="text-blue-800">Monthly Total:</span>
+                                          <span className="text-blue-700">${feeCalculation.taas.monthlyFee}</span>
+                                        </div>
+                                      </div>
+                                      
+                                      {feeCalculation.taas.setupFee > 0 && (
+                                        <div className="border-t border-blue-200 pt-2 mt-2">
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Setup fee calculation:</span>
+                                            <span className="font-medium text-gray-700">
+                                              ${breakdown?.perYearFee || 0} per year
+                                            </span>
+                                          </div>
+                                          <div className="flex justify-between font-semibold">
+                                            <span className="text-blue-800">Setup Fee:</span>
+                                            <span className="text-blue-700">${feeCalculation.taas.setupFee}</span>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                );
+                              })()}
 
                               {/* Service Tier Breakdown */}
                               {form.watch('serviceTier') && form.watch('serviceTier') !== 'Automated' && (
