@@ -2337,56 +2337,6 @@ function HomePage() {
         )}
 
 
-        {/* New Service Selection Modal System */}
-        {showClientDetails && (
-        <>
-        <div className="max-w-4xl mx-auto mb-8">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">Select Services</h2>
-            <p className="text-white/80">Choose the services you'd like to include in this quote</p>
-          </div>
-          
-          <ServiceCards
-            selectedServices={{
-              serviceMonthlyBookkeeping: form.watch('serviceBookkeeping') || false,
-              serviceCleanupProjects: false, // New field, default to false for now
-              serviceTaasMonthly: form.watch('serviceTaas') || false,
-              servicePriorYearFilings: false, // New field, default to false for now
-              servicePayroll: form.watch('servicePayroll') || false,
-              serviceApArLite: form.watch('serviceApArLite') || false,
-              serviceFpaLite: form.watch('serviceFpaLite') || false
-            }}
-            onServiceChange={(services) => {
-              // Map new service structure back to existing form fields for backwards compatibility
-              if (services.serviceMonthlyBookkeeping !== undefined) {
-                form.setValue('serviceBookkeeping', services.serviceMonthlyBookkeeping);
-              }
-              if (services.serviceTaasMonthly !== undefined) {
-                form.setValue('serviceTaas', services.serviceTaasMonthly);
-              }
-              if (services.servicePayroll !== undefined) {
-                form.setValue('servicePayroll', services.servicePayroll);
-              }
-              if (services.serviceApArLite !== undefined) {
-                form.setValue('serviceApArLite', services.serviceApArLite);
-              }
-              if (services.serviceFpaLite !== undefined) {
-                form.setValue('serviceFpaLite', services.serviceFpaLite);
-              }
-              form.trigger();
-              
-              // Update current form view to first selected service
-              const activeServices = getActiveServices();
-              if (activeServices.length > 0) {
-                setCurrentFormView(activeServices[0]);
-              } else {
-                setCurrentFormView('placeholder');
-              }
-            }}
-          />
-        </div>
-        </>
-        )}
 
         {/* Quote builder section */}
         <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
