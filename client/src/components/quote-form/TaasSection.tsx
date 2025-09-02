@@ -46,11 +46,8 @@ export function TaasSection({ control, currentFormView, form }: TaasSectionProps
   };
 
   return (
-    <div className="space-y-8 border-t pt-8">
-      <div>
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">Tax Service Details</h3>
-        <p className="text-gray-600 text-sm">Configure your tax service requirements</p>
-      </div>
+    <div className="space-y-8 border-t pt-6">
+      <h3 className="text-xl font-semibold text-gray-800">Tax Service Details</h3>
       
       {/* Number of Entities - Tile Selection */}
       <div className="space-y-4">
