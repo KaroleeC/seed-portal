@@ -36,6 +36,7 @@ export const formSchema = insertQuoteSchema.omit({
   numBusinessOwners: z.number().min(1, "Must have at least 1 business owner").optional(),
   include1040s: z.boolean().optional(),
   priorYearsUnfiled: z.number().min(0, "Cannot be negative").max(5, "Maximum 5 years").optional(),
+  priorYearFilings: z.array(z.number()).default([]),
   alreadyOnSeedBookkeeping: z.boolean().optional(),
   // Bookkeeping information fields
   accountingBasis: z.string().optional(),
