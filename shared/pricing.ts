@@ -95,12 +95,7 @@ export function roundToNearest25(num: number): number {
 }
 
 export function calculateBookkeepingFees(data: PricingData): FeeResult {
-  if (!data.monthlyRevenueRange || !data.monthlyTransactions || !data.industry || data.cleanupMonths === undefined) {
-    return { monthlyFee: 0, setupFee: 0 };
-  }
-  
-  // If initial cleanup months is 0, initial cleanup complexity is not required
-  if (data.cleanupMonths > 0 && !data.cleanupComplexity) {
+  if (!data.monthlyRevenueRange || !data.monthlyTransactions || !data.industry) {
     return { monthlyFee: 0, setupFee: 0 };
   }
 

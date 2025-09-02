@@ -311,37 +311,8 @@ function roundToNearest25(num: number): number {
 }
 
 function calculateFees(data: Partial<FormData>) {
-  // Debug logging to see what's missing
-  console.log('🔍 Calculation Debug:', {
-    monthlyRevenueRange: data.monthlyRevenueRange,
-    monthlyTransactions: data.monthlyTransactions,
-    industry: data.industry,
-    cleanupMonths: data.cleanupMonths,
-    cleanupComplexity: data.cleanupComplexity
-  });
-
-  if (!data.monthlyRevenueRange || !data.monthlyTransactions || !data.industry || data.cleanupMonths === undefined) {
-    console.log('❌ Missing required fields for calculation');
-    return { 
-      monthlyFee: 0, 
-      setupFee: 0,
-      breakdown: {
-        baseFee: 0,
-        revenueMultiplier: 1,
-        afterRevenue: 0,
-        txFee: 0,
-        afterTx: 0,
-        industryMultiplier: 1,
-        finalMonthly: 0,
-        cleanupComplexity: 0,
-        cleanupMonths: 0,
-        setupCalc: 0
-      }
-    };
-  }
-  
-  // If initial cleanup months is 0, initial cleanup complexity is not required
-  if (data.cleanupMonths > 0 && !data.cleanupComplexity) {
+  // Only require core pricing fields - cleanup fields not needed for automatic setup fee
+  if (!data.monthlyRevenueRange || !data.monthlyTransactions || !data.industry) {
     return { 
       monthlyFee: 0, 
       setupFee: 0,
