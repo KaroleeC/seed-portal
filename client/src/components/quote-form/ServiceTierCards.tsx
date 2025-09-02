@@ -9,7 +9,7 @@ interface ServiceTierCardsProps {
 }
 
 export function ServiceTierCards({ form }: ServiceTierCardsProps) {
-  const selectedTier = form.watch('serviceTier') || 'Standard';
+  const selectedTier = form.watch('serviceTier') || 'Automated';
 
   const handleTierSelect = (tier: string) => {
     form.setValue('serviceTier', tier);
@@ -18,8 +18,8 @@ export function ServiceTierCards({ form }: ServiceTierCardsProps) {
   return (
     <div className="mb-8">
       <div className="text-center mb-6">
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">Choose Your Service Tier</h3>
-        <p className="text-gray-600">Select the level of support and guidance that's right for your business</p>
+        <h3 className="text-xl font-semibold text-gray-800 mb-2">Select Service Tier</h3>
+        <p className="text-gray-600">Select level of support and guidance based on client goals and needs</p>
       </div>
 
       <FormField
@@ -29,26 +29,27 @@ export function ServiceTierCards({ form }: ServiceTierCardsProps) {
           <FormItem>
             <FormControl>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Standard Tier */}
+                {/* Automated Tier */}
                 <Card 
                   className={`cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
-                    selectedTier === 'Standard'
+                    selectedTier === 'Automated'
                       ? 'border-blue-500 bg-blue-50 shadow-md' 
                       : 'border-gray-300 hover:border-blue-400'
                   }`}
-                  onClick={() => handleTierSelect('Standard')}
+                  onClick={() => handleTierSelect('Automated')}
                 >
                   <CardContent className="p-6 text-center">
                     <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mx-auto mb-4">
                       <Users className="w-6 h-6 text-white" />
                     </div>
-                    <h4 className="font-semibold text-lg text-gray-800 mb-2">Standard</h4>
+                    <h4 className="font-semibold text-lg text-gray-800 mb-2">Automated</h4>
                     <p className="text-2xl font-bold text-blue-600 mb-3">Included</p>
                     <p className="text-sm text-gray-600 mb-4">Base level of service with standard support</p>
                     <ul className="text-xs text-gray-500 text-left space-y-1">
-                      <li>• Standard response times</li>
                       <li>• Email support</li>
-                      <li>• Standard reporting</li>
+                      <li>• End-of-period summaries</li>
+                      <li>• Automated monitoring & reminders</li>
+                      <li>• Quarterly reports, estimates & insights</li>
                     </ul>
                   </CardContent>
                 </Card>
@@ -70,10 +71,10 @@ export function ServiceTierCards({ form }: ServiceTierCardsProps) {
                     <p className="text-2xl font-bold text-orange-600 mb-3">+$79<span className="text-sm">/mo</span></p>
                     <p className="text-sm text-gray-600 mb-4">Enhanced support and guidance</p>
                     <ul className="text-xs text-gray-500 text-left space-y-1">
-                      <li>• Priority support</li>
-                      <li>• Phone & email support</li>
-                      <li>• Enhanced reporting</li>
-                      <li>• Business guidance</li>
+                      <li>• Kickoff call & quarterly checkins</li>
+                      <li>• Dedicated Slack channel support</li>
+                      <li>• Personalized insights</li>
+                      <li>• Quarterly strategy calls, payment assistance & deadline prep</li>
                     </ul>
                   </CardContent>
                 </Card>
@@ -95,10 +96,10 @@ export function ServiceTierCards({ form }: ServiceTierCardsProps) {
                     <p className="text-2xl font-bold text-purple-600 mb-3">+$249<span className="text-sm">/mo</span></p>
                     <p className="text-sm text-gray-600 mb-4">Premium white-glove service</p>
                     <ul className="text-xs text-gray-500 text-left space-y-1">
-                      <li>• 24/7 priority support</li>
-                      <li>• Dedicated account manager</li>
-                      <li>• Custom reporting</li>
-                      <li>• Strategic planning</li>
+                      <li>• Zoom kickoff with dedicated controller</li>
+                      <li>• Custom deliverables & hands-on planning</li>
+                      <li>• Monthly strategy calls</li>
+                      <li>• Priority support via Slack & Zoom</li>
                     </ul>
                   </CardContent>
                 </Card>
