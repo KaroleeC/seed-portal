@@ -2371,8 +2371,8 @@ function HomePage() {
               }}
             />
 
-            {/* Show detailed TaaS configuration when TaaS services are selected */}
-            {(form.watch('serviceTaasMonthly') || form.watch('servicePriorYearFilings') || form.watch('serviceTaas')) && (
+            {/* Show detailed TaaS configuration when TaaS Monthly service is selected */}
+            {(form.watch('serviceTaasMonthly') || form.watch('serviceTaas')) && (
               <div className="max-w-6xl mx-auto mt-8">
                 <Card className="bg-white shadow-lg border border-gray-200">
                   <CardContent className="p-6">
@@ -2380,10 +2380,6 @@ function HomePage() {
                       <TaasSection 
                         control={form.control} 
                         currentFormView="taas" 
-                        form={form}
-                      />
-                      <PriorYearFilingsSection 
-                        control={form.control} 
                         form={form}
                       />
                     </Form>
@@ -2829,6 +2825,22 @@ function HomePage() {
                         )}
                       />
                     </div>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Show detailed Prior Year Filings configuration when Prior Year Filings service is selected */}
+            {form.watch('servicePriorYearFilings') && (
+              <div className="max-w-6xl mx-auto mt-8">
+                <Card className="bg-white shadow-lg border border-gray-200">
+                  <CardContent className="p-6">
+                    <Form {...form}>
+                      <PriorYearFilingsSection 
+                        control={form.control} 
+                        form={form}
+                      />
                     </Form>
                   </CardContent>
                 </Card>
