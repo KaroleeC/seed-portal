@@ -148,15 +148,79 @@ router.post('/quotes/:id/sync-hubspot', requireAuth, async (req, res) => {
       msa_document_url: quote.msaFileUrl
     };
 
-    // Make HubSpot API call (placeholder - implement actual HubSpot sync)
-    // const hubspotResult = await hubspotClient.createOrUpdateContact(hubspotData);
+    // Import HubSpot service
+    const { hubSpotService } = await import('./hubspot');
+    
+    if (!hubSpotService) {
+      return res.status(500).json({ error: 'HubSpot service not available' });
+    }
 
-    logger.info('[Quote] HubSpot sync initiated', { quoteId, email: quote.contactEmail });
+    // First, verify the contact exists in HubSpot
+    const contactVerification = await hubSpotService.verifyContactByEmail(quote.contactEmail);
+    
+    if (!contactVerification.verified || !contactVerification.contact) {
+      return res.status(404).json({ 
+        error: 'Contact not found in HubSpot',
+        message: 'Cannot sync quote data - contact must exist in HubSpot first'
+      });
+    }
+
+    const contactId = contactVerification.contact.id;
+    const syncResults = { contact: false, company: false };
+
+    // Prepare contact properties for sync
+    const contactProperties: any = {};
+    
+    // Only include properties that have values and map to correct HubSpot field names
+    if (quote.contactFirstName) contactProperties.firstname = quote.contactFirstName;
+    if (quote.contactLastName) contactProperties.lastname = quote.contactLastName;
+    if (quote.clientStreetAddress) contactProperties.address = quote.clientStreetAddress;
+    if (quote.clientCity) contactProperties.city = quote.clientCity;
+    if (quote.clientState) contactProperties.state = quote.clientState;
+    if (quote.clientZipCode) contactProperties.zip = quote.clientZipCode;
+    if (quote.clientCountry) contactProperties.country = quote.clientCountry;
+    if (quote.industry) contactProperties.industry = quote.industry;
+    if (quote.entityType) contactProperties.entity_type = quote.entityType;
+    if (quote.monthlyRevenueRange) contactProperties.monthly_revenue_range = quote.monthlyRevenueRange;
+
+    // Update contact if we have properties to sync
+    if (Object.keys(contactProperties).length > 0) {
+      const contactResult = await hubSpotService.updateContact(contactId, contactProperties);
+      syncResults.contact = !!contactResult;
+      logger.info('[Quote] Contact sync result', { 
+        contactId, 
+        success: syncResults.contact,
+        propertiesCount: Object.keys(contactProperties).length 
+      });
+    }
+
+    // Update or create company if company name exists
+    if (quote.companyName) {
+      try {
+        await hubSpotService.updateOrCreateCompanyFromQuote(contactId, quote);
+        syncResults.company = true;
+        logger.info('[Quote] Company sync completed', { companyName: quote.companyName });
+      } catch (error) {
+        logger.error('[Quote] Company sync failed', { error: error.message });
+        syncResults.company = false;
+      }
+    }
+
+    logger.info('[Quote] HubSpot sync completed', { 
+      quoteId, 
+      email: quote.contactEmail,
+      syncResults 
+    });
 
     res.json({
       success: true,
       message: 'Quote synced to HubSpot with enhanced data',
-      syncedFields: Object.keys(hubspotData)
+      syncedFields: Object.keys(hubspotData),
+      syncResults: {
+        contact: syncResults.contact,
+        company: syncResults.company,
+        contactPropertiesUpdated: Object.keys(contactProperties).length
+      }
     });
 
   } catch (error) {

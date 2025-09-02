@@ -1,16 +1,31 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Control } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
 import { FormData } from "./QuoteFormSchema";
+import { useEffect } from "react";
 
 interface TaasSectionProps {
   control: Control<FormData>;
   currentFormView: 'bookkeeping' | 'taas';
+  form: any; // Access to the full form for setValue
 }
 
-export function TaasSection({ control, currentFormView }: TaasSectionProps) {
+export function TaasSection({ control, currentFormView, form }: TaasSectionProps) {
   if (currentFormView !== 'taas') return null;
+
+  // Watch the alreadyOnSeedBookkeeping value to conditionally handle bookkeeping quality
+  const alreadyOnSeedBookkeeping = useWatch({
+    control,
+    name: 'alreadyOnSeedBookkeeping'
+  });
+
+  // Auto-set bookkeeping quality when Seed Bookkeeping Package is selected
+  useEffect(() => {
+    if (alreadyOnSeedBookkeeping) {
+      form.setValue('bookkeepingQuality', 'Clean / New');
+    }
+  }, [alreadyOnSeedBookkeeping, form]);
 
   return (
     <div className="space-y-6 border-t pt-6">
@@ -145,9 +160,17 @@ export function TaasSection({ control, currentFormView }: TaasSectionProps) {
         render={({ field }) => (
           <FormItem>
             <FormLabel>Current Bookkeeping Quality</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value || ""}>
+            <Select 
+              onValueChange={field.onChange} 
+              value={field.value || ""} 
+              disabled={alreadyOnSeedBookkeeping}
+            >
               <FormControl>
-                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                <SelectTrigger className={`border-gray-300 focus:ring-[#e24c00] focus:border-transparent ${
+                  alreadyOnSeedBookkeeping 
+                    ? 'bg-gray-100 text-gray-500 cursor-not-allowed' 
+                    : 'bg-white'
+                }`}>
                   <SelectValue placeholder="Select bookkeeping quality" />
                 </SelectTrigger>
               </FormControl>
@@ -156,6 +179,11 @@ export function TaasSection({ control, currentFormView }: TaasSectionProps) {
                 <SelectItem value="Not Done / Behind">Not Done / Behind</SelectItem>
               </SelectContent>
             </Select>
+            {alreadyOnSeedBookkeeping && (
+              <p className="text-sm text-gray-500 mt-1">
+                Quality is automatically set to "Clean / New" when using Seed Bookkeeping Package
+              </p>
+            )}
             <FormMessage />
           </FormItem>
         )}

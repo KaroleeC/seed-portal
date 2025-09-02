@@ -13,6 +13,7 @@ import { hubSpotService } from "./hubspot";
 import { setupAuth, requireAuth } from "./auth";
 import passport from "passport";
 import { registerAdminRoutes } from "./admin-routes";
+import quoteRoutes from "./quote-routes";
 import { calculateCombinedFees } from "@shared/pricing";
 import { clientIntelEngine } from "./client-intel";
 import { apiRateLimit, searchRateLimit, enhancementRateLimit } from "./middleware/rate-limiter";
@@ -5035,6 +5036,9 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
 
   // Register admin routes
   await registerAdminRoutes(app);
+
+  // Register quote routes with enhanced HubSpot sync
+  app.use('/api', quoteRoutes);
 
   // Register health check routes for service monitoring
   const { healthRoutes } = await import('./routes/health.js');

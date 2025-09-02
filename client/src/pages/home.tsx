@@ -3224,23 +3224,47 @@ function HomePage() {
                       <FormField
                         control={form.control}
                         name="bookkeepingQuality"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Bookkeeping Quality <span className="text-red-500">*</span></FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                                  <SelectValue placeholder="Select bookkeeping quality" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="Clean / New">Clean / New</SelectItem>
-                                <SelectItem value="Not Done / Behind">Not Done / Behind</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          const alreadyOnSeedBookkeeping = form.watch('alreadyOnSeedBookkeeping');
+                          
+                          // Auto-set to "Clean / New" when Seed Bookkeeping Package is selected
+                          React.useEffect(() => {
+                            if (alreadyOnSeedBookkeeping) {
+                              form.setValue('bookkeepingQuality', 'Clean / New');
+                            }
+                          }, [alreadyOnSeedBookkeeping]);
+                          
+                          return (
+                            <FormItem>
+                              <FormLabel>Bookkeeping Quality <span className="text-red-500">*</span></FormLabel>
+                              <Select 
+                                onValueChange={field.onChange} 
+                                value={field.value || ""} 
+                                disabled={alreadyOnSeedBookkeeping}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className={`border-gray-300 focus:ring-[#e24c00] focus:border-transparent ${
+                                    alreadyOnSeedBookkeeping 
+                                      ? 'bg-gray-100 text-gray-500 cursor-not-allowed' 
+                                      : 'bg-white'
+                                  }`}>
+                                    <SelectValue placeholder="Select bookkeeping quality" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="Clean / New">Clean / New</SelectItem>
+                                  <SelectItem value="Not Done / Behind">Not Done / Behind</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              {alreadyOnSeedBookkeeping && (
+                                <p className="text-sm text-gray-500 mt-1">
+                                  Quality is automatically set to "Clean / New" when using Seed Bookkeeping Package
+                                </p>
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
 
                       {/* Already on Seed Bookkeeping */}

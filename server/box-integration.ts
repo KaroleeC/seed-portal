@@ -5,14 +5,29 @@
 import BoxSDK from 'box-node-sdk';
 import { logger } from './logger';
 
-// Initialize Box SDK with App Auth (JWT)
-const sdk = BoxSDK.getBasicTokenBox(process.env.BOX_ACCESS_TOKEN);
+// Initialize Box SDK with Developer Token (for development)
+let sdk: any = null;
+try {
+  if (process.env.BOX_ACCESS_TOKEN) {
+    sdk = new BoxSDK({
+      clientID: '',
+      clientSecret: ''
+    });
+    // Use developer token for development
+    sdk = sdk.getBasicClient(process.env.BOX_ACCESS_TOKEN);
+  }
+} catch (error) {
+  logger.warn('[Box] Failed to initialize Box SDK:', error);
+}
 
 export class BoxService {
   private client: any;
 
   constructor() {
     this.client = sdk;
+    if (!this.client) {
+      logger.warn('[Box] Box client not initialized - Box features will be disabled');
+    }
   }
 
   /**

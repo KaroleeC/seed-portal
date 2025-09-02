@@ -3184,6 +3184,27 @@ Generated: ${new Date().toLocaleDateString()}`;
     }
   }
 
+  async updateContact(contactId: string, properties: any) {
+    try {
+      console.log(
+        `Updating contact ${contactId} with properties:`,
+        JSON.stringify(properties, null, 2),
+      );
+
+      const response = await this.makeRequest(
+        `/crm/v3/objects/contacts/${contactId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ properties }),
+        },
+      );
+      return response;
+    } catch (error) {
+      console.error("Failed to update contact:", error);
+      return null;
+    }
+  }
+
   async associateContactWithCompany(contactId: string, companyId: string) {
     try {
       await this.makeRequest(
