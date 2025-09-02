@@ -71,20 +71,7 @@ export const formSchema = insertQuoteSchema.omit({
   
   // TaaS validations
   if (data.quoteType === 'taas') {
-    if (!data.monthlyRevenueRange) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Monthly revenue range is required for TaaS quotes",
-        path: ["monthlyRevenueRange"],
-      });
-    }
-    if (!data.entityType) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Entity type is required for TaaS quotes",
-        path: ["entityType"],
-      });
-    }
+    // Monthly revenue range and entity type are now handled in client details section
     if (!data.numEntities) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -106,10 +93,11 @@ export const formSchema = insertQuoteSchema.omit({
         path: ["numBusinessOwners"],
       });
     }
-    if (!data.bookkeepingQuality) {
+    // Bookkeeping quality is only required if bookkeeping service is NOT selected
+    if (!data.serviceMonthlyBookkeeping && !data.bookkeepingQuality) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Bookkeeping quality is required for TaaS quotes",
+        message: "Bookkeeping quality is required for TaaS quotes when bookkeeping service is not included",
         path: ["bookkeepingQuality"],
       });
     }
@@ -120,20 +108,7 @@ export const formSchema = insertQuoteSchema.omit({
         path: ["include1040s"],
       });
     }
-    if (data.priorYearsUnfiled === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Prior years unfiled is required for TaaS quotes",
-        path: ["priorYearsUnfiled"],
-      });
-    }
-    if (data.alreadyOnSeedBookkeeping === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Please specify if already on Seed bookkeeping",
-        path: ["alreadyOnSeedBookkeeping"],
-      });
-    }
+    // Prior years unfiled and seed bookkeeping checkbox removed from UI
   }
 });
 

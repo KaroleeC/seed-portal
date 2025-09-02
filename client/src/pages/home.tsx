@@ -192,13 +192,7 @@ const formSchema = insertQuoteSchema.omit({
   
   // TaaS validations
   if (data.quoteType === 'taas') {
-    if (!data.entityType) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Entity type is required for TaaS quotes",
-        path: ["entityType"],
-      });
-    }
+    // Entity type and monthly revenue range are now handled in client details section
     if (!data.numEntities) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -220,34 +214,16 @@ const formSchema = insertQuoteSchema.omit({
         path: ["numBusinessOwners"],
       });
     }
-    if (!data.bookkeepingQuality) {
+    // Bookkeeping quality is only required if bookkeeping service is NOT selected
+    if (!data.serviceMonthlyBookkeeping && !data.bookkeepingQuality) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Bookkeeping quality is required for TaaS quotes",
+        message: "Bookkeeping quality is required for TaaS quotes when bookkeeping service is not included",
         path: ["bookkeepingQuality"],
       });
     }
-    if (data.include1040s === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Please specify if 1040s should be included",
-        path: ["include1040s"],
-      });
-    }
-    if (data.priorYearsUnfiled === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Prior years unfiled is required for TaaS quotes",
-        path: ["priorYearsUnfiled"],
-      });
-    }
-    if (data.alreadyOnSeedBookkeeping === undefined) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Please specify if already on Seed Bookkeeping",
-        path: ["alreadyOnSeedBookkeeping"],
-      });
-    }
+    // Include 1040s is handled by toggle switch with default value
+    // Prior years unfiled and seed bookkeeping checkbox removed from UI
   }
 });
 
@@ -375,9 +351,9 @@ function calculateFees(data: Partial<FormData>) {
 
 // TaaS-specific calculation function based on provided logic
 function calculateTaaSFees(data: Partial<FormData>, existingBookkeepingFees?: { monthlyFee: number; setupFee: number }) {
-  if (!data.monthlyRevenueRange || !data.industry || !data.entityType || !data.numEntities || !data.statesFiled || 
-      data.internationalFiling === undefined || !data.numBusinessOwners || !data.bookkeepingQuality || 
-      data.include1040s === undefined || data.priorYearsUnfiled === undefined || data.alreadyOnSeedBookkeeping === undefined) {
+  if (!data.monthlyRevenueRange || !data.industry || !data.numEntities || !data.statesFiled || 
+      data.internationalFiling === undefined || !data.numBusinessOwners || 
+      data.include1040s === undefined) {
     return { 
       monthlyFee: 0, 
       setupFee: 0,
@@ -468,7 +444,7 @@ function calculateTaaSFees(data: Partial<FormData>, existingBookkeepingFees?: { 
 
   // Setup fee calculation - 0.5 × monthly × 12 with $1000 minimum per year
   const perYearFee = Math.max(1000, monthlyFee * 0.5 * 12);
-  const setupFee = data.priorYearsUnfiled > 0 ? Math.max(monthlyFee, perYearFee * data.priorYearsUnfiled) : 0;
+  const setupFee = 0; // Prior years unfiled removed from UI
 
   // Add intermediate calculation for better breakdown display
   const afterIndustryMult = beforeMultipliers * industryMult;
@@ -488,7 +464,7 @@ function calculateTaaSFees(data: Partial<FormData>, existingBookkeepingFees?: { 
     afterMultipliers: Math.round(afterMultipliers),
     seedDiscount: 0, // No TaaS discount
     finalMonthly: monthlyFee,
-    priorYearsUnfiled: data.priorYearsUnfiled,
+    priorYearsUnfiled: 0, // Field removed from UI
     perYearFee: Math.round(perYearFee),
     setupFee
   };
@@ -523,7 +499,7 @@ function calculateCombinedFees(data: Partial<FormData>) {
   }
   
   // Apply Seed Bookkeeping Package discount (50% off bookkeeping when both services are selected)
-  if (includesBookkeeping && includesTaas && data.alreadyOnSeedBookkeeping) {
+  if (includesBookkeeping && includesTaas && data.serviceMonthlyBookkeeping) {
     bookkeepingFees = {
       ...bookkeepingFees,
       monthlyFee: Math.round(bookkeepingFees.monthlyFee * 0.50),
@@ -2907,7 +2883,7 @@ function HomePage() {
                               {feeCalculation.includesBookkeeping && (() => {
                                 // Get the breakdown data from the calculation
                                 const breakdown = (feeCalculation.bookkeeping as any).breakdown;
-                                const hasDiscount = feeCalculation.includesBookkeeping && feeCalculation.includesTaas && form.watch('alreadyOnSeedBookkeeping');
+                                const hasDiscount = feeCalculation.includesBookkeeping && feeCalculation.includesTaas && form.watch('serviceMonthlyBookkeeping');
                                 const hasQBO = form.watch('qboSubscription');
                                 const currentMonth = new Date().getMonth() + 1;
                                 
