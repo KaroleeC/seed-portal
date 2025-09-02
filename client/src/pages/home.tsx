@@ -1242,7 +1242,7 @@ function HomePage() {
   const monthlyFee = feeCalculation.combined.monthlyFee;
   const setupFee = feeCalculation.combined.setupFee;
   
-  const isCalculated = monthlyFee > 0;
+  const isCalculated = monthlyFee > 0 || feeCalculation.priorYearFilingsFee > 0;
 
   // Helper functions for navigation (defined after feeCalculation)
   const getActiveServices = () => {
@@ -2884,7 +2884,7 @@ function HomePage() {
                   
                   <div className="space-y-6">
                     {/* Main Total Display - Clickable for detailed breakdown */}
-                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas) && (
+                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0)) && (
                       <>
                         <div 
                           className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:from-blue-100 hover:to-indigo-200"
@@ -2905,14 +2905,20 @@ function HomePage() {
                                 )}
                               </button>
                             </div>
+                            {/* Show monthly fee for monthly services or $0 for Prior Year Filings only */}
                             <div className="text-4xl font-bold text-blue-800 mb-2">
                               ${feeCalculation.combined.monthlyFee.toLocaleString()}
-                              <span className="text-lg font-medium text-blue-600">/month</span>
+                              <span className="text-lg font-medium text-blue-600">
+                                {feeCalculation.combined.monthlyFee > 0 ? '/month' : ' monthly'}
+                              </span>
                             </div>
                             {feeCalculation.combined.setupFee > 0 && (
                               <div className="text-lg text-blue-700">
                                 <span className="font-semibold">${feeCalculation.combined.setupFee.toLocaleString()}</span>
-                                <span className="text-sm"> setup fee</span>
+                                <span className="text-sm">
+                                  {form.watch('servicePriorYearFilings') && !form.watch('serviceTaasMonthly') && !form.watch('serviceMonthlyBookkeeping') ? 
+                                    ' one-time setup' : ' setup fee'}
+                                </span>
                               </div>
                             )}
                             <div className="mt-3 text-xs text-blue-600">
