@@ -2388,7 +2388,10 @@ function HomePage() {
         )}
 
         {/* Quote builder section */}
-            <Card 
+        <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
+          <style>{`.quote-layout { display: flex; flex-direction: column; } @media (min-width: 1024px) { .quote-layout { flex-direction: row; } }`}</style>
+          {/* Quote Builder Form Card */}
+          <Card 
               className={`
                 cursor-pointer transition-all duration-300 hover:scale-105 border-2 shadow-lg
                 ${form.watch('serviceBookkeeping')
@@ -3470,7 +3473,6 @@ function HomePage() {
             </CardContent>
           </Card>
         </div>
-        </>
         )}
 
         {/* Redesigned Modern Pricing Summary Card */}
