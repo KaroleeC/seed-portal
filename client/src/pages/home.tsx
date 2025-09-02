@@ -311,7 +311,17 @@ function roundToNearest25(num: number): number {
 }
 
 function calculateFees(data: Partial<FormData>) {
+  // Debug logging to see what's missing
+  console.log('🔍 Calculation Debug:', {
+    monthlyRevenueRange: data.monthlyRevenueRange,
+    monthlyTransactions: data.monthlyTransactions,
+    industry: data.industry,
+    cleanupMonths: data.cleanupMonths,
+    cleanupComplexity: data.cleanupComplexity
+  });
+
   if (!data.monthlyRevenueRange || !data.monthlyTransactions || !data.industry || data.cleanupMonths === undefined) {
+    console.log('❌ Missing required fields for calculation');
     return { 
       monthlyFee: 0, 
       setupFee: 0,
