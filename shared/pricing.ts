@@ -220,22 +220,23 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
 }
 
 export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
-  // Determine which services are included using new separated service fields
+  // Determine which services are included - prioritize legacy fields for existing database compatibility
   const includesBookkeeping = Boolean(
+    // Legacy fields (existing database)
+    (data as any).serviceBookkeeping || 
+    (data as any).includesBookkeeping ||
+    // New separated service fields (future database)
     (data as any).serviceMonthlyBookkeeping || 
-    (data as any).serviceCleanupProjects || 
-    // Legacy fallback
-    (data.includesTaas !== undefined ? 
-      (data.includesTaas ? (data as any).includesBookkeeping !== false : true) : 
-      (data as any).serviceBookkeeping || true)
+    (data as any).serviceCleanupProjects
   );
   
   const includesTaas = Boolean(
+    // Legacy fields (existing database)
+    (data as any).serviceTaas ||
+    data.includesTaas === true ||
+    // New separated service fields (future database) 
     (data as any).serviceTaasMonthly || 
-    (data as any).servicePriorYearFilings || 
-    // Legacy fallback
-    data.includesTaas === true || 
-    (data as any).serviceTaas
+    (data as any).servicePriorYearFilings
   );
 
   // Calculate individual service fees

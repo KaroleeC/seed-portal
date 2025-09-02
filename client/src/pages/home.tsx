@@ -2355,9 +2355,20 @@ function HomePage() {
                 serviceFpaLite: form.watch('serviceFpaLite') || false,
               }}
               onServiceChange={(updatedServices) => {
+                // Set the new service fields
                 Object.entries(updatedServices).forEach(([key, value]) => {
                   form.setValue(key as any, value);
                 });
+                
+                // Also update legacy fields for backward compatibility with pricing logic
+                const hasBookkeeping = updatedServices.serviceMonthlyBookkeeping || updatedServices.serviceCleanupProjects;
+                const hasTaas = updatedServices.serviceTaasMonthly || updatedServices.servicePriorYearFilings;
+                
+                form.setValue('serviceBookkeeping', hasBookkeeping);
+                form.setValue('serviceTaas', hasTaas);
+                form.setValue('includesBookkeeping', hasBookkeeping);
+                form.setValue('includesTaas', hasTaas);
+                
                 form.trigger();
                 
                 // Update current form view based on selected services
