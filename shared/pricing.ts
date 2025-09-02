@@ -220,14 +220,23 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
 }
 
 export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
-  // Determine which services are included
-  const includesBookkeeping = data.includesTaas !== undefined ? 
-    // For combined quotes, check both flags
-    (data.includesTaas ? (data as any).includesBookkeeping !== false : true) :
-    // For single service quotes, assume bookkeeping if not explicitly TaaS
-    true;
+  // Determine which services are included using new separated service fields
+  const includesBookkeeping = Boolean(
+    (data as any).serviceMonthlyBookkeeping || 
+    (data as any).serviceCleanupProjects || 
+    // Legacy fallback
+    (data.includesTaas !== undefined ? 
+      (data.includesTaas ? (data as any).includesBookkeeping !== false : true) : 
+      (data as any).serviceBookkeeping || true)
+  );
   
-  const includesTaas = data.includesTaas === true;
+  const includesTaas = Boolean(
+    (data as any).serviceTaasMonthly || 
+    (data as any).servicePriorYearFilings || 
+    // Legacy fallback
+    data.includesTaas === true || 
+    (data as any).serviceTaas
+  );
 
   // Calculate individual service fees
   let bookkeepingFees = includesBookkeeping ? calculateBookkeepingFees(data) : { monthlyFee: 0, setupFee: 0 };
