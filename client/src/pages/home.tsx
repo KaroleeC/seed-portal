@@ -2903,48 +2903,91 @@ function HomePage() {
                             <div className="space-y-3">
                               {/* Bookkeeping Breakdown */}
                               {feeCalculation.includesBookkeeping && (() => {
-                                // Calculate the breakdown details
-                                const baseFee = 150;
+                                // Get the breakdown data from the calculation
+                                const breakdown = (feeCalculation.bookkeeping as any).breakdown;
                                 const hasDiscount = feeCalculation.includesBookkeeping && feeCalculation.includesTaas && form.watch('alreadyOnSeedBookkeeping');
-                                const originalFee = feeCalculation.bookkeeping.monthlyFee * (hasDiscount ? 2 : 1); // Reverse calculate original if discounted
-                                const discountAmount = hasDiscount ? originalFee * 0.5 : 0;
+                                const hasQBO = form.watch('qboSubscription');
+                                const currentMonth = new Date().getMonth() + 1;
                                 
                                 return (
                                   <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                                    <h5 className="font-medium text-green-800 mb-2">Bookkeeping Service</h5>
-                                    <div className="space-y-1 text-sm">
-                                      <div className="flex justify-between">
-                                        <span className="text-gray-600">Base monthly fee:</span>
-                                        <span className="font-medium">$150</span>
+                                    <h5 className="font-medium text-green-800 mb-3">Bookkeeping Service Breakdown</h5>
+                                    <div className="space-y-2 text-sm">
+                                      
+                                      {/* Base Calculation */}
+                                      <div className="space-y-1 pb-2 border-b border-green-200">
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Base monthly fee:</span>
+                                          <span className="font-medium">$150</span>
+                                        </div>
+                                        
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Revenue multiplier ({form.watch('monthlyRevenueRange')}):</span>
+                                          <span className="font-medium">{breakdown?.revenueMultiplier}x</span>
+                                        </div>
+                                        
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">After revenue adjustment:</span>
+                                          <span className="font-medium">${breakdown?.afterRevenue}</span>
+                                        </div>
+                                        
+                                        {breakdown?.txFee > 0 && (
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Transaction surcharge ({form.watch('monthlyTransactions')}):</span>
+                                            <span className="font-medium">+${breakdown.txFee}</span>
+                                          </div>
+                                        )}
+                                        
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Industry multiplier ({form.watch('industry')}):</span>
+                                          <span className="font-medium">{breakdown?.industryMultiplier}x</span>
+                                        </div>
+                                        
+                                        <div className="flex justify-between font-medium">
+                                          <span className="text-gray-700">Base calculation total:</span>
+                                          <span className="text-gray-800">${breakdown?.cleanupBeforeIndustry}</span>
+                                        </div>
                                       </div>
                                       
-                                      {/* Show calculated fees breakdown */}
-                                      {originalFee > baseFee && (
+                                      {/* QBO Subscription */}
+                                      {hasQBO && (
                                         <div className="flex justify-between">
-                                          <span className="text-gray-600">After adjustments:</span>
-                                          <span className="font-medium">${hasDiscount ? originalFee : feeCalculation.bookkeeping.monthlyFee}</span>
+                                          <span className="text-gray-600">QBO Subscription:</span>
+                                          <span className="font-medium text-blue-600">+$60</span>
                                         </div>
                                       )}
                                       
-                                      {/* Show discount if applicable */}
-                                      {hasDiscount && (
-                                        <>
-                                          <div className="flex justify-between text-green-600">
-                                            <span>Seed Bookkeeping Package (50% off):</span>
-                                            <span className="font-medium">-${discountAmount}</span>
-                                          </div>
-                                        </>
-                                      )}
-                                      
-                                      <div className="border-t pt-1 flex justify-between font-semibold">
-                                        <span>Monthly total:</span>
+                                      {/* Monthly Total */}
+                                      <div className="border-t pt-2 flex justify-between font-semibold">
+                                        <span className="text-gray-800">Monthly Total:</span>
                                         <span className="text-green-700">${feeCalculation.bookkeeping.monthlyFee}</span>
                                       </div>
                                       
+                                      {/* Setup Fee Breakdown */}
                                       {feeCalculation.bookkeeping.setupFee > 0 && (
-                                        <div className="flex justify-between">
-                                          <span className="text-gray-600">Setup fee:</span>
-                                          <span className="font-medium">${feeCalculation.bookkeeping.setupFee}</span>
+                                        <div className="mt-3 pt-3 border-t border-green-200">
+                                          <div className="space-y-1">
+                                            <div className="flex justify-between text-sm">
+                                              <span className="text-gray-600">Setup fee calculation:</span>
+                                              <span className="font-medium text-gray-700">
+                                                ${breakdown?.cleanupBeforeIndustry} × {currentMonth} × 0.25
+                                              </span>
+                                            </div>
+                                            <div className="flex justify-between font-semibold">
+                                              <span className="text-gray-800">Setup Fee:</span>
+                                              <span className="text-green-700">${feeCalculation.bookkeeping.setupFee}</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                      
+                                      {/* Discount Application */}
+                                      {hasDiscount && (
+                                        <div className="mt-3 pt-3 border-t border-green-200">
+                                          <div className="flex justify-between text-green-600 font-medium">
+                                            <span>Seed Bookkeeping Package (50% off):</span>
+                                            <span>Applied</span>
+                                          </div>
                                         </div>
                                       )}
                                     </div>
