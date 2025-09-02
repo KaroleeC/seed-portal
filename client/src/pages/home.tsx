@@ -1666,15 +1666,26 @@ function HomePage() {
       });
       
       if (result.valid) {
-        // Lock all fields permanently after approval
-        setIsApproved(true);
-        setFieldsLocked(true);
-        setIsApprovalDialogOpen(false);
-        setApprovalCode("");
-        toast({
-          title: "Approval Granted",
-          description: "Setup fee fields are now locked. Use the unlock button to make changes.",
-        });
+        // For duplicate quote approval, proceed to client details
+        if (selectedContact) {
+          setIsApprovalDialogOpen(false);
+          setApprovalCode("");
+          toast({
+            title: "Approval Granted",
+            description: "Proceeding to quote calculator.",
+          });
+          proceedToClientDetails(selectedContact);
+        } else {
+          // For cleanup override approval, lock fields 
+          setIsApproved(true);
+          setFieldsLocked(true);
+          setIsApprovalDialogOpen(false);
+          setApprovalCode("");
+          toast({
+            title: "Approval Granted",
+            description: "Setup fee fields are now locked. Use the unlock button to make changes.",
+          });
+        }
       } else {
         toast({
           title: "Invalid Code",
