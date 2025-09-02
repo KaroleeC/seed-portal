@@ -24,11 +24,8 @@ export function useHubSpotIntegration() {
     setLastVerifiedEmail(email);
     
     try {
-      // Check for existing quotes and verify HubSpot contact in parallel
-      const [hubspotData, existingQuotesData] = await Promise.all([
-        apiRequest('POST', '/api/hubspot/verify-contact', { email }),
-        apiRequest('POST', '/api/quotes/check-existing', { email })
-      ]);
+      // Verify HubSpot contact first - this is critical
+      const hubspotData = await apiRequest('POST', '/api/hubspot/verify-contact', { email });
 
       if (hubspotData.verified && hubspotData.contact) {
         setHubspotVerificationStatus('verified');
@@ -36,6 +33,15 @@ export function useHubSpotIntegration() {
       } else {
         setHubspotVerificationStatus('not-found');
         setHubspotContact(null);
+      }
+
+      // Try to check for existing quotes, but don't fail if this fails
+      let existingQuotesData = null;
+      try {
+        existingQuotesData = await apiRequest('POST', '/api/quotes/check-existing', { email });
+      } catch (quotesError) {
+        console.warn('Failed to check existing quotes, continuing without this data:', quotesError);
+        existingQuotesData = null;
       }
 
       return {
