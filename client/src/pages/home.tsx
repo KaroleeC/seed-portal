@@ -2456,6 +2456,29 @@ function HomePage() {
                                 </button>
                               ))}
                             </div>
+                            
+                            {/* Other Software Input */}
+                            {field.value === 'Other' && (
+                              <FormField
+                                control={form.control}
+                                name="otherBookkeepingSoftware"
+                                render={({ field: otherField }) => (
+                                  <div className="mt-4">
+                                    <FormLabel className="text-sm font-medium text-gray-700">Specify Other Software</FormLabel>
+                                    <FormControl>
+                                      <input
+                                        {...otherField}
+                                        type="text"
+                                        className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="Enter software name..."
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </div>
+                                )}
+                              />
+                            )}
+                            
                             <FormMessage />
                           </FormItem>
                         )}
@@ -2525,17 +2548,41 @@ function HomePage() {
                                   )}
                                 </div>
                               ) : (
-                                <div className="flex items-center space-x-3 mt-3">
-                                  <div className="p-3 border-2 border-blue-500 bg-blue-50 rounded-lg text-blue-700 font-medium">
-                                    {field.value}
+                                <div className="space-y-3 mt-3">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="p-3 border-2 border-blue-500 bg-blue-50 rounded-lg text-blue-700 font-medium">
+                                      {field.value}
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => field.onChange('')}
+                                      className="text-gray-500 hover:text-gray-700"
+                                    >
+                                      Change
+                                    </button>
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => field.onChange('')}
-                                    className="text-gray-500 hover:text-gray-700"
-                                  >
-                                    Change
-                                  </button>
+                                  
+                                  {/* Other Bank Input */}
+                                  {field.value === 'Other' && (
+                                    <FormField
+                                      control={form.control}
+                                      name="otherPrimaryBank"
+                                      render={({ field: otherField }) => (
+                                        <div>
+                                          <FormLabel className="text-sm font-medium text-gray-700">Specify Other Bank</FormLabel>
+                                          <FormControl>
+                                            <input
+                                              {...otherField}
+                                              type="text"
+                                              className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                              placeholder="Enter bank name..."
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </div>
+                                      )}
+                                    />
+                                  )}
                                 </div>
                               )}
                               <FormMessage />
@@ -2565,6 +2612,12 @@ function HomePage() {
                             setIsAdding(false);
                           };
                           
+                          const updateBankAtIndex = (index: number, value: string) => {
+                            const updated = [...currentBanks];
+                            updated[index] = value;
+                            field.onChange(updated);
+                          };
+                          
                           const removeBank = (index: number) => {
                             const updated = currentBanks.filter((_: any, i: number) => i !== index);
                             field.onChange(updated);
@@ -2575,19 +2628,43 @@ function HomePage() {
                               <FormLabel className="text-lg font-medium text-gray-800">Additional Banks or Credit Card Providers</FormLabel>
                               
                               {currentBanks.length > 0 && (
-                                <div className="space-y-2 mt-3">
+                                <div className="space-y-3 mt-3">
                                   {currentBanks.map((bank: string, index: number) => (
-                                    <div key={index} className="flex items-center space-x-3">
-                                      <div className="p-2 border-2 border-green-500 bg-green-50 rounded-lg text-green-700 font-medium">
-                                        {bank}
+                                    <div key={index} className="space-y-2">
+                                      <div className="flex items-center space-x-3">
+                                        <div className="p-2 border-2 border-green-500 bg-green-50 rounded-lg text-green-700 font-medium">
+                                          {bank}
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => removeBank(index)}
+                                          className="text-red-500 hover:text-red-700"
+                                        >
+                                          Remove
+                                        </button>
                                       </div>
-                                      <button
-                                        type="button"
-                                        onClick={() => removeBank(index)}
-                                        className="text-red-500 hover:text-red-700"
-                                      >
-                                        Remove
-                                      </button>
+                                      
+                                      {/* Other Bank Input */}
+                                      {bank === 'Other' && (
+                                        <FormField
+                                          control={form.control}
+                                          name={`otherAdditionalBank${index}`}
+                                          render={({ field: otherField }) => (
+                                            <div className="ml-6">
+                                              <FormLabel className="text-sm font-medium text-gray-700">Specify Other Bank/Provider</FormLabel>
+                                              <FormControl>
+                                                <input
+                                                  {...otherField}
+                                                  type="text"
+                                                  className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                                  placeholder="Enter bank or credit card provider name..."
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </div>
+                                          )}
+                                        />
+                                      )}
                                     </div>
                                   ))}
                                 </div>
@@ -2645,24 +2722,50 @@ function HomePage() {
                             field.onChange(updated);
                           };
                           
+                          const hasOtherMerchant = currentMerchants.includes('Other');
+                          
                           return (
                             <FormItem>
                               <FormLabel className="text-lg font-medium text-gray-800">Merchant Providers</FormLabel>
-                              <div className="grid grid-cols-4 gap-3 mt-3">
-                                {merchants.map((merchant) => (
-                                  <button
-                                    key={merchant}
-                                    type="button"
-                                    onClick={() => toggleMerchant(merchant)}
-                                    className={`p-3 border-2 rounded-lg text-center font-medium transition-all hover:shadow-md ${
-                                      currentMerchants.includes(merchant)
-                                        ? 'border-purple-500 bg-purple-50 text-purple-700'
-                                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
-                                    }`}
-                                  >
-                                    {merchant}
-                                  </button>
-                                ))}
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-4 gap-3 mt-3">
+                                  {merchants.map((merchant) => (
+                                    <button
+                                      key={merchant}
+                                      type="button"
+                                      onClick={() => toggleMerchant(merchant)}
+                                      className={`p-3 border-2 rounded-lg text-center font-medium transition-all hover:shadow-md ${
+                                        currentMerchants.includes(merchant)
+                                          ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                      }`}
+                                    >
+                                      {merchant}
+                                    </button>
+                                  ))}
+                                </div>
+                                
+                                {/* Other Merchant Input */}
+                                {hasOtherMerchant && (
+                                  <FormField
+                                    control={form.control}
+                                    name="otherMerchantProvider"
+                                    render={({ field: otherField }) => (
+                                      <div>
+                                        <FormLabel className="text-sm font-medium text-gray-700">Specify Other Merchant Provider</FormLabel>
+                                        <FormControl>
+                                          <input
+                                            {...otherField}
+                                            type="text"
+                                            className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                            placeholder="Enter merchant provider name..."
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </div>
+                                    )}
+                                  />
+                                )}
                               </div>
                               <FormMessage />
                             </FormItem>

@@ -42,6 +42,15 @@ export const quotes = pgTable("quotes", {
   // Bookkeeping-specific information fields (do not impact pricing)
   accountingBasis: text("accounting_basis"), // Cash, Accrual
   businessLoans: boolean("business_loans"),
+  // New SaaS-style service selection fields
+  currentBookkeepingSoftware: text("current_bookkeeping_software"),
+  otherBookkeepingSoftware: text("other_bookkeeping_software"),
+  primaryBank: text("primary_bank"),
+  otherPrimaryBank: text("other_primary_bank"),
+  additionalBanks: text("additional_banks").array(),
+  otherAdditionalBanks: text("other_additional_banks").array(),
+  merchantProviders: text("merchant_providers").array(),
+  otherMerchantProvider: text("other_merchant_provider"),
   // Service selections - new 5-card system (preserved for backwards compatibility)
   serviceBookkeeping: boolean("service_bookkeeping").default(false),
   serviceTaas: boolean("service_taas").default(false), 
