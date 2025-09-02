@@ -1046,6 +1046,52 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
     }
   });
 
+  // Request approval for duplicate quote creation  
+  app.post("/api/approval-request", async (req, res) => {
+    try {
+      const { type, email, contactName, requestedBy, reason, contactData } = req.body;
+      
+      if (!type || !email || !contactName || !requestedBy) {
+        res.status(400).json({ message: "Missing required fields" });
+        return;
+      }
+      
+      // Generate approval code using existing system (same as cleanup override)
+      const approvalCode = generateApprovalCode();
+      
+      // Set expiration to 1 hour from now
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 1);
+
+      // Store the approval code
+      await storage.createApprovalCode({
+        code: approvalCode,
+        contactEmail: email,
+        used: false,
+        expiresAt
+      });
+      
+      // Send Slack notification using existing system
+      try {
+        await sendSystemAlert(
+          type === 'duplicate_quote' ? 'Duplicate Quote Request' : 'Approval Request',
+          `Approval code: ${approvalCode}\nContact: ${contactName} (${email})\nRequested by: ${requestedBy}\nReason: ${reason}`,
+          'medium'
+        );
+      } catch (slackError) {
+        console.error('Failed to send Slack notification:', slackError);
+      }
+      
+      res.json({ 
+        message: "Approval request sent successfully",
+        success: true 
+      });
+    } catch (error) {
+      console.error('Approval request error:', error);
+      res.status(500).json({ message: "Failed to send approval request" });
+    }
+  });
+
   // Request approval code for cleanup override
   app.post("/api/approval/request", async (req, res) => {
     try {
