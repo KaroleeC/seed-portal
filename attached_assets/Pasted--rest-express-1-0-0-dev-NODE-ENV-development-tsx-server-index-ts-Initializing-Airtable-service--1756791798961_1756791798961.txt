@@ -1,0 +1,248 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+Initializing Airtable service with provided credentials
+[Redis] Module loading...
+[Storage] Initializing storage...
+[Storage] REDIS_URL: Set
+Using in-memory session storage (development only)
+[Storage] Checking for Redis availability...
+[Redis] About to create connections...
+[createRedisConnections] Starting...
+[createRedisConnections] REDIS_URL: Found
+[createRedisConnections] Creating Redis clients...
+[createRedisConnections] Waiting for Redis connections to be ready...
+[REDIS] Server initialization starting...
+[Server] ===== SERVER STARTUP BEGIN =====
+[Server] Applying session middleware...
+[Server] Initializing session configuration with enhanced Redis handling...
+[SessionConfig] Creating session configuration...
+[SessionConfig] Attempting Redis connection with REDIS_URL: SET
+[SessionConfig] Waiting for Redis to be ready...
+[SessionConfig] ✅ Redis ready event received
+[SessionConfig] ✅ Redis ping result: PONG
+[SessionConfig] ✅ Redis session store created successfully
+[SessionConfig] Store constructor name: RedisStore
+[SessionConfig] Store type check: true
+[SessionStore] 🔍 SET operation: { sid: 'test-sessi...', sessionKeys: [ 'test' ], hasPassport: false }
+[SessionStore] 🔍 SET result: { sid: 'test-sessi...', error: undefined, success: true }
+[SessionConfig] ✅ Redis store test successful
+[SessionStore] 🔍 DESTROY operation: { sid: 'test-sessi...' }
+[SessionConfig] Final session store type: RedisStore
+[SessionConfig] Production detection: {
+  NODE_ENV: 'development',
+  REPLIT_DEPLOYMENT: 'NOT SET',
+  REPL_ID: 'EXISTS',
+  REPL_SLUG: 'workspace',
+  PORT: '5000',
+  isProduction: false
+}
+[SessionConfig] 🍪 UNIVERSAL BROWSER-COMPATIBLE COOKIE CONFIG
+[SessionConfig] Using lax sameSite for maximum browser compatibility
+[SessionConfig] Session configuration completed: {
+  storeType: 'RedisStore',
+  isProduction: false,
+  cookieSecure: false,
+  cookieSameSite: 'lax',
+  sessionName: 'oseed.sid'
+}
+[Server] ✅ Session middleware applied successfully
+[Server] Session store type: RedisStore
+[Server] Production mode: DISABLED
+[Routes] ============= REGISTERROUTES CALLED =============
+[Routes] Function entry point reached
+[Routes] sessionRedis parameter: false
+[Routes] REDIS_URL available: true
+[Routes] 🚀 Starting direct session setup...
+[Routes] Session setup handled centrally, proceeding with routes...
+[Routes] ✅ Auth setup completed
+🔧 Initializing Google Admin API...
+🔑 Attempting service account authentication...
+📋 Parsing service account JSON...
+✅ Service account parsed successfully
+📧 Client email: seed-admin-api@seedportal.iam.gserviceaccount.com
+🏢 Project ID: seedportal
+[SessionStore] 🔍 DESTROY result: { sid: 'test-sessi...', error: undefined, success: true }
+Testing service account credentials...
+[2025-09-02 05:43:02.611 +0000] WARN: undefined - [Box] Box client not initialized - Box features will be disabled
+    env: "development"
+    message: "[Box] Box client not initialized - Box features will be disabled"
+[2025-09-02 05:43:02.648 +0000] INFO: undefined - Sentry error tracking initialized
+    env: "development"
+    message: "Sentry error tracking initialized"
+✅ Google Admin API initialized with service account (domain-wide delegation)
+Google Admin API configured successfully
+[Server] ✅ Routes registered successfully
+[2025-09-02 05:43:03.829 +0000] DEBUG: undefined - CRM Service initialized with HUBSPOT_ACCESS_TOKEN
+    env: "development"
+    message: "CRM Service initialized with HUBSPOT_ACCESS_TOKEN"
+[2025-09-02 05:43:03.829 +0000] DEBUG: undefined - CRM Client created successfully with HubSpot SDK
+    env: "development"
+    message: "CRM Client created successfully with HubSpot SDK"
+[2025-09-02 05:43:03.829 +0000] INFO: undefined - Initializing Box SDK with JWT authentication...
+    env: "development"
+    message: "Initializing Box SDK with JWT authentication..."
+[2025-09-02 05:43:03.831 +0000] INFO: undefined - ✅ Box SDK initialized successfully with JWT authentication
+    env: "development"
+    message: "✅ Box SDK initialized successfully with JWT authentication"
+Database connection established
+5:43:05 AM [express] serving on port 5000
+[Server] 🚀 HTTP server started successfully
+[Server] Starting background service initialization...
+[Server] Initializing Redis connections...
+🚀 Starting initial HubSpot commission sync...
+📊 Found 3 existing sales reps. Skipping initial sync.
+[SessionStore] 🔍 GET operation: { sid: '-0BSnGjxcB...' }
+[SessionStore] 🔍 GET result: {
+  sid: '-0BSnGjxcB...',
+  hasSession: true,
+  error: undefined,
+  sessionKeys: [ 'cookie', 'passport', 'csrfSecret' ]
+}
+🔄 [PASSPORT] Deserializing user ID: { id: 3, idType: 'number', timestamp: '2025-09-02T05:43:05.990Z' }
+🔵 safeDbQuery START - Operation: getUser
+🔵 safeDbQuery - Attempt 1/3 for getUser
+🟢 safeDbQuery SUCCESS - Operation: getUser { hasResult: true, resultType: 'object', isArray: false }
+🔄 [PASSPORT] ✅ Deserialized user successfully: {
+  email: 'jon@seedfinancial.io',
+  id: 3,
+  role: 'admin',
+  userKeys: [
+    'id',                 'email',
+    'password',           'firstName',
+    'lastName',           'hubspotUserId',
+    'firebaseUid',        'googleId',
+    'authProvider',       'role',
+    'defaultDashboard',   'roleAssignedBy',
+    'roleAssignedAt',     'profilePhoto',
+    'phoneNumber',        'address',
+    'city',               'state',
+    'zipCode',            'country',
+    'latitude',           'longitude',
+    'lastWeatherUpdate',  'lastHubspotSync',
+    'hubspotSyncEnabled', 'isImpersonating',
+    'originalAdminId',    'createdAt',
+    'updatedAt'
+  ]
+}
+Before CSRF - Request: { method: 'GET', url: '/', headers: 'No CSRF token' }
+After CSRF - Request passed CSRF check
+[SessionStore] 🔍 GET operation: { sid: '-0BSnGjxcB...' }
+[SessionStore] 🔍 GET operation: { sid: '-0BSnGjxcB...' }
+[SessionStore] 🔍 GET result: {
+  sid: '-0BSnGjxcB...',
+  hasSession: true,
+  error: undefined,
+  sessionKeys: [ 'cookie', 'passport', 'csrfSecret' ]
+}
+🔄 [PASSPORT] Deserializing user ID: { id: 3, idType: 'number', timestamp: '2025-09-02T05:43:06.666Z' }
+🔵 safeDbQuery START - Operation: getUser
+🔵 safeDbQuery - Attempt 1/3 for getUser
+[SessionStore] 🔍 GET result: {
+  sid: '-0BSnGjxcB...',
+  hasSession: true,
+  error: undefined,
+  sessionKeys: [ 'cookie', 'passport', 'csrfSecret' ]
+}
+🔄 [PASSPORT] Deserializing user ID: { id: 3, idType: 'number', timestamp: '2025-09-02T05:43:06.666Z' }
+🔵 safeDbQuery START - Operation: getUser
+🔵 safeDbQuery - Attempt 1/3 for getUser
+🟢 safeDbQuery SUCCESS - Operation: getUser { hasResult: true, resultType: 'object', isArray: false }
+🔄 [PASSPORT] ✅ Deserialized user successfully: {
+  email: 'jon@seedfinancial.io',
+  id: 3,
+  role: 'admin',
+  userKeys: [
+    'id',                 'email',
+    'password',           'firstName',
+    'lastName',           'hubspotUserId',
+    'firebaseUid',        'googleId',
+    'authProvider',       'role',
+    'defaultDashboard',   'roleAssignedBy',
+    'roleAssignedAt',     'profilePhoto',
+    'phoneNumber',        'address',
+    'city',               'state',
+    'zipCode',            'country',
+    'latitude',           'longitude',
+    'lastWeatherUpdate',  'lastHubspotSync',
+    'hubspotSyncEnabled', 'isImpersonating',
+    'originalAdminId',    'createdAt',
+    'updatedAt'
+  ]
+}
+Before CSRF - Request: { method: 'GET', url: '/@vite/client', headers: 'No CSRF token' }
+After CSRF - Request passed CSRF check
+[2025-09-02 05:43:06.635 +0000] INFO: undefined - GET / completed with 200
+    env: "development"
+    req: {
+      "id": 1,
+      "method": "GET",
+      "url": "/",
+      "query": {},
+      "params": {},
+      "headers": {
+        "host": "0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "accept-encoding": "identity, gzip, deflate, br, zstd",
+        "accept-language": "en-US,en;q=0.9",
+        "cookie": "[REDACTED]",
+        "dnt": "1",
+        "referer": "https://0eaa0906-91da-425d-a7fb-ee8d092a93fb-00-1yrbtgt9gt5c5.janeway.replit.dev/__replco/workspace_iframe.html?initialPath=%2F&id=%3Ariek%3A",
+        "sec-ch-ua": "\"Chromium\";v=\"139\", \"Not;A=Brand\";v=\"99\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"macOS\"",
+        "sec-fetch-dest": "iframe",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "same-origin",
+        "sec-fetch-storage-access": "active",
+        "upgrade-insecure-requests": "1",
+        "x-forwarded-for": "104.172.239.191, 10.83.9.89",
+        "x-forwarded-proto": "https",
+        "x-replit-user-bio": "",
+        "x-replit-user-id": "",
+        "x-replit-user-name": "",
+        "x-replit-user-profile-image": "",
+        "x-replit-user-roles": "",
+        "x-replit-user-teams": "",
+        "x-replit-user-url": ""
+      },
+      "remoteAddress": "172.31.83.226",
+      "remotePort": 40768
+    }
+    res: {
+      "statusCode": 200,
+      "headers": {
+        "content-security-policy": "default-src 'self';script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tiny.cloud https://accounts.google.com https://apis.google.com https://gstatic.com https://ssl.gstatic.com;style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tiny.cloud;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: https: blob:;connect-src 'self' https://api.openai.com https://api.hubapi.com https://api.airtable.com https://api.open-meteo.com https://nominatim.openstreetmap.org https://accounts.google.com https://www.googleapis.com https://gstatic.com https://ssl.gstatic.com;frame-src 'self' https://cdn.tiny.cloud https://accounts.google.com https://gstatic.com https://ssl.gstatic.com;child-src 'self' https://accounts.google.com;form-action 'self' https://accounts.google.com;base-uri 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests",
+        "cross-origin-opener-policy": "same-origin",
+        "cross-origin-resource-policy": "same-origin",
+        "origin-agent-cluster": "?1",
+        "referrer-policy": "no-referrer",
+        "strict-transport-security": "max-age=31536000; includeSubDomains",
+        "x-content-type-options": "nosniff",
+        "x-dns-prefetch-control": "off",
+        "x-download-options": "noopen",
+        "x-frame-options": "SAMEORIGIN",
+        "x-permitted-cross-domain-policies": "none",
+        "x-xss-protection": "0",
+        "access-control-allow-origin": "*",
+        "access-control-allow-credentials": "true",
+        "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS,PATCH",
+        "access-control-allow-headers": "Origin,X-Requested-With,Content-Type,Accept,Authorization,x-csrf-token",
+        "x-csrf-token": "r2kv80q2-yBWZ7eLO-1-MidUIP19OykheUFk",
+        "vary": "Origin",
+        "content-type": "text/html; charset=utf-8"
+      }
+    }
+    responseTime: 667
+    message: "GET / completed with 200"
+5:43:07 AM [vite] Pre-transform error: /home/runner/workspace/client/src/pages/home.tsx: Expected corresponding JSX closing tag for <CardContent>. (1960:10)
+
+  1958 |               )}
+  1959 |             </div>
+> 1960 |           </DialogContent>
+       |           ^
+  1961 |         </Dialog>
+  1962 |
+  1963 |         {/* Client Details Section - Show after contact selection or email trigger */}

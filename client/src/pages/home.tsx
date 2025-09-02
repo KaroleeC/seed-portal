@@ -1860,11 +1860,15 @@ function HomePage() {
           </Card>
         )}
 
-        {/* All Content and Dialogs */}
-        {showClientDetails && (
-          <Card className="max-w-6xl mx-auto mb-8 bg-white/95 backdrop-blur-sm shadow-xl border-0">
-            <Form {...form}>
-              <CardContent className="p-6">
+        {/* HubSpot Contact Search Modal */}
+        <Dialog open={showContactSearch} onOpenChange={setShowContactSearch}>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Search HubSpot Contacts</DialogTitle>
+              <DialogDescription>
+                Find an existing contact or create a new quote for "{triggerEmail}"
+              </DialogDescription>
+            </DialogHeader>
             
             <div className="space-y-4">
               <div className="relative">
