@@ -4010,6 +4010,62 @@ function HomePage() {
           </DialogContent>
         </Dialog>
 
+        {/* Approval Code Dialog */}
+        <Dialog open={isApprovalDialogOpen} onOpenChange={setIsApprovalDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center">Enter Approval Code</DialogTitle>
+              <DialogDescription className="text-center">
+                Enter the 4-digit approval code from Slack to proceed.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="approvalCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  Approval Code
+                </label>
+                <Input
+                  id="approvalCode"
+                  type="text"
+                  maxLength={4}
+                  placeholder="0000"
+                  value={approvalCode}
+                  onChange={(e) => {
+                    // Only allow numbers
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    setApprovalCode(value);
+                  }}
+                  className="text-center text-2xl tracking-widest font-mono"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && approvalCode.length === 4) {
+                      validateApprovalCode();
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsApprovalDialogOpen(false);
+                    setApprovalCode("");
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={validateApprovalCode}
+                  disabled={isValidatingCode || approvalCode.length !== 4}
+                  className="flex-1"
+                >
+                  {isValidatingCode ? "Validating..." : "Validate Code"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </div>
   );
