@@ -2413,178 +2413,11 @@ function HomePage() {
                 <Card className="bg-white shadow-lg border border-gray-200">
                   <CardContent className="p-6">
                     <Form {...form}>
-                    <div className="space-y-6 border-t pt-6">
-                      <h3 className="text-lg font-semibold text-gray-800">Tax Service Details</h3>
-                      
-                      {/* Entity Type */}
-                      <FormField
-                        control={form.control}
-                        name="entityType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Entity Type (Tax Classification)</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                                  <SelectValue placeholder="Select entity type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="C-Corp">C-Corp</SelectItem>
-                                <SelectItem value="S-Corp">S-Corp</SelectItem>
-                                <SelectItem value="Partnership">Partnership</SelectItem>
-                                <SelectItem value="Sole Proprietorship">Sole Proprietorship</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                      <TaasSection 
+                        control={form.control} 
+                        currentFormView="taas" 
+                        form={form}
                       />
-
-                      {/* Number of Entities */}
-                      <FormField
-                        control={form.control}
-                        name="numEntities"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Number of Entities</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                                  <SelectValue placeholder="Select number of entities" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="1">1</SelectItem>
-                                <SelectItem value="2">2</SelectItem>
-                                <SelectItem value="3">3</SelectItem>
-                                <SelectItem value="4">4</SelectItem>
-                                <SelectItem value="5">5+</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* States Filed */}
-                      <FormField
-                        control={form.control}
-                        name="statesFiled"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>States Filed</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                                  <SelectValue placeholder="Select number of states" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="1">1</SelectItem>
-                                <SelectItem value="2">2</SelectItem>
-                                <SelectItem value="3">3</SelectItem>
-                                <SelectItem value="4">4</SelectItem>
-                                <SelectItem value="5">5+</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* International Filing */}
-                      <FormField
-                        control={form.control}
-                        name="internationalFiling"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                className="data-[state=checked]:bg-[#e24c00] data-[state=checked]:border-[#e24c00]"
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>International Filing Required</FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Number of Business Owners */}
-                      <FormField
-                        control={form.control}
-                        name="numBusinessOwners"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Number of Business Owners</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                                  <SelectValue placeholder="Select number of owners" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="1">1</SelectItem>
-                                <SelectItem value="2">2</SelectItem>
-                                <SelectItem value="3">3</SelectItem>
-                                <SelectItem value="4">4</SelectItem>
-                                <SelectItem value="5">5+</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Include 1040s */}
-                      <FormField
-                        control={form.control}
-                        name="include1040s"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                className="data-[state=checked]:bg-[#e24c00] data-[state=checked]:border-[#e24c00]"
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Include Individual 1040 Returns</FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Prior Years Unfiled */}
-                      <FormField
-                        control={form.control}
-                        name="priorYearsUnfiled"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Prior Years Unfiled</FormLabel>
-                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
-                                  <SelectValue placeholder="Select number of years" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="0">0 - All current</SelectItem>
-                                <SelectItem value="1">1 year</SelectItem>
-                                <SelectItem value="2">2 years</SelectItem>
-                                <SelectItem value="3">3 years</SelectItem>
-                                <SelectItem value="4">4+ years</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
                     </Form>
                   </CardContent>
                 </Card>
@@ -2600,13 +2433,40 @@ function HomePage() {
                     <div className="space-y-6 border-t pt-6">
                       <h3 className="text-lg font-semibold text-gray-800">Bookkeeping Service Details</h3>
                       
-                      {/* Monthly Transactions */}
+                      {/* Monthly Revenue Range - CRITICAL for pricing */}
+                      <FormField
+                        control={form.control}
+                        name="monthlyRevenueRange"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Monthly Revenue Range <span className="text-red-500">*</span></FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                  <SelectValue placeholder="Select monthly revenue range" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="<$10K">&lt;$10K</SelectItem>
+                                <SelectItem value="10K-25K">$10K-$25K</SelectItem>
+                                <SelectItem value="25K-75K">$25K-$75K</SelectItem>
+                                <SelectItem value="75K-250K">$75K-$250K</SelectItem>
+                                <SelectItem value="250K-1M">$250K-$1M</SelectItem>
+                                <SelectItem value="1M+">$1M+</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Monthly Transactions - CRITICAL for pricing */}
                       <FormField
                         control={form.control}
                         name="monthlyTransactions"
                         render={({ field }) => (
                           <FormItem>
-                            <label className="text-gray-700 font-medium text-sm block mb-2">Monthly Transaction Volume <span className="text-red-500">*</span></label>
+                            <FormLabel>Monthly Transaction Volume <span className="text-red-500">*</span></FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
@@ -2627,13 +2487,46 @@ function HomePage() {
                         )}
                       />
 
-                      {/* Cleanup Months */}
+                      {/* Industry - CRITICAL for pricing */}
+                      <FormField
+                        control={form.control}
+                        name="industry"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Industry <span className="text-red-500">*</span></FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                                  <SelectValue placeholder="Select industry" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Software/SaaS">Software/SaaS</SelectItem>
+                                <SelectItem value="Professional Services">Professional Services</SelectItem>
+                                <SelectItem value="Consulting">Consulting</SelectItem>
+                                <SelectItem value="Healthcare/Medical">Healthcare/Medical</SelectItem>
+                                <SelectItem value="Real Estate">Real Estate</SelectItem>
+                                <SelectItem value="Property Management">Property Management</SelectItem>
+                                <SelectItem value="E-commerce/Retail">E-commerce/Retail</SelectItem>
+                                <SelectItem value="Restaurant/Food Service">Restaurant/Food Service</SelectItem>
+                                <SelectItem value="Hospitality">Hospitality</SelectItem>
+                                <SelectItem value="Construction/Trades">Construction/Trades</SelectItem>
+                                <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Cleanup Months - CRITICAL for pricing */}
                       <FormField
                         control={form.control}
                         name="cleanupMonths"
                         render={({ field }) => (
                           <FormItem>
-                            <label className="text-gray-700 font-medium text-sm block mb-2">Cleanup Months Required</label>
+                            <FormLabel>Cleanup Months Required</FormLabel>
                             <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
                               <FormControl>
                                 <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
@@ -2655,14 +2548,14 @@ function HomePage() {
                         )}
                       />
 
-                      {/* Cleanup Complexity */}
+                      {/* Cleanup Complexity - CRITICAL for pricing when cleanup > 0 */}
                       {form.watch('cleanupMonths') > 0 && (
                         <FormField
                           control={form.control}
                           name="cleanupComplexity"
                           render={({ field }) => (
                             <FormItem>
-                              <label className="text-gray-700 font-medium text-sm block mb-2">Cleanup Complexity <span className="text-red-500">*</span></label>
+                              <FormLabel>Cleanup Complexity <span className="text-red-500">*</span></FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500">
@@ -2670,9 +2563,9 @@ function HomePage() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="Basic">Basic - Simple transactions</SelectItem>
-                                  <SelectItem value="Standard">Standard - Moderate complexity</SelectItem>
-                                  <SelectItem value="Complex">Complex - High complexity</SelectItem>
+                                  <SelectItem value="0.75">Basic - Simple transactions</SelectItem>
+                                  <SelectItem value="1.0">Standard - Moderate complexity</SelectItem>
+                                  <SelectItem value="1.25">Complex - High complexity</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -2680,6 +2573,26 @@ function HomePage() {
                           )}
                         />
                       )}
+
+                      {/* QBO Subscription */}
+                      <FormField
+                        control={form.control}
+                        name="qboSubscription"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Add QuickBooks Online Subscription (+$60/month)</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
                     </div>
                     </Form>
                   </CardContent>
