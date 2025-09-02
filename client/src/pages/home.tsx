@@ -1542,12 +1542,38 @@ function HomePage() {
     setIsRequestingApproval(true);
     try {
       const formData = form.getValues();
-      const fees = calculateFees(formData);
       
-      // Include custom setup fee if "Other" reason is selected
-      const setupFee = formData.overrideReason === "Other" && formData.customSetupFee 
-        ? parseFloat(formData.customSetupFee) 
-        : fees.setupFee;
+      // Check if this is for duplicate quotes or cleanup override
+      if (existingQuotesForEmail.length > 0) {
+        // This is a duplicate quote approval request
+        const result = await apiRequest("/api/approval-request", {
+          method: "POST",
+          body: JSON.stringify({
+            type: 'duplicate_quote',
+            email: formData.contactEmail,
+            contactName: `${formData.contactFirstName} ${formData.contactLastName}`,
+            requestedBy: currentUser?.email || 'Unknown',
+            reason: 'Additional quote requested for existing contact',
+            contactData: formData
+          })
+        });
+        
+        if (result.success) {
+          setHasRequestedApproval(true);
+          setIsApprovalDialogOpen(true);
+          toast({
+            title: "Approval Requested",
+            description: "Request sent to admins. Check Slack for approval code.",
+          });
+        }
+      } else {
+        // This is a cleanup override approval request (existing logic)
+        const fees = calculateFees(formData);
+        
+        // Include custom setup fee if "Other" reason is selected
+        const setupFee = formData.overrideReason === "Other" && formData.customSetupFee 
+          ? parseFloat(formData.customSetupFee) 
+          : fees.setupFee;
       
       const result = await apiRequest("/api/approval/request", {
         method: "POST",
@@ -1570,15 +1596,16 @@ function HomePage() {
         })
       });
       
-      if (result) {
-        setHasRequestedApproval(true);
-        toast({
-          title: "Approval Requested",
-          description: "Check Slack for the approval code.",
-        });
-        setIsApprovalDialogOpen(true);
-      } else {
-        throw new Error('Failed to request approval');
+        if (result) {
+          setHasRequestedApproval(true);
+          toast({
+            title: "Approval Requested",
+            description: "Check Slack for the approval code.",
+          });
+          setIsApprovalDialogOpen(true);
+        } else {
+          throw new Error('Failed to request approval');
+        }
       }
     } catch (error) {
       console.error('Error requesting approval:', error);
@@ -1662,43 +1689,14 @@ function HomePage() {
   const onSubmit = async (data: FormData) => {
     console.log('onSubmit called with data:', data);
     
-    // Check if approval code is required and validate it
-    if (existingQuotesForEmail.length > 0) {
-      if (!data.approvalCode || data.approvalCode.length !== 4) {
-        toast({
-          title: "Approval Code Required",
-          description: "Please enter the 4-digit approval code received via Slack to create an additional quote for this contact.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      // Validate the approval code
-      try {
-        const result = await apiRequest("/api/approval/validate", {
-          method: "POST",
-          body: JSON.stringify({
-            code: data.approvalCode,
-            contactEmail: data.contactEmail
-          })
-        });
-        
-        if (!result.valid) {
-          toast({
-            title: "Invalid Approval Code",
-            description: result.message || "The approval code is invalid or has expired.",
-            variant: "destructive",
-          });
-          return;
-        }
-      } catch (error) {
-        toast({
-          title: "Validation Error",
-          description: "Failed to validate approval code. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
+    // Check if duplicate quote approval is required
+    if (existingQuotesForEmail.length > 0 && !isApproved) {
+      toast({
+        title: "Approval Required",
+        description: "You must get approval before creating additional quotes for this contact.",
+        variant: "destructive",
+      });
+      return;
     }
     
     if (!isCalculated) {
@@ -2824,6 +2822,22 @@ function HomePage() {
                               </div>
                             )}
                             
+                            {/* Approval Status for existing quotes */}
+                            {existingQuotesForEmail.length > 0 && !isApproved && (
+                              <div className="flex items-center gap-2 mt-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={hasRequestedApproval ? () => setIsApprovalDialogOpen(true) : requestApproval}
+                                  disabled={isRequestingApproval}
+                                  className="relative"
+                                >
+                                  {isRequestingApproval ? "Requesting..." : hasRequestedApproval ? "Enter Code" : "Request Approval for Additional Quote"}
+                                </Button>
+                              </div>
+                            )}
+                            
                             {/* Approval Status */}
                             {form.watch("cleanupOverride") && isApproved && (
                               <div className="text-sm text-green-600 font-medium ml-4">
@@ -2946,31 +2960,6 @@ function HomePage() {
                           />
                       )}
                       
-                      {/* Approval Code for Duplicate Quotes */}
-                      {existingQuotesForEmail.length > 0 && (
-                        <FormField
-                          control={form.control}
-                          name="approvalCode"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Approval Code</FormLabel>
-                              <FormDescription>
-                                Enter the approval code received via Slack to create an additional quote for this contact.
-                              </FormDescription>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter 4-digit approval code..."
-                                  className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent"
-                                  {...field}
-                                  maxLength={4}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
-
                       {/* QBO Subscription Checkbox */}
                       <FormField
                         control={form.control}

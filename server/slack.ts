@@ -52,7 +52,8 @@ export async function sendSlackMessage(
 export async function sendSystemAlert(
   title: string,
   description: string,
-  severity: 'low' | 'medium' | 'high' | 'critical' = 'medium'
+  severity: 'low' | 'medium' | 'high' | 'critical' = 'medium',
+  channel?: string
 ): Promise<void> {
   const severityColors = {
     low: '#36C5F0',      // Blue
@@ -70,6 +71,7 @@ export async function sendSystemAlert(
 
   try {
     await sendSlackMessage({
+      channel: channel,  // Use custom channel if provided
       text: `${severityEmojis[severity]} ${title}`,
       attachments: [
         {
