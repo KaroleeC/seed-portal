@@ -541,10 +541,9 @@ function calculateTaaSFees(data: Partial<FormData>, existingBookkeepingFees?: { 
 
 // Combined calculation function for quotes that include both services
 function calculateCombinedFees(data: Partial<FormData>) {
-  // Use the new service selection fields (serviceBookkeeping, serviceTaas)
-  // Also check legacy fields for backward compatibility
-  const includesBookkeeping = data.serviceBookkeeping || data.includesBookkeeping !== false; // Default to true for legacy
-  const includesTaas = data.serviceTaas || data.includesTaas === true;
+  // Use the new service selection fields with proper fallback logic
+  const includesBookkeeping = data.serviceMonthlyBookkeeping || data.serviceCleanupProjects || data.serviceBookkeeping || data.includesBookkeeping === true;
+  const includesTaas = data.serviceTaasMonthly || data.servicePriorYearFilings || data.serviceTaas || data.includesTaas === true;
   
   let bookkeepingFees: any = { monthlyFee: 0, setupFee: 0, breakdown: undefined };
   let taasFees: any = { monthlyFee: 0, setupFee: 0, breakdown: undefined };
