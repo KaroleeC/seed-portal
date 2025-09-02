@@ -1072,7 +1072,7 @@ function HomePage() {
           type: 'duplicate_quote',
           email: contact.properties.email,
           contactName: `${contact.properties.firstname || ''} ${contact.properties.lastname || ''}`.trim() || contact.properties.email,
-          requestedBy: currentUser?.email,
+          requestedBy: user?.email,
           reason: `Creating additional quote for existing contact: ${contact.properties.email}`,
           contactData: contact
         })
@@ -1564,7 +1564,7 @@ function HomePage() {
             type: 'duplicate_quote',
             email: formData.contactEmail,
             contactName: `${formData.contactFirstName} ${formData.contactLastName}`,
-            requestedBy: currentUser?.email || 'Unknown',
+            requestedBy: user?.email || 'Unknown',
             reason: 'Additional quote requested for existing contact',
             contactData: formData
           })
