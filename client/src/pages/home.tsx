@@ -2338,7 +2338,8 @@ function HomePage() {
 
 
 
-        {/* Quote builder section */}
+        {/* Quote builder section - Only show after client details */}
+        {showClientDetails && (
         <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
           <style>{`.quote-layout { display: flex; flex-direction: column; } @media (min-width: 1024px) { .quote-layout { flex-direction: row; } }`}</style>
           {/* Quote Builder Form Card */}
@@ -2549,7 +2550,10 @@ function HomePage() {
             </Card>
           </div>
         </div>
+        )}
 
+        {showClientDetails && (
+        <>
         {/* Quote builder section */}
         <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
           <style>{`.quote-layout { display: flex; flex-direction: column; } @media (min-width: 1024px) { .quote-layout { flex-direction: row; } }`}</style>
@@ -4095,6 +4099,8 @@ function HomePage() {
             </div>
           </DialogContent>
         </Dialog>
+        </>
+        )}
       </div>
     </>
   );
