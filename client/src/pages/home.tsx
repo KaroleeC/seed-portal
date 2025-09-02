@@ -2625,10 +2625,10 @@ function HomePage() {
                           
                           return (
                             <FormItem>
-                              <FormLabel className="text-lg font-medium text-gray-800 mb-4">Additional Banks or Credit Card Providers</FormLabel>
+                              <FormLabel className="text-lg font-medium text-gray-800">Additional Banks or Credit Card Providers</FormLabel>
                               
                               {currentBanks.length > 0 && (
-                                <div className="space-y-3 mt-3">
+                                <div className="space-y-3 mt-4">
                                   {currentBanks.map((bank: string, index: number) => (
                                     <div key={index} className="space-y-2">
                                       <div className="flex items-center space-x-3">
@@ -2670,12 +2670,13 @@ function HomePage() {
                                 </div>
                               )}
                               
-                              {!isAdding ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setIsAdding(true)}
-                                  className="mt-8 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-800 font-medium"
-                                >
+                              <div className="mt-6">
+                                {!isAdding ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsAdding(true)}
+                                    className="px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-800 font-medium"
+                                  >
                                   + Add Another Bank or Credit Card Provider
                                 </button>
                               ) : (
@@ -2699,8 +2700,9 @@ function HomePage() {
                                   >
                                     Cancel
                                   </button>
-                                </div>
-                              )}
+                                  </div>
+                                )}
+                              </div>
                               <FormMessage />
                             </FormItem>
                           );
