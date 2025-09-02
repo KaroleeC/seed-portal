@@ -28,10 +28,9 @@ export function PriorYearFilingsSection({ control, form }: PriorYearFilingsSecti
   }
 
   return (
-    <div className="space-y-8 border-t pt-6">
+    <div className="space-y-8">
       <div>
         <h3 className="text-xl font-semibold text-gray-800">Prior Year Filings Details</h3>
-        <hr className="border-gray-200 mt-3" />
       </div>
       
       {/* Prior Years Selection - Tile Selection */}
@@ -69,19 +68,6 @@ export function PriorYearFilingsSection({ control, form }: PriorYearFilingsSecti
                   })}
                 </div>
               </FormControl>
-              
-              {/* Summary */}
-              {selectedYears.length > 0 && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="text-sm font-medium text-blue-800">
-                    Selected: {selectedYears.length} year{selectedYears.length !== 1 ? 's' : ''} 
-                    ({selectedYears.sort((a, b) => b - a).join(', ')})
-                  </div>
-                  <div className="text-sm text-blue-600 mt-1">
-                    Total cost: ${(selectedYears.length * 1500).toLocaleString()}
-                  </div>
-                </div>
-              )}
             </FormItem>
           )}
         />

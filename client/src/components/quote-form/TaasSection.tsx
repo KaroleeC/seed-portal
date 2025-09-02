@@ -15,10 +15,20 @@ interface TaasSectionProps {
 export function TaasSection({ control, currentFormView, form }: TaasSectionProps) {
   if (currentFormView !== 'taas') return null;
 
+  // Auto-default bookkeeping quality to 'clean' when only Prior Year Filings is selected
+  useEffect(() => {
+    const isPriorYearFilingsOnly = form.watch('servicePriorYearFilings') && !form.watch('serviceTaasMonthly');
+    if (isPriorYearFilingsOnly && !form.watch('bookkeepingQuality')) {
+      form.setValue('bookkeepingQuality', 'Clean / New');
+    }
+  }, [form.watch('servicePriorYearFilings'), form.watch('serviceTaasMonthly')]);
+
   // Watch values for conditional logic
   const numEntities = useWatch({ control, name: 'numEntities' });
   const statesFiled = useWatch({ control, name: 'statesFiled' });
   const includesBookkeeping = useWatch({ control, name: 'serviceMonthlyBookkeeping' });
+  const serviceTaasMonthly = useWatch({ control, name: 'serviceTaasMonthly' });
+  const servicePriorYearFilings = useWatch({ control, name: 'servicePriorYearFilings' });
   
   // State for custom inputs
   const [showCustomEntities, setShowCustomEntities] = useState(false);
@@ -233,8 +243,8 @@ export function TaasSection({ control, currentFormView, form }: TaasSectionProps
         )}
       />
 
-      {/* Current Bookkeeping Quality - Conditional on NOT having bookkeeping service */}
-      {!includesBookkeeping && (
+      {/* Current Bookkeeping Quality - Only show for TaaS Monthly (not Prior Year Filings only) */}
+      {!includesBookkeeping && serviceTaasMonthly && (
         <FormField
           control={control}
           name="bookkeepingQuality"
