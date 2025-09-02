@@ -3473,7 +3473,6 @@ function HomePage() {
             </CardContent>
           </Card>
         </div>
-        )}
 
         {/* Redesigned Modern Pricing Summary Card */}
         {showClientDetails && (
