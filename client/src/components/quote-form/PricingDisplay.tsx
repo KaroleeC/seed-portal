@@ -79,11 +79,8 @@ export function PricingDisplay({
           </div>
         </div>
 
-        {/* Service breakdown - show if multiple services are included */}
-        {((feeCalculation.includesBookkeeping && feeCalculation.includesTaas) || 
-          (feeCalculation.includesBookkeeping && feeCalculation.includesAP) || 
-          (feeCalculation.includesTaas && feeCalculation.includesAP) || 
-          (feeCalculation.includesBookkeeping && feeCalculation.includesTaas && feeCalculation.includesAP)) && (
+        {/* Service breakdown - show if any services are included */}
+        {(feeCalculation.includesBookkeeping || feeCalculation.includesTaas || feeCalculation.includesAP) && (
           <>
             <Button
               type="button"
