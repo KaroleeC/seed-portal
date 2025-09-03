@@ -2279,7 +2279,7 @@ function HomePage() {
                 serviceTaasMonthly: form.watch('serviceTaasMonthly') || false,
                 servicePriorYearFilings: form.watch('servicePriorYearFilings') || false,
                 serviceCfoAdvisory: form.watch('serviceCfoAdvisory') || false,
-                servicePayroll: form.watch('servicePayroll') || false,
+                servicePayrollService: form.watch('servicePayrollService') || false,
                 serviceApLite: form.watch('serviceApLite') || false,
                 serviceArLite: form.watch('serviceArLite') || false,
                 serviceApAdvanced: form.watch('serviceApAdvanced') || false,
@@ -2298,6 +2298,24 @@ function HomePage() {
                 Object.entries(updatedServices).forEach(([key, value]) => {
                   form.setValue(key as any, value);
                 });
+                
+                // Clear related form fields when services are turned off
+                if (!updatedServices.servicePayrollService) {
+                  form.setValue('payrollEmployeeCount', 1);
+                  form.setValue('payrollStateCount', 1);
+                }
+                if (!updatedServices.serviceCfoAdvisory) {
+                  form.setValue('cfoAdvisoryType', undefined);
+                  form.setValue('cfoAdvisoryBundleHours', undefined);
+                }
+                if (!updatedServices.servicePriorYearFilings) {
+                  form.setValue('priorYearFilings', []);
+                }
+                if (!updatedServices.serviceCleanupProjects) {
+                  form.setValue('cleanupMonths', 0);
+                  form.setValue('cleanupComplexity', undefined);
+                  form.setValue('cleanupOverride', false);
+                }
                 
                 // Update legacy fields for backward compatibility - only set for monthly services, not project-only
                 const hasMonthlyBookkeeping = updatedServices.serviceMonthlyBookkeeping;
@@ -2320,7 +2338,7 @@ function HomePage() {
                     serviceTaasMonthly: 'taas',
                     servicePriorYearFilings: 'taas',
                     serviceCfoAdvisory: 'cfoadvisory',
-                    servicePayroll: 'payroll',
+                    servicePayrollService: 'payroll',
                     serviceApLite: 'aparlite',
                     serviceArLite: 'aparlite',
                     serviceApAdvanced: 'aparlite',
@@ -2902,7 +2920,7 @@ function HomePage() {
                   
                   <div className="space-y-6">
                     {/* Main Total Display - Clickable for detailed breakdown */}
-                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0) || (form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0) || (form.watch('serviceCfoAdvisory') && feeCalculation.cfoAdvisoryFee > 0)) && (
+                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0) || (form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0) || (form.watch('serviceCfoAdvisory') && feeCalculation.cfoAdvisoryFee > 0) || form.watch('servicePayrollService')) && (
                       <>
                         <div 
                           className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:from-blue-100 hover:to-indigo-200"
@@ -3278,7 +3296,7 @@ function HomePage() {
                               })()}
 
                               {/* Payroll Breakdown */}
-                              {form.watch('servicePayrollService') && feeCalculation.payrollFee > 0 && (() => {
+                              {form.watch('servicePayrollService') && (() => {
                                 const employeeCount = form.watch('payrollEmployeeCount') || 1;
                                 const stateCount = form.watch('payrollStateCount') || 1;
                                 
@@ -3477,7 +3495,7 @@ function HomePage() {
                       )}
 
                       {/* Payroll Service Card */}
-                      {form.watch('servicePayrollService') && feeCalculation.payrollFee > 0 && (
+                      {form.watch('servicePayrollService') && (
                         <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-xl p-4 shadow-sm">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -3522,7 +3540,7 @@ function HomePage() {
                     </div>
 
                     {/* No Services Selected */}
-                    {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas && !form.watch('serviceCfoAdvisory') && feeCalculation.cleanupProjectFee === 0 && feeCalculation.priorYearFilingsFee === 0) && (
+                    {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas && !form.watch('serviceCfoAdvisory') && !form.watch('servicePayrollService') && feeCalculation.cleanupProjectFee === 0 && feeCalculation.priorYearFilingsFee === 0) && (
                       <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
                         <div className="text-gray-500 mb-2">
                           <Calculator className="h-8 w-8 mx-auto mb-2 opacity-50" />
