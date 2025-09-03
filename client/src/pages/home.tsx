@@ -2286,14 +2286,14 @@ function HomePage() {
                   form.setValue(key as any, value);
                 });
                 
-                // Also update legacy fields for backward compatibility with pricing logic
-                const hasBookkeeping = updatedServices.serviceMonthlyBookkeeping || updatedServices.serviceCleanupProjects;
-                const hasTaas = updatedServices.serviceTaasMonthly || updatedServices.servicePriorYearFilings;
+                // Update legacy fields for backward compatibility - only set for monthly services, not project-only
+                const hasMonthlyBookkeeping = updatedServices.serviceMonthlyBookkeeping;
+                const hasMonthlyTaas = updatedServices.serviceTaasMonthly;
                 
-                form.setValue('serviceBookkeeping', hasBookkeeping);
-                form.setValue('serviceTaas', hasTaas);
-                form.setValue('includesBookkeeping', hasBookkeeping);
-                form.setValue('includesTaas', hasTaas);
+                form.setValue('serviceBookkeeping', hasMonthlyBookkeeping);
+                form.setValue('serviceTaas', hasMonthlyTaas);
+                form.setValue('includesBookkeeping', hasMonthlyBookkeeping);
+                form.setValue('includesTaas', hasMonthlyTaas);
                 
                 form.trigger();
                 
@@ -2318,10 +2318,10 @@ function HomePage() {
                   setCurrentFormView('placeholder');
                 }
               }}
-              // Legacy compatibility for existing fee calculation logic
+              // Legacy compatibility for existing fee calculation logic - only monthly services count
               feeCalculation={{
-                includesBookkeeping: form.watch('serviceMonthlyBookkeeping') || form.watch('serviceCleanupProjects') || false,
-                includesTaas: form.watch('serviceTaasMonthly') || form.watch('servicePriorYearFilings') || false,
+                includesBookkeeping: form.watch('serviceMonthlyBookkeeping') || false,
+                includesTaas: form.watch('serviceTaasMonthly') || false,
               }}
               onLegacyServiceChange={(bookkeeping: boolean, taas: boolean) => {
                 // Update legacy fields for backward compatibility
