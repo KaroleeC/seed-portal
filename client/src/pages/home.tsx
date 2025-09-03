@@ -3162,6 +3162,64 @@ function HomePage() {
                                 );
                               })()}
 
+                              {/* CFO Advisory Breakdown */}
+                              {form.watch('serviceCfoAdvisory') && feeCalculation.cfoAdvisoryFee > 0 && (() => {
+                                const advisoryType = form.watch('cfoAdvisoryType');
+                                const bundleHours = form.watch('cfoAdvisoryBundleHours');
+                                
+                                return (
+                                  <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                                    <h5 className="font-medium text-indigo-800 mb-2">CFO Advisory Breakdown</h5>
+                                    <div className="space-y-1 text-sm">
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Service type:</span>
+                                        <span className="font-medium">
+                                          {advisoryType === 'pay_as_you_go' ? 'Pay-as-you-Go' : 'Prepaid Bundle'}
+                                        </span>
+                                      </div>
+                                      {advisoryType === 'pay_as_you_go' ? (
+                                        <>
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Hourly rate:</span>
+                                            <span className="font-medium">$300/hour</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Required deposit:</span>
+                                            <span className="font-medium">8 hours</span>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Bundle size:</span>
+                                            <span className="font-medium">{bundleHours} hours</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Rate per hour:</span>
+                                            <span className="font-medium">
+                                              ${bundleHours === 8 ? '295' : bundleHours === 16 ? '290' : bundleHours === 32 ? '285' : '280'}/hour
+                                            </span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Valid for:</span>
+                                            <span className="font-medium">6 months</span>
+                                          </div>
+                                        </>
+                                      )}
+                                      
+                                      <div className="border-t border-indigo-200 pt-2 mt-2">
+                                        <div className="flex justify-between font-semibold">
+                                          <span className="text-indigo-800">
+                                            {advisoryType === 'pay_as_you_go' ? 'Deposit Amount:' : 'Total Cost:'}
+                                          </span>
+                                          <span className="text-indigo-700">${feeCalculation.cfoAdvisoryFee.toLocaleString()}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
                               {/* Service Tier Breakdown */}
                               {form.watch('serviceTier') && form.watch('serviceTier') !== 'Automated' && (
                                 <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
