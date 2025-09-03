@@ -32,6 +32,7 @@ export interface PricingData {
 export interface FeeResult {
   monthlyFee: number;
   setupFee: number;
+  breakdown?: any; // Optional breakdown for UI display
 }
 
 export interface CombinedFeeResult {
@@ -108,8 +109,14 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
   const txFee = PRICING_CONSTANTS.txSurcharge[data.monthlyTransactions as keyof typeof PRICING_CONSTANTS.txSurcharge] || 0;
   const industryData = PRICING_CONSTANTS.industryMultipliers[data.industry as keyof typeof PRICING_CONSTANTS.industryMultipliers] || { monthly: 1, cleanup: 1 };
   
+  // Intermediate calculations for breakdown
+  const baseMonthlyFee = PRICING_CONSTANTS.baseMonthlyFee;
+  const afterRevenue = Math.round(baseMonthlyFee * revenueMultiplier);
+  const afterTransactions = afterRevenue + txFee;
+  const cleanupBeforeIndustry = Math.round(afterTransactions * industryData.monthly);
+  
   // Dynamic calculation: base fee * revenue multiplier + transaction surcharge, then apply industry multiplier
-  const monthlyFeeBeforeQBO = Math.round((PRICING_CONSTANTS.baseMonthlyFee * revenueMultiplier + txFee) * industryData.monthly);
+  const monthlyFeeBeforeQBO = cleanupBeforeIndustry;
   
   // Add QBO Subscription fee if selected
   let monthlyFee = monthlyFeeBeforeQBO;
@@ -121,7 +128,22 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
   const currentMonth = new Date().getMonth() + 1; // Get current month (1-12)
   const setupFee = Math.round(monthlyFeeBeforeQBO * currentMonth * 0.25);
   
-  return { monthlyFee, setupFee };
+  // Create breakdown object for UI display
+  const breakdown = {
+    baseMonthlyFee,
+    revenueMultiplier,
+    afterRevenue,
+    txFee,
+    afterTransactions,
+    industryMultiplier: industryData.monthly,
+    cleanupBeforeIndustry,
+    monthlyFeeBeforeQBO,
+    qboFee: data.qboSubscription ? 60 : 0,
+    currentMonth,
+    setupFeeBeforeDiscount: setupFee
+  };
+  
+  return { monthlyFee, setupFee, breakdown };
 }
 
 export function calculateTaaSFees(data: PricingData): FeeResult {
@@ -195,8 +217,10 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
                      avgMonthlyRevenue <= 250000 ? 1.6 :
                      avgMonthlyRevenue <= 1000000 ? 1.8 : 2.0;
 
-  // Calculate raw fee
-  const rawFee = (base + entityUpcharge + stateUpcharge + intlUpcharge + ownerUpcharge + bookUpcharge + personal1040) * industryMult * revenueMult;
+  // Intermediate calculations for breakdown
+  const beforeMultipliers = base + entityUpcharge + stateUpcharge + intlUpcharge + ownerUpcharge + bookUpcharge + personal1040;
+  const afterIndustryMult = beforeMultipliers * industryMult;
+  const rawFee = afterIndustryMult * revenueMult;
 
   // No discount applied here - will be handled in calculateCombinedFees for bundle scenarios
   const monthlyFee = roundToNearest25(rawFee);
@@ -204,7 +228,24 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
   // Setup fee: prior years unfiled * $2100 per year
   const setupFee = (data.priorYearsUnfiled || 0) * 2100;
 
-  return { monthlyFee, setupFee };
+  // Create breakdown object for UI display
+  const breakdown = {
+    base,
+    entityUpcharge,
+    stateUpcharge,
+    intlUpcharge,
+    ownerUpcharge,
+    bookUpcharge,
+    personal1040,
+    beforeMultipliers,
+    industryMult,
+    afterIndustryMult: Math.round(afterIndustryMult),
+    revenueMult,
+    rawFee: Math.round(rawFee),
+    monthlyFee
+  };
+
+  return { monthlyFee, setupFee, breakdown };
 }
 
 // Calculate Bookkeeping Cleanup Project fees ($100 per month selected)
