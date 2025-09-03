@@ -66,6 +66,10 @@ export const quotes = pgTable("quotes", {
   serviceTaasMonthly: boolean("service_taas_monthly").default(false),
   servicePriorYearFilings: boolean("service_prior_year_filings").default(false),
   serviceCfoAdvisory: boolean("service_cfo_advisory").default(false),
+  // CFO Advisory specific fields
+  cfoAdvisoryType: text("cfo_advisory_type"), // 'pay_as_you_go' or 'bundled'
+  cfoAdvisoryBundleHours: integer("cfo_advisory_bundle_hours"), // 8, 16, 32, 40 hours
+  cfoAdvisoryHubspotProductId: text("cfo_advisory_hubspot_product_id"), // HubSpot product record ID
   // Client address information for MSA generation
   clientStreetAddress: text("client_street_address"),
   clientCity: text("client_city"),

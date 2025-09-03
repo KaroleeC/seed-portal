@@ -42,6 +42,8 @@ export interface CombinedFeeResult {
   includesTaas: boolean;
   cleanupProjectFee: number;
   priorYearFilingsFee: number;
+  cfoAdvisoryFee: number;
+  cfoAdvisoryHubspotProductId: string | null;
 }
 
 // Constants
@@ -211,6 +213,38 @@ export function calculateCleanupProjectFees(data: PricingData): { cleanupProject
   return { cleanupProjectFee };
 }
 
+// Calculate CFO Advisory fees
+export function calculateCfoAdvisoryFees(data: PricingData): { cfoAdvisoryFee: number; hubspotProductId: string | null } {
+  const cfoAdvisoryType = (data as any).cfoAdvisoryType;
+  const bundleHours = (data as any).cfoAdvisoryBundleHours;
+  
+  if (cfoAdvisoryType === 'pay_as_you_go') {
+    // Pay-as-you-Go: 8-hour deposit at $300/hr = $2,400
+    return { 
+      cfoAdvisoryFee: 2400, // 8 hours × $300/hr
+      hubspotProductId: '28945017957'
+    };
+  } else if (cfoAdvisoryType === 'bundled' && bundleHours) {
+    // Bundled prepaid hours at discounted rates
+    const bundleOptions = {
+      8: { rate: 295, total: 2360, hubspotId: '28928008785' },  // $295/hr
+      16: { rate: 290, total: 4640, hubspotId: '28945017959' }, // $290/hr
+      32: { rate: 285, total: 9120, hubspotId: '28960863883' }, // $285/hr
+      40: { rate: 280, total: 11200, hubspotId: '28960863884' } // $280/hr
+    };
+    
+    const bundle = bundleOptions[bundleHours as keyof typeof bundleOptions];
+    if (bundle) {
+      return {
+        cfoAdvisoryFee: bundle.total,
+        hubspotProductId: bundle.hubspotId
+      };
+    }
+  }
+  
+  return { cfoAdvisoryFee: 0, hubspotProductId: null };
+}
+
 export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   // Determine which services are included - separate monthly vs project-only services
   const includesMonthlyBookkeeping = Boolean(
@@ -265,9 +299,13 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   const priorYearFilings = (data as any).priorYearFilings || [];
   const priorYearFilingsFee = priorYearFilings.length * 1500;
 
+  // Calculate CFO Advisory fees
+  const includesCfoAdvisory = Boolean((data as any).serviceCfoAdvisory);
+  const { cfoAdvisoryFee, hubspotProductId } = includesCfoAdvisory ? calculateCfoAdvisoryFees(data) : { cfoAdvisoryFee: 0, hubspotProductId: null };
+
   // Combined totals
   const combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee;
-  const combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee;
+  const combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee;
 
   return {
     bookkeeping: bookkeepingFees,
@@ -279,6 +317,8 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     includesBookkeeping,
     includesTaas,
     cleanupProjectFee,
-    priorYearFilingsFee
+    priorYearFilingsFee,
+    cfoAdvisoryFee,
+    cfoAdvisoryHubspotProductId: hubspotProductId
   };
 }

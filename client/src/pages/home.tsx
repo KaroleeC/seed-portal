@@ -34,6 +34,7 @@ import { ServiceCards } from "@/components/quote-form/ServiceCards";
 import { TaasSection } from "@/components/quote-form/TaasSection";
 import { PriorYearFilingsSection } from "@/components/quote-form/PriorYearFilingsSection";
 import { BookkeepingCleanupSection } from "@/components/quote-form/BookkeepingCleanupSection";
+import { CfoAdvisorySection } from "@/components/quote-form/CfoAdvisorySection";
 
 // Get current month number (1-12)
 const currentMonth = new Date().getMonth() + 1;
@@ -1190,7 +1191,7 @@ function HomePage() {
   const monthlyFee = feeCalculation.combined.monthlyFee;
   const setupFee = feeCalculation.combined.setupFee;
   
-  const isCalculated = monthlyFee > 0 || feeCalculation.priorYearFilingsFee > 0 || feeCalculation.cleanupProjectFee > 0;
+  const isCalculated = monthlyFee > 0 || feeCalculation.priorYearFilingsFee > 0 || feeCalculation.cleanupProjectFee > 0 || feeCalculation.cfoAdvisoryFee > 0;
 
   // Helper functions for navigation (defined after feeCalculation)
   const getActiveServices = () => {
@@ -2276,9 +2277,20 @@ function HomePage() {
                 serviceCleanupProjects: form.watch('serviceCleanupProjects') || false,
                 serviceTaasMonthly: form.watch('serviceTaasMonthly') || false,
                 servicePriorYearFilings: form.watch('servicePriorYearFilings') || false,
+                serviceCfoAdvisory: form.watch('serviceCfoAdvisory') || false,
                 servicePayroll: form.watch('servicePayroll') || false,
-                serviceApArLite: form.watch('serviceApArLite') || false,
-                serviceFpaLite: form.watch('serviceFpaLite') || false,
+                serviceApLite: form.watch('serviceApLite') || false,
+                serviceArLite: form.watch('serviceArLite') || false,
+                serviceApAdvanced: form.watch('serviceApAdvanced') || false,
+                serviceArAdvanced: form.watch('serviceArAdvanced') || false,
+                serviceFpaBuild: form.watch('serviceFpaBuild') || false,
+                serviceFpaSupport: form.watch('serviceFpaSupport') || false,
+                serviceAgentOfService: form.watch('serviceAgentOfService') || false,
+                serviceNexusStudy: form.watch('serviceNexusStudy') || false,
+                serviceEntityOptimization: form.watch('serviceEntityOptimization') || false,
+                serviceCostSegregation: form.watch('serviceCostSegregation') || false,
+                serviceRdCredit: form.watch('serviceRdCredit') || false,
+                serviceRealEstateAdvisory: form.watch('serviceRealEstateAdvisory') || false,
               }}
               onServiceChange={(updatedServices) => {
                 // Set the new service fields
@@ -2306,9 +2318,14 @@ function HomePage() {
                     serviceCleanupProjects: 'bookkeeping',
                     serviceTaasMonthly: 'taas',
                     servicePriorYearFilings: 'taas',
+                    serviceCfoAdvisory: 'cfoadvisory',
                     servicePayroll: 'payroll',
-                    serviceApArLite: 'aparlite',
-                    serviceFpaLite: 'fpalite'
+                    serviceApLite: 'aparlite',
+                    serviceArLite: 'aparlite',
+                    serviceApAdvanced: 'aparlite',
+                    serviceArAdvanced: 'aparlite',
+                    serviceFpaBuild: 'fpalite',
+                    serviceFpaSupport: 'fpalite'
                   };
                   const firstSelectedView = serviceMap[selectedServiceKeys[0]];
                   if (firstSelectedView) {
@@ -2824,6 +2841,22 @@ function HomePage() {
                 </Card>
               </div>
             )}
+
+            {/* Show detailed CFO Advisory configuration when CFO Advisory service is selected */}
+            {form.watch('serviceCfoAdvisory') && (
+              <div className="max-w-6xl mx-auto mt-8">
+                <Card className="bg-white shadow-lg border border-gray-200">
+                  <CardContent className="p-6">
+                    <Form {...form}>
+                      <CfoAdvisorySection 
+                        control={form.control} 
+                        form={form}
+                      />
+                    </Form>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         </div>
         )}
@@ -2848,7 +2881,7 @@ function HomePage() {
                   
                   <div className="space-y-6">
                     {/* Main Total Display - Clickable for detailed breakdown */}
-                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0) || (form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0)) && (
+                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0) || (form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0) || (form.watch('serviceCfoAdvisory') && feeCalculation.cfoAdvisoryFee > 0)) && (
                       <>
                         <div 
                           className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:from-blue-100 hover:to-indigo-200"
@@ -2880,8 +2913,8 @@ function HomePage() {
                               <div className="text-lg text-blue-700">
                                 <span className="font-semibold">${feeCalculation.combined.setupFee.toLocaleString()}</span>
                                 <span className="text-sm">
-                                  {form.watch('servicePriorYearFilings') && !form.watch('serviceTaasMonthly') && !form.watch('serviceMonthlyBookkeeping') ? 
-                                    ' one-time setup' : ' setup fee'}
+                                  {(form.watch('servicePriorYearFilings') || form.watch('serviceCfoAdvisory')) && !form.watch('serviceTaasMonthly') && !form.watch('serviceMonthlyBookkeeping') ? 
+                                    ' one-time fee' : ' setup fee'}
                                 </span>
                               </div>
                             )}
@@ -3251,6 +3284,34 @@ function HomePage() {
                         </div>
                       )}
 
+                      {/* CFO Advisory Service Card */}
+                      {form.watch('serviceCfoAdvisory') && feeCalculation.cfoAdvisoryFee > 0 && (
+                        <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">💼</span>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-indigo-800">CFO Advisory</h4>
+                                <p className="text-xs text-indigo-600">
+                                  {form.watch('cfoAdvisoryType') === 'pay_as_you_go' 
+                                    ? '8-hour deposit (Pay-as-you-Go)' 
+                                    : `${form.watch('cfoAdvisoryBundleHours')} prepaid hours`
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-indigo-800">${feeCalculation.cfoAdvisoryFee.toLocaleString()}</div>
+                              <div className="text-xs text-indigo-600">
+                                {form.watch('cfoAdvisoryType') === 'pay_as_you_go' ? 'deposit + hourly billing' : 'prepaid bundle'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Service Tier Upgrade Card */}
                       {form.watch('serviceTier') && form.watch('serviceTier') !== 'Automated' && (
                         <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-4 shadow-sm">
@@ -3276,7 +3337,7 @@ function HomePage() {
                     </div>
 
                     {/* No Services Selected */}
-                    {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas) && (
+                    {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas && !form.watch('serviceCfoAdvisory') && feeCalculation.cleanupProjectFee === 0 && feeCalculation.priorYearFilingsFee === 0) && (
                       <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
                         <div className="text-gray-500 mb-2">
                           <Calculator className="h-8 w-8 mx-auto mb-2 opacity-50" />
