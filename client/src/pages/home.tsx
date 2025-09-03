@@ -440,9 +440,9 @@ function HomePage() {
   const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(false);
   
   // Service details collapsible states
-  const [isBookkeepingExpanded, setIsBookkeepingExpanded] = useState(false);
-  const [isPayrollExpanded, setIsPayrollExpanded] = useState(false);
-  const [isCfoAdvisoryExpanded, setIsCfoAdvisoryExpanded] = useState(false);
+  const [isBookkeepingExpanded, setIsBookkeepingExpanded] = useState(true);
+  const [isPayrollExpanded, setIsPayrollExpanded] = useState(true);
+  const [isCfoAdvisoryExpanded, setIsCfoAdvisoryExpanded] = useState(true);
   
   // Form navigation state
   const [currentFormView, setCurrentFormView] = useState<'bookkeeping' | 'taas' | 'placeholder'>('placeholder');
