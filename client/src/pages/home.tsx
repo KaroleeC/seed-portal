@@ -36,6 +36,7 @@ import { PriorYearFilingsSection } from "@/components/quote-form/PriorYearFiling
 import { BookkeepingCleanupSection } from "@/components/quote-form/BookkeepingCleanupSection";
 import { CfoAdvisorySection } from "@/components/quote-form/CfoAdvisorySection";
 import PayrollSection from "@/components/quote-form/PayrollSection";
+import APSection from "@/components/quote-form/APSection";
 
 // Get current month number (1-12)
 const currentMonth = new Date().getMonth() + 1;
@@ -443,6 +444,7 @@ function HomePage() {
   const [isBookkeepingExpanded, setIsBookkeepingExpanded] = useState(true);
   const [isPayrollExpanded, setIsPayrollExpanded] = useState(true);
   const [isCfoAdvisoryExpanded, setIsCfoAdvisoryExpanded] = useState(true);
+  const [isApExpanded, setIsApExpanded] = useState(true);
   
   // Form navigation state
   const [currentFormView, setCurrentFormView] = useState<'bookkeeping' | 'taas' | 'placeholder'>('placeholder');
@@ -2809,6 +2811,40 @@ function HomePage() {
                 </Card>
               </div>
             )}
+
+            {/* AP Service Section */}
+            {form.watch('serviceApArService') && (
+              <div className="max-w-6xl mx-auto mt-8">
+                <Card className="bg-white shadow-lg border border-gray-200">
+                  <CardHeader 
+                    className="pb-4 cursor-pointer hover:bg-gray-50 transition-all duration-200"
+                    onClick={() => setIsApExpanded(!isApExpanded)}
+                  >
+                    <CardTitle className="text-xl font-semibold text-gray-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Receipt className="w-6 h-6 text-green-600" />
+                        Accounts Payable Service Details
+                      </div>
+                      <button className="p-1 rounded-full hover:bg-gray-200 transition-colors">
+                        {isApExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-gray-600" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-gray-600" />
+                        )}
+                      </button>
+                    </CardTitle>
+                    <p className="text-gray-600">Configure your accounts payable requirements and service level</p>
+                  </CardHeader>
+                  {isApExpanded && (
+                  <CardContent className="p-6">
+                    <Form {...form}>
+                      <APSection form={form} />
+                    </Form>
+                  </CardContent>
+                  )}
+                </Card>
+              </div>
+            )}
           </div>
         </div>
         )}
@@ -2833,7 +2869,7 @@ function HomePage() {
                   
                   <div className="space-y-6">
                     {/* Main Total Display - Clickable for detailed breakdown */}
-                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0) || (form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0) || (form.watch('serviceCfoAdvisory') && feeCalculation.cfoAdvisoryFee > 0) || form.watch('servicePayrollService')) && (
+                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0) || (form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0) || (form.watch('serviceCfoAdvisory') && feeCalculation.cfoAdvisoryFee > 0) || form.watch('servicePayrollService') || form.watch('serviceApArService')) && (
                       <>
                         <div 
                           className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:from-blue-100 hover:to-indigo-200"

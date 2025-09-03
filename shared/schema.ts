@@ -74,6 +74,13 @@ export const quotes = pgTable("quotes", {
   // Payroll specific fields
   payrollEmployeeCount: integer("payroll_employee_count").default(1), // Total W2 employees
   payrollStateCount: integer("payroll_state_count").default(1), // Number of states employees are in
+  // AP/AR service selection
+  serviceApArService: boolean("service_ap_ar_service").default(false),
+  // AP specific fields
+  apVendorBillsBand: text("ap_vendor_bills_band"), // '0-25', '26-100', '101-250', '251+'
+  apVendorCount: integer("ap_vendor_count"), // Number of unique vendors/payees
+  customApVendorCount: integer("custom_ap_vendor_count"), // For when 5+ is selected
+  apServiceTier: text("ap_service_tier"), // 'lite' or 'advanced'
   // Client address information for MSA generation
   clientStreetAddress: text("client_street_address"),
   clientCity: text("client_city"),

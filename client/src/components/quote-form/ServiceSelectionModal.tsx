@@ -139,24 +139,9 @@ export function ServiceSelectionModal({
           description: "Complete payroll processing and compliance"
         },
         {
-          key: "serviceApLite" as const,
-          name: "AP Lite",
-          description: "Basic accounts payable management"
-        },
-        {
-          key: "serviceArLite" as const,
-          name: "AR Lite",
-          description: "Basic accounts receivable management"
-        },
-        {
-          key: "serviceApAdvanced" as const,
-          name: "AP Advanced",
-          description: "Advanced accounts payable with automation"
-        },
-        {
-          key: "serviceArAdvanced" as const,
-          name: "AR Advanced",
-          description: "Advanced accounts receivable with collections"
+          key: "serviceApArService" as const,
+          name: "Accounts Payable (AP)",
+          description: "Automated vendor bill processing and payment management"
         }
       ]
     },

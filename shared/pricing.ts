@@ -46,6 +46,7 @@ export interface CombinedFeeResult {
   cfoAdvisoryFee: number;
   cfoAdvisoryHubspotProductId: string | null;
   payrollFee: number;
+  apFee: number;
 }
 
 // Constants
@@ -305,6 +306,51 @@ export function calculatePayrollFees(data: PricingData): { payrollFee: number } 
   return { payrollFee };
 }
 
+export function calculateAPFees(data: PricingData): { apFee: number } {
+  const apServiceTier = (data as any).apServiceTier;
+  const apVendorBillsBand = (data as any).apVendorBillsBand;
+  const apVendorCount = (data as any).customApVendorCount || (data as any).apVendorCount || 1;
+  
+  if (!apServiceTier) {
+    return { apFee: 0 };
+  }
+  
+  // Base pricing by service tier
+  let baseFee = 0;
+  if (apServiceTier === 'lite') {
+    baseFee = 199; // AP Lite: $199/month
+  } else if (apServiceTier === 'advanced') {
+    baseFee = 499; // AP Advanced: $499/month
+  }
+  
+  // Add surcharges based on vendor bills volume
+  let billsVolumeSurcharge = 0;
+  switch (apVendorBillsBand) {
+    case '0-25':
+      billsVolumeSurcharge = 0; // No surcharge for low volume
+      break;
+    case '26-100':
+      billsVolumeSurcharge = 100; // $100/month surcharge for medium volume
+      break;
+    case '101-250':
+      billsVolumeSurcharge = 300; // $300/month surcharge for high volume
+      break;
+    case '251+':
+      billsVolumeSurcharge = 600; // $600/month surcharge for enterprise volume
+      break;
+  }
+  
+  // Add vendor count surcharge for high vendor count
+  let vendorCountSurcharge = 0;
+  if (apVendorCount > 10) {
+    vendorCountSurcharge = (apVendorCount - 10) * 25; // $25/month per vendor above 10
+  }
+  
+  const totalApFee = baseFee + billsVolumeSurcharge + vendorCountSurcharge;
+  
+  return { apFee: totalApFee };
+}
+
 export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   // Determine which services are included - separate monthly vs project-only services
   const includesMonthlyBookkeeping = Boolean(
@@ -367,8 +413,12 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   const includesPayroll = Boolean((data as any).servicePayrollService);
   const { payrollFee } = includesPayroll ? calculatePayrollFees(data) : { payrollFee: 0 };
 
+  // Calculate AP fees
+  const includesAP = Boolean((data as any).serviceApArService);
+  const { apFee } = includesAP ? calculateAPFees(data) : { apFee: 0 };
+
   // Combined totals
-  const combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee;
+  const combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee;
   const combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee;
 
   return {
@@ -384,6 +434,7 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     priorYearFilingsFee,
     cfoAdvisoryFee,
     cfoAdvisoryHubspotProductId: hubspotProductId,
-    payrollFee
+    payrollFee,
+    apFee
   };
 }
