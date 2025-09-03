@@ -3026,6 +3026,42 @@ function HomePage() {
                                 );
                               })()}
 
+                              {/* Bookkeeping Cleanup Projects Breakdown */}
+                              {form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0 && (() => {
+                                const selectedPeriods = form.watch('cleanupPeriods') || [];
+                                if (selectedPeriods.length === 0) return null;
+                                
+                                const costPerMonth = 200;
+                                const totalCost = selectedPeriods.length * costPerMonth;
+                                
+                                return (
+                                  <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                                    <h5 className="font-medium text-purple-800 mb-2">Bookkeeping Cleanup Project Breakdown</h5>
+                                    <div className="space-y-1 text-sm">
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Selected months:</span>
+                                        <span className="font-medium">{selectedPeriods.length} months</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Cost per month:</span>
+                                        <span className="font-medium">$200</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Project scope:</span>
+                                        <span className="font-medium">Data cleanup & reconciliation</span>
+                                      </div>
+                                      
+                                      <div className="border-t border-purple-200 pt-2 mt-2">
+                                        <div className="flex justify-between font-semibold">
+                                          <span className="text-purple-800">Project Total:</span>
+                                          <span className="text-purple-700">${totalCost.toLocaleString()}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
                               {/* TaaS Breakdown - only show if monthly TaaS is selected, not just Prior Year Filings */}
                               {feeCalculation.includesTaas && form.watch('serviceTaasMonthly') && (() => {
                                 // Get the breakdown data from the TaaS calculation
