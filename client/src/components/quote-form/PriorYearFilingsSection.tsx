@@ -1,5 +1,7 @@
 import { Control, UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface PriorYearFilingsSectionProps {
   control: Control<any>;
@@ -11,6 +13,9 @@ export function PriorYearFilingsSection({ control, form }: PriorYearFilingsSecti
   const priorYears = Array.from({ length: 7 }, (_, i) => currentYear - (i + 1));
   
   const selectedYears = form.watch('priorYearFilings') || [];
+  
+  // State for collapsible section
+  const [isExpanded, setIsExpanded] = useState(true);
   
   const toggleYear = (year: number) => {
     const currentSelected = form.getValues('priorYearFilings') || [];
@@ -29,12 +34,29 @@ export function PriorYearFilingsSection({ control, form }: PriorYearFilingsSecti
 
   return (
     <div className="space-y-8">
-      <div>
-        <h3 className="text-xl font-semibold text-gray-800">Prior Year Filings Details</h3>
+      <div 
+        className="cursor-pointer select-none"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between group hover:bg-gray-50 p-3 -m-3 rounded-lg transition-colors">
+          <h3 className="text-xl font-semibold text-gray-800 group-hover:text-gray-900">Prior Year Filings Details</h3>
+          <div className="flex items-center gap-2 text-gray-500 group-hover:text-gray-700">
+            <span className="text-sm font-medium">{isExpanded ? 'Collapse' : 'Expand'}</span>
+            {isExpanded ? (
+              <ChevronUp className="h-5 w-5 transition-transform" />
+            ) : (
+              <ChevronDown className="h-5 w-5 transition-transform" />
+            )}
+          </div>
+        </div>
+        <hr className="border-gray-200 mt-3" />
       </div>
       
-      {/* Prior Years Selection - Tile Selection */}
-      <div className="space-y-4">
+      {/* Collapsible Content */}
+      {isExpanded && (
+        <div className="space-y-8 animate-in slide-in-from-top-2 duration-300">
+          {/* Prior Years Selection - Tile Selection */}
+          <div className="space-y-4">
         <FormField
           control={control}
           name="priorYearFilings"
@@ -71,7 +93,9 @@ export function PriorYearFilingsSection({ control, form }: PriorYearFilingsSecti
             </FormItem>
           )}
         />
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

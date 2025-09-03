@@ -74,40 +74,37 @@ export function ServiceSelectionModal({
           key: "serviceCleanupProjects" as const,
           name: "Bookkeeping Cleanup Project",
           description: "One-time bookkeeping cleanup and catch-up work"
-        }
-      ]
-    },
-    {
-      title: "Operational Services",
-      icon: Users,
-      color: "bg-green-600", 
-      services: [
-        {
-          key: "servicePayroll" as const,
-          name: "Payroll",
-          description: "Complete payroll processing and compliance"
-        },
-        {
-          key: "serviceApArLite" as const,
-          name: "AP/AR Lite",
-          description: "Basic accounts payable and receivable management"
-        }
-      ]
-    },
-    {
-      title: "Financial Planning & Analysis",
-      icon: TrendingUp,
-      color: "bg-purple-600",
-      services: [
-        {
-          key: "serviceFpaLite" as const,
-          name: "FP&A Lite", 
-          description: "Essential financial planning and analysis services"
         },
         {
           key: "serviceCfoAdvisory" as const,
           name: "CFO Advisory Services",
           description: "Strategic financial planning and CFO-level advisory"
+        }
+      ]
+    },
+    {
+      title: "Add-On Services",
+      subtitle: "Requires a core service",
+      icon: Settings,
+      color: "bg-gray-600",
+      services: [
+        {
+          key: "servicePayroll" as const,
+          name: "Payroll",
+          description: "Complete payroll processing and compliance",
+          category: "Operational Services"
+        },
+        {
+          key: "serviceApArLite" as const,
+          name: "AP/AR Lite",
+          description: "Basic accounts payable and receivable management",
+          category: "Operational Services"
+        },
+        {
+          key: "serviceFpaLite" as const,
+          name: "FP&A Lite", 
+          description: "Essential financial planning and analysis services",
+          category: "Financial Planning & Analysis"
         }
       ]
     }

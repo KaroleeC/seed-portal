@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { Control } from "react-hook-form";
 import { FormData } from "./QuoteFormSchema";
 
@@ -18,6 +18,9 @@ export function ContactSection({
   hubspotContact,
   onEmailChange
 }: ContactSectionProps) {
+  // State for collapsible section
+  const [isExpanded, setIsExpanded] = useState(true);
+  
   const getVerificationIcon = () => {
     switch (hubspotVerificationStatus) {
       case 'verifying':
@@ -46,10 +49,29 @@ export function ContactSection({
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-800">Contact Information</h3>
+      <div 
+        className="cursor-pointer select-none"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between group hover:bg-gray-50 p-3 -m-3 rounded-lg transition-colors">
+          <h3 className="text-lg font-semibold text-gray-800 group-hover:text-gray-900">Contact Information</h3>
+          <div className="flex items-center gap-2 text-gray-500 group-hover:text-gray-700">
+            <span className="text-sm font-medium">{isExpanded ? 'Collapse' : 'Expand'}</span>
+            {isExpanded ? (
+              <ChevronUp className="h-5 w-5 transition-transform" />
+            ) : (
+              <ChevronDown className="h-5 w-5 transition-transform" />
+            )}
+          </div>
+        </div>
+        <hr className="border-gray-200 mt-3" />
+      </div>
       
-      {/* Contact Email */}
-      <FormField
+      {/* Collapsible Content */}
+      {isExpanded && (
+        <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
+          {/* Contact Email */}
+          <FormField
         control={control}
         name="contactEmail"
         render={({ field }) => (
@@ -99,6 +121,8 @@ export function ContactSection({
           </FormItem>
         )}
       />
+        </div>
+      )}
     </div>
   );
 }
