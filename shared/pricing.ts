@@ -40,6 +40,8 @@ export interface CombinedFeeResult {
   combined: FeeResult;
   includesBookkeeping: boolean;
   includesTaas: boolean;
+  cleanupProjectFee: number;
+  priorYearFilingsFee: number;
 }
 
 // Constants
@@ -202,6 +204,13 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
   return { monthlyFee, setupFee };
 }
 
+// Calculate Bookkeeping Cleanup Project fees ($100 per month selected)
+export function calculateCleanupProjectFees(data: PricingData): { cleanupProjectFee: number } {
+  const cleanupPeriods = (data as any).cleanupPeriods || [];
+  const cleanupProjectFee = cleanupPeriods.length * 100; // $100 per month
+  return { cleanupProjectFee };
+}
+
 export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   // Determine which services are included - prioritize legacy fields for existing database compatibility
   const includesBookkeeping = Boolean(
@@ -244,9 +253,16 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     serviceTierFee = 0; // Automated tier is free
   }
 
+  // Calculate additional project fees
+  const { cleanupProjectFee } = calculateCleanupProjectFees(data);
+  
+  // Calculate prior year filings fee ($1,500 per year)
+  const priorYearFilings = (data as any).priorYearFilings || [];
+  const priorYearFilingsFee = priorYearFilings.length * 1500;
+
   // Combined totals
   const combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee;
-  const combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee;
+  const combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee;
 
   return {
     bookkeeping: bookkeepingFees,
@@ -256,6 +272,8 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
       setupFee: combinedSetupFee
     },
     includesBookkeeping,
-    includesTaas
+    includesTaas,
+    cleanupProjectFee,
+    priorYearFilingsFee
   };
 }

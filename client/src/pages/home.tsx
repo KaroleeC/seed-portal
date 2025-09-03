@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Copy, Save, Check, Search, ArrowUpDown, Edit, AlertCircle, Archive, CheckCircle, XCircle, Loader2, Upload, User, LogOut, Calculator, FileText, Sparkles, DollarSign, X, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, HelpCircle, Bell, Settings, Lock, Unlock, Building, Users, CreditCard } from "lucide-react";
 import { useLocation } from "wouter";
 import { insertQuoteSchema, type Quote } from "@shared/schema";
+import { calculateCombinedFees } from "@shared/pricing";
 
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -509,60 +510,6 @@ function calculateTaaSFees(data: Partial<FormData>, existingBookkeepingFees?: { 
   return { monthlyFee, setupFee, breakdown };
 }
 
-// Combined calculation function for quotes that include both services
-function calculateCombinedFees(data: Partial<FormData>) {
-  // Use the new service selection fields with proper fallback logic
-  const includesBookkeeping = data.serviceMonthlyBookkeeping || data.serviceCleanupProjects || data.serviceBookkeeping || data.includesBookkeeping === true;
-  const includesTaas = data.serviceTaasMonthly || data.servicePriorYearFilings || data.serviceTaas || data.includesTaas === true;
-  
-  let bookkeepingFees: any = { monthlyFee: 0, setupFee: 0, breakdown: undefined };
-  let taasFees: any = { monthlyFee: 0, setupFee: 0, breakdown: undefined };
-  
-  if (includesBookkeeping) {
-    bookkeepingFees = calculateFees(data);
-  }
-  
-  if (includesTaas) {
-    taasFees = calculateTaaSFees(data);
-  }
-  
-  // Apply Seed Bookkeeping Package discount (50% off bookkeeping when both services are selected)
-  if (includesBookkeeping && includesTaas && data.serviceMonthlyBookkeeping) {
-    bookkeepingFees = {
-      ...bookkeepingFees,
-      monthlyFee: Math.round(bookkeepingFees.monthlyFee * 0.50),
-      // Setup fee is not discounted
-    };
-  }
-  
-  // Calculate service tier fees
-  let serviceTierFee = 0;
-  if (data.serviceTier === 'Guided') {
-    serviceTierFee = 79;
-  } else if (data.serviceTier === 'Concierge') {
-    serviceTierFee = 249;
-  } else if (data.serviceTier === 'Automated' || !data.serviceTier) {
-    serviceTierFee = 0; // Automated tier is free
-  }
-  
-  // Calculate Prior Year Filings fees
-  let priorYearFilingsFee = 0;
-  if (data.priorYearFilings && Array.isArray(data.priorYearFilings)) {
-    priorYearFilingsFee = data.priorYearFilings.length * 1500; // $1,500 per year
-  }
-  
-  return {
-    bookkeeping: bookkeepingFees,
-    taas: taasFees,
-    combined: {
-      monthlyFee: bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee,
-      setupFee: bookkeepingFees.setupFee + taasFees.setupFee + priorYearFilingsFee
-    },
-    includesBookkeeping,
-    includesTaas,
-    priorYearFilingsFee
-  };
-}
 
 function HomePage() {
   const { toast } = useToast();
@@ -1243,7 +1190,7 @@ function HomePage() {
   const monthlyFee = feeCalculation.combined.monthlyFee;
   const setupFee = feeCalculation.combined.setupFee;
   
-  const isCalculated = monthlyFee > 0 || feeCalculation.priorYearFilingsFee > 0;
+  const isCalculated = monthlyFee > 0 || feeCalculation.priorYearFilingsFee > 0 || feeCalculation.cleanupProjectFee > 0;
 
   // Helper functions for navigation (defined after feeCalculation)
   const getActiveServices = () => {
@@ -2403,8 +2350,8 @@ function HomePage() {
               </div>
             )}
 
-            {/* Show detailed Bookkeeping configuration when Bookkeeping services are selected */}
-            {(form.watch('serviceMonthlyBookkeeping') || form.watch('serviceCleanupProjects') || form.watch('serviceBookkeeping')) && (
+            {/* Show detailed Bookkeeping configuration when Monthly Bookkeeping service is selected (not just cleanup projects) */}
+            {(form.watch('serviceMonthlyBookkeeping') || form.watch('serviceBookkeeping')) && (
               <div className="max-w-6xl mx-auto mt-8">
                 <Card className="bg-white shadow-lg border border-gray-200">
                   <CardContent className="p-8">
@@ -2840,13 +2787,6 @@ function HomePage() {
                         )}
                       />
                     </div>
-                    
-                    {/* Bookkeeping Cleanup Section */}
-                    <BookkeepingCleanupSection 
-                      control={form.control} 
-                      form={form}
-                    />
-                    
                     </Form>
                   </CardContent>
                 </Card>
@@ -2860,6 +2800,22 @@ function HomePage() {
                   <CardContent className="p-6">
                     <Form {...form}>
                       <PriorYearFilingsSection 
+                        control={form.control} 
+                        form={form}
+                      />
+                    </Form>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Show detailed Bookkeeping Cleanup Project configuration when Cleanup Projects service is selected */}
+            {form.watch('serviceCleanupProjects') && (
+              <div className="max-w-6xl mx-auto mt-8">
+                <Card className="bg-white shadow-lg border border-gray-200">
+                  <CardContent className="p-6">
+                    <Form {...form}>
+                      <BookkeepingCleanupSection 
                         control={form.control} 
                         form={form}
                       />
@@ -2892,7 +2848,7 @@ function HomePage() {
                   
                   <div className="space-y-6">
                     {/* Main Total Display - Clickable for detailed breakdown */}
-                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0)) && (
+                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0) || (form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0)) && (
                       <>
                         <div 
                           className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:from-blue-100 hover:to-indigo-200"
@@ -3244,6 +3200,29 @@ function HomePage() {
                             <div className="text-right">
                               <div className="text-lg font-bold text-blue-800">${feeCalculation.taas.monthlyFee}</div>
                               <div className="text-xs text-blue-600">per month</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Bookkeeping Cleanup Project Service Card */}
+                      {form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0 && (
+                        <div className="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">🧹</span>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-purple-800">Bookkeeping Cleanup Project</h4>
+                                <p className="text-xs text-purple-600">
+                                  {form.watch('cleanupPeriods')?.length || 0} month{(form.watch('cleanupPeriods')?.length || 0) !== 1 ? 's' : ''} selected
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-purple-800">${feeCalculation.cleanupProjectFee}</div>
+                              <div className="text-xs text-purple-600">one-time project</div>
                             </div>
                           </div>
                         </div>

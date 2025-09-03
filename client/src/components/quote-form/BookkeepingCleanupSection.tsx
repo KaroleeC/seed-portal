@@ -11,7 +11,12 @@ interface BookkeepingCleanupSectionProps {
 export function BookkeepingCleanupSection({ control, form }: BookkeepingCleanupSectionProps) {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth(); // 0-11
-  const years = Array.from({ length: 5 }, (_, i) => currentYear - i); // Current year and 4 previous years
+  
+  // Hide current year (2025) if both monthly bookkeeping and cleanup projects are selected
+  // because current year cleanup is covered in the setup fee for monthly bookkeeping
+  const isMonthlyBookkeepingSelected = form.watch('serviceMonthlyBookkeeping');
+  const startYear = isMonthlyBookkeepingSelected ? currentYear - 1 : currentYear;
+  const years = Array.from({ length: 5 }, (_, i) => startYear - i); // Conditional year range
   
   const months = [
     { value: 0, name: "January", short: "Jan" },
@@ -143,7 +148,12 @@ export function BookkeepingCleanupSection({ control, form }: BookkeepingCleanupS
                     Select Cleanup Periods <span className="text-red-500">*</span>
                   </FormLabel>
                   <p className="text-sm text-gray-600 mb-6">
-                    Choose the specific years and months that need bookkeeping cleanup work. Each month selected will impact the project scope and pricing.
+                    Choose the specific years and months that need bookkeeping cleanup work. Each month costs <span className="font-semibold text-gray-800">$100</span> and will be added to your setup fee.
+                    {isMonthlyBookkeepingSelected && (
+                      <span className="block mt-2 text-blue-600 font-medium">
+                        Note: {currentYear} cleanup is included in your monthly bookkeeping setup fee.
+                      </span>
+                    )}
                   </p>
                   
                   <FormControl>
