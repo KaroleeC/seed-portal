@@ -30,6 +30,14 @@ export const formSchema = insertQuoteSchema.omit({
   serviceCleanupProjects: z.boolean().default(false),
   serviceTaasMonthly: z.boolean().default(false),
   servicePriorYearFilings: z.boolean().default(false),
+  serviceCfoAdvisory: z.boolean().default(false),
+  servicePayrollService: z.boolean().default(false),
+  // CFO Advisory fields
+  cfoAdvisoryType: z.string().optional(),
+  cfoAdvisoryBundleHours: z.number().optional(),
+  // Payroll fields
+  payrollEmployeeCount: z.number().min(1, "Must have at least 1 employee").default(1),
+  payrollStateCount: z.number().min(1, "Must have at least 1 state").default(1),
   // TaaS fields
   numEntities: z.number().min(1, "Must have at least 1 entity").optional(),
   statesFiled: z.number().min(1, "Must file in at least 1 state").optional(),

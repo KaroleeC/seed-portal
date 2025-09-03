@@ -44,6 +44,7 @@ export interface CombinedFeeResult {
   priorYearFilingsFee: number;
   cfoAdvisoryFee: number;
   cfoAdvisoryHubspotProductId: string | null;
+  payrollFee: number;
 }
 
 // Constants
@@ -245,6 +246,25 @@ export function calculateCfoAdvisoryFees(data: PricingData): { cfoAdvisoryFee: n
   return { cfoAdvisoryFee: 0, hubspotProductId: null };
 }
 
+export function calculatePayrollFees(data: PricingData): { payrollFee: number } {
+  const employeeCount = (data as any).payrollEmployeeCount || 1;
+  const stateCount = (data as any).payrollStateCount || 1;
+  
+  let payrollFee = 100; // Base fee: $100/mo for up to 3 employees in 1 state
+  
+  // Additional employee fees: $12/mo per employee above 3
+  if (employeeCount > 3) {
+    payrollFee += (employeeCount - 3) * 12;
+  }
+  
+  // Additional state fees: $25/mo per state above 1
+  if (stateCount > 1) {
+    payrollFee += (stateCount - 1) * 25;
+  }
+  
+  return { payrollFee };
+}
+
 export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   // Determine which services are included - separate monthly vs project-only services
   const includesMonthlyBookkeeping = Boolean(
@@ -303,8 +323,12 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   const includesCfoAdvisory = Boolean((data as any).serviceCfoAdvisory);
   const { cfoAdvisoryFee, hubspotProductId } = includesCfoAdvisory ? calculateCfoAdvisoryFees(data) : { cfoAdvisoryFee: 0, hubspotProductId: null };
 
+  // Calculate Payroll fees
+  const includesPayroll = Boolean((data as any).servicePayrollService);
+  const { payrollFee } = includesPayroll ? calculatePayrollFees(data) : { payrollFee: 0 };
+
   // Combined totals
-  const combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee;
+  const combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee;
   const combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee;
 
   return {
@@ -319,6 +343,7 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     cleanupProjectFee,
     priorYearFilingsFee,
     cfoAdvisoryFee,
-    cfoAdvisoryHubspotProductId: hubspotProductId
+    cfoAdvisoryHubspotProductId: hubspotProductId,
+    payrollFee
   };
 }

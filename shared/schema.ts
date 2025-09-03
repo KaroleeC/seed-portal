@@ -70,6 +70,10 @@ export const quotes = pgTable("quotes", {
   cfoAdvisoryType: text("cfo_advisory_type"), // 'pay_as_you_go' or 'bundled'
   cfoAdvisoryBundleHours: integer("cfo_advisory_bundle_hours"), // 8, 16, 32, 40 hours
   cfoAdvisoryHubspotProductId: text("cfo_advisory_hubspot_product_id"), // HubSpot product record ID
+  servicePayrollService: boolean("service_payroll_service").default(false),
+  // Payroll specific fields
+  payrollEmployeeCount: integer("payroll_employee_count").default(1), // Total W2 employees
+  payrollStateCount: integer("payroll_state_count").default(1), // Number of states employees are in
   // Client address information for MSA generation
   clientStreetAddress: text("client_street_address"),
   clientCity: text("client_city"),

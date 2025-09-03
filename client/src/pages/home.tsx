@@ -35,6 +35,7 @@ import { TaasSection } from "@/components/quote-form/TaasSection";
 import { PriorYearFilingsSection } from "@/components/quote-form/PriorYearFilingsSection";
 import { BookkeepingCleanupSection } from "@/components/quote-form/BookkeepingCleanupSection";
 import { CfoAdvisorySection } from "@/components/quote-form/CfoAdvisorySection";
+import PayrollSection from "@/components/quote-form/PayrollSection";
 
 // Get current month number (1-12)
 const currentMonth = new Date().getMonth() + 1;
@@ -1191,7 +1192,7 @@ function HomePage() {
   const monthlyFee = feeCalculation.combined.monthlyFee;
   const setupFee = feeCalculation.combined.setupFee;
   
-  const isCalculated = monthlyFee > 0 || feeCalculation.priorYearFilingsFee > 0 || feeCalculation.cleanupProjectFee > 0 || feeCalculation.cfoAdvisoryFee > 0;
+  const isCalculated = monthlyFee > 0 || feeCalculation.priorYearFilingsFee > 0 || feeCalculation.cleanupProjectFee > 0 || feeCalculation.cfoAdvisoryFee > 0 || feeCalculation.payrollFee > 0;
 
   // Helper functions for navigation (defined after feeCalculation)
   const getActiveServices = () => {
@@ -2857,6 +2858,26 @@ function HomePage() {
                 </Card>
               </div>
             )}
+
+            {/* Payroll Service Section */}
+            {form.watch('servicePayrollService') && (
+              <div className="max-w-6xl mx-auto mt-8">
+                <Card className="bg-white shadow-lg border border-gray-200">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                      <Users className="w-6 h-6 text-blue-600" />
+                      Payroll Service Details
+                    </CardTitle>
+                    <p className="text-gray-600">Configure your payroll requirements and pricing</p>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <Form {...form}>
+                      <PayrollSection form={form} />
+                    </Form>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         </div>
         )}
@@ -3256,6 +3277,55 @@ function HomePage() {
                                 );
                               })()}
 
+                              {/* Payroll Breakdown */}
+                              {form.watch('servicePayrollService') && feeCalculation.payrollFee > 0 && (() => {
+                                const employeeCount = form.watch('payrollEmployeeCount') || 1;
+                                const stateCount = form.watch('payrollStateCount') || 1;
+                                
+                                const baseFee = 100;
+                                const additionalEmployeeFee = employeeCount > 3 ? (employeeCount - 3) * 12 : 0;
+                                const additionalStateFee = stateCount > 1 ? (stateCount - 1) * 25 : 0;
+                                
+                                return (
+                                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                    <h5 className="font-medium text-blue-800 mb-2">Payroll Service Breakdown</h5>
+                                    <div className="space-y-1 text-sm">
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Employee count:</span>
+                                        <span className="font-medium">{employeeCount} {employeeCount === 1 ? 'employee' : 'employees'}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">State count:</span>
+                                        <span className="font-medium">{stateCount} {stateCount === 1 ? 'state' : 'states'}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Base fee (up to 3 employees, 1 state):</span>
+                                        <span className="font-medium">$100/month</span>
+                                      </div>
+                                      {additionalEmployeeFee > 0 && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Additional employees ({employeeCount - 3} × $12):</span>
+                                          <span className="font-medium">$${additionalEmployeeFee}/month</span>
+                                        </div>
+                                      )}
+                                      {additionalStateFee > 0 && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Additional states ({stateCount - 1} × $25):</span>
+                                          <span className="font-medium">$${additionalStateFee}/month</span>
+                                        </div>
+                                      )}
+                                      
+                                      <div className="border-t border-blue-200 pt-2 mt-2">
+                                        <div className="flex justify-between font-semibold">
+                                          <span className="text-blue-800">Monthly Payroll Fee:</span>
+                                          <span className="text-blue-700">${feeCalculation.payrollFee}/month</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
                               {/* Service Tier Breakdown */}
                               {form.watch('serviceTier') && form.watch('serviceTier') !== 'Automated' && (
                                 <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
@@ -3401,6 +3471,29 @@ function HomePage() {
                               <div className="text-xs text-indigo-600">
                                 {form.watch('cfoAdvisoryType') === 'pay_as_you_go' ? 'deposit + hourly billing' : 'prepaid bundle'}
                               </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Payroll Service Card */}
+                      {form.watch('servicePayrollService') && feeCalculation.payrollFee > 0 && (
+                        <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+                                <Users className="w-4 h-4 text-white" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-blue-800">Payroll Service</h4>
+                                <p className="text-xs text-blue-600">
+                                  {form.watch('payrollEmployeeCount') || 1} employees in {form.watch('payrollStateCount') || 1} state{(form.watch('payrollStateCount') || 1) > 1 ? 's' : ''}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-blue-800">${feeCalculation.payrollFee}</div>
+                              <div className="text-xs text-blue-600">per month</div>
                             </div>
                           </div>
                         </div>

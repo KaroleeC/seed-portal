@@ -12,7 +12,7 @@ interface ServiceSelectionModalProps {
     serviceTaasMonthly: boolean;
     servicePriorYearFilings: boolean;
     serviceCfoAdvisory: boolean;
-    servicePayroll: boolean;
+    servicePayrollService: boolean;
     serviceApLite: boolean;
     serviceArLite: boolean;
     serviceApAdvanced: boolean;
@@ -99,7 +99,7 @@ export function ServiceSelectionModal({
       color: "bg-green-600",
       services: [
         {
-          key: "servicePayroll" as const,
+          key: "servicePayrollService" as const,
           name: "Payroll",
           description: "Complete payroll processing and compliance"
         },
