@@ -27,6 +27,7 @@ export function TaasSection({ control, currentFormView, form }: TaasSectionProps
   // Watch values for conditional logic
   const numEntities = useWatch({ control, name: 'numEntities' });
   const statesFiled = useWatch({ control, name: 'statesFiled' });
+  const numBusinessOwners = useWatch({ control, name: 'numBusinessOwners' });
   const includesBookkeeping = useWatch({ control, name: 'serviceMonthlyBookkeeping' });
   const serviceTaasMonthly = useWatch({ control, name: 'serviceTaasMonthly' });
   const servicePriorYearFilings = useWatch({ control, name: 'servicePriorYearFilings' });
@@ -34,6 +35,7 @@ export function TaasSection({ control, currentFormView, form }: TaasSectionProps
   // State for custom inputs
   const [showCustomEntities, setShowCustomEntities] = useState(false);
   const [showCustomStates, setShowCustomStates] = useState(false);
+  const [showCustomOwners, setShowCustomOwners] = useState(false);
   
   // State for collapsible section
   const [isExpanded, setIsExpanded] = useState(true);
@@ -56,6 +58,16 @@ export function TaasSection({ control, currentFormView, form }: TaasSectionProps
     } else {
       setShowCustomStates(false);
       form.setValue('statesFiled', value);
+    }
+  };
+
+  const handleOwnersSelect = (value: number) => {
+    if (value === 5) {
+      setShowCustomOwners(true);
+      form.setValue('numBusinessOwners', 5); // Start with 5 as minimum
+    } else {
+      setShowCustomOwners(false);
+      form.setValue('numBusinessOwners', value);
     }
   };
 
@@ -187,30 +199,49 @@ export function TaasSection({ control, currentFormView, form }: TaasSectionProps
         <FormLabel className="text-base font-medium text-gray-700">Number of Business Owners <span className="text-red-500">*</span></FormLabel>
         <div className="grid grid-cols-5 gap-3">
           {[1, 2, 3, 4, 5].map((num) => (
-            <FormField
+            <button
               key={num}
-              control={control}
-              name="numBusinessOwners"
-              render={({ field }) => (
-                <button
-                  type="button"
-                  onClick={() => field.onChange(num)}
-                  className={`p-4 rounded-lg border-2 text-center transition-all duration-200 ${
-                    field.value === num
-                      ? 'border-[#e24c00] bg-orange-50 text-[#e24c00]'
-                      : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
-                  }`}
-                  data-testid={`tile-owners-${num === 5 ? 'custom' : num}`}
-                >
-                  <div className="font-semibold text-lg">{num === 5 ? '5+' : num}</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {num === 1 ? 'Owner' : 'Owners'}
-                  </div>
-                </button>
-              )}
-            />
+              type="button"
+              onClick={() => handleOwnersSelect(num)}
+              className={`p-4 rounded-lg border-2 text-center transition-all duration-200 ${
+                (numBusinessOwners === num || (num === 5 && showCustomOwners))
+                  ? 'border-[#e24c00] bg-orange-50 text-[#e24c00]'
+                  : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
+              }`}
+              data-testid={`tile-owners-${num === 5 ? 'custom' : num}`}
+            >
+              <div className="font-semibold text-lg">{num === 5 ? '5+' : num}</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {num === 1 ? 'Owner' : 'Owners'}
+              </div>
+            </button>
           ))}
         </div>
+
+        {/* Custom Owners Input */}
+        {showCustomOwners && (
+          <FormField
+            control={control}
+            name="numBusinessOwners"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Exact Number of Business Owners</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="5"
+                    placeholder="Enter exact number (5 or more)"
+                    value={field.value || ''}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 5)}
+                    className="max-w-xs"
+                    data-testid="input-custom-owners"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
       </div>
 
       {/* International Filing - Toggle Switch */}

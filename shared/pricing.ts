@@ -147,10 +147,18 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
 }
 
 export function calculateTaaSFees(data: PricingData): FeeResult {
-  if (!data.includesTaas || !data.monthlyRevenueRange || !data.industry || !data.entityType || 
+  // Check for TaaS service enablement (legacy or new fields)
+  const hasTaasService = Boolean(
+    data.includesTaas || 
+    (data as any).serviceTaas || 
+    (data as any).serviceTaasMonthly || 
+    (data as any).servicePriorYearFilings
+  );
+  
+  // Require core fields for calculation
+  if (!hasTaasService || !data.monthlyRevenueRange || !data.industry || 
       !data.numEntities || !data.statesFiled || data.internationalFiling === undefined || 
-      !data.numBusinessOwners || !data.bookkeepingQuality || data.include1040s === undefined || 
-      data.priorYearsUnfiled === undefined || data.alreadyOnSeedBookkeeping === undefined) {
+      !data.numBusinessOwners || data.include1040s === undefined) {
     return { monthlyFee: 0, setupFee: 0 };
   }
 
