@@ -147,14 +147,11 @@ export function BookkeepingCleanupSection({ control, form }: BookkeepingCleanupS
                   <FormLabel className="text-base font-medium text-gray-700">
                     Select Cleanup Periods <span className="text-red-500">*</span>
                   </FormLabel>
-                  <p className="text-sm text-gray-600 mb-6">
-                    Choose the specific years and months that need bookkeeping cleanup work. Each month costs <span className="font-semibold text-gray-800">$100</span> and will be added to your setup fee.
-                    {isMonthlyBookkeepingSelected && (
-                      <span className="block mt-2 text-blue-600 font-medium">
-                        Note: {currentYear} cleanup is included in your monthly bookkeeping setup fee.
-                      </span>
-                    )}
-                  </p>
+                  {isMonthlyBookkeepingSelected && (
+                    <p className="text-sm text-blue-600 font-medium mb-6">
+                      Note: {currentYear} cleanup is included in your monthly bookkeeping setup fee.
+                    </p>
+                  )}
                   
                   <FormControl>
                     <div className="space-y-6">
