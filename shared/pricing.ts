@@ -190,18 +190,9 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
   // Personal 1040s
   const personal1040 = data.include1040s ? effectiveNumBusinessOwners * 25 : 0;
 
-  // Industry multiplier (simplified mapping from TaaS logic to our existing industries)
-  const taasIndustryMult: Record<string, number> = {
-    'Software/SaaS': 1.0,
-    'Professional Services': 1.1,
-    'Consulting': 1.1,
-    'Real Estate': 1.2,
-    'E-commerce/Retail': 1.3,
-    'Construction/Trades': 1.4,
-    'Multi-entity/Holding Companies': 1.5,
-  };
-  
-  const industryMult = taasIndustryMult[data.industry] || 1.0;
+  // Use the same comprehensive industry multipliers as bookkeeping (monthly values)
+  const industryData = PRICING_CONSTANTS.industryMultipliers[data.industry as keyof typeof PRICING_CONSTANTS.industryMultipliers] || { monthly: 1.0, cleanup: 1.0 };
+  const industryMult = industryData.monthly;
 
   // Revenue multiplier (map our revenue bands to average monthly revenue)
   const avgMonthlyRevenue = data.monthlyRevenueRange === '<$10K' ? 5000 :
@@ -241,7 +232,7 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
     industryMult,
     afterIndustryMult: Math.round(afterIndustryMult),
     revenueMult,
-    rawFee: Math.round(rawFee),
+    afterMultipliers: Math.round(rawFee),
     monthlyFee
   };
 
