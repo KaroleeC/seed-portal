@@ -2854,13 +2854,13 @@ function HomePage() {
                                         
                                         <div className="flex justify-between">
                                           <span className="text-gray-600">After revenue adjustment:</span>
-                                          <span className="font-medium">${breakdown?.afterRevenue}</span>
+                                          <span className="font-medium">${breakdown?.afterRevenue.toLocaleString()}</span>
                                         </div>
                                         
                                         {breakdown?.txFee > 0 && (
                                           <div className="flex justify-between">
                                             <span className="text-gray-600">Transaction surcharge ({form.watch('monthlyTransactions')}):</span>
-                                            <span className="font-medium">+${breakdown.txFee}</span>
+                                            <span className="font-medium">+${breakdown.txFee.toLocaleString()}</span>
                                           </div>
                                         )}
                                         
@@ -2871,7 +2871,7 @@ function HomePage() {
                                         
                                         <div className="flex justify-between font-medium">
                                           <span className="text-gray-700">Base calculation total:</span>
-                                          <span className="text-gray-800">${breakdown?.cleanupBeforeIndustry}</span>
+                                          <span className="text-gray-800">${breakdown?.cleanupBeforeIndustry.toLocaleString()}</span>
                                         </div>
                                       </div>
                                       
@@ -2886,7 +2886,7 @@ function HomePage() {
                                       {/* Monthly Total */}
                                       <div className="border-t pt-2 flex justify-between font-semibold">
                                         <span className="text-gray-800">Monthly Total:</span>
-                                        <span className="text-green-700">${feeCalculation.bookkeeping.monthlyFee}</span>
+                                        <span className="text-green-700">${feeCalculation.bookkeeping.monthlyFee.toLocaleString()}</span>
                                       </div>
                                       
                                       {/* Setup Fee Breakdown */}
@@ -2901,7 +2901,7 @@ function HomePage() {
                                             </div>
                                             <div className="flex justify-between font-semibold">
                                               <span className="text-gray-800">Setup Fee:</span>
-                                              <span className="text-green-700">${feeCalculation.bookkeeping.setupFee}</span>
+                                              <span className="text-green-700">${feeCalculation.bookkeeping.setupFee.toLocaleString()}</span>
                                             </div>
                                           </div>
                                         </div>
@@ -2974,42 +2974,42 @@ function HomePage() {
                                       {breakdown?.entityUpcharge > 0 && (
                                         <div className="flex justify-between">
                                           <span className="text-gray-600">Entity upcharge ({form.watch('customNumEntities') || form.watch('numEntities')} entities):</span>
-                                          <span className="font-medium">+${breakdown.entityUpcharge}</span>
+                                          <span className="font-medium">+${breakdown.entityUpcharge.toLocaleString()}</span>
                                         </div>
                                       )}
                                       
                                       {breakdown?.stateUpcharge > 0 && (
                                         <div className="flex justify-between">
                                           <span className="text-gray-600">State upcharge ({form.watch('customStatesFiled') || form.watch('statesFiled')} states):</span>
-                                          <span className="font-medium">+${breakdown.stateUpcharge}</span>
+                                          <span className="font-medium">+${breakdown.stateUpcharge.toLocaleString()}</span>
                                         </div>
                                       )}
                                       
                                       {breakdown?.intlUpcharge > 0 && (
                                         <div className="flex justify-between">
                                           <span className="text-gray-600">International filing:</span>
-                                          <span className="font-medium">+${breakdown.intlUpcharge}</span>
+                                          <span className="font-medium">+${breakdown.intlUpcharge.toLocaleString()}</span>
                                         </div>
                                       )}
                                       
                                       {breakdown?.ownerUpcharge > 0 && (
                                         <div className="flex justify-between">
                                           <span className="text-gray-600">Owner upcharge ({form.watch('customNumBusinessOwners') || form.watch('numBusinessOwners')} owners):</span>
-                                          <span className="font-medium">+${breakdown.ownerUpcharge}</span>
+                                          <span className="font-medium">+${breakdown.ownerUpcharge.toLocaleString()}</span>
                                         </div>
                                       )}
                                       
                                       {breakdown?.bookUpcharge > 0 && (
                                         <div className="flex justify-between">
                                           <span className="text-gray-600">Bookkeeping quality upcharge:</span>
-                                          <span className="font-medium">+${breakdown.bookUpcharge}</span>
+                                          <span className="font-medium">+${breakdown.bookUpcharge.toLocaleString()}</span>
                                         </div>
                                       )}
                                       
                                       {breakdown?.personal1040 > 0 && (
                                         <div className="flex justify-between">
                                           <span className="text-gray-600">Personal 1040s ({form.watch('customNumBusinessOwners') || form.watch('numBusinessOwners')} × $25):</span>
-                                          <span className="font-medium">+${breakdown.personal1040}</span>
+                                          <span className="font-medium">+${breakdown.personal1040.toLocaleString()}</span>
                                         </div>
                                       )}
                                       
@@ -3035,7 +3035,7 @@ function HomePage() {
                                       <div className="border-t border-blue-200 pt-2 mt-2">
                                         <div className="flex justify-between font-semibold">
                                           <span className="text-blue-800">Monthly Total:</span>
-                                          <span className="text-blue-700">${feeCalculation.taas.monthlyFee}</span>
+                                          <span className="text-blue-700">${feeCalculation.taas.monthlyFee.toLocaleString()}</span>
                                         </div>
                                       </div>
                                       
@@ -3049,7 +3049,7 @@ function HomePage() {
                                           </div>
                                           <div className="flex justify-between font-semibold">
                                             <span className="text-blue-800">Setup Fee:</span>
-                                            <span className="text-blue-700">${feeCalculation.taas.setupFee}</span>
+                                            <span className="text-blue-700">${feeCalculation.taas.setupFee.toLocaleString()}</span>
                                           </div>
                                         </div>
                                       )}
@@ -3179,20 +3179,20 @@ function HomePage() {
                                       {additionalEmployeeFee > 0 && (
                                         <div className="flex justify-between">
                                           <span className="text-gray-600">Additional employees ({employeeCount - 3} × $12):</span>
-                                          <span className="font-medium">${additionalEmployeeFee}/month</span>
+                                          <span className="font-medium">${additionalEmployeeFee.toLocaleString()}/month</span>
                                         </div>
                                       )}
                                       {additionalStateFee > 0 && (
                                         <div className="flex justify-between">
                                           <span className="text-gray-600">Additional states ({stateCount - 1} × $25):</span>
-                                          <span className="font-medium">${additionalStateFee}/month</span>
+                                          <span className="font-medium">${additionalStateFee.toLocaleString()}/month</span>
                                         </div>
                                       )}
                                       
                                       <div className="border-t border-blue-200 pt-2 mt-2">
                                         <div className="flex justify-between font-semibold">
                                           <span className="text-blue-800">Monthly Payroll Fee:</span>
-                                          <span className="text-blue-700">${feeCalculation.payrollFee}/month</span>
+                                          <span className="text-blue-700">${feeCalculation.payrollFee.toLocaleString()}/month</span>
                                         </div>
                                       </div>
                                     </div>
@@ -3248,7 +3248,7 @@ function HomePage() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-lg font-bold text-green-800">${feeCalculation.bookkeeping.monthlyFee}</div>
+                              <div className="text-lg font-bold text-green-800">${feeCalculation.bookkeeping.monthlyFee.toLocaleString()}</div>
                               <div className="text-xs text-green-600">per month</div>
                             </div>
                           </div>
@@ -3269,7 +3269,7 @@ function HomePage() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-lg font-bold text-blue-800">${feeCalculation.taas.monthlyFee}</div>
+                              <div className="text-lg font-bold text-blue-800">${feeCalculation.taas.monthlyFee.toLocaleString()}</div>
                               <div className="text-xs text-blue-600">per month</div>
                             </div>
                           </div>
@@ -3292,7 +3292,7 @@ function HomePage() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-lg font-bold text-purple-800">${feeCalculation.cleanupProjectFee}</div>
+                              <div className="text-lg font-bold text-purple-800">${feeCalculation.cleanupProjectFee.toLocaleString()}</div>
                               <div className="text-xs text-purple-600">one-time project</div>
                             </div>
                           </div>
@@ -3315,7 +3315,7 @@ function HomePage() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-lg font-bold text-amber-800">${feeCalculation.priorYearFilingsFee}</div>
+                              <div className="text-lg font-bold text-amber-800">${feeCalculation.priorYearFilingsFee.toLocaleString()}</div>
                               <div className="text-xs text-amber-600">one-time setup</div>
                             </div>
                           </div>
@@ -3364,7 +3364,7 @@ function HomePage() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-lg font-bold text-blue-800">${feeCalculation.payrollFee}</div>
+                              <div className="text-lg font-bold text-blue-800">${feeCalculation.payrollFee.toLocaleString()}</div>
                               <div className="text-xs text-blue-600">per month</div>
                             </div>
                           </div>
@@ -3387,7 +3387,7 @@ function HomePage() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <div className="text-lg font-bold text-purple-800">+${form.watch('serviceTier') === 'Guided' ? '79' : '249'}</div>
+                              <div className="text-lg font-bold text-purple-800">+${form.watch('serviceTier') === 'Guided' ? 79 : 249}</div>
                               <div className="text-xs text-purple-600">per month</div>
                             </div>
                           </div>
