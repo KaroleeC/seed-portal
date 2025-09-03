@@ -37,7 +37,11 @@ export function BookkeepingCleanupSection({ control, form }: BookkeepingCleanupS
   
   // State for collapsible section
   const [isExpanded, setIsExpanded] = useState(true);
-  const [expandedYears, setExpandedYears] = useState<{[key: number]: boolean}>({});
+  const [expandedYears, setExpandedYears] = useState<{[key: number]: boolean}>(() => {
+    // Only the first (most recent) year should be expanded by default
+    const mostRecentYear = years[0];
+    return { [mostRecentYear]: true };
+  });
   
   const toggleYearExpansion = (year: number) => {
     setExpandedYears(prev => ({
@@ -156,7 +160,7 @@ export function BookkeepingCleanupSection({ control, form }: BookkeepingCleanupS
                   <FormControl>
                     <div className="space-y-6">
                       {years.map((year) => {
-                        const isYearExpanded = expandedYears[year] !== false; // Default to expanded
+                        const isYearExpanded = expandedYears[year] === true; // Only expanded if explicitly set to true
                         const selectedMonthsCount = getSelectedMonthsForYear(year);
                         const availableMonths = months.filter(month => isMonthSelectable(year, month.value));
                         const allMonthsSelected = selectedMonthsCount === availableMonths.length;
