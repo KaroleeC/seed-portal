@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 import { Calculator, FileText, Users, CreditCard, TrendingUp, Settings, Shield, Building2 } from "lucide-react";
 
 interface ServiceSelectionModalProps {
@@ -37,6 +38,7 @@ export function ServiceSelectionModal({
 }: ServiceSelectionModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [tempServices, setTempServices] = useState(selectedServices);
+  const { toast } = useToast();
 
   const handleServiceToggle = (serviceKey: keyof typeof selectedServices) => {
     // Check if trying to enable Payroll without core services
@@ -48,7 +50,11 @@ export function ServiceSelectionModal({
                              tempServices.serviceCfoAdvisory;
       
       if (!hasCoreServices && !tempServices.servicePayrollService) {
-        alert('Payroll service requires at least one core service (TaaS, Monthly Bookkeeping, Prior Year Filings, Cleanup Projects, or CFO Advisory).');
+        toast({
+          title: "Core Service Required",
+          description: "Payroll service requires at least one core service (TaaS, Monthly Bookkeeping, Prior Year Filings, Cleanup Projects, or CFO Advisory).",
+          variant: "destructive",
+        });
         return;
       }
     }
@@ -59,7 +65,11 @@ export function ServiceSelectionModal({
       const otherCoreServicesSelected = coreServiceKeys.filter(key => key !== serviceKey && tempServices[key as keyof typeof tempServices]).length;
       
       if (otherCoreServicesSelected === 0) {
-        alert('Cannot remove this core service while Payroll is selected. Please remove Payroll first or select another core service.');
+        toast({
+          title: "Cannot Remove Core Service",
+          description: "Cannot remove this core service while Payroll is selected. Please remove Payroll first or select another core service.",
+          variant: "destructive",
+        });
         return;
       }
     }
