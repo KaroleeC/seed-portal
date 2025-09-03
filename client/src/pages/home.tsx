@@ -32,6 +32,7 @@ import { ServiceTierCards } from "@/components/quote-form/ServiceTierCards";
 import { ServiceCards } from "@/components/quote-form/ServiceCards";
 import { TaasSection } from "@/components/quote-form/TaasSection";
 import { PriorYearFilingsSection } from "@/components/quote-form/PriorYearFilingsSection";
+import { BookkeepingCleanupSection } from "@/components/quote-form/BookkeepingCleanupSection";
 
 // Get current month number (1-12)
 const currentMonth = new Date().getMonth() + 1;
@@ -2839,6 +2840,13 @@ function HomePage() {
                         )}
                       />
                     </div>
+                    
+                    {/* Bookkeeping Cleanup Section */}
+                    <BookkeepingCleanupSection 
+                      control={form.control} 
+                      form={form}
+                    />
+                    
                     </Form>
                   </CardContent>
                 </Card>

@@ -19,6 +19,7 @@ export const formSchema = insertQuoteSchema.omit({
   contactFirstName: z.string().min(1, "First name is required"),
   contactLastName: z.string().min(1, "Last name is required"),
   cleanupMonths: z.number().min(0, "Cannot be negative"),
+  cleanupPeriods: z.array(z.string()).default([]), // Array of year-month strings like ["2024-01", "2024-02"]
   cleanupOverride: z.boolean().default(false),
   overrideReason: z.string().optional(),
   customOverrideReason: z.string().optional(),

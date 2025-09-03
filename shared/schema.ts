@@ -10,6 +10,7 @@ export const quotes = pgTable("quotes", {
   industry: text("industry").notNull(),
   cleanupMonths: integer("cleanup_months").notNull(),
   cleanupComplexity: decimal("cleanup_complexity", { precision: 3, scale: 2 }).notNull(),
+  cleanupPeriods: text("cleanup_periods").array(), // Store year-month combinations like ["2024-01", "2024-02", "2023-12"]
   cleanupOverride: boolean("cleanup_override").default(false).notNull(),
   overrideReason: text("override_reason"),
   approvalRequired: boolean("approval_required").default(false).notNull(),
