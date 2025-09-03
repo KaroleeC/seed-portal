@@ -3031,7 +3031,7 @@ function HomePage() {
                                 const selectedPeriods = form.watch('cleanupPeriods') || [];
                                 if (selectedPeriods.length === 0) return null;
                                 
-                                const costPerMonth = 200;
+                                const costPerMonth = 100;
                                 const totalCost = selectedPeriods.length * costPerMonth;
                                 
                                 return (
@@ -3044,7 +3044,7 @@ function HomePage() {
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="text-gray-600">Cost per month:</span>
-                                        <span className="font-medium">$200</span>
+                                        <span className="font-medium">$100</span>
                                       </div>
                                       <div className="flex justify-between">
                                         <span className="text-gray-600">Project scope:</span>
