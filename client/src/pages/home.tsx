@@ -3293,6 +3293,92 @@ function HomePage() {
                                 );
                               })()}
 
+                              {/* AP Service Breakdown */}
+                              {form.watch('serviceApArService') && (() => {
+                                const billsVolume = form.watch('apBillsVolume') || 'low';
+                                const vendorPayees = form.watch('apVendorPayees') || 'up_to_5';
+                                const serviceTier = form.watch('apServiceTier') || 'lite';
+                                
+                                // Calculate AP fees details
+                                const baseFees = {
+                                  low: 150,
+                                  medium: 500,
+                                  high: 1000
+                                };
+                                
+                                const vendorFees = {
+                                  up_to_5: 0,
+                                  '6_to_10': 60,  // 5 additional × $12
+                                  '11_to_15': 120, // 10 additional × $12
+                                  '16_to_20': 180, // 15 additional × $12
+                                  '21_to_25': 240, // 20 additional × $12
+                                  'over_25': 300   // 25 additional × $12
+                                };
+                                
+                                const baseFee = baseFees[billsVolume];
+                                const vendorFee = vendorFees[vendorPayees];
+                                const subtotal = baseFee + vendorFee;
+                                const isAdvanced = serviceTier === 'advanced';
+                                const finalFee = isAdvanced ? subtotal * 2.5 : subtotal;
+                                
+                                return (
+                                  <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                                    <h5 className="font-medium text-purple-800 mb-2">Accounts Payable Service Breakdown</h5>
+                                    <div className="space-y-1 text-sm">
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Bills volume:</span>
+                                        <span className="font-medium">
+                                          {billsVolume === 'low' ? 'Low (1-50 bills)' : 
+                                           billsVolume === 'medium' ? 'Medium (51-200 bills)' : 
+                                           'High (201+ bills)'}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Base AP fee:</span>
+                                        <span className="font-medium">${baseFee}/month</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Vendor/payee count:</span>
+                                        <span className="font-medium">
+                                          {vendorPayees === 'up_to_5' ? 'Up to 5 (included)' :
+                                           vendorPayees === '6_to_10' ? '6-10 (+5 additional)' :
+                                           vendorPayees === '11_to_15' ? '11-15 (+10 additional)' :
+                                           vendorPayees === '16_to_20' ? '16-20 (+15 additional)' :
+                                           vendorPayees === '21_to_25' ? '21-25 (+20 additional)' :
+                                           'Over 25 (+25 additional)'}
+                                        </span>
+                                      </div>
+                                      {vendorFee > 0 && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Additional vendor fees ($12/month each):</span>
+                                          <span className="font-medium">${vendorFee}/month</span>
+                                        </div>
+                                      )}
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Service tier:</span>
+                                        <span className="font-medium">
+                                          {isAdvanced ? 'AP Advanced (2.5x multiplier)' : 'AP Lite'}
+                                        </span>
+                                      </div>
+                                      
+                                      {isAdvanced && (
+                                        <div className="flex justify-between text-orange-600">
+                                          <span>AP Advanced multiplier (${subtotal} × 2.5):</span>
+                                          <span className="font-medium">${finalFee}/month</span>
+                                        </div>
+                                      )}
+                                      
+                                      <div className="border-t border-purple-200 pt-2 mt-2">
+                                        <div className="flex justify-between font-semibold">
+                                          <span className="text-purple-800">Monthly AP Fee:</span>
+                                          <span className="text-purple-700">${finalFee}/month</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
                               {/* Service Tier Breakdown */}
                               {form.watch('serviceTier') && form.watch('serviceTier') !== 'Automated' && (
                                 <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
