@@ -32,12 +32,11 @@ export default function APSection({ form }: APSectionProps) {
     {
       value: 'lite',
       title: 'AP Lite (Reports Only)',
-      price: 'Volume-based pricing',
+      price: '$150-$1,000/month',
       features: [
         'Automated categorization + reconciliation of vendor bills',
         'Aging reports delivered monthly (who you owe, when, how much)',
         'Cash flow visibility → but no one is paying vendors for you',
-        'Pricing: $150-$1,000/month based on bill volume',
         'Great for: DIYers who want clarity but will handle payments themselves'
       ],
       icon: Receipt,
@@ -46,13 +45,12 @@ export default function APSection({ form }: APSectionProps) {
     {
       value: 'advanced',
       title: 'AP Advanced (Full Service)',
-      price: '2.5x total quote',
+      price: 'Premium service tier',
       features: [
         'Everything in Lite plus:',
         'We actually process and schedule vendor payments (through Bill.com, Melio, or QBO Bill Pay)',
         'Vendor onboarding and W-9 collection',
         'Approval workflows (if client wants controls)',
-        'Applies 2.5x multiplier to entire monthly quote',
         'Great for: busy operators who want zero touch beyond approving'
       ],
       icon: CheckCircle,
@@ -129,7 +127,7 @@ export default function APSection({ form }: APSectionProps) {
                 Number of Vendors / Payees
                 <span className="text-sm font-normal text-gray-600">(unique vendors, not bills)</span>
               </FormLabel>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4">
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mt-4">
                 {vendorCounts.map((count) => (
                   <Card
                     key={count.value}

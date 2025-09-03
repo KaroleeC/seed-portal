@@ -60,8 +60,7 @@ export function ServiceSelectionModal({
     }
     
     // Check if trying to enable AP services without core services
-    const apServices = ['serviceApLite', 'serviceApAdvanced'];
-    if (apServices.includes(serviceKey)) {
+    if (serviceKey === 'serviceApArService') {
       const hasCoreServices = tempServices.serviceTaasMonthly || 
                              tempServices.serviceMonthlyBookkeeping || 
                              tempServices.servicePriorYearFilings || 
@@ -69,7 +68,7 @@ export function ServiceSelectionModal({
                              tempServices.serviceCfoAdvisory ||
                              tempServices.servicePayrollService;
       
-      if (!hasCoreServices && !tempServices[serviceKey as keyof typeof tempServices]) {
+      if (!hasCoreServices && !tempServices.serviceApArService) {
         toast({
           title: "Core Service Required",
           description: "AP services require at least one core service (TaaS, Monthly Bookkeeping, Prior Year Filings, Cleanup Projects, CFO Advisory, or Payroll).",
@@ -82,7 +81,7 @@ export function ServiceSelectionModal({
     // Check if trying to disable a core service when Payroll or AP services are selected
     const coreServiceKeys = ['serviceTaasMonthly', 'serviceMonthlyBookkeeping', 'servicePriorYearFilings', 'serviceCleanupProjects', 'serviceCfoAdvisory'];
     if (coreServiceKeys.includes(serviceKey) && tempServices[serviceKey]) {
-      const hasPayrollOrAp = tempServices.servicePayrollService || tempServices.serviceApLite || tempServices.serviceApAdvanced;
+      const hasPayrollOrAp = tempServices.servicePayrollService || tempServices.serviceApArService;
       if (hasPayrollOrAp) {
         const otherCoreServicesSelected = coreServiceKeys.filter(key => key !== serviceKey && tempServices[key as keyof typeof tempServices]).length;
         
