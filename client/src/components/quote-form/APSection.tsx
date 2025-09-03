@@ -212,14 +212,9 @@ export default function APSection({ form }: APSectionProps) {
                       onClick={() => field.onChange(tier.value)}
                     >
                       <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <IconComponent className="w-6 h-6" />
-                            <span className="text-lg">{tier.title}</span>
-                          </div>
-                          <Badge variant="outline" className="text-lg font-semibold">
-                            {tier.price}
-                          </Badge>
+                        <CardTitle className="flex items-center gap-2">
+                          <IconComponent className="w-6 h-6" />
+                          <span className="text-lg">{tier.title}</span>
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="pt-0">
