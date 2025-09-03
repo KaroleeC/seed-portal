@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calculator, FileText, Users, CreditCard, TrendingUp, Settings } from "lucide-react";
+import { Calculator, FileText, Users, CreditCard, TrendingUp, Settings, Shield, Building2 } from "lucide-react";
 
 interface ServiceSelectionModalProps {
   selectedServices: {
@@ -11,10 +11,20 @@ interface ServiceSelectionModalProps {
     serviceCleanupProjects: boolean;
     serviceTaasMonthly: boolean;
     servicePriorYearFilings: boolean;
-    servicePayroll: boolean;
-    serviceApArLite: boolean;
-    serviceFpaLite: boolean;
     serviceCfoAdvisory: boolean;
+    servicePayroll: boolean;
+    serviceApLite: boolean;
+    serviceArLite: boolean;
+    serviceApAdvanced: boolean;
+    serviceArAdvanced: boolean;
+    serviceFpaBuild: boolean;
+    serviceFpaSupport: boolean;
+    serviceAgentOfService: boolean;
+    serviceNexusStudy: boolean;
+    serviceEntityOptimization: boolean;
+    serviceCostSegregation: boolean;
+    serviceRdCredit: boolean;
+    serviceRealEstateAdvisory: boolean;
   };
   onServiceChange: (services: Partial<ServiceSelectionModalProps['selectedServices']>) => void;
   triggerText?: string;
@@ -83,28 +93,99 @@ export function ServiceSelectionModal({
       ]
     },
     {
-      title: "Add-On Services",
-      subtitle: "Requires a core service",
-      icon: Settings,
-      color: "bg-gray-600",
+      title: "Operational Services",
+      subtitle: "Add-on services - requires a core service",
+      icon: Users,
+      color: "bg-green-600",
       services: [
         {
           key: "servicePayroll" as const,
           name: "Payroll",
-          description: "Complete payroll processing and compliance",
-          category: "Operational Services"
+          description: "Complete payroll processing and compliance"
         },
         {
-          key: "serviceApArLite" as const,
-          name: "AP/AR Lite",
-          description: "Basic accounts payable and receivable management",
-          category: "Operational Services"
+          key: "serviceApLite" as const,
+          name: "AP Lite",
+          description: "Basic accounts payable management"
         },
         {
-          key: "serviceFpaLite" as const,
-          name: "FP&A Lite", 
-          description: "Essential financial planning and analysis services",
-          category: "Financial Planning & Analysis"
+          key: "serviceArLite" as const,
+          name: "AR Lite",
+          description: "Basic accounts receivable management"
+        },
+        {
+          key: "serviceApAdvanced" as const,
+          name: "AP Advanced",
+          description: "Advanced accounts payable with automation"
+        },
+        {
+          key: "serviceArAdvanced" as const,
+          name: "AR Advanced",
+          description: "Advanced accounts receivable with collections"
+        }
+      ]
+    },
+    {
+      title: "Financial Planning & Analysis",
+      subtitle: "Add-on services - requires a core service",
+      icon: TrendingUp,
+      color: "bg-purple-600",
+      services: [
+        {
+          key: "serviceFpaBuild" as const,
+          name: "FP&A Build",
+          description: "Custom financial planning and analysis build-out"
+        },
+        {
+          key: "serviceFpaSupport" as const,
+          name: "FP&A Support",
+          description: "Ongoing financial planning and analysis support"
+        }
+      ]
+    },
+    {
+      title: "Compliance & Advisory Services",
+      subtitle: "Add-on services - requires a core service",
+      icon: Shield,
+      color: "bg-orange-600",
+      services: [
+        {
+          key: "serviceAgentOfService" as const,
+          name: "Agent of Service",
+          description: "Legal agent representation services"
+        },
+        {
+          key: "serviceNexusStudy" as const,
+          name: "Nexus Study",
+          description: "Multi-state tax nexus analysis and compliance"
+        },
+        {
+          key: "serviceEntityOptimization" as const,
+          name: "Entity Optimization",
+          description: "Business entity structure optimization advisory"
+        }
+      ]
+    },
+    {
+      title: "Specialized Services",
+      subtitle: "Add-on services - requires a core service",
+      icon: Building2,
+      color: "bg-indigo-600",
+      services: [
+        {
+          key: "serviceCostSegregation" as const,
+          name: "Cost Segregation Study",
+          description: "Tax depreciation acceleration analysis"
+        },
+        {
+          key: "serviceRdCredit" as const,
+          name: "R&D Credit Analysis",
+          description: "Research and development tax credit optimization"
+        },
+        {
+          key: "serviceRealEstateAdvisory" as const,
+          name: "Real Estate Advisory",
+          description: "Specialized real estate tax and financial advisory"
         }
       ]
     }

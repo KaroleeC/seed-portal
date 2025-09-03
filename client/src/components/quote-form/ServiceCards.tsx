@@ -8,9 +8,20 @@ interface ServiceCardsProps {
     serviceCleanupProjects: boolean;
     serviceTaasMonthly: boolean;
     servicePriorYearFilings: boolean;
+    serviceCfoAdvisory: boolean;
     servicePayroll: boolean;
-    serviceApArLite: boolean;
-    serviceFpaLite: boolean;
+    serviceApLite: boolean;
+    serviceArLite: boolean;
+    serviceApAdvanced: boolean;
+    serviceArAdvanced: boolean;
+    serviceFpaBuild: boolean;
+    serviceFpaSupport: boolean;
+    serviceAgentOfService: boolean;
+    serviceNexusStudy: boolean;
+    serviceEntityOptimization: boolean;
+    serviceCostSegregation: boolean;
+    serviceRdCredit: boolean;
+    serviceRealEstateAdvisory: boolean;
   };
   onServiceChange: (services: Partial<ServiceCardsProps['selectedServices']>) => void;
   // Backwards compatibility props for existing legacy logic
@@ -38,9 +49,20 @@ export function ServiceCards({
     if (selectedServices.serviceCleanupProjects) serviceNames.push("Cleanup Projects");
     if (selectedServices.serviceTaasMonthly) serviceNames.push("Tax Advisory");
     if (selectedServices.servicePriorYearFilings) serviceNames.push("Prior Year Filings");
+    if (selectedServices.serviceCfoAdvisory) serviceNames.push("CFO Advisory");
     if (selectedServices.servicePayroll) serviceNames.push("Payroll");
-    if (selectedServices.serviceApArLite) serviceNames.push("AP/AR Lite");
-    if (selectedServices.serviceFpaLite) serviceNames.push("FP&A Lite");
+    if (selectedServices.serviceApLite) serviceNames.push("AP Lite");
+    if (selectedServices.serviceArLite) serviceNames.push("AR Lite");
+    if (selectedServices.serviceApAdvanced) serviceNames.push("AP Advanced");
+    if (selectedServices.serviceArAdvanced) serviceNames.push("AR Advanced");
+    if (selectedServices.serviceFpaBuild) serviceNames.push("FP&A Build");
+    if (selectedServices.serviceFpaSupport) serviceNames.push("FP&A Support");
+    if (selectedServices.serviceAgentOfService) serviceNames.push("Agent of Service");
+    if (selectedServices.serviceNexusStudy) serviceNames.push("Nexus Study");
+    if (selectedServices.serviceEntityOptimization) serviceNames.push("Entity Optimization");
+    if (selectedServices.serviceCostSegregation) serviceNames.push("Cost Segregation");
+    if (selectedServices.serviceRdCredit) serviceNames.push("R&D Credit");
+    if (selectedServices.serviceRealEstateAdvisory) serviceNames.push("Real Estate Advisory");
     return serviceNames;
   };
 
