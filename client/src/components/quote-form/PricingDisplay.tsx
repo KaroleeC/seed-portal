@@ -79,8 +79,11 @@ export function PricingDisplay({
           </div>
         </div>
 
-        {/* Service breakdown - only show if both services are included */}
-        {(feeCalculation.includesBookkeeping && feeCalculation.includesTaas) && (
+        {/* Service breakdown - show if multiple services are included */}
+        {((feeCalculation.includesBookkeeping && feeCalculation.includesTaas) || 
+          (feeCalculation.includesBookkeeping && feeCalculation.includesAP) || 
+          (feeCalculation.includesTaas && feeCalculation.includesAP) || 
+          (feeCalculation.includesBookkeeping && feeCalculation.includesTaas && feeCalculation.includesAP)) && (
           <>
             <Button
               type="button"
@@ -117,6 +120,16 @@ export function PricingDisplay({
                     <div className="flex justify-between text-sm">
                       <span>Setup:</span>
                       <span className="font-semibold">{formatCurrency(feeCalculation.taas.setupFee)}</span>
+                    </div>
+                  </div>
+                )}
+                
+                {feeCalculation.includesAP && (
+                  <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                    <h4 className="font-medium text-purple-800 mb-2">Accounts Payable Service</h4>
+                    <div className="flex justify-between text-sm">
+                      <span>Monthly:</span>
+                      <span className="font-semibold">{formatCurrency(feeCalculation.apFee)}</span>
                     </div>
                   </div>
                 )}

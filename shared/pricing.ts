@@ -435,6 +435,7 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     },
     includesBookkeeping,
     includesTaas,
+    includesAP,
     cleanupProjectFee,
     priorYearFilingsFee,
     cfoAdvisoryFee,
