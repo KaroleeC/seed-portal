@@ -3486,9 +3486,7 @@ function HomePage() {
                               </div>
                               <div>
                                 <h4 className="font-semibold text-blue-800">Payroll Service</h4>
-                                <p className="text-xs text-blue-600">
-                                  {form.watch('payrollEmployeeCount') || 1} employees in {form.watch('payrollStateCount') || 1} state{(form.watch('payrollStateCount') || 1) > 1 ? 's' : ''}
-                                </p>
+                                <p className="text-xs text-blue-600">Employee payroll management</p>
                               </div>
                             </div>
                             <div className="text-right">

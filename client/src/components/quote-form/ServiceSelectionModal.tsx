@@ -39,6 +39,31 @@ export function ServiceSelectionModal({
   const [tempServices, setTempServices] = useState(selectedServices);
 
   const handleServiceToggle = (serviceKey: keyof typeof selectedServices) => {
+    // Check if trying to enable Payroll without core services
+    if (serviceKey === 'servicePayrollService') {
+      const hasCoreServices = tempServices.serviceTaasMonthly || 
+                             tempServices.serviceMonthlyBookkeeping || 
+                             tempServices.servicePriorYearFilings || 
+                             tempServices.serviceCleanupProjects || 
+                             tempServices.serviceCfoAdvisory;
+      
+      if (!hasCoreServices && !tempServices.servicePayrollService) {
+        alert('Payroll service requires at least one core service (TaaS, Monthly Bookkeeping, Prior Year Filings, Cleanup Projects, or CFO Advisory).');
+        return;
+      }
+    }
+    
+    // Check if trying to disable a core service when Payroll is selected
+    const coreServiceKeys = ['serviceTaasMonthly', 'serviceMonthlyBookkeeping', 'servicePriorYearFilings', 'serviceCleanupProjects', 'serviceCfoAdvisory'];
+    if (coreServiceKeys.includes(serviceKey) && tempServices[serviceKey] && tempServices.servicePayrollService) {
+      const otherCoreServicesSelected = coreServiceKeys.filter(key => key !== serviceKey && tempServices[key as keyof typeof tempServices]).length;
+      
+      if (otherCoreServicesSelected === 0) {
+        alert('Cannot remove this core service while Payroll is selected. Please remove Payroll first or select another core service.');
+        return;
+      }
+    }
+    
     setTempServices(prev => ({
       ...prev,
       [serviceKey]: !prev[serviceKey]
