@@ -3323,13 +3323,13 @@ function HomePage() {
                                       {additionalEmployeeFee > 0 && (
                                         <div className="flex justify-between">
                                           <span className="text-gray-600">Additional employees ({employeeCount - 3} × $12):</span>
-                                          <span className="font-medium">$${additionalEmployeeFee}/month</span>
+                                          <span className="font-medium">${additionalEmployeeFee}/month</span>
                                         </div>
                                       )}
                                       {additionalStateFee > 0 && (
                                         <div className="flex justify-between">
                                           <span className="text-gray-600">Additional states ({stateCount - 1} × $25):</span>
-                                          <span className="font-medium">$${additionalStateFee}/month</span>
+                                          <span className="font-medium">${additionalStateFee}/month</span>
                                         </div>
                                       )}
                                       
