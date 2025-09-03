@@ -3029,8 +3029,8 @@ function HomePage() {
                                 );
                               })()}
 
-                              {/* TaaS Breakdown */}
-                              {feeCalculation.includesTaas && (() => {
+                              {/* TaaS Breakdown - only show if monthly TaaS is selected, not just Prior Year Filings */}
+                              {feeCalculation.includesTaas && form.watch('serviceTaasMonthly') && (() => {
                                 // Get the breakdown data from the TaaS calculation
                                 const breakdown = (feeCalculation.taas as any).breakdown;
                                 
