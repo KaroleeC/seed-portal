@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Control, useWatch } from "react-hook-form";
 import { FormData } from "./QuoteFormSchema";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface TaasSectionProps {
   control: Control<FormData>;
@@ -33,6 +34,9 @@ export function TaasSection({ control, currentFormView, form }: TaasSectionProps
   // State for custom inputs
   const [showCustomEntities, setShowCustomEntities] = useState(false);
   const [showCustomStates, setShowCustomStates] = useState(false);
+  
+  // State for collapsible section
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // Handle tile selections with custom inputs
   const handleEntitiesSelect = (value: number) => {
@@ -57,12 +61,28 @@ export function TaasSection({ control, currentFormView, form }: TaasSectionProps
 
   return (
     <div className="space-y-8 pt-6">
-      <div>
-        <h3 className="text-xl font-semibold text-gray-800">Tax Service Details</h3>
+      <div 
+        className="cursor-pointer select-none"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between group hover:bg-gray-50 p-3 -m-3 rounded-lg transition-colors">
+          <h3 className="text-xl font-semibold text-gray-800 group-hover:text-gray-900">Tax Service Details</h3>
+          <div className="flex items-center gap-2 text-gray-500 group-hover:text-gray-700">
+            <span className="text-sm font-medium">{isExpanded ? 'Collapse' : 'Expand'}</span>
+            {isExpanded ? (
+              <ChevronUp className="h-5 w-5 transition-transform" />
+            ) : (
+              <ChevronDown className="h-5 w-5 transition-transform" />
+            )}
+          </div>
+        </div>
         <hr className="border-gray-200 mt-3" />
       </div>
       
-      {/* Number of Entities - Tile Selection */}
+      {/* Collapsible Content */}
+      {isExpanded && (
+        <div className="space-y-8 animate-in slide-in-from-top-2 duration-300">
+          {/* Number of Entities - Tile Selection */}
       <div className="space-y-4">
         <FormLabel className="text-base font-medium text-gray-700">Number of Entities <span className="text-red-500">*</span></FormLabel>
         <div className="grid grid-cols-5 gap-3">
@@ -269,6 +289,8 @@ export function TaasSection({ control, currentFormView, form }: TaasSectionProps
             </FormItem>
           )}
         />
+      )}
+        </div>
       )}
     </div>
   );

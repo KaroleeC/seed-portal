@@ -64,6 +64,7 @@ export const quotes = pgTable("quotes", {
   serviceCleanupProjects: boolean("service_cleanup_projects").default(false),
   serviceTaasMonthly: boolean("service_taas_monthly").default(false),
   servicePriorYearFilings: boolean("service_prior_year_filings").default(false),
+  serviceCfoAdvisory: boolean("service_cfo_advisory").default(false),
   // Client address information for MSA generation
   clientStreetAddress: text("client_street_address"),
   clientCity: text("client_city"),

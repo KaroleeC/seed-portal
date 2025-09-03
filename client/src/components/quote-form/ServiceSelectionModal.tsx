@@ -14,6 +14,7 @@ interface ServiceSelectionModalProps {
     servicePayroll: boolean;
     serviceApArLite: boolean;
     serviceFpaLite: boolean;
+    serviceCfoAdvisory: boolean;
   };
   onServiceChange: (services: Partial<ServiceSelectionModalProps['selectedServices']>) => void;
   triggerText?: string;
@@ -73,17 +74,11 @@ export function ServiceSelectionModal({
           key: "serviceCleanupProjects" as const,
           name: "Bookkeeping Cleanup Project",
           description: "One-time bookkeeping cleanup and catch-up work"
-        },
-        {
-          key: "serviceFpaLite" as const,
-          name: "CFO Advisory Services",
-          description: "Strategic financial planning and CFO-level advisory"
         }
       ]
     },
     {
       title: "Operational Services",
-      subtitle: "(Requires a core service)",
       icon: Users,
       color: "bg-green-600", 
       services: [
@@ -101,7 +96,6 @@ export function ServiceSelectionModal({
     },
     {
       title: "Financial Planning & Analysis",
-      subtitle: "(Requires a core service)",
       icon: TrendingUp,
       color: "bg-purple-600",
       services: [
@@ -109,27 +103,12 @@ export function ServiceSelectionModal({
           key: "serviceFpaLite" as const,
           name: "FP&A Lite", 
           description: "Essential financial planning and analysis services"
+        },
+        {
+          key: "serviceCfoAdvisory" as const,
+          name: "CFO Advisory Services",
+          description: "Strategic financial planning and CFO-level advisory"
         }
-      ]
-    },
-    {
-      title: "Compliance & Advisory Services", 
-      subtitle: "(Requires a core service)",
-      icon: FileText,
-      color: "bg-orange-600",
-      services: [
-        // Note: These would need new database fields to be added
-        // Keeping existing serviceApArLite as placeholder for now
-      ]
-    },
-    {
-      title: "Specialized Services",
-      subtitle: "(Requires a core service)", 
-      icon: Settings,
-      color: "bg-gray-600",
-      services: [
-        // Note: These would need new database fields to be added
-        // Keeping existing services as placeholders for now
       ]
     }
   ];
@@ -146,48 +125,67 @@ export function ServiceSelectionModal({
           {triggerText} {getSelectedCount() > 0 && `(${getSelectedCount()} selected)`}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" data-testid="modal-service-selection">
-        <DialogHeader>
-          <DialogTitle>Select Services</DialogTitle>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto border-0 shadow-2xl" data-testid="modal-service-selection">
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            [data-testid="modal-service-selection"] button:has(svg[stroke="currentColor"]),
+            [data-testid="modal-service-selection"] .absolute.right-4.top-4 {
+              display: none !important;
+            }
+          `
+        }} />
+        <DialogHeader className="pb-6 border-b border-gray-100">
+          <DialogTitle className="text-2xl font-bold text-gray-800 text-center">Select Services</DialogTitle>
+          <p className="text-sm text-gray-600 text-center mt-2">Choose the services you'd like to include in your quote</p>
         </DialogHeader>
         
-        <div className="space-y-6">
+        <div className="space-y-8 py-6">
           {serviceCategories.map((category) => {
             const Icon = category.icon;
             return (
               <div key={category.title} className="space-y-3">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-2 rounded-lg ${category.color}`}>
-                    <Icon className="w-5 h-5 text-white" />
+                  <div className={`p-3 rounded-xl ${category.color} shadow-md`}>
+                    <Icon className="w-6 h-6 text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">{category.title}</h3>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">{category.title}</h3>
+                    {category.subtitle && (
+                      <p className="text-xs text-gray-500 italic">{category.subtitle}</p>
+                    )}
+                  </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {category.services.map((service) => {
                     const isSelected = tempServices[service.key];
                     return (
                       <Card 
                         key={service.key}
-                        className={`cursor-pointer transition-all duration-200 border-2 ${
+                        className={`cursor-pointer transition-all duration-300 border-2 shadow-sm hover:shadow-md ${
                           isSelected 
-                            ? 'border-[#e24c00] bg-orange-50' 
-                            : 'border-gray-200 hover:border-[#e24c00] hover:bg-gray-50'
+                            ? 'border-[#e24c00] bg-gradient-to-br from-orange-50 to-orange-100 shadow-lg transform scale-[1.02]' 
+                            : 'border-gray-200 hover:border-[#e24c00] hover:bg-gray-50 hover:shadow-md'
                         }`}
                         onClick={() => handleServiceToggle(service.key)}
                         data-testid={`card-${service.key}`}
                       >
-                        <CardContent className="p-4">
+                        <CardContent className="p-5">
                           <div className="flex items-start gap-3">
-                            <Checkbox 
-                              checked={isSelected}
-                              onChange={() => handleServiceToggle(service.key)}
-                              className="mt-1"
-                              data-testid={`checkbox-${service.key}`}
-                            />
+                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                              isSelected 
+                                ? 'bg-[#e24c00] border-[#e24c00]' 
+                                : 'border-gray-300'
+                            }`}>
+                              {isSelected && (
+                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
                             <div className="flex-1">
-                              <h4 className="font-medium text-gray-800 mb-1">{service.name}</h4>
-                              <p className="text-sm text-gray-600">{service.description}</p>
+                              <h4 className="font-semibold text-gray-800 mb-2">{service.name}</h4>
+                              <p className="text-sm text-gray-600 leading-relaxed">{service.description}</p>
                             </div>
                           </div>
                         </CardContent>
@@ -200,15 +198,18 @@ export function ServiceSelectionModal({
           })}
         </div>
         
-        <div className="flex justify-between items-center pt-4 border-t">
-          <div className="text-sm text-gray-600">
-            {getSelectedCount()} service{getSelectedCount() !== 1 ? 's' : ''} selected
+        <div className="flex justify-between items-center pt-6 mt-6 border-t border-gray-100">
+          <div className="text-sm font-medium text-gray-700">
+            <span className="bg-gray-100 px-3 py-1 rounded-full">
+              {getSelectedCount()} service{getSelectedCount() !== 1 ? 's' : ''} selected
+            </span>
           </div>
           <div className="flex gap-2">
             <Button 
               type="button"
               variant="outline" 
               onClick={handleCancel}
+              className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
               data-testid="button-cancel-services"
             >
               Cancel
@@ -216,10 +217,10 @@ export function ServiceSelectionModal({
             <Button 
               type="button"
               onClick={handleApply}
-              className="bg-[#e24c00] hover:bg-[#d63f00]"
+              className="px-6 py-2 bg-gradient-to-r from-[#e24c00] to-[#ff6b35] hover:from-[#d63f00] hover:to-[#e55a2b] text-white font-semibold shadow-lg"
               data-testid="button-apply-services"
             >
-              Apply Selection
+              Apply Selection ({getSelectedCount()})
             </Button>
           </div>
         </div>
