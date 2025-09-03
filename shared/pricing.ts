@@ -315,38 +315,36 @@ export function calculateAPFees(data: PricingData): { apFee: number } {
     return { apFee: 0 };
   }
   
-  // Base pricing by service tier
-  let baseFee = 0;
-  if (apServiceTier === 'lite') {
-    baseFee = 199; // AP Lite: $199/month
-  } else if (apServiceTier === 'advanced') {
-    baseFee = 499; // AP Advanced: $499/month
-  }
-  
-  // Add surcharges based on vendor bills volume
-  let billsVolumeSurcharge = 0;
+  // AP Lite baseline pricing based on vendor bills volume
+  let apLiteFee = 0;
   switch (apVendorBillsBand) {
     case '0-25':
-      billsVolumeSurcharge = 0; // No surcharge for low volume
+      apLiteFee = 150; // $150/month for 0-25 bills
       break;
     case '26-100':
-      billsVolumeSurcharge = 100; // $100/month surcharge for medium volume
+      apLiteFee = 300; // $300/month for 26-100 bills
       break;
     case '101-250':
-      billsVolumeSurcharge = 300; // $300/month surcharge for high volume
+      apLiteFee = 600; // $600/month for 101-250 bills
       break;
     case '251+':
-      billsVolumeSurcharge = 600; // $600/month surcharge for enterprise volume
+      apLiteFee = 1000; // $1,000/month for 251+ bills
+      break;
+    default:
+      apLiteFee = 150; // Default to lowest tier
       break;
   }
   
-  // Add vendor count surcharge for high vendor count
+  // Add vendor/payee count surcharge (first 5 are free, then $12/month per payee above 5)
   let vendorCountSurcharge = 0;
-  if (apVendorCount > 10) {
-    vendorCountSurcharge = (apVendorCount - 10) * 25; // $25/month per vendor above 10
+  if (apVendorCount > 5) {
+    vendorCountSurcharge = (apVendorCount - 5) * 12; // $12/month per vendor above 5
   }
   
-  const totalApFee = baseFee + billsVolumeSurcharge + vendorCountSurcharge;
+  let totalApFee = apLiteFee + vendorCountSurcharge;
+  
+  // If AP Advanced is selected, apply 2.5x multiplier to the total quote
+  // Note: This will be handled in the main calculation function as it affects the entire quote
   
   return { apFee: totalApFee };
 }
@@ -418,8 +416,15 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   const { apFee } = includesAP ? calculateAPFees(data) : { apFee: 0 };
 
   // Combined totals
-  const combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee;
-  const combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee;
+  let combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee;
+  let combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee;
+  
+  // Apply AP Advanced 2.5x multiplier to the entire quote if AP Advanced is selected
+  const apServiceTier = (data as any).apServiceTier;
+  if (apServiceTier === 'advanced') {
+    combinedMonthlyFee = combinedMonthlyFee * 2.5;
+    combinedSetupFee = combinedSetupFee * 2.5;
+  }
 
   return {
     bookkeeping: bookkeepingFees,

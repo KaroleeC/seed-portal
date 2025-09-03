@@ -59,18 +59,41 @@ export function ServiceSelectionModal({
       }
     }
     
-    // Check if trying to disable a core service when Payroll is selected
-    const coreServiceKeys = ['serviceTaasMonthly', 'serviceMonthlyBookkeeping', 'servicePriorYearFilings', 'serviceCleanupProjects', 'serviceCfoAdvisory'];
-    if (coreServiceKeys.includes(serviceKey) && tempServices[serviceKey] && tempServices.servicePayrollService) {
-      const otherCoreServicesSelected = coreServiceKeys.filter(key => key !== serviceKey && tempServices[key as keyof typeof tempServices]).length;
+    // Check if trying to enable AP services without core services
+    const apServices = ['serviceApLite', 'serviceApAdvanced'];
+    if (apServices.includes(serviceKey)) {
+      const hasCoreServices = tempServices.serviceTaasMonthly || 
+                             tempServices.serviceMonthlyBookkeeping || 
+                             tempServices.servicePriorYearFilings || 
+                             tempServices.serviceCleanupProjects || 
+                             tempServices.serviceCfoAdvisory ||
+                             tempServices.servicePayrollService;
       
-      if (otherCoreServicesSelected === 0) {
+      if (!hasCoreServices && !tempServices[serviceKey as keyof typeof tempServices]) {
         toast({
-          title: "Cannot Remove Core Service",
-          description: "Cannot remove this core service while Payroll is selected. Please remove Payroll first or select another core service.",
+          title: "Core Service Required",
+          description: "AP services require at least one core service (TaaS, Monthly Bookkeeping, Prior Year Filings, Cleanup Projects, CFO Advisory, or Payroll).",
           variant: "destructive",
         });
         return;
+      }
+    }
+    
+    // Check if trying to disable a core service when Payroll or AP services are selected
+    const coreServiceKeys = ['serviceTaasMonthly', 'serviceMonthlyBookkeeping', 'servicePriorYearFilings', 'serviceCleanupProjects', 'serviceCfoAdvisory'];
+    if (coreServiceKeys.includes(serviceKey) && tempServices[serviceKey]) {
+      const hasPayrollOrAp = tempServices.servicePayrollService || tempServices.serviceApLite || tempServices.serviceApAdvanced;
+      if (hasPayrollOrAp) {
+        const otherCoreServicesSelected = coreServiceKeys.filter(key => key !== serviceKey && tempServices[key as keyof typeof tempServices]).length;
+        
+        if (otherCoreServicesSelected === 0) {
+          toast({
+            title: "Cannot Remove Core Service",
+            description: "Cannot remove this core service while Payroll or AP services are selected. Please remove those services first or select another core service.",
+            variant: "destructive",
+          });
+          return;
+        }
       }
     }
     

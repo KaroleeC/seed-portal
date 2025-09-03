@@ -20,22 +20,24 @@ export default function APSection({ form }: APSectionProps) {
   ];
 
   const vendorCounts = [
-    { value: 1, label: '1', description: 'Single vendor' },
-    { value: 2, label: '2', description: 'Two vendors' },
-    { value: 3, label: '3', description: 'Three vendors' },
-    { value: 4, label: '4', description: 'Four vendors' },
-    { value: 5, label: '5+', description: 'Five or more' }
+    { value: 5, label: '5 or less', description: '5 payees or less' },
+    { value: 6, label: '6', description: '6 payees' },
+    { value: 7, label: '7', description: '7 payees' },
+    { value: 8, label: '8', description: '8 payees' },
+    { value: 9, label: '9', description: '9 payees' },
+    { value: 10, label: '10+', description: '10 or more payees' }
   ];
 
   const serviceTiers = [
     {
       value: 'lite',
       title: 'AP Lite (Reports Only)',
-      price: '$199/month',
+      price: 'Volume-based pricing',
       features: [
         'Automated categorization + reconciliation of vendor bills',
         'Aging reports delivered monthly (who you owe, when, how much)',
         'Cash flow visibility → but no one is paying vendors for you',
+        'Pricing: $150-$1,000/month based on bill volume',
         'Great for: DIYers who want clarity but will handle payments themselves'
       ],
       icon: Receipt,
@@ -43,13 +45,14 @@ export default function APSection({ form }: APSectionProps) {
     },
     {
       value: 'advanced',
-      title: 'AP Advanced (Human Help)',
-      price: '$499/month',
+      title: 'AP Advanced (Full Service)',
+      price: '2.5x total quote',
       features: [
         'Everything in Lite plus:',
         'We actually process and schedule vendor payments (through Bill.com, Melio, or QBO Bill Pay)',
         'Vendor onboarding and W-9 collection',
         'Approval workflows (if client wants controls)',
+        'Applies 2.5x multiplier to entire monthly quote',
         'Great for: busy operators who want zero touch beyond approving'
       ],
       icon: CheckCircle,
@@ -58,9 +61,9 @@ export default function APSection({ form }: APSectionProps) {
   ];
 
   const handleVendorCountChange = (value: number) => {
-    if (value === 5) {
+    if (value === 10) {
       setShowCustomVendorCount(true);
-      form.setValue('apVendorCount', 5);
+      form.setValue('apVendorCount', 10);
     } else {
       setShowCustomVendorCount(false);
       form.setValue('apVendorCount', value);
@@ -172,7 +175,7 @@ export default function APSection({ form }: APSectionProps) {
                   <Input
                     type="number"
                     placeholder="Enter exact number of vendors"
-                    min="5"
+                    min="10"
                     className="max-w-xs"
                     {...field}
                     value={field.value || ''}
