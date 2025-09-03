@@ -439,6 +439,11 @@ function HomePage() {
   // TaaS state
   const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(false);
   
+  // Service details collapsible states
+  const [isBookkeepingExpanded, setIsBookkeepingExpanded] = useState(false);
+  const [isPayrollExpanded, setIsPayrollExpanded] = useState(false);
+  const [isCfoAdvisoryExpanded, setIsCfoAdvisoryExpanded] = useState(false);
+  
   // Form navigation state
   const [currentFormView, setCurrentFormView] = useState<'bookkeeping' | 'taas' | 'placeholder'>('placeholder');
   
@@ -2249,7 +2254,22 @@ function HomePage() {
                   <CardContent className="p-8">
                     <Form {...form}>
                     <div className="space-y-8">
-                      <h3 className="text-xl font-semibold text-gray-900 border-b pb-4">Bookkeeping Service Details</h3>
+                      <div 
+                        className="flex items-center justify-between cursor-pointer border-b pb-4 hover:bg-gray-50 rounded-lg px-4 py-2 -mx-4 -mt-2 transition-all duration-200"
+                        onClick={() => setIsBookkeepingExpanded(!isBookkeepingExpanded)}
+                      >
+                        <h3 className="text-xl font-semibold text-gray-900">Bookkeeping Service Details</h3>
+                        <button className="p-1 rounded-full hover:bg-gray-200 transition-colors">
+                          {isBookkeepingExpanded ? (
+                            <ChevronUp className="h-5 w-5 text-gray-600" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-gray-600" />
+                          )}
+                        </button>
+                      </div>
+                      
+                      {isBookkeepingExpanded && (
+                      <div className="space-y-8">
                       
                       {/* Current Bookkeeping Software */}
                       <FormField
@@ -2678,6 +2698,8 @@ function HomePage() {
                           </FormItem>
                         )}
                       />
+                      </div>
+                      )}
                     </div>
                     </Form>
                   </CardContent>
@@ -2721,6 +2743,26 @@ function HomePage() {
             {form.watch('serviceCfoAdvisory') && (
               <div className="max-w-6xl mx-auto mt-8">
                 <Card className="bg-white shadow-lg border border-gray-200">
+                  <CardHeader 
+                    className="pb-4 cursor-pointer hover:bg-gray-50 transition-all duration-200"
+                    onClick={() => setIsCfoAdvisoryExpanded(!isCfoAdvisoryExpanded)}
+                  >
+                    <CardTitle className="text-xl font-semibold text-gray-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-6 h-6 text-indigo-600" />
+                        CFO Advisory Service Details
+                      </div>
+                      <button className="p-1 rounded-full hover:bg-gray-200 transition-colors">
+                        {isCfoAdvisoryExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-gray-600" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-gray-600" />
+                        )}
+                      </button>
+                    </CardTitle>
+                    <p className="text-gray-600">Configure your CFO advisory requirements and billing structure</p>
+                  </CardHeader>
+                  {isCfoAdvisoryExpanded && (
                   <CardContent className="p-6">
                     <Form {...form}>
                       <CfoAdvisorySection 
@@ -2729,6 +2771,7 @@ function HomePage() {
                       />
                     </Form>
                   </CardContent>
+                  )}
                 </Card>
               </div>
             )}
@@ -2737,18 +2780,32 @@ function HomePage() {
             {form.watch('servicePayrollService') && (
               <div className="max-w-6xl mx-auto mt-8">
                 <Card className="bg-white shadow-lg border border-gray-200">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                      <Users className="w-6 h-6 text-blue-600" />
-                      Payroll Service Details
+                  <CardHeader 
+                    className="pb-4 cursor-pointer hover:bg-gray-50 transition-all duration-200"
+                    onClick={() => setIsPayrollExpanded(!isPayrollExpanded)}
+                  >
+                    <CardTitle className="text-xl font-semibold text-gray-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-6 h-6 text-blue-600" />
+                        Payroll Service Details
+                      </div>
+                      <button className="p-1 rounded-full hover:bg-gray-200 transition-colors">
+                        {isPayrollExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-gray-600" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-gray-600" />
+                        )}
+                      </button>
                     </CardTitle>
                     <p className="text-gray-600">Configure your payroll requirements and pricing</p>
                   </CardHeader>
+                  {isPayrollExpanded && (
                   <CardContent className="p-6">
                     <Form {...form}>
                       <PayrollSection form={form} />
                     </Form>
                   </CardContent>
+                  )}
                 </Card>
               </div>
             )}

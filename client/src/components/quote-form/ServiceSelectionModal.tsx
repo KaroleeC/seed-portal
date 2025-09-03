@@ -167,11 +167,6 @@ export function ServiceSelectionModal({
       color: "bg-purple-600",
       services: [
         {
-          key: "serviceCfoAdvisory" as const,
-          name: "CFO Advisory",
-          description: "Executive financial advisory services with flexible billing options"
-        },
-        {
           key: "serviceFpaBuild" as const,
           name: "FP&A Build",
           description: "Custom financial planning and analysis build-out"
