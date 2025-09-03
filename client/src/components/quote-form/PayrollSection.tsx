@@ -1,5 +1,6 @@
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { Users, MapPin } from "lucide-react";
 
@@ -43,20 +44,37 @@ export default function PayrollSection({ form }: PayrollSectionProps) {
                     </span>
                   </div>
                   <FormControl>
-                    <Slider
-                      value={[field.value || 1]}
-                      onValueChange={(values) => field.onChange(values[0])}
-                      max={50}
-                      min={1}
-                      step={1}
-                      className="w-full"
-                      data-testid="slider-employee-count"
-                    />
+                    {employeeCount >= 50 ? (
+                      <div className="space-y-2">
+                        <Input
+                          type="number"
+                          min="1"
+                          max="999"
+                          value={field.value || 1}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                          className="text-center text-lg font-bold"
+                          data-testid="input-employee-count"
+                        />
+                        <p className="text-xs text-blue-600 text-center">Enter exact number of employees</p>
+                      </div>
+                    ) : (
+                      <>
+                        <Slider
+                          value={[field.value || 1]}
+                          onValueChange={(values) => field.onChange(values[0])}
+                          max={50}
+                          min={1}
+                          step={1}
+                          className="w-full"
+                          data-testid="slider-employee-count"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>1</span>
+                          <span>50+</span>
+                        </div>
+                      </>
+                    )}
                   </FormControl>
-                  <div className="flex justify-between text-xs text-gray-400 mt-1">
-                    <span>1</span>
-                    <span>50+</span>
-                  </div>
                 </div>
                 <p className="text-xs text-gray-600">
                   Base rate covers up to 3 employees. Additional employees are $12/month each.
@@ -85,20 +103,37 @@ export default function PayrollSection({ form }: PayrollSectionProps) {
                     </span>
                   </div>
                   <FormControl>
-                    <Slider
-                      value={[field.value || 1]}
-                      onValueChange={(values) => field.onChange(values[0])}
-                      max={15}
-                      min={1}
-                      step={1}
-                      className="w-full"
-                      data-testid="slider-state-count"
-                    />
+                    {stateCount >= 15 ? (
+                      <div className="space-y-2">
+                        <Input
+                          type="number"
+                          min="1"
+                          max="50"
+                          value={field.value || 1}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                          className="text-center text-lg font-bold"
+                          data-testid="input-state-count"
+                        />
+                        <p className="text-xs text-green-600 text-center">Enter exact number of states</p>
+                      </div>
+                    ) : (
+                      <>
+                        <Slider
+                          value={[field.value || 1]}
+                          onValueChange={(values) => field.onChange(values[0])}
+                          max={15}
+                          min={1}
+                          step={1}
+                          className="w-full"
+                          data-testid="slider-state-count"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>1</span>
+                          <span>15+</span>
+                        </div>
+                      </>
+                    )}
                   </FormControl>
-                  <div className="flex justify-between text-xs text-gray-400 mt-1">
-                    <span>1</span>
-                    <span>15+</span>
-                  </div>
                 </div>
                 <p className="text-xs text-gray-600">
                   Base rate covers 1 state. Additional states are $25/month each.
