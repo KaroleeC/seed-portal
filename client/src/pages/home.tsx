@@ -2899,8 +2899,8 @@ function HomePage() {
                               Detailed Breakdown
                             </h4>
                             <div className="space-y-3">
-                              {/* Bookkeeping Breakdown */}
-                              {feeCalculation.includesBookkeeping && (() => {
+                              {/* Bookkeeping Breakdown - Only show for monthly bookkeeping, not cleanup-only */}
+                              {feeCalculation.includesBookkeeping && form.watch('serviceMonthlyBookkeeping') && (() => {
                                 // Get the breakdown data from the calculation
                                 const breakdown = (feeCalculation.bookkeeping as any).breakdown;
                                 const hasDiscount = feeCalculation.includesBookkeeping && feeCalculation.includesTaas && form.watch('serviceMonthlyBookkeeping');
@@ -3163,8 +3163,8 @@ function HomePage() {
 
                     {/* Service Breakdown Cards */}
                     <div className="grid gap-4">
-                      {/* Bookkeeping Service Card */}
-                      {feeCalculation.includesBookkeeping && (
+                      {/* Bookkeeping Service Card - Only show for monthly bookkeeping, not cleanup-only */}
+                      {feeCalculation.includesBookkeeping && form.watch('serviceMonthlyBookkeeping') && (
                         <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 shadow-sm">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">

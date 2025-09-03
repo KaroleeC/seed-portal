@@ -212,15 +212,20 @@ export function calculateCleanupProjectFees(data: PricingData): { cleanupProject
 }
 
 export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
-  // Determine which services are included - prioritize legacy fields for existing database compatibility
-  const includesBookkeeping = Boolean(
+  // Determine which services are included - separate monthly vs project-only services
+  const includesMonthlyBookkeeping = Boolean(
     // Legacy fields (existing database)
     (data as any).serviceBookkeeping || 
     (data as any).includesBookkeeping ||
-    // New separated service fields (future database)
-    (data as any).serviceMonthlyBookkeeping || 
-    (data as any).serviceCleanupProjects
+    // New monthly bookkeeping field
+    (data as any).serviceMonthlyBookkeeping
   );
+  
+  const includesBookkeepingCleanupOnly = Boolean(
+    (data as any).serviceCleanupProjects && !includesMonthlyBookkeeping
+  );
+  
+  const includesBookkeeping = includesMonthlyBookkeeping || includesBookkeepingCleanupOnly;
   
   const includesTaas = Boolean(
     // Legacy fields (existing database)
@@ -231,12 +236,12 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     (data as any).servicePriorYearFilings
   );
 
-  // Calculate individual service fees
-  let bookkeepingFees = includesBookkeeping ? calculateBookkeepingFees(data) : { monthlyFee: 0, setupFee: 0 };
+  // Calculate individual service fees - only generate monthly fees if monthly service is selected
+  let bookkeepingFees = includesMonthlyBookkeeping ? calculateBookkeepingFees(data) : { monthlyFee: 0, setupFee: 0 };
   const taasFees = includesTaas ? calculateTaaSFees(data) : { monthlyFee: 0, setupFee: 0 };
 
-  // Apply Seed Bookkeeping Package discount (50% off bookkeeping when both services are selected)
-  if (includesBookkeeping && includesTaas && data.alreadyOnSeedBookkeeping) {
+  // Apply Seed Bookkeeping Package discount (50% off bookkeeping when both monthly services are selected)
+  if (includesMonthlyBookkeeping && includesTaas && data.alreadyOnSeedBookkeeping) {
     bookkeepingFees = {
       monthlyFee: roundToNearest25(bookkeepingFees.monthlyFee * 0.50),
       setupFee: bookkeepingFees.setupFee // Setup fee is not discounted
