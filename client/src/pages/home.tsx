@@ -2917,7 +2917,7 @@ function HomePage() {
                         )}
                       </button>
                     </CardTitle>
-                    <p className="text-gray-600">Configure your Agent of Service requirements and upgrade options</p>
+                    <p className="text-gray-600">Configure Agent of Service requirements and upgrade options</p>
                   </CardHeader>
                   {isAgentOfServiceExpanded && (
                   <CardContent className="p-6">

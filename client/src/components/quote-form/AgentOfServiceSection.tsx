@@ -34,11 +34,7 @@ export default function AgentOfServiceSection({ form }: AgentOfServiceSectionPro
           </div>
           <div className="text-center">
             <div className="text-sm font-medium text-gray-700">Includes:</div>
-            <div className="text-xs text-gray-600">Primary state/entity registration</div>
-          </div>
-          <div className="text-center">
-            <div className="text-sm font-medium text-gray-700">Service:</div>
-            <div className="text-xs text-gray-600">Agent of Service designation</div>
+            <div className="text-xs text-gray-600">Entity & Filing Admin, Tax & Compliance Admin, Banking & Account Setup, Misc.</div>
           </div>
         </div>
       </div>
@@ -85,7 +81,7 @@ export default function AgentOfServiceSection({ form }: AgentOfServiceSectionPro
                     </div>
                   </div>
                   <div className="mt-3 text-sm text-gray-600">
-                    <p>Each additional state or entity where you need Agent of Service designation beyond the primary registration.</p>
+                    <p>Each additional state or entity where there is an Agent of Service designation need beyond the primary registration.</p>
                   </div>
                 </Card>
               </div>
@@ -166,50 +162,6 @@ export default function AgentOfServiceSection({ form }: AgentOfServiceSectionPro
         />
       </div>
 
-      {/* Total Fee Summary */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800">Agent of Service - Total</h3>
-            <div className="text-sm text-gray-600 mt-1">
-              {baseFee === totalFee ? 'Base service only' : 
-               `Base ($${baseFee}) + Additional fees ($${totalFee - baseFee})`}
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-blue-600">${totalFee}</div>
-            <div className="text-sm text-gray-600">per month</div>
-          </div>
-        </div>
-
-        {/* Fee Breakdown */}
-        {(additionalStatesValue > 0 || complexCaseValue) && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="text-sm text-gray-600 space-y-1">
-              <div className="flex justify-between">
-                <span>Base Agent of Service</span>
-                <span>${baseFee}</span>
-              </div>
-              {additionalStatesValue > 0 && (
-                <div className="flex justify-between">
-                  <span>Additional States/Entities ({additionalStatesValue})</span>
-                  <span>${additionalStatesFee}</span>
-                </div>
-              )}
-              {complexCaseValue && (
-                <div className="flex justify-between">
-                  <span>Complex Case Upgrade</span>
-                  <span>${complexCaseFee}</span>
-                </div>
-              )}
-              <div className="flex justify-between font-semibold pt-1 border-t border-gray-300">
-                <span>Total Monthly Fee</span>
-                <span>${totalFee}</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
