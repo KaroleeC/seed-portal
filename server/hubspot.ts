@@ -671,6 +671,21 @@ export class HubSpotService {
     bookkeepingSetupFee?: number,
     quoteData?: any,
     serviceTier?: string,
+    // New services
+    includesPayroll?: boolean,
+    payrollFee?: number,
+    includesAP?: boolean,
+    apFee?: number,
+    includesAR?: boolean,
+    arFee?: number,
+    includesAgentOfService?: boolean,
+    agentOfServiceFee?: number,
+    includesCfoAdvisory?: boolean,
+    cfoAdvisoryFee?: number,
+    cleanupProjectFee?: number,
+    priorYearFilingsFee?: number,
+    includesFpaBuild?: boolean,
+    fpaServiceFee?: number,
   ): Promise<{ id: string; title: string } | null> {
     try {
       // Create a proper HubSpot quote using the quotes API
@@ -732,6 +747,14 @@ Services Include:
       const paymentTerms = this.generatePaymentTerms(
         includesBookkeeping,
         includesTaas,
+        includesPayroll,
+        includesAP,
+        includesAR,
+        includesAgentOfService,
+        includesCfoAdvisory,
+        cleanupProjectFee > 0,
+        priorYearFilingsFee > 0,
+        includesFpaBuild,
       );
       console.log("📋 Payment terms generated:", paymentTerms);
 
@@ -790,6 +813,21 @@ Services Include:
           bookkeepingMonthlyFee,
           bookkeepingSetupFee,
           serviceTier,
+          // New services
+          includesPayroll,
+          payrollFee || 0,
+          includesAP,
+          apFee || 0,
+          includesAR,
+          arFee || 0,
+          includesAgentOfService,
+          agentOfServiceFee || 0,
+          includesCfoAdvisory,
+          cfoAdvisoryFee || 0,
+          cleanupProjectFee || 0,
+          priorYearFilingsFee || 0,
+          includesFpaBuild,
+          fpaServiceFee || 0,
         );
         console.log("📋 Line items added successfully to quote");
       } catch (lineItemError) {
@@ -836,6 +874,21 @@ Services Include:
     bookkeepingMonthlyFee?: number,
     bookkeepingSetupFee?: number,
     serviceTier?: string,
+    // New services
+    includesPayroll?: boolean,
+    payrollFee?: number,
+    includesAP?: boolean,
+    apFee?: number,
+    includesAR?: boolean,
+    arFee?: number,
+    includesAgentOfService?: boolean,
+    agentOfServiceFee?: number,
+    includesCfoAdvisory?: boolean,
+    cfoAdvisoryFee?: number,
+    cleanupProjectFee?: number,
+    priorYearFilingsFee?: number,
+    includesFpaBuild?: boolean,
+    fpaServiceFee?: number,
   ): Promise<void> {
     try {
       console.log("🔧 STARTING LINE ITEM CREATION");
@@ -863,6 +916,21 @@ Services Include:
         bookkeepingMonthlyFee: bookkeepingMonthlyFee || monthlyFee,
         bookkeepingSetupFee: bookkeepingSetupFee || setupFee,
         serviceTier: serviceTier,
+        // New services
+        includesPayroll: includesPayroll ?? false,
+        payrollFee: payrollFee || 0,
+        includesAP: includesAP ?? false,
+        apFee: apFee || 0,
+        includesAR: includesAR ?? false,
+        arFee: arFee || 0,
+        includesAgentOfService: includesAgentOfService ?? false,
+        agentOfServiceFee: agentOfServiceFee || 0,
+        includesCfoAdvisory: includesCfoAdvisory ?? false,
+        cfoAdvisoryFee: cfoAdvisoryFee || 0,
+        cleanupProjectFee: cleanupProjectFee || 0,
+        priorYearFilingsFee: priorYearFilingsFee || 0,
+        includesFpaBuild: includesFpaBuild ?? false,
+        fpaServiceFee: fpaServiceFee || 0,
       });
 
       console.log("✅ LINE ITEM CREATION COMPLETED SUCCESSFULLY");
@@ -888,6 +956,21 @@ Services Include:
       bookkeepingMonthlyFee: number;
       bookkeepingSetupFee: number;
       serviceTier?: string;
+      // New services
+      includesPayroll: boolean;
+      payrollFee: number;
+      includesAP: boolean;
+      apFee: number;
+      includesAR: boolean;
+      arFee: number;
+      includesAgentOfService: boolean;
+      agentOfServiceFee: number;
+      includesCfoAdvisory: boolean;
+      cfoAdvisoryFee: number;
+      cleanupProjectFee: number;
+      priorYearFilingsFee: number;
+      includesFpaBuild: boolean;
+      fpaServiceFee: number;
     },
   ): Promise<void> {
     try {
@@ -907,6 +990,7 @@ Services Include:
       const serviceDefinitions = {
         bookkeeping: {
           shouldInclude: serviceConfig.includesBookkeeping,
+          serviceAgreementLink: "www.seedfinancial.io/legal/ssa-v-2025-09-01", // Standard bookkeeping agreement
           lineItems: [
             {
               condition: serviceConfig.bookkeepingMonthlyFee > 0,
@@ -929,6 +1013,7 @@ Services Include:
             serviceConfig.includesTaas &&
             (serviceConfig.taasMonthlyFee > 0 ||
               serviceConfig.taasPriorYearsFee > 0),
+          serviceAgreementLink: "www.seedfinancial.io/legal/ssb-v-2025-09-01", // TaaS agreement
           lineItems: [
             {
               condition: serviceConfig.taasMonthlyFee > 0,
@@ -966,11 +1051,118 @@ Services Include:
             },
           ],
         },
-        // Future services can be easily added here:
-        // payroll: {
-        //   shouldInclude: serviceConfig.includesPayroll,
-        //   lineItems: [...]
-        // }
+        // Payroll Service
+        payroll: {
+          shouldInclude: serviceConfig.includesPayroll && serviceConfig.payrollFee > 0,
+          serviceAgreementLink: "www.seedfinancial.io/legal/ssc-v-2025-09-01",
+          lineItems: [
+            {
+              condition: serviceConfig.payrollFee > 0,
+              name: "Payroll Service (Custom)",
+              price: serviceConfig.payrollFee,
+              productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
+              description: "Seed Financial Payroll Service - Complete payroll processing and compliance",
+            },
+          ],
+        },
+        // Accounts Payable Service  
+        accountsPayable: {
+          shouldInclude: serviceConfig.includesAP && serviceConfig.apFee > 0,
+          serviceAgreementLink: "www.seedfinancial.io/legal/ssd-v-2025-09-01",
+          lineItems: [
+            {
+              condition: serviceConfig.apFee > 0,
+              name: "Accounts Payable Service (Custom)",
+              price: serviceConfig.apFee,
+              productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
+              description: "Seed Financial Accounts Payable Service - Automated vendor bill processing and payment management",
+            },
+          ],
+        },
+        // Accounts Receivable Service
+        accountsReceivable: {
+          shouldInclude: serviceConfig.includesAR && serviceConfig.arFee > 0,
+          serviceAgreementLink: "www.seedfinancial.io/legal/sse-v-2025-09-01",
+          lineItems: [
+            {
+              condition: serviceConfig.arFee > 0,
+              name: "Accounts Receivable Service (Custom)",
+              price: serviceConfig.arFee,
+              productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
+              description: "Seed Financial Accounts Receivable Service - Customer invoice processing and collection management",
+            },
+          ],
+        },
+        // Agent of Service
+        agentOfService: {
+          shouldInclude: serviceConfig.includesAgentOfService && serviceConfig.agentOfServiceFee > 0,
+          serviceAgreementLink: "www.seedfinancial.io/legal/ssf-v-2025-09-01",
+          lineItems: [
+            {
+              condition: serviceConfig.agentOfServiceFee > 0,
+              name: "Agent of Service (Custom)",
+              price: serviceConfig.agentOfServiceFee,
+              productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
+              description: "Seed Financial Agent of Service - Legal agent representation services for entity compliance",
+            },
+          ],
+        },
+        // CFO Advisory Service
+        cfoAdvisory: {
+          shouldInclude: serviceConfig.includesCfoAdvisory && serviceConfig.cfoAdvisoryFee > 0,
+          serviceAgreementLink: "www.seedfinancial.io/legal/ssa-v-2025-09-01", // Standard agreement for now
+          lineItems: [
+            {
+              condition: serviceConfig.cfoAdvisoryFee > 0,
+              name: "CFO Advisory Services (Custom)",
+              price: serviceConfig.cfoAdvisoryFee,
+              productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
+              description: "Seed Financial CFO Advisory Services - Strategic financial planning and CFO-level advisory",
+            },
+          ],
+        },
+        // Cleanup Projects
+        cleanupProjects: {
+          shouldInclude: serviceConfig.cleanupProjectFee > 0,
+          serviceAgreementLink: "www.seedfinancial.io/legal/ssa-v-2025-09-01", // Standard agreement
+          lineItems: [
+            {
+              condition: serviceConfig.cleanupProjectFee > 0,
+              name: "Bookkeeping Cleanup Project (Custom)",
+              price: serviceConfig.cleanupProjectFee,
+              productId: productIds.cleanup,
+              description: "Seed Financial Bookkeeping Cleanup Project - One-time bookkeeping cleanup and catch-up work",
+            },
+          ],
+        },
+        // Prior Year Filings
+        priorYearFilings: {
+          shouldInclude: serviceConfig.priorYearFilingsFee > 0,
+          serviceAgreementLink: "www.seedfinancial.io/legal/ssb-v-2025-09-01", // TaaS agreement for tax work
+          lineItems: [
+            {
+              condition: serviceConfig.priorYearFilingsFee > 0,
+              name: "Prior Year Tax Filings (Custom)",
+              price: serviceConfig.priorYearFilingsFee,
+              productId: productIds.cleanup, // Using cleanup product ID as placeholder
+              description: "Seed Financial Prior Year Tax Filings - Catch-up tax filings for previous years",
+            },
+          ],
+        },
+        // FP&A Services
+        fpaServices: {
+          shouldInclude: serviceConfig.includesFpaBuild && serviceConfig.fpaServiceFee > 0,
+          serviceAgreementLink: "www.seedfinancial.io/legal/ssa-v-2025-09-01", // Standard agreement for now
+          lineItems: [
+            {
+              condition: serviceConfig.fpaServiceFee > 0,
+              name: "FP&A Services (Custom)",
+              price: serviceConfig.fpaServiceFee,
+              productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
+              description: "Seed Financial FP&A Services - Financial planning and analysis build-out and support",
+            },
+          ],
+        },
       };
 
       // Create line items for all included services
@@ -2455,6 +2647,14 @@ Generated: ${new Date().toLocaleDateString()}`;
       const paymentTerms = this.generatePaymentTerms(
         includesBookkeeping,
         includesTaas,
+        includesPayroll,
+        includesAP,
+        includesAR,
+        includesAgentOfService,
+        includesCfoAdvisory,
+        cleanupProjectFee > 0,
+        priorYearFilingsFee > 0,
+        includesFpaBuild,
       );
       console.log("📋 Payment terms updated:", paymentTerms);
 
@@ -2749,6 +2949,14 @@ Generated: ${new Date().toLocaleDateString()}`;
   private generatePaymentTerms(
     includesBookkeeping: boolean,
     includesTaas: boolean,
+    includesPayroll?: boolean,
+    includesAP?: boolean,
+    includesAR?: boolean,
+    includesAgentOfService?: boolean,
+    includesCfoAdvisory?: boolean,
+    includesCleanup?: boolean,
+    includesPriorYears?: boolean,
+    includesFpaBuild?: boolean,
   ): string {
     const baseTerms = `This Quote is the Order Form under Seed's MSA and the selected Service Schedule(s), which are incorporated by reference. By signing and paying, Client agrees to those documents. Pricing is based on the Assumptions listed above; material changes may adjust Bookkeeping fees prospectively per our right-sizing rule. Order of precedence: Quote → Schedule(s) → MSA. Governing law: California.
 
@@ -2758,13 +2966,61 @@ Generated: ${new Date().toLocaleDateString()}`;
 
     if (includesBookkeeping) {
       schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssa-v-2025-07-01">SCHEDULE A - BOOKKEEPING v2025.07.01</a>',
+        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
       );
     }
 
     if (includesTaas) {
       schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssb-v-2025-07-01">SCHEDULE B - TAX AS A SERVICE v2025.07.01</a>',
+        '<a href="https://seedfinancial.io/legal/ssb-v-2025-09-01">SCHEDULE B - TAX AS A SERVICE v2025.09.01</a>',
+      );
+    }
+
+    if (includesPayroll) {
+      schedules.push(
+        '<a href="https://www.seedfinancial.io/legal/ssc-v-2025-09-01">SCHEDULE C - PAYROLL v2025.09.01</a>',
+      );
+    }
+
+    if (includesAP) {
+      schedules.push(
+        '<a href="https://www.seedfinancial.io/legal/ssd-v-2025-09-01">SCHEDULE D - ACCOUNTS PAYABLE v2025.09.01</a>',
+      );
+    }
+
+    if (includesAR) {
+      schedules.push(
+        '<a href="https://www.seedfinancial.io/legal/sse-v-2025-09-01">SCHEDULE E - ACCOUNTS RECEIVABLE v2025.09.01</a>',
+      );
+    }
+
+    if (includesAgentOfService) {
+      schedules.push(
+        '<a href="https://www.seedfinancial.io/legal/ssf-v-2025-09-01">SCHEDULE F - AGENT OF SERVICE v2025.09.01</a>',
+      );
+    }
+
+    if (includesCfoAdvisory) {
+      schedules.push(
+        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
+      );
+    }
+
+    if (includesCleanup) {
+      schedules.push(
+        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
+      );
+    }
+
+    if (includesPriorYears) {
+      schedules.push(
+        '<a href="https://seedfinancial.io/legal/ssb-v-2025-09-01">SCHEDULE B - TAX AS A SERVICE v2025.09.01</a>',
+      );
+    }
+
+    if (includesFpaBuild) {
+      schedules.push(
+        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
       );
     }
 

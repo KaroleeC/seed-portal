@@ -1365,6 +1365,9 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       
       console.log(`🔧 CORRECTED: Using actualIncludesBookkeeping=${actualIncludesBookkeeping}, actualIncludesTaas=${actualIncludesTaas}`);
       
+      // Calculate all service fees using the pricing engine
+      const allFees = calculateCombinedFees(quote);
+      
       const hubspotQuote = await hubSpotService.createQuote(
         deal.id,
         companyName,
@@ -1380,7 +1383,22 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         bookkeepingMonthlyFee,
         bookkeepingSetupFee,
         quote, // Pass the complete quote data for scope assumptions
-        quote.serviceTier || 'Automated' // Pass the service tier
+        quote.serviceTier || 'Automated', // Pass the service tier
+        // New services
+        quote.servicePayroll || false,
+        allFees.payrollFee || 0,
+        quote.serviceApArLite || false, // AP service
+        allFees.apFee || 0,
+        quote.serviceApArLite || false, // AR service (same field for both AP/AR)
+        allFees.arFee || 0,
+        quote.serviceAgentOfService || false,
+        allFees.agentOfServiceFee || 0,
+        quote.serviceCfoAdvisory || false,
+        allFees.cfoAdvisoryFee || 0,
+        allFees.cleanupProjectFee || 0,
+        allFees.priorYearFilingsFee || 0,
+        quote.serviceFpaLite || false,
+        allFees.fpaServiceFee || 0
       );
 
       if (!hubspotQuote) {
