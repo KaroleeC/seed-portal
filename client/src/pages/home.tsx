@@ -3363,16 +3363,19 @@ function HomePage() {
                                         )}
                                         
                                         {isAdvanced && (
-                                          <>
-                                            <div className="flex justify-between">
-                                              <span className="text-gray-600">AP Advanced applies to entire quote</span>
-                                              <span className="font-medium">2.5x</span>
+                                          <div className="mt-3 pt-3 border-t border-purple-200">
+                                            <div className="bg-purple-100 rounded-md p-3 border border-purple-300">
+                                              <div className="text-center text-sm">
+                                                <div className="font-medium text-purple-800 mb-1">🚀 AP Advanced Selected</div>
+                                                <div className="text-purple-700">
+                                                  <strong>2.5x multiplier applied to entire quote</strong>
+                                                </div>
+                                                <div className="text-purple-600 text-xs mt-1">
+                                                  See "Total Monthly Fee" below for multiplied amount
+                                                </div>
+                                              </div>
                                             </div>
-                                            <div className="flex justify-between">
-                                              <span className="text-gray-600">Total quote multiplier applied</span>
-                                              <span className="font-medium">See total above</span>
-                                            </div>
-                                          </>
+                                          </div>
                                         )}
                                       </div>
                                       
@@ -3591,13 +3594,19 @@ function HomePage() {
                               <div>
                                 <h4 className="font-semibold text-purple-800">Accounts Payable Service</h4>
                                 <p className="text-xs text-purple-600">
-                                  {form.watch('apServiceTier') === 'advanced' ? 'AP Advanced tier' : 'AP Lite tier'}
+                                  {form.watch('apServiceTier') === 'advanced' ? (
+                                    <>AP Advanced tier • <strong>2.5x multiplier affects entire quote</strong></>
+                                  ) : (
+                                    'AP Lite tier'
+                                  )}
                                 </p>
                               </div>
                             </div>
                             <div className="text-right">
                               <div className="text-lg font-bold text-purple-800">${feeCalculation.apFee.toLocaleString()}</div>
-                              <div className="text-xs text-purple-600">per month</div>
+                              <div className="text-xs text-purple-600">
+                                {form.watch('apServiceTier') === 'advanced' ? 'base fee' : 'per month'}
+                              </div>
                             </div>
                           </div>
                         </div>
