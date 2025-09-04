@@ -53,6 +53,7 @@ export function ServiceCards({
     if (selectedServices.serviceCfoAdvisory) serviceNames.push("CFO Advisory");
     if (selectedServices.servicePayrollService) serviceNames.push("Payroll");
     if (selectedServices.serviceApArService) serviceNames.push("Accounts Payable"); // Current AP tracking
+    if (selectedServices.serviceArService) serviceNames.push("Accounts Receivable"); // AR service
     if (selectedServices.serviceApLite) serviceNames.push("AP Lite");
     if (selectedServices.serviceArLite) serviceNames.push("AR Lite");
     if (selectedServices.serviceApAdvanced) serviceNames.push("AP Advanced");

@@ -79,17 +79,36 @@ export function ServiceSelectionModal({
       }
     }
     
-    // Check if trying to disable a core service when Payroll or AP services are selected
+    // Check if trying to enable AR services without core services
+    if (serviceKey === 'serviceArService') {
+      const hasCoreServices = tempServices.serviceTaasMonthly || 
+                             tempServices.serviceMonthlyBookkeeping || 
+                             tempServices.servicePriorYearFilings || 
+                             tempServices.serviceCleanupProjects || 
+                             tempServices.serviceCfoAdvisory ||
+                             tempServices.servicePayrollService;
+      
+      if (!hasCoreServices && !tempServices.serviceArService) {
+        toast({
+          title: "Core Service Required",
+          description: "AR services require at least one core service (TaaS, Monthly Bookkeeping, Prior Year Filings, Cleanup Projects, CFO Advisory, or Payroll).",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    // Check if trying to disable a core service when Payroll, AP, or AR services are selected
     const coreServiceKeys = ['serviceTaasMonthly', 'serviceMonthlyBookkeeping', 'servicePriorYearFilings', 'serviceCleanupProjects', 'serviceCfoAdvisory'];
     if (coreServiceKeys.includes(serviceKey) && tempServices[serviceKey]) {
-      const hasPayrollOrAp = tempServices.servicePayrollService || tempServices.serviceApArService;
-      if (hasPayrollOrAp) {
+      const hasPayrollOrApOrAr = tempServices.servicePayrollService || tempServices.serviceApArService || tempServices.serviceArService;
+      if (hasPayrollOrApOrAr) {
         const otherCoreServicesSelected = coreServiceKeys.filter(key => key !== serviceKey && tempServices[key as keyof typeof tempServices]).length;
         
         if (otherCoreServicesSelected === 0) {
           toast({
             title: "Cannot Remove Core Service",
-            description: "Cannot remove this core service while Payroll or AP services are selected. Please remove those services first or select another core service.",
+            description: "Cannot remove this core service while Payroll, AP, or AR services are selected. Please remove those services first or select another core service.",
             variant: "destructive",
           });
           return;
@@ -165,6 +184,11 @@ export function ServiceSelectionModal({
           key: "serviceApArService" as const,
           name: "Accounts Payable (AP)",
           description: "Automated vendor bill processing and payment management"
+        },
+        {
+          key: "serviceArService" as const,
+          name: "Accounts Receivable (AR)",
+          description: "Customer invoice processing and collection management"
         }
       ]
     },

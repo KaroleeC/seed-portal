@@ -2146,6 +2146,7 @@ function HomePage() {
                 serviceCfoAdvisory: form.watch('serviceCfoAdvisory') || false,
                 servicePayrollService: form.watch('servicePayrollService') || false,
                 serviceApArService: form.watch('serviceApArService') || false, // Current AP tracking
+                serviceArService: form.watch('serviceArService') || false, // AR service
                 serviceApLite: form.watch('serviceApLite') || false,
                 serviceArLite: form.watch('serviceArLite') || false,
                 serviceApAdvanced: form.watch('serviceApAdvanced') || false,
@@ -2906,7 +2907,7 @@ function HomePage() {
                   
                   <div className="space-y-6">
                     {/* Main Total Display - Clickable for detailed breakdown */}
-                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0) || (form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0) || (form.watch('serviceCfoAdvisory') && feeCalculation.cfoAdvisoryFee > 0) || form.watch('servicePayrollService') || form.watch('serviceApArService')) && (
+                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0) || (form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0) || (form.watch('serviceCfoAdvisory') && feeCalculation.cfoAdvisoryFee > 0) || form.watch('servicePayrollService') || form.watch('serviceApArService') || form.watch('serviceArService')) && (
                       <>
                         <div 
                           className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:from-blue-100 hover:to-indigo-200"
@@ -3364,6 +3365,49 @@ function HomePage() {
                                   </div>
                               )}
 
+                              {/* AR Service Breakdown - Uses backend breakdown values only */}
+                              {form.watch('serviceArService') && feeCalculation.includesAR && feeCalculation.arBreakdown && (
+                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                    <h5 className="font-medium text-blue-800 mb-3">Accounts Receivable Service Breakdown</h5>
+                                    <div className="space-y-2 text-sm">
+                                      
+                                      {/* Base Calculation */}
+                                      <div className="space-y-1 pb-2 border-b border-blue-200">
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Base AR fee ({feeCalculation.arBreakdown.invoicesLabel}):</span>
+                                          <span className="font-medium">${feeCalculation.arBreakdown.baseFee}</span>
+                                        </div>
+                                        
+                                        {feeCalculation.arBreakdown.customerSurcharge > 0 && (
+                                          <>
+                                            <div className="flex justify-between">
+                                              <span className="text-gray-600">Additional customers ({feeCalculation.arBreakdown.arCustomerCount - 5} × $12):</span>
+                                              <span className="font-medium">+${feeCalculation.arBreakdown.customerSurcharge}</span>
+                                            </div>
+                                            <div className="flex justify-between font-medium">
+                                              <span className="text-gray-700">AR {feeCalculation.arBreakdown.arServiceTier === 'advanced' ? 'Base' : 'Lite'} Total:</span>
+                                              <span className="text-gray-800">${feeCalculation.arBreakdown.beforeMultiplier}</span>
+                                            </div>
+                                          </>
+                                        )}
+                                        
+                                        {feeCalculation.arBreakdown.arServiceTier === 'advanced' && (
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">AR Advanced affects entire quote (2.5x multiplier):</span>
+                                            <span className="text-sm text-blue-600">Applied to total</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Service Fee Display - Uses backend calculation only */}
+                                      <div className="flex justify-between font-semibold">
+                                        <span className="text-gray-800">AR Service Base Fee:</span>
+                                        <span className="text-blue-700">${feeCalculation.arFee?.toLocaleString() || '0'}/month</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                              )}
+
                               {/* Service Tier Breakdown */}
                               {form.watch('serviceTier') && form.watch('serviceTier') !== 'Automated' && (
                                 <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
@@ -3586,10 +3630,39 @@ function HomePage() {
                           </div>
                         </div>
                       )}
+
+                      {/* AR Service Card */}
+                      {form.watch('serviceArService') && (
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">💰</span>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-blue-800">Accounts Receivable Service</h4>
+                                <p className="text-xs text-blue-600">
+                                  {form.watch('arServiceTier') === 'advanced' ? (
+                                    <>AR Advanced tier • <strong>2.5x multiplier affects entire quote</strong></>
+                                  ) : (
+                                    'AR Lite tier'
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-blue-800">${feeCalculation.arFee?.toLocaleString() || '0'}</div>
+                              <div className="text-xs text-blue-600">
+                                {form.watch('arServiceTier') === 'advanced' ? 'base fee' : 'per month'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* No Services Selected */}
-                    {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas && !form.watch('serviceCfoAdvisory') && !form.watch('servicePayrollService') && !form.watch('serviceApArService') && feeCalculation.cleanupProjectFee === 0 && feeCalculation.priorYearFilingsFee === 0) && (
+                    {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas && !form.watch('serviceCfoAdvisory') && !form.watch('servicePayrollService') && !form.watch('serviceApArService') && !form.watch('serviceArService') && feeCalculation.cleanupProjectFee === 0 && feeCalculation.priorYearFilingsFee === 0) && (
                       <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
                         <div className="text-gray-500 mb-2">
                           <Calculator className="h-8 w-8 mx-auto mb-2 opacity-50" />
