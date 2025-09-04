@@ -3294,49 +3294,48 @@ function HomePage() {
                                 );
                               })()}
 
-                              {/* AP Service Breakdown */}
-                              {form.watch('serviceApArService') && (() => {
+                              {/* AP Service Breakdown - Uses centralized feeCalculation.apFee */}
+                              {form.watch('serviceApArService') && feeCalculation.includesAP && (() => {
                                 const apVendorBillsBand = form.watch('apVendorBillsBand') || '0-25';
                                 const apVendorCount = form.watch('customApVendorCount') || form.watch('apVendorCount') || 1;
                                 const serviceTier = form.watch('apServiceTier') || 'lite';
                                 
-                                // Use backend pricing logic for consistency
-                                let apLiteFee = 0;
+                                // Get bill range display label
                                 let billsLabel = '';
                                 switch (apVendorBillsBand) {
                                   case '0-25':
-                                    apLiteFee = 150;
                                     billsLabel = '0-25 bills';
                                     break;
                                   case '26-100':
-                                    apLiteFee = 300;
                                     billsLabel = '26-100 bills';
                                     break;
                                   case '101-250':
-                                    apLiteFee = 600;
                                     billsLabel = '101-250 bills';
                                     break;
                                   case '251+':
-                                    apLiteFee = 1000;
                                     billsLabel = '251+ bills';
                                     break;
                                   default:
-                                    apLiteFee = 150;
                                     billsLabel = '0-25 bills';
                                     break;
                                 }
                                 
-                                // Add vendor/payee count surcharge (first 5 are free, then $12/month per payee above 5)
-                                let vendorCountSurcharge = 0;
-                                if (apVendorCount > 5) {
-                                  vendorCountSurcharge = (apVendorCount - 5) * 12;
+                                // Use centralized calculation - display breakdown of feeCalculation.apFee
+                                const isAdvanced = serviceTier === 'advanced';
+                                const totalApFee = feeCalculation.apFee; // This is the authoritative value
+                                
+                                // Calculate breakdown components for display only (not for calculation)
+                                let baseFee = 0;
+                                switch (apVendorBillsBand) {
+                                  case '0-25': baseFee = 150; break;
+                                  case '26-100': baseFee = 300; break;
+                                  case '101-250': baseFee = 600; break;
+                                  case '251+': baseFee = 1000; break;
+                                  default: baseFee = 150; break;
                                 }
                                 
-                                const baseFee = apLiteFee;
-                                const vendorFee = vendorCountSurcharge;
-                                const subtotal = baseFee + vendorFee;
-                                const isAdvanced = serviceTier === 'advanced';
-                                const finalFee = isAdvanced ? subtotal * 2.5 : subtotal;
+                                const vendorSurcharge = apVendorCount > 5 ? (apVendorCount - 5) * 12 : 0;
+                                const beforeMultiplier = baseFee + vendorSurcharge;
                                 
                                 return (
                                   <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
@@ -3350,15 +3349,15 @@ function HomePage() {
                                           <span className="font-medium">${baseFee}</span>
                                         </div>
                                         
-                                        {vendorFee > 0 && (
+                                        {vendorSurcharge > 0 && (
                                           <>
                                             <div className="flex justify-between">
                                               <span className="text-gray-600">Additional vendors ({apVendorCount - 5} × $12):</span>
-                                              <span className="font-medium">+${vendorFee}</span>
+                                              <span className="font-medium">+${vendorSurcharge}</span>
                                             </div>
                                             <div className="flex justify-between font-medium">
                                               <span className="text-gray-700">{isAdvanced ? 'Before multiplier:' : 'AP Lite total:'}:</span>
-                                              <span className="text-gray-800">${subtotal}</span>
+                                              <span className="text-gray-800">${beforeMultiplier}</span>
                                             </div>
                                           </>
                                         )}
@@ -3366,21 +3365,21 @@ function HomePage() {
                                         {isAdvanced && (
                                           <>
                                             <div className="flex justify-between">
-                                              <span className="text-gray-600">AP Advanced multiplier:</span>
+                                              <span className="text-gray-600">AP Advanced applies to entire quote</span>
                                               <span className="font-medium">2.5x</span>
                                             </div>
                                             <div className="flex justify-between">
-                                              <span className="text-gray-600">After multiplier (${subtotal} × 2.5):</span>
-                                              <span className="font-medium">${finalFee}</span>
+                                              <span className="text-gray-600">Total quote multiplier applied</span>
+                                              <span className="font-medium">See total above</span>
                                             </div>
                                           </>
                                         )}
                                       </div>
                                       
-                                      {/* Monthly Total */}
+                                      {/* Monthly Total - Uses centralized calculation */}
                                       <div className="flex justify-between font-semibold">
-                                        <span className="text-gray-800">Monthly Total:</span>
-                                        <span className="text-purple-700">${finalFee.toLocaleString()}</span>
+                                        <span className="text-gray-800">AP Service Monthly Total:</span>
+                                        <span className="text-purple-700">${totalApFee.toLocaleString()}</span>
                                       </div>
                                     </div>
                                   </div>
