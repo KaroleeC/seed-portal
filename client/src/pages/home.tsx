@@ -3454,6 +3454,44 @@ function HomePage() {
                                   </div>
                               )}
 
+                              {/* Agent of Service Breakdown - Uses backend breakdown values only */}
+                              {form.watch('serviceAgentOfService') && feeCalculation.includesAgentOfService && feeCalculation.agentOfServiceBreakdown && (
+                                <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                                  <h5 className="font-medium text-indigo-800 mb-3">Agent of Service Breakdown</h5>
+                                  <div className="space-y-2 text-sm">
+                                    
+                                    {/* Base Fee */}
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Base fee:</span>
+                                      <span className="font-medium">${feeCalculation.agentOfServiceBreakdown.baseFee}</span>
+                                    </div>
+                                    
+                                    {/* Additional States */}
+                                    {feeCalculation.agentOfServiceBreakdown.additionalStatesFee > 0 && (
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Additional states ({feeCalculation.agentOfServiceBreakdown.additionalStates} × $150):</span>
+                                        <span className="font-medium">+${feeCalculation.agentOfServiceBreakdown.additionalStatesFee}</span>
+                                      </div>
+                                    )}
+                                    
+                                    {/* Complex Case */}
+                                    {feeCalculation.agentOfServiceBreakdown.complexCaseFee > 0 && (
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-600">Complex case upgrade:</span>
+                                        <span className="font-medium">+${feeCalculation.agentOfServiceBreakdown.complexCaseFee}</span>
+                                      </div>
+                                    )}
+                                    
+                                    <div className="border-t border-indigo-200 pt-2 mt-2">
+                                      <div className="flex justify-between font-semibold">
+                                        <span className="text-indigo-800">Monthly Agent of Service Fee:</span>
+                                        <span className="text-indigo-700">${feeCalculation.agentOfServiceFee.toLocaleString()}/month</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
                               {/* Service Tier Breakdown */}
                               {form.watch('serviceTier') && form.watch('serviceTier') !== 'Automated' && (
                                 <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
