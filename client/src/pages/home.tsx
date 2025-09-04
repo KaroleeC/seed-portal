@@ -38,6 +38,7 @@ import { CfoAdvisorySection } from "@/components/quote-form/CfoAdvisorySection";
 import PayrollSection from "@/components/quote-form/PayrollSection";
 import APSection from "@/components/quote-form/APSection";
 import ARSection from "@/components/quote-form/ARSection";
+import AgentOfServiceSection from "@/components/quote-form/AgentOfServiceSection";
 
 // Get current month number (1-12)
 const currentMonth = new Date().getMonth() + 1;
@@ -447,6 +448,7 @@ function HomePage() {
   const [isCfoAdvisoryExpanded, setIsCfoAdvisoryExpanded] = useState(true);
   const [isApExpanded, setIsApExpanded] = useState(true);
   const [isArExpanded, setIsArExpanded] = useState(true);
+  const [isAgentOfServiceExpanded, setIsAgentOfServiceExpanded] = useState(true);
   
   // Form navigation state
   const [currentFormView, setCurrentFormView] = useState<'bookkeeping' | 'taas' | 'placeholder'>('placeholder');
@@ -489,6 +491,10 @@ function HomePage() {
       alreadyOnSeedBookkeeping: false,
       qboSubscription: false,
       serviceTier: "Standard",
+      // Agent of Service defaults
+      serviceAgentOfService: false,
+      agentOfServiceAdditionalStates: 0,
+      agentOfServiceComplexCase: false,
     },
   });
 
@@ -1302,6 +1308,10 @@ function HomePage() {
       priorYearsUnfiled: 0,
       alreadyOnSeedBookkeeping: false,
       serviceTier: "Standard",
+      // Reset Agent of Service fields
+      serviceAgentOfService: false,
+      agentOfServiceAdditionalStates: 0,
+      agentOfServiceComplexCase: false,
     });
     
     // Reset all HubSpot verification state
@@ -2147,13 +2157,15 @@ function HomePage() {
                 servicePayrollService: form.watch('servicePayrollService') || false,
                 serviceApArService: form.watch('serviceApArService') || false, // Current AP tracking
                 serviceArService: form.watch('serviceArService') || false, // AR service
+                serviceAgentOfService: form.watch('serviceAgentOfService') || false, // Agent of Service
+                agentOfServiceAdditionalStates: form.watch('agentOfServiceAdditionalStates') || 0,
+                agentOfServiceComplexCase: form.watch('agentOfServiceComplexCase') || false,
                 serviceApLite: form.watch('serviceApLite') || false,
                 serviceArLite: form.watch('serviceArLite') || false,
                 serviceApAdvanced: form.watch('serviceApAdvanced') || false,
                 serviceArAdvanced: form.watch('serviceArAdvanced') || false,
                 serviceFpaBuild: form.watch('serviceFpaBuild') || false,
                 serviceFpaSupport: form.watch('serviceFpaSupport') || false,
-                serviceAgentOfService: form.watch('serviceAgentOfService') || false,
                 serviceNexusStudy: form.watch('serviceNexusStudy') || false,
                 serviceEntityOptimization: form.watch('serviceEntityOptimization') || false,
                 serviceCostSegregation: form.watch('serviceCostSegregation') || false,
@@ -2883,6 +2895,40 @@ function HomePage() {
                 </Card>
               </div>
             )}
+
+            {/* Agent of Service Section */}
+            {form.watch('serviceAgentOfService') && (
+              <div className="max-w-6xl mx-auto mt-8">
+                <Card className="bg-white shadow-lg border border-gray-200">
+                  <CardHeader 
+                    className="pb-4 cursor-pointer hover:bg-gray-50 transition-all duration-200"
+                    onClick={() => setIsAgentOfServiceExpanded(!isAgentOfServiceExpanded)}
+                  >
+                    <CardTitle className="text-xl font-semibold text-gray-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Building className="w-6 h-6 text-blue-600" />
+                        Agent of Service Details
+                      </div>
+                      <button className="p-1 rounded-full hover:bg-gray-200 transition-colors">
+                        {isAgentOfServiceExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-gray-600" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-gray-600" />
+                        )}
+                      </button>
+                    </CardTitle>
+                    <p className="text-gray-600">Configure your Agent of Service requirements and upgrade options</p>
+                  </CardHeader>
+                  {isAgentOfServiceExpanded && (
+                  <CardContent className="p-6">
+                    <Form {...form}>
+                      <AgentOfServiceSection form={form} />
+                    </Form>
+                  </CardContent>
+                  )}
+                </Card>
+              </div>
+            )}
           </div>
         </div>
         )}
@@ -2907,7 +2953,7 @@ function HomePage() {
                   
                   <div className="space-y-6">
                     {/* Main Total Display - Clickable for detailed breakdown */}
-                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0) || (form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0) || (form.watch('serviceCfoAdvisory') && feeCalculation.cfoAdvisoryFee > 0) || form.watch('servicePayrollService') || form.watch('serviceApArService') || form.watch('serviceArService')) && (
+                    {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas || (form.watch('servicePriorYearFilings') && feeCalculation.priorYearFilingsFee > 0) || (form.watch('serviceCleanupProjects') && feeCalculation.cleanupProjectFee > 0) || (form.watch('serviceCfoAdvisory') && feeCalculation.cfoAdvisoryFee > 0) || form.watch('servicePayrollService') || form.watch('serviceApArService') || form.watch('serviceArService') || form.watch('serviceAgentOfService')) && (
                       <>
                         <div 
                           className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:from-blue-100 hover:to-indigo-200"
@@ -3659,10 +3705,33 @@ function HomePage() {
                           </div>
                         </div>
                       )}
+
+                      {/* Agent of Service Card */}
+                      {form.watch('serviceAgentOfService') && (
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">🏢</span>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-green-800">Agent of Service</h4>
+                                <p className="text-xs text-green-600">
+                                  Corporate service designation
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-green-800">${feeCalculation.agentOfServiceFee?.toLocaleString() || '0'}</div>
+                              <div className="text-xs text-green-600">per month</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* No Services Selected */}
-                    {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas && !form.watch('serviceCfoAdvisory') && !form.watch('servicePayrollService') && !form.watch('serviceApArService') && !form.watch('serviceArService') && feeCalculation.cleanupProjectFee === 0 && feeCalculation.priorYearFilingsFee === 0) && (
+                    {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas && !form.watch('serviceCfoAdvisory') && !form.watch('servicePayrollService') && !form.watch('serviceApArService') && !form.watch('serviceArService') && !form.watch('serviceAgentOfService') && feeCalculation.cleanupProjectFee === 0 && feeCalculation.priorYearFilingsFee === 0) && (
                       <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
                         <div className="text-gray-500 mb-2">
                           <Calculator className="h-8 w-8 mx-auto mb-2 opacity-50" />

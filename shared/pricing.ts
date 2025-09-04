@@ -43,6 +43,7 @@ export interface CombinedFeeResult {
   includesTaas: boolean;
   includesAP: boolean;
   includesAR: boolean;
+  includesAgentOfService: boolean;
   cleanupProjectFee: number;
   priorYearFilingsFee: number;
   cfoAdvisoryFee: number;
@@ -53,6 +54,8 @@ export interface CombinedFeeResult {
   apBreakdown?: any;
   arFee: number;
   arBreakdown?: any;
+  agentOfServiceFee: number;
+  agentOfServiceBreakdown?: any;
 }
 
 // Constants
@@ -465,6 +468,44 @@ export function calculateARFees(data: PricingData): {
   };
 }
 
+export function calculateAgentOfServiceFees(data: PricingData): { 
+  agentOfServiceFee: number;
+  breakdown?: {
+    baseFee: number;
+    additionalStates: number;
+    additionalStatesFee: number;
+    complexCase: boolean;
+    complexCaseFee: number;
+    totalFee: number;
+  }
+} {
+  const agentOfServiceAdditionalStates = (data as any).agentOfServiceAdditionalStates || 0;
+  const agentOfServiceComplexCase = Boolean((data as any).agentOfServiceComplexCase);
+  
+  // Base fee is $150
+  const baseFee = 150;
+  
+  // Additional states: $150 per additional state/entity
+  const additionalStatesFee = agentOfServiceAdditionalStates * 150;
+  
+  // Complex case upgrade: +$300
+  const complexCaseFee = agentOfServiceComplexCase ? 300 : 0;
+  
+  const totalFee = baseFee + additionalStatesFee + complexCaseFee;
+  
+  return { 
+    agentOfServiceFee: totalFee,
+    breakdown: {
+      baseFee,
+      additionalStates: agentOfServiceAdditionalStates,
+      additionalStatesFee,
+      complexCase: agentOfServiceComplexCase,
+      complexCaseFee,
+      totalFee
+    }
+  };
+}
+
 export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   // Determine which services are included - separate monthly vs project-only services
   const includesMonthlyBookkeeping = Boolean(
@@ -538,8 +579,13 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   const arResult = includesAR ? calculateARFees(data) : { arFee: 0, breakdown: undefined };
   const { arFee, breakdown: arBreakdown } = arResult;
 
+  // Calculate Agent of Service fees  
+  const includesAgentOfService = Boolean((data as any).serviceAgentOfService);
+  const agentOfServiceResult = includesAgentOfService ? calculateAgentOfServiceFees(data) : { agentOfServiceFee: 0, breakdown: undefined };
+  const { agentOfServiceFee, breakdown: agentOfServiceBreakdown } = agentOfServiceResult;
+
   // Combined totals - AP/AR Advanced multipliers are already applied to individual fees, not to entire quote
-  let combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee + arFee;
+  let combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee + arFee + agentOfServiceFee;
   let combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee;
 
   return {
@@ -553,6 +599,7 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     includesTaas,
     includesAP,
     includesAR,
+    includesAgentOfService,
     cleanupProjectFee,
     priorYearFilingsFee,
     cfoAdvisoryFee,
@@ -562,6 +609,8 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     apFee,
     apBreakdown,
     arFee,
-    arBreakdown
+    arBreakdown,
+    agentOfServiceFee,
+    agentOfServiceBreakdown
   };
 }

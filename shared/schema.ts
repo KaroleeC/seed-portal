@@ -88,6 +88,11 @@ export const quotes = pgTable("quotes", {
   arCustomerCount: integer("ar_customer_count"), // Number of unique customers/clients
   customArCustomerCount: integer("custom_ar_customer_count"), // For when 5+ is selected
   arServiceTier: text("ar_service_tier"), // 'lite' or 'advanced'
+  // Agent of Service selection
+  serviceAgentOfService: boolean("service_agent_of_service").default(false),
+  // Agent of Service specific fields
+  agentOfServiceAdditionalStates: integer("agent_of_service_additional_states").default(0), // Number of additional states beyond base
+  agentOfServiceComplexCase: boolean("agent_of_service_complex_case").default(false), // Complex Case upgrade (+$300)
   // Client address information for MSA generation
   clientStreetAddress: text("client_street_address"),
   clientCity: text("client_city"),
