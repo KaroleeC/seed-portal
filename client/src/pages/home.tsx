@@ -2143,6 +2143,7 @@ function HomePage() {
                 servicePriorYearFilings: form.watch('servicePriorYearFilings') || false,
                 serviceCfoAdvisory: form.watch('serviceCfoAdvisory') || false,
                 servicePayrollService: form.watch('servicePayrollService') || false,
+                serviceApArService: form.watch('serviceApArService') || false, // Current AP tracking
                 serviceApLite: form.watch('serviceApLite') || false,
                 serviceArLite: form.watch('serviceArLite') || false,
                 serviceApAdvanced: form.watch('serviceApAdvanced') || false,
@@ -3349,22 +3350,28 @@ function HomePage() {
                                               <span className="font-medium">+${vendorFee}</span>
                                             </div>
                                             <div className="flex justify-between font-medium">
-                                              <span className="text-gray-700">AP Lite subtotal:</span>
+                                              <span className="text-gray-700">{isAdvanced ? 'Before multiplier:' : 'AP Lite total:'}:</span>
                                               <span className="text-gray-800">${subtotal}</span>
                                             </div>
                                           </>
                                         )}
                                         
                                         {isAdvanced && (
-                                          <div className="flex justify-between">
-                                            <span className="text-gray-600">AP Advanced multiplier:</span>
-                                            <span className="font-medium">2.5x</span>
-                                          </div>
+                                          <>
+                                            <div className="flex justify-between">
+                                              <span className="text-gray-600">AP Advanced multiplier:</span>
+                                              <span className="font-medium">2.5x</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                              <span className="text-gray-600">After multiplier (${subtotal} × 2.5):</span>
+                                              <span className="font-medium">${finalFee}</span>
+                                            </div>
+                                          </>
                                         )}
                                       </div>
                                       
                                       {/* Monthly Total */}
-                                      <div className="border-t pt-2 flex justify-between font-semibold">
+                                      <div className="flex justify-between font-semibold">
                                         <span className="text-gray-800">Monthly Total:</span>
                                         <span className="text-purple-700">${finalFee.toLocaleString()}</span>
                                       </div>

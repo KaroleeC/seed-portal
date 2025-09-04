@@ -10,6 +10,7 @@ interface ServiceCardsProps {
     servicePriorYearFilings: boolean;
     serviceCfoAdvisory: boolean;
     servicePayrollService: boolean;
+    serviceApArService: boolean; // Current AP/AR service flag
     serviceApLite: boolean;
     serviceArLite: boolean;
     serviceApAdvanced: boolean;
@@ -51,6 +52,7 @@ export function ServiceCards({
     if (selectedServices.servicePriorYearFilings) serviceNames.push("Prior Year Filings");
     if (selectedServices.serviceCfoAdvisory) serviceNames.push("CFO Advisory");
     if (selectedServices.servicePayrollService) serviceNames.push("Payroll");
+    if (selectedServices.serviceApArService) serviceNames.push("Accounts Payable"); // Current AP tracking
     if (selectedServices.serviceApLite) serviceNames.push("AP Lite");
     if (selectedServices.serviceArLite) serviceNames.push("AR Lite");
     if (selectedServices.serviceApAdvanced) serviceNames.push("AP Advanced");

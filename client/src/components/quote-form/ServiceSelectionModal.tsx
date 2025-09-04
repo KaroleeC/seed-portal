@@ -14,6 +14,7 @@ interface ServiceSelectionModalProps {
     servicePriorYearFilings: boolean;
     serviceCfoAdvisory: boolean;
     servicePayrollService: boolean;
+    serviceApArService: boolean; // Current AP/AR service flag
     serviceApLite: boolean;
     serviceArLite: boolean;
     serviceApAdvanced: boolean;
