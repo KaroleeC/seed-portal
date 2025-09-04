@@ -133,7 +133,27 @@ export function ServiceSelectionModal({
   };
 
   const getSelectedCount = () => {
-    return Object.values(tempServices).filter(Boolean).length;
+    // Only count user-facing services, not internal flags
+    const userFacingServices = [
+      'serviceMonthlyBookkeeping',
+      'serviceCleanupProjects', 
+      'serviceTaasMonthly',
+      'servicePriorYearFilings',
+      'serviceCfoAdvisory',
+      'servicePayrollService',
+      'serviceApArService', // This represents the main AP selection
+      'serviceArService', // This represents the separate AR selection
+      'serviceFpaBuild',
+      'serviceFpaSupport',
+      'serviceAgentOfService',
+      'serviceNexusStudy',
+      'serviceEntityOptimization',
+      'serviceCostSegregation',
+      'serviceRdCredit',
+      'serviceRealEstateAdvisory'
+    ];
+    
+    return userFacingServices.filter(service => tempServices[service as keyof typeof tempServices]).length;
   };
 
   const serviceCategories = [
