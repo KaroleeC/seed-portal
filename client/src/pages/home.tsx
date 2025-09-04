@@ -3296,37 +3296,44 @@ function HomePage() {
 
                               {/* AP Service Breakdown */}
                               {form.watch('serviceApArService') && (() => {
-                                const billsVolume = form.watch('apBillsVolume') || 'low';
-                                const vendorPayees = form.watch('apVendorPayees') || 'up_to_5';
+                                const apVendorBillsBand = form.watch('apVendorBillsBand') || '0-25';
+                                const apVendorCount = form.watch('customApVendorCount') || form.watch('apVendorCount') || 1;
                                 const serviceTier = form.watch('apServiceTier') || 'lite';
                                 
-                                // Calculate AP fees details
-                                const baseFees = {
-                                  low: 150,
-                                  medium: 500,
-                                  high: 1000
-                                };
+                                // Use backend pricing logic for consistency
+                                let apLiteFee = 0;
+                                let billsLabel = '';
+                                switch (apVendorBillsBand) {
+                                  case '0-25':
+                                    apLiteFee = 150;
+                                    billsLabel = '0-25 bills';
+                                    break;
+                                  case '26-100':
+                                    apLiteFee = 300;
+                                    billsLabel = '26-100 bills';
+                                    break;
+                                  case '101-250':
+                                    apLiteFee = 600;
+                                    billsLabel = '101-250 bills';
+                                    break;
+                                  case '251+':
+                                    apLiteFee = 1000;
+                                    billsLabel = '251+ bills';
+                                    break;
+                                  default:
+                                    apLiteFee = 150;
+                                    billsLabel = '0-25 bills';
+                                    break;
+                                }
                                 
-                                const vendorFees = {
-                                  up_to_5: 0,
-                                  '6_to_10': 60,  // 5 additional × $12
-                                  '11_to_15': 120, // 10 additional × $12
-                                  '16_to_20': 180, // 15 additional × $12
-                                  '21_to_25': 240, // 20 additional × $12
-                                  'over_25': 300   // 25 additional × $12
-                                };
+                                // Add vendor/payee count surcharge (first 5 are free, then $12/month per payee above 5)
+                                let vendorCountSurcharge = 0;
+                                if (apVendorCount > 5) {
+                                  vendorCountSurcharge = (apVendorCount - 5) * 12;
+                                }
                                 
-                                const additionalVendors = {
-                                  up_to_5: 0,
-                                  '6_to_10': 5,
-                                  '11_to_15': 10,
-                                  '16_to_20': 15,
-                                  '21_to_25': 20,
-                                  'over_25': 25
-                                };
-                                
-                                const baseFee = baseFees[billsVolume];
-                                const vendorFee = vendorFees[vendorPayees];
+                                const baseFee = apLiteFee;
+                                const vendorFee = vendorCountSurcharge;
                                 const subtotal = baseFee + vendorFee;
                                 const isAdvanced = serviceTier === 'advanced';
                                 const finalFee = isAdvanced ? subtotal * 2.5 : subtotal;
@@ -3339,14 +3346,14 @@ function HomePage() {
                                       {/* Base Calculation */}
                                       <div className="space-y-1 pb-2 border-b border-purple-200">
                                         <div className="flex justify-between">
-                                          <span className="text-gray-600">Base AP fee ({billsVolume === 'low' ? '1-50 bills' : billsVolume === 'medium' ? '51-200 bills' : '201+ bills'}):</span>
+                                          <span className="text-gray-600">Base AP fee ({billsLabel}):</span>
                                           <span className="font-medium">${baseFee}</span>
                                         </div>
                                         
                                         {vendorFee > 0 && (
                                           <>
                                             <div className="flex justify-between">
-                                              <span className="text-gray-600">Additional vendors ({additionalVendors[vendorPayees]} × $12):</span>
+                                              <span className="text-gray-600">Additional vendors ({apVendorCount - 5} × $12):</span>
                                               <span className="font-medium">+${vendorFee}</span>
                                             </div>
                                             <div className="flex justify-between font-medium">
