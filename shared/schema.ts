@@ -81,6 +81,13 @@ export const quotes = pgTable("quotes", {
   apVendorCount: integer("ap_vendor_count"), // Number of unique vendors/payees
   customApVendorCount: integer("custom_ap_vendor_count"), // For when 5+ is selected
   apServiceTier: text("ap_service_tier"), // 'lite' or 'advanced'
+  // AR service selection
+  serviceArService: boolean("service_ar_service").default(false),
+  // AR specific fields
+  arCustomerInvoicesBand: text("ar_customer_invoices_band"), // '0-25', '26-100', '101-250', '251+'
+  arCustomerCount: integer("ar_customer_count"), // Number of unique customers/clients
+  customArCustomerCount: integer("custom_ar_customer_count"), // For when 5+ is selected
+  arServiceTier: text("ar_service_tier"), // 'lite' or 'advanced'
   // Client address information for MSA generation
   clientStreetAddress: text("client_street_address"),
   clientCity: text("client_city"),

@@ -37,6 +37,7 @@ import { BookkeepingCleanupSection } from "@/components/quote-form/BookkeepingCl
 import { CfoAdvisorySection } from "@/components/quote-form/CfoAdvisorySection";
 import PayrollSection from "@/components/quote-form/PayrollSection";
 import APSection from "@/components/quote-form/APSection";
+import ARSection from "@/components/quote-form/ARSection";
 
 // Get current month number (1-12)
 const currentMonth = new Date().getMonth() + 1;
@@ -445,6 +446,7 @@ function HomePage() {
   const [isPayrollExpanded, setIsPayrollExpanded] = useState(true);
   const [isCfoAdvisoryExpanded, setIsCfoAdvisoryExpanded] = useState(true);
   const [isApExpanded, setIsApExpanded] = useState(true);
+  const [isArExpanded, setIsArExpanded] = useState(true);
   
   // Form navigation state
   const [currentFormView, setCurrentFormView] = useState<'bookkeeping' | 'taas' | 'placeholder'>('placeholder');
@@ -2840,6 +2842,40 @@ function HomePage() {
                   <CardContent className="p-6">
                     <Form {...form}>
                       <APSection form={form} />
+                    </Form>
+                  </CardContent>
+                  )}
+                </Card>
+              </div>
+            )}
+
+            {/* AR Service Section */}
+            {form.watch('serviceArService') && (
+              <div className="max-w-6xl mx-auto mt-8">
+                <Card className="bg-white shadow-lg border border-gray-200">
+                  <CardHeader 
+                    className="pb-4 cursor-pointer hover:bg-gray-50 transition-all duration-200"
+                    onClick={() => setIsArExpanded(!isArExpanded)}
+                  >
+                    <CardTitle className="text-xl font-semibold text-gray-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-6 h-6 text-blue-600" />
+                        Accounts Receivable Service Details
+                      </div>
+                      <button className="p-1 rounded-full hover:bg-gray-200 transition-colors">
+                        {isArExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-gray-600" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-gray-600" />
+                        )}
+                      </button>
+                    </CardTitle>
+                    <p className="text-gray-600">Configure your accounts receivable requirements and service level</p>
+                  </CardHeader>
+                  {isArExpanded && (
+                  <CardContent className="p-6">
+                    <Form {...form}>
+                      <ARSection form={form} />
                     </Form>
                   </CardContent>
                   )}

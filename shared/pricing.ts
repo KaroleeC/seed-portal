@@ -42,6 +42,7 @@ export interface CombinedFeeResult {
   includesBookkeeping: boolean;
   includesTaas: boolean;
   includesAP: boolean;
+  includesAR: boolean;
   cleanupProjectFee: number;
   priorYearFilingsFee: number;
   cfoAdvisoryFee: number;
@@ -50,6 +51,8 @@ export interface CombinedFeeResult {
   payrollBreakdown?: any;
   apFee: number;
   apBreakdown?: any;
+  arFee: number;
+  arBreakdown?: any;
 }
 
 // Constants
@@ -394,6 +397,74 @@ export function calculateAPFees(data: PricingData): {
   };
 }
 
+export function calculateARFees(data: PricingData): { 
+  arFee: number;
+  breakdown?: {
+    arServiceTier: string;
+    arCustomerInvoicesBand: string;
+    arCustomerCount: number;
+    baseFee: number;
+    customerSurcharge: number;
+    beforeMultiplier: number;
+    invoicesLabel: string;
+  }
+} {
+  const arServiceTier = (data as any).arServiceTier;
+  const arCustomerInvoicesBand = (data as any).arCustomerInvoicesBand || '0-25';
+  const arCustomerCount = (data as any).customArCustomerCount || (data as any).arCustomerCount || 1;
+  
+  if (!arServiceTier) {
+    return { arFee: 0 };
+  }
+  
+  // AR Lite baseline pricing based on customer invoices volume
+  let arLiteFee = 0;
+  let invoicesLabel = '';
+  switch (arCustomerInvoicesBand) {
+    case '0-25':
+      arLiteFee = 150;
+      invoicesLabel = '0-25 invoices';
+      break;
+    case '26-100':
+      arLiteFee = 300;
+      invoicesLabel = '26-100 invoices';
+      break;
+    case '101-250':
+      arLiteFee = 600;
+      invoicesLabel = '101-250 invoices';
+      break;
+    case '251+':
+      arLiteFee = 1000;
+      invoicesLabel = '251+ invoices';
+      break;
+    default:
+      arLiteFee = 150;
+      invoicesLabel = '0-25 invoices';
+      break;
+  }
+  
+  // Add customer count surcharge (first 5 are free, then $12/month per customer above 5)
+  const customerCountSurcharge = arCustomerCount > 5 ? (arCustomerCount - 5) * 12 : 0;
+  
+  const beforeMultiplier = arLiteFee + customerCountSurcharge;
+  
+  // Apply 2.5x multiplier for AR Advanced tier
+  const totalArFee = arServiceTier === 'advanced' ? beforeMultiplier * 2.5 : beforeMultiplier;
+  
+  return { 
+    arFee: totalArFee,
+    breakdown: {
+      arServiceTier,
+      arCustomerInvoicesBand,
+      arCustomerCount,
+      baseFee: arLiteFee,
+      customerSurcharge: customerCountSurcharge,
+      beforeMultiplier,
+      invoicesLabel
+    }
+  };
+}
+
 export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   // Determine which services are included - separate monthly vs project-only services
   const includesMonthlyBookkeeping = Boolean(
@@ -462,8 +533,13 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   const apResult = includesAP ? calculateAPFees(data) : { apFee: 0, breakdown: undefined };
   const { apFee, breakdown: apBreakdown } = apResult;
 
-  // Combined totals - AP Advanced multiplier is already applied to apFee, not to entire quote
-  let combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee;
+  // Calculate AR fees
+  const includesAR = Boolean((data as any).serviceArService);
+  const arResult = includesAR ? calculateARFees(data) : { arFee: 0, breakdown: undefined };
+  const { arFee, breakdown: arBreakdown } = arResult;
+
+  // Combined totals - AP/AR Advanced multipliers are already applied to individual fees, not to entire quote
+  let combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee + arFee;
   let combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee;
 
   return {
@@ -476,6 +552,7 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     includesBookkeeping,
     includesTaas,
     includesAP,
+    includesAR,
     cleanupProjectFee,
     priorYearFilingsFee,
     cfoAdvisoryFee,
@@ -483,6 +560,8 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     payrollFee,
     payrollBreakdown,
     apFee,
-    apBreakdown
+    apBreakdown,
+    arFee,
+    arBreakdown
   };
 }
