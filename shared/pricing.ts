@@ -375,7 +375,10 @@ export function calculateAPFees(data: PricingData): {
   // Add vendor/payee count surcharge (first 5 are free, then $12/month per payee above 5)
   const vendorCountSurcharge = apVendorCount > 5 ? (apVendorCount - 5) * 12 : 0;
   
-  const totalApFee = apLiteFee + vendorCountSurcharge;
+  const beforeMultiplier = apLiteFee + vendorCountSurcharge;
+  
+  // Apply 2.5x multiplier for AP Advanced tier
+  const totalApFee = apServiceTier === 'advanced' ? beforeMultiplier * 2.5 : beforeMultiplier;
   
   return { 
     apFee: totalApFee,
@@ -385,7 +388,7 @@ export function calculateAPFees(data: PricingData): {
       apVendorCount,
       baseFee: apLiteFee,
       vendorSurcharge: vendorCountSurcharge,
-      beforeMultiplier: totalApFee,
+      beforeMultiplier,
       billsLabel
     }
   };
@@ -459,16 +462,9 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   const apResult = includesAP ? calculateAPFees(data) : { apFee: 0, breakdown: undefined };
   const { apFee, breakdown: apBreakdown } = apResult;
 
-  // Combined totals
+  // Combined totals - AP Advanced multiplier is already applied to apFee, not to entire quote
   let combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee;
   let combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee;
-  
-  // Apply AP Advanced 2.5x multiplier to the entire quote if AP Advanced is selected
-  const apServiceTier = (data as any).apServiceTier;
-  if (apServiceTier === 'advanced') {
-    combinedMonthlyFee = combinedMonthlyFee * 2.5;
-    combinedSetupFee = combinedSetupFee * 2.5;
-  }
 
   return {
     bookkeeping: bookkeepingFees,
