@@ -26,6 +26,7 @@ export function conditionalCsrf(req: Request, res: Response, next: NextFunction)
     '/api/hubspot/update-quote', // Protected by requireAuth middleware
     '/api/hubspot/search-contacts', // Protected by requireAuth middleware
     '/api/hubspot/verify-contact', // Protected by requireAuth middleware
+    '/api/quotes', // Protected by requireAuth middleware
     '/api/create-user', // User creation endpoint for testing
     '/api/login', // Simple login endpoint
   ];
