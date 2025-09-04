@@ -41,12 +41,15 @@ export interface CombinedFeeResult {
   combined: FeeResult;
   includesBookkeeping: boolean;
   includesTaas: boolean;
+  includesAP: boolean;
   cleanupProjectFee: number;
   priorYearFilingsFee: number;
   cfoAdvisoryFee: number;
   cfoAdvisoryHubspotProductId: string | null;
   payrollFee: number;
+  payrollBreakdown?: any;
   apFee: number;
+  apBreakdown?: any;
 }
 
 // Constants
@@ -287,28 +290,56 @@ export function calculateCfoAdvisoryFees(data: PricingData): { cfoAdvisoryFee: n
   return { cfoAdvisoryFee: 0, hubspotProductId: null };
 }
 
-export function calculatePayrollFees(data: PricingData): { payrollFee: number } {
+export function calculatePayrollFees(data: PricingData): { 
+  payrollFee: number;
+  breakdown?: {
+    baseFee: number;
+    employeeCount: number;
+    stateCount: number;
+    additionalEmployeeFee: number;
+    additionalStateFee: number;
+  }
+} {
   const employeeCount = (data as any).payrollEmployeeCount || 1;
   const stateCount = (data as any).payrollStateCount || 1;
   
-  let payrollFee = 100; // Base fee: $100/mo for up to 3 employees in 1 state
+  const baseFee = 100; // Base fee: $100/mo for up to 3 employees in 1 state
+  let payrollFee = baseFee;
   
   // Additional employee fees: $12/mo per employee above 3
-  if (employeeCount > 3) {
-    payrollFee += (employeeCount - 3) * 12;
-  }
+  const additionalEmployeeFee = employeeCount > 3 ? (employeeCount - 3) * 12 : 0;
+  payrollFee += additionalEmployeeFee;
   
   // Additional state fees: $25/mo per state above 1
-  if (stateCount > 1) {
-    payrollFee += (stateCount - 1) * 25;
-  }
+  const additionalStateFee = stateCount > 1 ? (stateCount - 1) * 25 : 0;
+  payrollFee += additionalStateFee;
   
-  return { payrollFee };
+  return { 
+    payrollFee,
+    breakdown: {
+      baseFee,
+      employeeCount,
+      stateCount,
+      additionalEmployeeFee,
+      additionalStateFee
+    }
+  };
 }
 
-export function calculateAPFees(data: PricingData): { apFee: number } {
+export function calculateAPFees(data: PricingData): { 
+  apFee: number;
+  breakdown?: {
+    apServiceTier: string;
+    apVendorBillsBand: string;
+    apVendorCount: number;
+    baseFee: number;
+    vendorSurcharge: number;
+    beforeMultiplier: number;
+    billsLabel: string;
+  }
+} {
   const apServiceTier = (data as any).apServiceTier;
-  const apVendorBillsBand = (data as any).apVendorBillsBand;
+  const apVendorBillsBand = (data as any).apVendorBillsBand || '0-25';
   const apVendorCount = (data as any).customApVendorCount || (data as any).apVendorCount || 1;
   
   if (!apServiceTier) {
@@ -317,36 +348,47 @@ export function calculateAPFees(data: PricingData): { apFee: number } {
   
   // AP Lite baseline pricing based on vendor bills volume
   let apLiteFee = 0;
+  let billsLabel = '';
   switch (apVendorBillsBand) {
     case '0-25':
-      apLiteFee = 150; // $150/month for 0-25 bills
+      apLiteFee = 150;
+      billsLabel = '0-25 bills';
       break;
     case '26-100':
-      apLiteFee = 300; // $300/month for 26-100 bills
+      apLiteFee = 300;
+      billsLabel = '26-100 bills';
       break;
     case '101-250':
-      apLiteFee = 600; // $600/month for 101-250 bills
+      apLiteFee = 600;
+      billsLabel = '101-250 bills';
       break;
     case '251+':
-      apLiteFee = 1000; // $1,000/month for 251+ bills
+      apLiteFee = 1000;
+      billsLabel = '251+ bills';
       break;
     default:
-      apLiteFee = 150; // Default to lowest tier
+      apLiteFee = 150;
+      billsLabel = '0-25 bills';
       break;
   }
   
   // Add vendor/payee count surcharge (first 5 are free, then $12/month per payee above 5)
-  let vendorCountSurcharge = 0;
-  if (apVendorCount > 5) {
-    vendorCountSurcharge = (apVendorCount - 5) * 12; // $12/month per vendor above 5
-  }
+  const vendorCountSurcharge = apVendorCount > 5 ? (apVendorCount - 5) * 12 : 0;
   
-  let totalApFee = apLiteFee + vendorCountSurcharge;
+  const totalApFee = apLiteFee + vendorCountSurcharge;
   
-  // If AP Advanced is selected, apply 2.5x multiplier to the total quote
-  // Note: This will be handled in the main calculation function as it affects the entire quote
-  
-  return { apFee: totalApFee };
+  return { 
+    apFee: totalApFee,
+    breakdown: {
+      apServiceTier,
+      apVendorBillsBand,
+      apVendorCount,
+      baseFee: apLiteFee,
+      vendorSurcharge: vendorCountSurcharge,
+      beforeMultiplier: totalApFee,
+      billsLabel
+    }
+  };
 }
 
 export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
@@ -409,11 +451,13 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
 
   // Calculate Payroll fees
   const includesPayroll = Boolean((data as any).servicePayrollService);
-  const { payrollFee } = includesPayroll ? calculatePayrollFees(data) : { payrollFee: 0 };
+  const payrollResult = includesPayroll ? calculatePayrollFees(data) : { payrollFee: 0, breakdown: undefined };
+  const { payrollFee, breakdown: payrollBreakdown } = payrollResult;
 
   // Calculate AP fees
   const includesAP = Boolean((data as any).serviceApArService);
-  const { apFee } = includesAP ? calculateAPFees(data) : { apFee: 0 };
+  const apResult = includesAP ? calculateAPFees(data) : { apFee: 0, breakdown: undefined };
+  const { apFee, breakdown: apBreakdown } = apResult;
 
   // Combined totals
   let combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee;
@@ -441,6 +485,8 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     cfoAdvisoryFee,
     cfoAdvisoryHubspotProductId: hubspotProductId,
     payrollFee,
-    apFee
+    payrollBreakdown,
+    apFee,
+    apBreakdown
   };
 }

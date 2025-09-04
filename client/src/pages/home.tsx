@@ -3245,140 +3245,88 @@ function HomePage() {
                                 );
                               })()}
 
-                              {/* Payroll Breakdown */}
-                              {form.watch('servicePayrollService') && (() => {
-                                const employeeCount = form.watch('payrollEmployeeCount') || 1;
-                                const stateCount = form.watch('payrollStateCount') || 1;
-                                
-                                const baseFee = 100;
-                                const additionalEmployeeFee = employeeCount > 3 ? (employeeCount - 3) * 12 : 0;
-                                const additionalStateFee = stateCount > 1 ? (stateCount - 1) * 25 : 0;
-                                
-                                return (
-                                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                    <h5 className="font-medium text-blue-800 mb-2">Payroll Service Breakdown</h5>
-                                    <div className="space-y-1 text-sm">
+                              {/* Payroll Service Breakdown - Uses backend breakdown values */}
+                              {form.watch('servicePayrollService') && feeCalculation.payrollBreakdown && (
+                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                  <h5 className="font-medium text-blue-800 mb-2">Payroll Service Breakdown</h5>
+                                  <div className="space-y-1 text-sm">
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Employee count:</span>
+                                      <span className="font-medium">{feeCalculation.payrollBreakdown.employeeCount} {feeCalculation.payrollBreakdown.employeeCount === 1 ? 'employee' : 'employees'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">State count:</span>
+                                      <span className="font-medium">{feeCalculation.payrollBreakdown.stateCount} {feeCalculation.payrollBreakdown.stateCount === 1 ? 'state' : 'states'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Base fee (up to 3 employees, 1 state):</span>
+                                      <span className="font-medium">${feeCalculation.payrollBreakdown.baseFee}/month</span>
+                                    </div>
+                                    {feeCalculation.payrollBreakdown.additionalEmployeeFee > 0 && (
                                       <div className="flex justify-between">
-                                        <span className="text-gray-600">Employee count:</span>
-                                        <span className="font-medium">{employeeCount} {employeeCount === 1 ? 'employee' : 'employees'}</span>
+                                        <span className="text-gray-600">Additional employees ({feeCalculation.payrollBreakdown.employeeCount - 3} × $12):</span>
+                                        <span className="font-medium">${feeCalculation.payrollBreakdown.additionalEmployeeFee.toLocaleString()}/month</span>
                                       </div>
+                                    )}
+                                    {feeCalculation.payrollBreakdown.additionalStateFee > 0 && (
                                       <div className="flex justify-between">
-                                        <span className="text-gray-600">State count:</span>
-                                        <span className="font-medium">{stateCount} {stateCount === 1 ? 'state' : 'states'}</span>
+                                        <span className="text-gray-600">Additional states ({feeCalculation.payrollBreakdown.stateCount - 1} × $25):</span>
+                                        <span className="font-medium">${feeCalculation.payrollBreakdown.additionalStateFee.toLocaleString()}/month</span>
                                       </div>
-                                      <div className="flex justify-between">
-                                        <span className="text-gray-600">Base fee (up to 3 employees, 1 state):</span>
-                                        <span className="font-medium">$100/month</span>
-                                      </div>
-                                      {additionalEmployeeFee > 0 && (
-                                        <div className="flex justify-between">
-                                          <span className="text-gray-600">Additional employees ({employeeCount - 3} × $12):</span>
-                                          <span className="font-medium">${additionalEmployeeFee.toLocaleString()}/month</span>
-                                        </div>
-                                      )}
-                                      {additionalStateFee > 0 && (
-                                        <div className="flex justify-between">
-                                          <span className="text-gray-600">Additional states ({stateCount - 1} × $25):</span>
-                                          <span className="font-medium">${additionalStateFee.toLocaleString()}/month</span>
-                                        </div>
-                                      )}
-                                      
-                                      <div className="border-t border-blue-200 pt-2 mt-2">
-                                        <div className="flex justify-between font-semibold">
-                                          <span className="text-blue-800">Monthly Payroll Fee:</span>
-                                          <span className="text-blue-700">${feeCalculation.payrollFee.toLocaleString()}/month</span>
-                                        </div>
+                                    )}
+                                    
+                                    <div className="border-t border-blue-200 pt-2 mt-2">
+                                      <div className="flex justify-between font-semibold">
+                                        <span className="text-blue-800">Monthly Payroll Fee:</span>
+                                        <span className="text-blue-700">${feeCalculation.payrollFee.toLocaleString()}/month</span>
                                       </div>
                                     </div>
                                   </div>
-                                );
-                              })()}
+                                </div>
+                              )}
 
-                              {/* AP Service Breakdown - Uses centralized feeCalculation.apFee */}
-                              {form.watch('serviceApArService') && feeCalculation.includesAP && (() => {
-                                const apVendorBillsBand = form.watch('apVendorBillsBand') || '0-25';
-                                const apVendorCount = form.watch('customApVendorCount') || form.watch('apVendorCount') || 1;
-                                const serviceTier = form.watch('apServiceTier') || 'lite';
-                                
-                                // Get bill range display label
-                                let billsLabel = '';
-                                switch (apVendorBillsBand) {
-                                  case '0-25':
-                                    billsLabel = '0-25 bills';
-                                    break;
-                                  case '26-100':
-                                    billsLabel = '26-100 bills';
-                                    break;
-                                  case '101-250':
-                                    billsLabel = '101-250 bills';
-                                    break;
-                                  case '251+':
-                                    billsLabel = '251+ bills';
-                                    break;
-                                  default:
-                                    billsLabel = '0-25 bills';
-                                    break;
-                                }
-                                
-                                // Use centralized calculation - display breakdown of feeCalculation.apFee
-                                const isAdvanced = serviceTier === 'advanced';
-                                const totalApFee = feeCalculation.apFee; // This is the authoritative value
-                                
-                                // Calculate breakdown components for display only (not for calculation)
-                                let baseFee = 0;
-                                switch (apVendorBillsBand) {
-                                  case '0-25': baseFee = 150; break;
-                                  case '26-100': baseFee = 300; break;
-                                  case '101-250': baseFee = 600; break;
-                                  case '251+': baseFee = 1000; break;
-                                  default: baseFee = 150; break;
-                                }
-                                
-                                const vendorSurcharge = apVendorCount > 5 ? (apVendorCount - 5) * 12 : 0;
-                                const beforeMultiplier = baseFee + vendorSurcharge;
-                                
-                                return (
-                                  <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                              {/* AP Service Breakdown - Uses backend breakdown values only */}
+                              {form.watch('serviceApArService') && feeCalculation.includesAP && feeCalculation.apBreakdown && (
+                                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
                                     <h5 className="font-medium text-purple-800 mb-3">Accounts Payable Service Breakdown</h5>
                                     <div className="space-y-2 text-sm">
                                       
                                       {/* Base Calculation */}
                                       <div className="space-y-1 pb-2 border-b border-purple-200">
                                         <div className="flex justify-between">
-                                          <span className="text-gray-600">Base AP fee ({billsLabel}):</span>
-                                          <span className="font-medium">${baseFee}</span>
+                                          <span className="text-gray-600">Base AP fee ({feeCalculation.apBreakdown.billsLabel}):</span>
+                                          <span className="font-medium">${feeCalculation.apBreakdown.baseFee}</span>
                                         </div>
                                         
-                                        {vendorSurcharge > 0 && (
+                                        {feeCalculation.apBreakdown.vendorSurcharge > 0 && (
                                           <>
                                             <div className="flex justify-between">
-                                              <span className="text-gray-600">Additional vendors ({apVendorCount - 5} × $12):</span>
-                                              <span className="font-medium">+${vendorSurcharge}</span>
+                                              <span className="text-gray-600">Additional vendors ({feeCalculation.apBreakdown.apVendorCount - 5} × $12):</span>
+                                              <span className="font-medium">+${feeCalculation.apBreakdown.vendorSurcharge}</span>
                                             </div>
                                             <div className="flex justify-between font-medium">
-                                              <span className="text-gray-700">{isAdvanced ? 'Before multiplier:' : 'AP Lite total:'}:</span>
-                                              <span className="text-gray-800">${beforeMultiplier}</span>
+                                              <span className="text-gray-700">AP {feeCalculation.apBreakdown.apServiceTier === 'advanced' ? 'Base' : 'Lite'} Total:</span>
+                                              <span className="text-gray-800">${feeCalculation.apBreakdown.beforeMultiplier}</span>
                                             </div>
                                           </>
                                         )}
                                         
-                                        {isAdvanced && (
+                                        {feeCalculation.apBreakdown.apServiceTier === 'advanced' && (
                                           <div className="flex justify-between">
-                                            <span className="text-gray-600">AP Advanced multiplier (2.5x):</span>
-                                            <span className="font-medium">+${(feeCalculation.apFee * 1.5).toLocaleString()}</span>
+                                            <span className="text-gray-600">AP Advanced affects entire quote (2.5x multiplier):</span>
+                                            <span className="text-sm text-purple-600">Applied to total</span>
                                           </div>
                                         )}
                                       </div>
                                       
-                                      {/* Monthly Total - Uses centralized calculation */}
+                                      {/* Service Fee Display - Uses backend calculation only */}
                                       <div className="flex justify-between font-semibold">
-                                        <span className="text-gray-800">AP Service Monthly Total:</span>
-                                        <span className="text-purple-700">${isAdvanced ? (feeCalculation.apFee * 2.5).toLocaleString() : feeCalculation.apFee.toLocaleString()}</span>
+                                        <span className="text-gray-800">AP Service Base Fee:</span>
+                                        <span className="text-purple-700">${feeCalculation.apFee.toLocaleString()}/month</span>
                                       </div>
                                     </div>
                                   </div>
-                                );
-                              })()}
+                              )}
 
                               {/* Service Tier Breakdown */}
                               {form.watch('serviceTier') && form.watch('serviceTier') !== 'Automated' && (
