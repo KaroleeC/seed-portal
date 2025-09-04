@@ -144,6 +144,7 @@ export function PricingDisplay({
                 {feeCalculation.includesAgentOfService && (
                   <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
                     <h4 className="font-medium text-indigo-800 mb-2">Agent of Service</h4>
+                    {console.log('Agent of Service Debug:', { includesAgentOfService: feeCalculation.includesAgentOfService, breakdown: feeCalculation.agentOfServiceBreakdown, fee: feeCalculation.agentOfServiceFee })}
                     {feeCalculation.agentOfServiceBreakdown ? (
                       <div className="space-y-1">
                         <div className="flex justify-between text-sm">
