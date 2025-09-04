@@ -26,10 +26,16 @@ export interface HubSpotDeal {
 
 import { cache, CacheTTL, CachePrefix } from "./cache.js";
 
-// HubSpot Product Record IDs for Service Tiers
+// HubSpot Product Record IDs for All Services
 const HUBSPOT_PRODUCT_IDS = {
   GUIDED_SERVICE_TIER: "28884795543",
-  CONCIERGE_SERVICE_TIER: "28891925782"
+  CONCIERGE_SERVICE_TIER: "28891925782",
+  PAYROLL_SERVICE: "29038614325",
+  AP_LITE_SERVICE: "28960182651",
+  AR_LITE_SERVICE: "28960244571",
+  AP_ADVANCED_SERVICE: "28960182653",
+  AR_ADVANCED_SERVICE: "28928071009",
+  AGENT_OF_SERVICE: "29001355021"
 } as const;
 
 export class HubSpotService {
@@ -1060,7 +1066,7 @@ Services Include:
               condition: serviceConfig.payrollFee > 0,
               name: "Payroll Service (Custom)",
               price: serviceConfig.payrollFee,
-              productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
+              productId: HUBSPOT_PRODUCT_IDS.PAYROLL_SERVICE,
               description: "Seed Financial Payroll Service - Complete payroll processing and compliance",
             },
           ],
@@ -1074,7 +1080,7 @@ Services Include:
               condition: serviceConfig.apFee > 0,
               name: "Accounts Payable Service (Custom)",
               price: serviceConfig.apFee,
-              productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
+              productId: HUBSPOT_PRODUCT_IDS.AP_LITE_SERVICE, // Will need logic to determine Lite vs Advanced
               description: "Seed Financial Accounts Payable Service - Automated vendor bill processing and payment management",
             },
           ],
@@ -1088,7 +1094,7 @@ Services Include:
               condition: serviceConfig.arFee > 0,
               name: "Accounts Receivable Service (Custom)",
               price: serviceConfig.arFee,
-              productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
+              productId: HUBSPOT_PRODUCT_IDS.AR_LITE_SERVICE, // Will need logic to determine Lite vs Advanced
               description: "Seed Financial Accounts Receivable Service - Customer invoice processing and collection management",
             },
           ],
@@ -1102,7 +1108,7 @@ Services Include:
               condition: serviceConfig.agentOfServiceFee > 0,
               name: "Agent of Service (Custom)",
               price: serviceConfig.agentOfServiceFee,
-              productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
+              productId: HUBSPOT_PRODUCT_IDS.AGENT_OF_SERVICE,
               description: "Seed Financial Agent of Service - Legal agent representation services for entity compliance",
             },
           ],
