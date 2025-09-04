@@ -3484,8 +3484,8 @@ function HomePage() {
                                     
                                     <div className="border-t border-indigo-200 pt-2 mt-2">
                                       <div className="flex justify-between font-semibold">
-                                        <span className="text-indigo-800">Monthly Agent of Service Fee:</span>
-                                        <span className="text-indigo-700">${feeCalculation.agentOfServiceFee.toLocaleString()}/month</span>
+                                        <span className="text-indigo-800">Agent of Service Project Fee:</span>
+                                        <span className="text-indigo-700">${feeCalculation.agentOfServiceFee.toLocaleString()}</span>
                                       </div>
                                     </div>
                                   </div>
@@ -3761,7 +3761,7 @@ function HomePage() {
                             </div>
                             <div className="text-right">
                               <div className="text-lg font-bold text-green-800">${feeCalculation.agentOfServiceFee?.toLocaleString() || '0'}</div>
-                              <div className="text-xs text-green-600">per month</div>
+                              <div className="text-xs text-green-600">one-time</div>
                             </div>
                           </div>
                         </div>

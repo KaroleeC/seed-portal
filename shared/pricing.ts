@@ -585,8 +585,8 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   const { agentOfServiceFee, breakdown: agentOfServiceBreakdown } = agentOfServiceResult;
 
   // Combined totals - AP/AR Advanced multipliers are already applied to individual fees, not to entire quote
-  let combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee + arFee + agentOfServiceFee;
-  let combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee;
+  let combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee + arFee;
+  let combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee + agentOfServiceFee;
 
   return {
     bookkeeping: bookkeepingFees,
