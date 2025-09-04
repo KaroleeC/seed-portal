@@ -3363,18 +3363,9 @@ function HomePage() {
                                         )}
                                         
                                         {isAdvanced && (
-                                          <div className="mt-3 pt-3 border-t border-purple-200">
-                                            <div className="bg-purple-100 rounded-md p-3 border border-purple-300">
-                                              <div className="text-center text-sm">
-                                                <div className="font-medium text-purple-800 mb-1">🚀 AP Advanced Selected</div>
-                                                <div className="text-purple-700">
-                                                  <strong>2.5x multiplier applied to entire quote</strong>
-                                                </div>
-                                                <div className="text-purple-600 text-xs mt-1">
-                                                  See "Total Monthly Fee" below for multiplied amount
-                                                </div>
-                                              </div>
-                                            </div>
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">AP Advanced multiplier (2.5x):</span>
+                                            <span className="font-medium">+${(feeCalculation.apFee * 1.5).toLocaleString()}</span>
                                           </div>
                                         )}
                                       </div>
@@ -3382,7 +3373,7 @@ function HomePage() {
                                       {/* Monthly Total - Uses centralized calculation */}
                                       <div className="flex justify-between font-semibold">
                                         <span className="text-gray-800">AP Service Monthly Total:</span>
-                                        <span className="text-purple-700">${totalApFee.toLocaleString()}</span>
+                                        <span className="text-purple-700">${isAdvanced ? (feeCalculation.apFee * 2.5).toLocaleString() : feeCalculation.apFee.toLocaleString()}</span>
                                       </div>
                                     </div>
                                   </div>
