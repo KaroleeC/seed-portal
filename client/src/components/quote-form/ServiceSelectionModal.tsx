@@ -41,61 +41,52 @@ export function ServiceSelectionModal({
   const [tempServices, setTempServices] = useState(selectedServices);
   const { toast } = useToast();
 
+  // Helper function to check if core services are selected
+  const hasCoreServices = () => {
+    return tempServices.serviceTaasMonthly || 
+           tempServices.serviceMonthlyBookkeeping || 
+           tempServices.servicePriorYearFilings || 
+           tempServices.serviceCleanupProjects || 
+           tempServices.serviceCfoAdvisory ||
+           tempServices.servicePayrollService;
+  };
+
+  // Services that require a core service (Agent of Service is excluded as it can be standalone)
+  const servicesRequiringCore = [
+    'servicePayrollService',
+    'serviceApArService', 
+    'serviceArService',
+    'serviceFpaBuild',
+    'serviceFpaSupport',
+    'serviceNexusStudy',
+    'serviceEntityOptimization',
+    'serviceCostSegregation',
+    'serviceRdCredit',
+    'serviceRealEstateAdvisory'
+  ];
+
   const handleServiceToggle = (serviceKey: keyof typeof selectedServices) => {
-    // Check if trying to enable Payroll without core services
-    if (serviceKey === 'servicePayrollService') {
-      const hasCoreServices = tempServices.serviceTaasMonthly || 
-                             tempServices.serviceMonthlyBookkeeping || 
-                             tempServices.servicePriorYearFilings || 
-                             tempServices.serviceCleanupProjects || 
-                             tempServices.serviceCfoAdvisory;
-      
-      if (!hasCoreServices && !tempServices.servicePayrollService) {
-        toast({
-          title: "Core Service Required",
-          description: "Payroll service requires at least one core service (TaaS, Monthly Bookkeeping, Prior Year Filings, Cleanup Projects, or CFO Advisory).",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
-    // Check if trying to enable AP services without core services
-    if (serviceKey === 'serviceApArService') {
-      const hasCoreServices = tempServices.serviceTaasMonthly || 
-                             tempServices.serviceMonthlyBookkeeping || 
-                             tempServices.servicePriorYearFilings || 
-                             tempServices.serviceCleanupProjects || 
-                             tempServices.serviceCfoAdvisory ||
-                             tempServices.servicePayrollService;
-      
-      if (!hasCoreServices && !tempServices.serviceApArService) {
-        toast({
-          title: "Core Service Required",
-          description: "AP services require at least one core service (TaaS, Monthly Bookkeeping, Prior Year Filings, Cleanup Projects, CFO Advisory, or Payroll).",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
-    // Check if trying to enable AR services without core services
-    if (serviceKey === 'serviceArService') {
-      const hasCoreServices = tempServices.serviceTaasMonthly || 
-                             tempServices.serviceMonthlyBookkeeping || 
-                             tempServices.servicePriorYearFilings || 
-                             tempServices.serviceCleanupProjects || 
-                             tempServices.serviceCfoAdvisory ||
-                             tempServices.servicePayrollService;
-      
-      if (!hasCoreServices && !tempServices.serviceArService) {
-        toast({
-          title: "Core Service Required",
-          description: "AR services require at least one core service (TaaS, Monthly Bookkeeping, Prior Year Filings, Cleanup Projects, CFO Advisory, or Payroll).",
-          variant: "destructive",
-        });
-        return;
-      }
+    // Check if trying to enable an add-on service without core services
+    if (servicesRequiringCore.includes(serviceKey) && !tempServices[serviceKey] && !hasCoreServices()) {
+      const serviceNames = {
+        servicePayrollService: "Payroll service",
+        serviceApArService: "AP services", 
+        serviceArService: "AR services",
+        serviceFpaBuild: "FP&A Build",
+        serviceFpaSupport: "FP&A Support",
+        serviceNexusStudy: "Nexus Study",
+        serviceEntityOptimization: "Entity Optimization",
+        serviceCostSegregation: "Cost Segregation Study",
+        serviceRdCredit: "R&D Credit Analysis", 
+        serviceRealEstateAdvisory: "Real Estate Advisory"
+      };
+
+      toast({
+        title: "Core Service Required",
+        description: `${serviceNames[serviceKey as keyof typeof serviceNames]} requires at least one core service (TaaS, Monthly Bookkeeping, Prior Year Filings, Cleanup Projects, CFO Advisory, or Payroll).`,
+        variant: "destructive",
+      });
+      return;
     }
     
     // Check if trying to disable a core service when Payroll, AP, or AR services are selected
