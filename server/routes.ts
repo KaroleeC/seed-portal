@@ -795,6 +795,9 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         monthlyTransactions: req.body.monthlyTransactions || "N/A",
         cleanupComplexity: req.body.cleanupComplexity || "0",
         cleanupMonths: req.body.cleanupMonths || 0,
+        // Required fields with defaults for validation
+        monthlyRevenueRange: req.body.monthlyRevenueRange || "Not specified",
+        industry: req.body.industry || "Not specified",
       };
       
       // Check for existing quotes - use approval system if needed
