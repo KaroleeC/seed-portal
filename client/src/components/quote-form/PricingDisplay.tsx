@@ -80,7 +80,7 @@ export function PricingDisplay({
         </div>
 
         {/* Service breakdown - show if any services are included */}
-        {(feeCalculation.includesBookkeeping || feeCalculation.includesTaas || feeCalculation.includesAP) && (
+        {(feeCalculation.includesBookkeeping || feeCalculation.includesTaas || feeCalculation.includesAP || feeCalculation.includesAR || feeCalculation.includesAgentOfService) && (
           <>
             <Button
               type="button"
@@ -128,6 +128,51 @@ export function PricingDisplay({
                       <span>Monthly:</span>
                       <span className="font-semibold">{formatCurrency(feeCalculation.apFee)}</span>
                     </div>
+                  </div>
+                )}
+                
+                {feeCalculation.includesAR && (
+                  <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                    <h4 className="font-medium text-orange-800 mb-2">Accounts Receivable Service</h4>
+                    <div className="flex justify-between text-sm">
+                      <span>Monthly:</span>
+                      <span className="font-semibold">{formatCurrency(feeCalculation.arFee)}</span>
+                    </div>
+                  </div>
+                )}
+                
+                {feeCalculation.includesAgentOfService && (
+                  <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
+                    <h4 className="font-medium text-indigo-800 mb-2">Agent of Service</h4>
+                    {feeCalculation.agentOfServiceBreakdown ? (
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span>Base Fee:</span>
+                          <span className="font-semibold">{formatCurrency(feeCalculation.agentOfServiceBreakdown.baseFee)}</span>
+                        </div>
+                        {feeCalculation.agentOfServiceBreakdown.additionalStatesFee > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span>Additional States ({feeCalculation.agentOfServiceBreakdown.additionalStates}):</span>
+                            <span className="font-semibold">{formatCurrency(feeCalculation.agentOfServiceBreakdown.additionalStatesFee)}</span>
+                          </div>
+                        )}
+                        {feeCalculation.agentOfServiceBreakdown.complexCaseFee > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span>Complex Case Upgrade:</span>
+                            <span className="font-semibold">{formatCurrency(feeCalculation.agentOfServiceBreakdown.complexCaseFee)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm font-semibold pt-1 border-t border-indigo-200">
+                          <span>Total Monthly:</span>
+                          <span>{formatCurrency(feeCalculation.agentOfServiceFee)}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between text-sm">
+                        <span>Monthly:</span>
+                        <span className="font-semibold">{formatCurrency(feeCalculation.agentOfServiceFee)}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
