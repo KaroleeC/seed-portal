@@ -3315,6 +3315,15 @@ function HomePage() {
                                   'over_25': 300   // 25 additional × $12
                                 };
                                 
+                                const additionalVendors = {
+                                  up_to_5: 0,
+                                  '6_to_10': 5,
+                                  '11_to_15': 10,
+                                  '16_to_20': 15,
+                                  '21_to_25': 20,
+                                  'over_25': 25
+                                };
+                                
                                 const baseFee = baseFees[billsVolume];
                                 const vendorFee = vendorFees[vendorPayees];
                                 const subtotal = baseFee + vendorFee;
@@ -3323,56 +3332,41 @@ function HomePage() {
                                 
                                 return (
                                   <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                                    <h5 className="font-medium text-purple-800 mb-2">Accounts Payable Service Breakdown</h5>
-                                    <div className="space-y-1 text-sm">
-                                      <div className="flex justify-between">
-                                        <span className="text-gray-600">Bills volume:</span>
-                                        <span className="font-medium">
-                                          {billsVolume === 'low' ? 'Low (1-50 bills)' : 
-                                           billsVolume === 'medium' ? 'Medium (51-200 bills)' : 
-                                           'High (201+ bills)'}
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span className="text-gray-600">Base AP fee:</span>
-                                        <span className="font-medium">${baseFee}/month</span>
-                                      </div>
-                                      <div className="flex justify-between">
-                                        <span className="text-gray-600">Vendor/payee count:</span>
-                                        <span className="font-medium">
-                                          {vendorPayees === 'up_to_5' ? 'Up to 5 (included)' :
-                                           vendorPayees === '6_to_10' ? '6-10 (+5 additional)' :
-                                           vendorPayees === '11_to_15' ? '11-15 (+10 additional)' :
-                                           vendorPayees === '16_to_20' ? '16-20 (+15 additional)' :
-                                           vendorPayees === '21_to_25' ? '21-25 (+20 additional)' :
-                                           'Over 25 (+25 additional)'}
-                                        </span>
-                                      </div>
-                                      {vendorFee > 0 && (
+                                    <h5 className="font-medium text-purple-800 mb-3">Accounts Payable Service Breakdown</h5>
+                                    <div className="space-y-2 text-sm">
+                                      
+                                      {/* Base Calculation */}
+                                      <div className="space-y-1 pb-2 border-b border-purple-200">
                                         <div className="flex justify-between">
-                                          <span className="text-gray-600">Additional vendor fees ($12/month each):</span>
-                                          <span className="font-medium">${vendorFee}/month</span>
+                                          <span className="text-gray-600">Base AP fee ({billsVolume === 'low' ? '1-50 bills' : billsVolume === 'medium' ? '51-200 bills' : '201+ bills'}):</span>
+                                          <span className="font-medium">${baseFee}</span>
                                         </div>
-                                      )}
-                                      <div className="flex justify-between">
-                                        <span className="text-gray-600">Service tier:</span>
-                                        <span className="font-medium">
-                                          {isAdvanced ? 'AP Advanced (2.5x multiplier)' : 'AP Lite'}
-                                        </span>
+                                        
+                                        {vendorFee > 0 && (
+                                          <>
+                                            <div className="flex justify-between">
+                                              <span className="text-gray-600">Additional vendors ({additionalVendors[vendorPayees]} × $12):</span>
+                                              <span className="font-medium">+${vendorFee}</span>
+                                            </div>
+                                            <div className="flex justify-between font-medium">
+                                              <span className="text-gray-700">AP Lite subtotal:</span>
+                                              <span className="text-gray-800">${subtotal}</span>
+                                            </div>
+                                          </>
+                                        )}
+                                        
+                                        {isAdvanced && (
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">AP Advanced multiplier:</span>
+                                            <span className="font-medium">2.5x</span>
+                                          </div>
+                                        )}
                                       </div>
                                       
-                                      {isAdvanced && (
-                                        <div className="flex justify-between text-orange-600">
-                                          <span>AP Advanced multiplier (${subtotal} × 2.5):</span>
-                                          <span className="font-medium">${finalFee}/month</span>
-                                        </div>
-                                      )}
-                                      
-                                      <div className="border-t border-purple-200 pt-2 mt-2">
-                                        <div className="flex justify-between font-semibold">
-                                          <span className="text-purple-800">Monthly AP Fee:</span>
-                                          <span className="text-purple-700">${finalFee}/month</span>
-                                        </div>
+                                      {/* Monthly Total */}
+                                      <div className="border-t pt-2 flex justify-between font-semibold">
+                                        <span className="text-gray-800">Monthly Total:</span>
+                                        <span className="text-purple-700">${finalFee.toLocaleString()}</span>
                                       </div>
                                     </div>
                                   </div>
@@ -3572,10 +3566,33 @@ function HomePage() {
                           </div>
                         </div>
                       )}
+
+                      {/* AP Service Card */}
+                      {form.watch('serviceApArService') && (
+                        <div className="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">💳</span>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-purple-800">Accounts Payable Service</h4>
+                                <p className="text-xs text-purple-600">
+                                  {form.watch('apServiceTier') === 'advanced' ? 'AP Advanced tier' : 'AP Lite tier'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-purple-800">${feeCalculation.apFee.toLocaleString()}</div>
+                              <div className="text-xs text-purple-600">per month</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* No Services Selected */}
-                    {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas && !form.watch('serviceCfoAdvisory') && !form.watch('servicePayrollService') && feeCalculation.cleanupProjectFee === 0 && feeCalculation.priorYearFilingsFee === 0) && (
+                    {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas && !form.watch('serviceCfoAdvisory') && !form.watch('servicePayrollService') && !form.watch('serviceApArService') && feeCalculation.cleanupProjectFee === 0 && feeCalculation.priorYearFilingsFee === 0) && (
                       <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
                         <div className="text-gray-500 mb-2">
                           <Calculator className="h-8 w-8 mx-auto mb-2 opacity-50" />
