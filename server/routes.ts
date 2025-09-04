@@ -833,7 +833,17 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       console.log('Validation data (first 500 chars):', JSON.stringify(validationData).substring(0, 500));
       
       // Validate the data first (without ownerId)
-      const validatedQuoteData = insertQuoteSchema.parse(validationData);
+      console.log('🔍 STARTING ZOD VALIDATION...');
+      const validationResult = insertQuoteSchema.safeParse(validationData);
+      
+      if (!validationResult.success) {
+        console.error('🚨 ZOD VALIDATION FAILED:');
+        console.error('Validation errors:', JSON.stringify(validationResult.error.errors, null, 2));
+        throw validationResult.error;
+      }
+      
+      const validatedQuoteData = validationResult.data;
+      console.log('🟢 ZOD VALIDATION PASSED');
       
       // Add ownerId after validation passes
       const quoteData = {
