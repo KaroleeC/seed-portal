@@ -833,7 +833,16 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       }
       
       console.log('Processing quote data for:', req.body.contactEmail);
-      console.log('Validation data (first 500 chars):', JSON.stringify(validationData).substring(0, 500));
+      console.log('Validation data keys:', Object.keys(validationData));
+      console.log('Required fields check:');
+      console.log('- contactEmail:', validationData.contactEmail);
+      console.log('- monthlyRevenueRange:', validationData.monthlyRevenueRange);
+      console.log('- industry:', validationData.industry);
+      console.log('- monthlyTransactions:', validationData.monthlyTransactions);
+      console.log('- cleanupMonths:', validationData.cleanupMonths);
+      console.log('- cleanupComplexity:', validationData.cleanupComplexity);
+      console.log('- monthlyFee:', validationData.monthlyFee);
+      console.log('- setupFee:', validationData.setupFee);
       
       // Validate the data first (without ownerId)
       console.log('🔍 STARTING ZOD VALIDATION...');
@@ -842,6 +851,17 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       if (!validationResult.success) {
         console.error('🚨 ZOD VALIDATION FAILED:');
         console.error('Validation errors:', JSON.stringify(validationResult.error.errors, null, 2));
+        
+        // Log each error in detail
+        validationResult.error.errors.forEach((error, index) => {
+          console.error(`Error ${index + 1}:`, {
+            path: error.path,
+            message: error.message,
+            received: error.received,
+            expected: error.expected
+          });
+        });
+        
         throw validationResult.error;
       }
       
