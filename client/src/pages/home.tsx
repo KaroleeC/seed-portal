@@ -1063,7 +1063,15 @@ function HomePage() {
   const monthlyFee = feeCalculation.combined.monthlyFee;
   const setupFee = feeCalculation.combined.setupFee;
   
-  const isCalculated = monthlyFee > 0 || feeCalculation.priorYearFilingsFee > 0 || feeCalculation.cleanupProjectFee > 0 || feeCalculation.cfoAdvisoryFee > 0 || feeCalculation.payrollFee > 0;
+  // Modular calculation check - any service with a fee > 0 means the quote is calculated
+  const isCalculated = (() => {
+    const hasMonthlyFees = monthlyFee > 0;
+    const hasSetupFees = setupFee > 0;
+    const hasProjectFees = feeCalculation.priorYearFilingsFee > 0 || feeCalculation.cleanupProjectFee > 0 || feeCalculation.cfoAdvisoryFee > 0;
+    const hasServiceFees = feeCalculation.payrollFee > 0 || feeCalculation.apFee > 0 || feeCalculation.arFee > 0 || feeCalculation.agentOfServiceFee > 0;
+    
+    return hasMonthlyFees || hasSetupFees || hasProjectFees || hasServiceFees;
+  })();
 
   // Helper functions for navigation (defined after feeCalculation)
   const getActiveServices = () => {
