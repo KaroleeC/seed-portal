@@ -1227,7 +1227,44 @@ export function QuoteCalculatorContainer() {
 
                     {/* Service Cards */}
                     <div className="mt-6">
-                      <ServiceCards form={form} />
+                      <ServiceCards 
+                        selectedServices={{
+                          serviceMonthlyBookkeeping: form.watch('serviceMonthlyBookkeeping') || false,
+                          serviceCleanupProjects: form.watch('serviceCleanupProjects') || false,
+                          serviceTaasMonthly: form.watch('serviceTaasMonthly') || false,
+                          servicePriorYearFilings: form.watch('servicePriorYearFilings') || false,
+                          serviceCfoAdvisory: form.watch('serviceCfoAdvisory') || false,
+                          servicePayrollService: form.watch('servicePayrollService') || false,
+                          serviceApArService: form.watch('serviceApArService') || false,
+                          serviceApLite: form.watch('serviceApLite') || false,
+                          serviceArLite: form.watch('serviceArLite') || false,
+                          serviceApAdvanced: form.watch('serviceApAdvanced') || false,
+                          serviceArAdvanced: form.watch('serviceArAdvanced') || false,
+                          serviceFpaBuild: form.watch('serviceFpaBuild') || false,
+                          serviceFpaSupport: form.watch('serviceFpaSupport') || false,
+                          serviceAgentOfService: form.watch('serviceAgentOfService') || false,
+                          serviceNexusStudy: form.watch('serviceNexusStudy') || false,
+                          serviceEntityOptimization: form.watch('serviceEntityOptimization') || false,
+                          serviceCostSegregation: form.watch('serviceCostSegregation') || false,
+                          serviceRdCredit: form.watch('serviceRdCredit') || false,
+                          serviceRealEstateAdvisory: form.watch('serviceRealEstateAdvisory') || false,
+                        }}
+                        onServiceChange={(services) => {
+                          Object.entries(services).forEach(([key, value]) => {
+                            if (typeof value === 'boolean') {
+                              form.setValue(key as any, value);
+                            }
+                          });
+                        }}
+                        feeCalculation={{
+                          includesBookkeeping: feeCalculation.includesBookkeeping,
+                          includesTaas: feeCalculation.includesTaas
+                        }}
+                        onLegacyServiceChange={(bookkeeping, taas) => {
+                          form.setValue('serviceMonthlyBookkeeping', bookkeeping);
+                          form.setValue('serviceTaasMonthly', taas);
+                        }}
+                      />
                     </div>
 
                     {/* Simple pricing display */}
