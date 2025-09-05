@@ -136,13 +136,13 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
           quote.serviceTier || 'Standard',
           // Add all the missing service parameters with CORRECT field mapping
           Boolean(quote.servicePayroll || quote.servicePayrollService),  // includesPayroll
-          1200,                                               // payrollFee (hardcoded for now)
+          parseFloat(quote.payrollServiceFee || '0'),         // payrollFee
           Boolean(quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService), // includesAP
-          300,                                                // apFee (hardcoded for now)
+          parseFloat(quote.apServiceFee || '0'),              // apFee
           Boolean(quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService), // includesAR
-          300,                                                // arFee (hardcoded for now)
+          parseFloat(quote.arServiceFee || '0'),              // arFee
           Boolean(quote.serviceAgentOfService),               // includesAgentOfService
-          850,                                                // agentOfServiceFee (hardcoded for now)
+          parseFloat(quote.agentOfServiceFee || '0'),         // agentOfServiceFee
           Boolean(quote.serviceCfoAdvisory),                  // includesCfoAdvisory
           parseFloat(quote.cfoAdvisoryFee || '0'),            // cfoAdvisoryFee
           parseFloat(quote.cleanupProjectFee || '0'),         // cleanupProjectFee
