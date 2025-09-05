@@ -44,6 +44,7 @@ export interface CombinedFeeResult {
   includesAP: boolean;
   includesAR: boolean;
   includesAgentOfService: boolean;
+  serviceTierFee: number;
   cleanupProjectFee: number;
   priorYearFilingsFee: number;
   cfoAdvisoryFee: number;
@@ -600,6 +601,7 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     includesAP,
     includesAR,
     includesAgentOfService,
+    serviceTierFee,
     cleanupProjectFee,
     priorYearFilingsFee,
     cfoAdvisoryFee,

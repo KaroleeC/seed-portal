@@ -1416,7 +1416,12 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                 const { calculateCombinedFees } = await import('@shared/pricing');
                 const feeCalculation = calculateCombinedFees(quote as any);
                 
+                // Use calculated service tier fee from pricing engine
+                
                 console.log('🔧 Calculated individual service fees:', {
+                  bookkeepingMonthlyFee: feeCalculation.bookkeeping.monthlyFee,
+                  taasMonthlyFee: feeCalculation.taas.monthlyFee,
+                  serviceTierFee: feeCalculation.serviceTierFee,
                   payrollFee: feeCalculation.payrollFee,
                   agentOfServiceFee: feeCalculation.agentOfServiceFee,
                   apFee: feeCalculation.apFee,
@@ -1456,7 +1461,11 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                   feeCalculation.cleanupProjectFee,                   // cleanupProjectFee (calculated)
                   feeCalculation.priorYearFilingsFee,                 // priorYearFilingsFee (calculated)
                   Boolean(quote.serviceFpaBuild),                     // includesFpaBuild
-                  parseFloat(quote.fpaServiceFee || '0')              // fpaServiceFee (TODO: calculate)
+                  parseFloat(quote.fpaServiceFee || '0'),             // fpaServiceFee (TODO: calculate)
+                  // Pass the individual calculated service fees for line items
+                  feeCalculation.bookkeeping.monthlyFee,              // calculatedBookkeepingMonthlyFee
+                  feeCalculation.taas.monthlyFee,                     // calculatedTaasMonthlyFee
+                  feeCalculation.serviceTierFee                       // calculatedServiceTierFee
                 );
                 console.log('✅ HubSpot quote created successfully:', hubspotQuote?.id);
               } catch (quoteError) {

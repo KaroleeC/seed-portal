@@ -781,6 +781,10 @@ export class HubSpotService {
     priorYearFilingsFee?: number,
     includesFpaBuild?: boolean,
     fpaServiceFee?: number,
+    // Pass the individual calculated service fees for line items
+    calculatedBookkeepingMonthlyFee?: number,
+    calculatedTaasMonthlyFee?: number,
+    calculatedServiceTierFee?: number,
   ): Promise<{ id: string; title: string } | null> {
     try {
       // Create a proper HubSpot quote using the quotes API
@@ -952,11 +956,11 @@ Services Include:
           apServiceTier: quoteData?.apServiceTier,
           arServiceTier: quoteData?.arServiceTier,
           serviceTier: quoteData?.serviceTier,
-          serviceTierFee: quoteData?.serviceTierFee || 0,
+          serviceTierFee: calculatedServiceTierFee || 0,
           qboSubscription: quoteData?.qboSubscription ?? false,
           qboFee: quoteData?.qboFee || (quoteData?.qboSubscription ? 60 : 0),
-          bookkeepingMonthlyFee: quoteData?.bookkeepingMonthlyFee || 0,
-          taasMonthlyFee: quoteData?.taasMonthlyFee || 0,
+          bookkeepingMonthlyFee: calculatedBookkeepingMonthlyFee || 0,
+          taasMonthlyFee: calculatedTaasMonthlyFee || 0,
           monthlyFee: monthlyFee,
         });
         console.log("📋 Comprehensive line items added successfully to quote");
@@ -1077,8 +1081,10 @@ Services Include:
     // Service Tier (Concierge/Guided) - USE CALCULATED FEE ONLY
     if (serviceConfig.serviceTier === 'Concierge' && serviceConfig.serviceTierFee > 0) {
       services.push({price: serviceConfig.serviceTierFee, productId: HUBSPOT_PRODUCT_IDS.CONCIERGE_SERVICE_TIER});
-    } else if (serviceConfig.serviceTier === 'Guided' && serviceConfig.serviceTierFee > 0) {
-      services.push({price: serviceConfig.serviceTierFee, productId: HUBSPOT_PRODUCT_IDS.GUIDED_SERVICE_TIER});
+    } else if (serviceConfig.serviceTier === 'Guided') {
+      // Guided tier should always show, even if fee is 0 or $79
+      const guidedFee = serviceConfig.serviceTierFee || 79;
+      services.push({price: guidedFee, productId: HUBSPOT_PRODUCT_IDS.GUIDED_SERVICE_TIER});
     }
     
     // QBO Subscription
