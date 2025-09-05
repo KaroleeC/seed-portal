@@ -1366,6 +1366,15 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
             // Get HubSpot owner ID
             const ownerId = await hubSpotService.getOwnerByEmail(req.user.email);
 
+            // Update company address from quote data first
+            try {
+              console.log('🏢 Syncing company address from quote data...');
+              await hubSpotService.updateOrCreateCompanyFromQuote(quote, contact);
+              console.log('✅ Company address sync completed');
+            } catch (companyError) {
+              console.error('⚠️ Company address sync failed:', companyError);
+            }
+
             // Create deal in HubSpot
             const dealIncludesBookkeeping = quote.serviceBookkeeping || quote.includesBookkeeping;
             const dealIncludesTaas = quote.serviceTaas || quote.includesTaas;
@@ -1384,23 +1393,31 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
 
             // Now create the quote in HubSpot linked to the deal
             if (deal) {
-              await hubSpotService.createQuote(
-                deal.id,
-                companyName,
-                parseFloat(quote.monthlyFee),
-                parseFloat(quote.setupFee),
-                req.user.email,
-                contact.properties.firstname || 'Contact',
-                contact.properties.lastname || '',
-                dealIncludesBookkeeping,
-                dealIncludesTaas,
-                parseFloat(quote.taasMonthlyFee || '0'),
-                parseFloat(quote.taasPriorYearsFee || '0'),
-                parseFloat(quote.monthlyFee),
-                parseFloat(quote.setupFee),
-                quote,
-                quote.serviceTier || 'Standard'
-              );
+              try {
+                console.log('📋 Creating HubSpot quote for deal:', deal.id);
+                const hubspotQuote = await hubSpotService.createQuote(
+                  deal.id,
+                  companyName,
+                  parseFloat(quote.monthlyFee),
+                  parseFloat(quote.setupFee),
+                  req.user.email,
+                  contact.properties.firstname || 'Contact',
+                  contact.properties.lastname || '',
+                  dealIncludesBookkeeping,
+                  dealIncludesTaas,
+                  parseFloat(quote.taasMonthlyFee || '0'),
+                  parseFloat(quote.taasPriorYearsFee || '0'),
+                  parseFloat(quote.monthlyFee),
+                  parseFloat(quote.setupFee),
+                  quote,
+                  quote.serviceTier || 'Standard'
+                );
+                console.log('✅ HubSpot quote created successfully:', hubspotQuote?.id);
+              } catch (quoteError) {
+                console.error('❌ Quote creation failed:', quoteError);
+              }
+            } else {
+              console.error('❌ Cannot create quote - deal creation failed');
             }
 
             console.log(`✅ Direct HubSpot sync completed for quote ${quoteId}`);

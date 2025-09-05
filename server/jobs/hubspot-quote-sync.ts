@@ -71,6 +71,17 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
       // Get HubSpot owner ID
       const ownerId = await hubSpotService.getOwnerByEmail(user.email);
 
+      await job.updateProgress(70);
+
+      // Update company address from quote data first
+      try {
+        hubspotLogger.info({ quoteId }, '🏢 Syncing company address from quote data');
+        await hubSpotService.updateOrCreateCompanyFromQuote(quote, contact);
+        hubspotLogger.info({ quoteId }, '✅ Company address sync completed');
+      } catch (companyError) {
+        hubspotLogger.warn({ quoteId, error: companyError }, '⚠️ Company address sync failed');
+      }
+
       await job.updateProgress(75);
 
       // Create deal in HubSpot
@@ -93,24 +104,34 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
         throw new Error('Failed to create deal in HubSpot');
       }
 
+      await job.updateProgress(85);
+
       // Now create the quote in HubSpot linked to the deal
-      const hubspotQuote = await hubSpotService.createQuote(
-        deal.id,
-        companyName,
-        parseFloat(quote.monthlyFee),
-        parseFloat(quote.setupFee),
-        user.email,
-        contact.properties.firstname || 'Contact',
-        contact.properties.lastname || '',
-        dealIncludesBookkeeping,
-        dealIncludesTaas,
-        parseFloat(quote.taasMonthlyFee || '0'),
-        parseFloat(quote.taasPriorYearsFee || '0'),
-        parseFloat(quote.monthlyFee),
-        parseFloat(quote.setupFee),
-        quote,
-        quote.serviceTier || 'Standard'
-      );
+      let hubspotQuote = null;
+      try {
+        hubspotLogger.info({ quoteId, dealId: deal.id }, '📋 Creating HubSpot quote');
+        hubspotQuote = await hubSpotService.createQuote(
+          deal.id,
+          companyName,
+          parseFloat(quote.monthlyFee),
+          parseFloat(quote.setupFee),
+          user.email,
+          contact.properties.firstname || 'Contact',
+          contact.properties.lastname || '',
+          dealIncludesBookkeeping,
+          dealIncludesTaas,
+          parseFloat(quote.taasMonthlyFee || '0'),
+          parseFloat(quote.taasPriorYearsFee || '0'),
+          parseFloat(quote.monthlyFee),
+          parseFloat(quote.setupFee),
+          quote,
+          quote.serviceTier || 'Standard'
+        );
+        hubspotLogger.info({ quoteId, hubspotQuoteId: hubspotQuote?.id }, '✅ HubSpot quote created successfully');
+      } catch (quoteError) {
+        hubspotLogger.error({ quoteId, dealId: deal.id, error: quoteError }, '❌ Quote creation failed');
+        // Don't throw - deal was created successfully
+      }
 
       result = {
         success: true,
