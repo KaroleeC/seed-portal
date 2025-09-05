@@ -87,15 +87,12 @@ export class HubSpotService {
   // Get pipeline information to find the correct pipeline and stage IDs
   async getPipelines(): Promise<any> {
     try {
-      console.log("🔍 Fetching HubSpot pipelines...");
+      console.log("🔍 [HUBSPOT DEBUG] Fetching HubSpot pipelines...");
       const result = await this.makeRequest("/crm/v3/pipelines/deals");
-      console.log("✅ Pipeline fetch successful:", result ? "Got data" : "No data");
-      if (result?.results) {
-        console.log("📋 Found pipelines:", result.results.map((p: any) => p.label));
-      }
+      console.log("✅ [HUBSPOT DEBUG] Pipeline fetch result:", JSON.stringify(result, null, 2));
       return result;
     } catch (error) {
-      console.error("❌ Pipeline fetch failed:", error);
+      console.error("❌ [HUBSPOT DEBUG] Pipeline fetch failed:", error);
       console.error("Error fetching pipelines:", error);
       return null;
     }
@@ -149,8 +146,8 @@ export class HubSpotService {
         qualifiedStageId: qualifiedStage.id,
       };
     } catch (error) {
-      console.error("Error finding pipeline/stage:", error);
-      console.error("Full error details:", JSON.stringify(error, null, 2));
+      console.error("❌ [HUBSPOT DEBUG] Error finding pipeline/stage:", error);
+      console.error("❌ [HUBSPOT DEBUG] Full error details:", JSON.stringify(error, null, 2));
       return null;
     }
   }
@@ -632,16 +629,17 @@ export class HubSpotService {
       };
 
       console.log(
-        "Creating deal with body:",
+        "🔧 [DEAL DEBUG] Creating deal with body:",
         JSON.stringify(dealBody, null, 2),
       );
 
+      console.log("🔧 [DEAL DEBUG] Making API request to /crm/v3/objects/deals...");
       const result = await this.makeRequest("/crm/v3/objects/deals", {
         method: "POST",
         body: JSON.stringify(dealBody),
       });
 
-      console.log("Raw HubSpot API response:", JSON.stringify(result, null, 2));
+      console.log("🔧 [DEAL DEBUG] Raw HubSpot API response:", JSON.stringify(result, null, 2));
 
       if (!result || !result.id) {
         console.error(
@@ -664,7 +662,8 @@ export class HubSpotService {
         },
       };
     } catch (error) {
-      console.error("Error creating deal in HubSpot:", error);
+      console.error("🔧 [DEAL DEBUG] Error creating deal in HubSpot:", error);
+      console.error("🔧 [DEAL DEBUG] Full error details:", JSON.stringify(error, null, 2));
       return null;
     }
   }
