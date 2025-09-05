@@ -1000,6 +1000,14 @@ Services Include:
     console.log("Creating service line items for quote:", quoteId);
     console.log("🔧 SERVICE CONFIG RECEIVED:", JSON.stringify(serviceConfig, null, 2));
     
+    // DEBUG: Check specific service fees
+    console.log("🔍 DEBUGGING INDIVIDUAL SERVICE FEES:");
+    console.log("bookkeepingMonthlyFee:", serviceConfig.bookkeepingMonthlyFee, "type:", typeof serviceConfig.bookkeepingMonthlyFee);
+    console.log("taasMonthlyFee:", serviceConfig.taasMonthlyFee, "type:", typeof serviceConfig.taasMonthlyFee);
+    console.log("serviceTierFee:", serviceConfig.serviceTierFee, "type:", typeof serviceConfig.serviceTierFee);
+    console.log("includesBookkeeping:", serviceConfig.includesBookkeeping);
+    console.log("includesTaas:", serviceConfig.includesTaas);
+    
     // CRITICAL: Verify all product IDs exist first to avoid failures
     console.log("🔍 VERIFYING ALL PRODUCT IDs BEFORE CREATING LINE ITEMS:");
     const products = await this.getProducts();
