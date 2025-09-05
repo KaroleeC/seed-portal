@@ -808,12 +808,17 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       
       // Check for existing quotes - use approval system if needed
       const { contactEmail, approvalCode } = req.body;
+      console.log('🔍 APPROVAL CHECK - Contact Email:', contactEmail);
+      console.log('🔍 APPROVAL CHECK - Approval Code provided:', !!approvalCode, 'Value:', approvalCode);
+      
       if (contactEmail) {
         const existingQuotes = await storage.getQuotesByEmail(contactEmail);
+        console.log('🔍 APPROVAL CHECK - Existing quotes found:', existingQuotes.length);
         
         if (existingQuotes.length > 0) {
-          // Existing quotes found - require approval code validation (same as cleanup override)
+          // Existing quotes found - require approval code validation
           if (!approvalCode) {
+            console.log('🚨 APPROVAL CHECK - No approval code provided, rejecting');
             res.status(400).json({ 
               message: "Approval code required for creating additional quotes",
               requiresApproval: true,
@@ -822,9 +827,13 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
             return;
           }
           
+          console.log('🔍 APPROVAL CHECK - Validating approval code:', approvalCode);
           // Validate the approval code using existing system
           const isValidCode = await storage.validateApprovalCode(approvalCode, contactEmail);
+          console.log('🔍 APPROVAL CHECK - Code validation result:', isValidCode);
+          
           if (!isValidCode) {
+            console.log('🚨 APPROVAL CHECK - Invalid approval code, rejecting');
             res.status(400).json({ 
               message: "Invalid or expired approval code",
               requiresApproval: true
@@ -834,7 +843,9 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
           
           // Mark code as used
           await storage.markApprovalCodeUsed(approvalCode, contactEmail);
-          console.log(`✅ Approval code validated for duplicate quote: ${contactEmail}`);
+          console.log(`✅ APPROVAL CHECK - Code validated and marked as used for: ${contactEmail}`);
+        } else {
+          console.log('✅ APPROVAL CHECK - No existing quotes, proceeding without approval');
         }
       }
       
