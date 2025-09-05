@@ -1786,6 +1786,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
   app.post("/api/hubspot/update-quote", async (req, res) => {
     try {
       const { quoteId, currentFormData } = req.body;
+      console.log(`🔥 UPDATE QUOTE ENDPOINT REACHED - Quote ID: ${quoteId}`);
+      console.log(`🔥 Current form data received:`, JSON.stringify(currentFormData, null, 2));
       
       if (!quoteId) {
         res.status(400).json({ message: "Quote ID is required" });
