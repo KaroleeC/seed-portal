@@ -1375,7 +1375,7 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       if (!deal) {
         console.error("🚨 CRITICAL ERROR: createDeal returned null/undefined");
         console.error("🚨 Deal creation parameters were:", {
-          contactId: existingContact.contactId,
+          contactId: contact.id,
           companyName: quote.companyName,
           monthlyFee: parseFloat(quote.monthlyFee),
           setupFee: parseFloat(quote.setupFee),
