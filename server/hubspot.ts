@@ -3615,7 +3615,7 @@ Generated: ${new Date().toLocaleDateString()}`;
     }
   }
 
-  // Update or create company from quote data for bidirectional sync
+  // Update existing company from quote data (no company creation)
   async updateOrCreateCompanyFromQuote(
     contactId: string,
     quote: any,
@@ -3628,106 +3628,49 @@ Generated: ${new Date().toLocaleDateString()}`;
       }
 
       // Check if contact has associated company
-      const existingCompanies =
-        await this.getContactAssociatedCompanies(contactId);
+      const existingCompanies = await this.getContactAssociatedCompanies(contactId);
 
-      let companyId: string | null = null;
-
-      if (existingCompanies.length > 0) {
-        // Update existing associated company
-        companyId = existingCompanies[0].toObjectId;
-        console.log(`Updating existing company ${companyId} with quote data`);
-      } else {
-        // Search for existing company by name
-        const searchBody = {
-          filterGroups: [
-            {
-              filters: [
-                {
-                  propertyName: "name",
-                  operator: "EQ",
-                  value: companyName,
-                },
-              ],
-            },
-          ],
-          properties: ["name"],
-          limit: 1,
-        };
-
-        const searchResult = await this.makeRequest(
-          "/crm/v3/objects/companies/search",
-          {
-            method: "POST",
-            body: JSON.stringify(searchBody),
-          },
-        );
-
-        if (searchResult.results && searchResult.results.length > 0) {
-          // Found existing company, associate it with contact
-          companyId = searchResult.results[0].id;
-          console.log(
-            `Found existing company ${companyName} (${companyId}), associating with contact`,
-          );
-          await this.associateContactWithCompany(contactId, companyId);
-        } else {
-          // Create new company with address fields (removed domain, website, phone - per requirements)
-          console.log(`Creating new company: ${companyName}`);
-          const newCompany = await this.createCompany({
-            name: companyName,
-            // Address fields for company (moved from contact)
-            address: quote.clientStreetAddress,
-            city: quote.clientCity,
-            state: quote.clientState,
-            zip: quote.clientZipCode,
-            country: quote.clientCountry || "US",
-          });
-
-          if (newCompany) {
-            companyId = newCompany.id;
-            console.log(`Created new company ${companyName} (${companyId})`);
-            await this.associateContactWithCompany(contactId, companyId);
-          } else {
-            console.error("Failed to create new company");
-            return;
-          }
-        }
+      if (existingCompanies.length === 0) {
+        console.log(`Contact ${contactId} has no associated companies - skipping company update`);
+        return;
       }
+
+      // Update existing associated company only
+      const companyId = existingCompanies[0].toObjectId;
+      console.log(`Updating existing company ${companyId} with quote data`);
 
       // Update company properties with quote data (1-way sync - always override HubSpot)
-      if (companyId) {
-        const companyUpdateProperties: any = {};
+      const companyUpdateProperties: any = {};
 
-        // Force update company name (1-way sync from quote to HubSpot)
-        companyUpdateProperties.name = companyName;
+      // Force update company name (1-way sync from quote to HubSpot)
+      companyUpdateProperties.name = companyName;
 
-        // Address fields (2-way sync - moved from contact to company only)
-        if (quote.clientStreetAddress) companyUpdateProperties.address = quote.clientStreetAddress;
-        if (quote.clientCity) companyUpdateProperties.city = quote.clientCity;
-        if (quote.clientState) companyUpdateProperties.state = quote.clientState;
-        if (quote.clientZipCode) companyUpdateProperties.zip = quote.clientZipCode;
-        if (quote.clientCountry) companyUpdateProperties.country = quote.clientCountry;
+      // Address fields (2-way sync - moved from contact to company only)
+      if (quote.clientStreetAddress) companyUpdateProperties.address = quote.clientStreetAddress;
+      if (quote.clientCity) companyUpdateProperties.city = quote.clientCity;
+      if (quote.clientState) companyUpdateProperties.state = quote.clientState;
+      if (quote.clientZipCode) companyUpdateProperties.zip = quote.clientZipCode;
+      if (quote.clientCountry) companyUpdateProperties.country = quote.clientCountry;
 
-        // Conditional employee count (only if payroll service is selected)
-        if (quote.includesPayroll || quote.servicePayroll) {
-          // Add employee count from payroll data if available
-          if (quote.numberOfEmployees) {
-            companyUpdateProperties.numberofemployees = quote.numberOfEmployees.toString();
-          }
+      // Conditional employee count (only if payroll service is selected)
+      if (quote.includesPayroll || quote.servicePayroll) {
+        // Add employee count from payroll data if available
+        if (quote.numberOfEmployees) {
+          companyUpdateProperties.numberofemployees = quote.numberOfEmployees.toString();
         }
-
-        // Note: industry and monthly_revenue synced via contact properties
-        // Note: removed domain, website, phone, linkedin_company_page, lead_source per requirements
-
-        // Always update company properties to ensure sync
-        await this.updateCompany(companyId, companyUpdateProperties);
-        console.log(
-          "Updated HubSpot company properties (1-way sync):",
-          companyUpdateProperties,
-        );
       }
+
+      // Note: industry and monthly_revenue synced via contact properties
+      // Note: removed domain, website, phone, linkedin_company_page, lead_source per requirements
+
+      // Always update company properties to ensure sync
+      await this.updateCompany(companyId, companyUpdateProperties);
+      console.log(
+        "Updated HubSpot company properties (update only):",
+        companyUpdateProperties,
+      );
     } catch (error) {
-      console.error("Error updating/creating company from quote:", error);
+      console.error("Error updating company from quote:", error);
       throw error;
     }
   }
