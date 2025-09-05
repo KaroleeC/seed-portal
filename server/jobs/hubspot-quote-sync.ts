@@ -115,6 +115,9 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
         const feeCalculation = calculateCombinedFees(quote as any);
         
         hubspotLogger.info({ quoteId, calculatedFees: {
+          bookkeepingMonthlyFee: feeCalculation.bookkeeping.monthlyFee,
+          bookkeepingSetupFee: feeCalculation.bookkeeping.setupFee,
+          combinedSetupFee: parseFloat(quote.setupFee),
           payrollFee: feeCalculation.payrollFee,
           agentOfServiceFee: feeCalculation.agentOfServiceFee,
           apFee: feeCalculation.apFee,
@@ -136,8 +139,8 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
           dealIncludesTaas,
           parseFloat(quote.taasMonthlyFee || '0'),
           parseFloat(quote.taasPriorYearsFee || '0'),
-          parseFloat(quote.monthlyFee),
-          parseFloat(quote.setupFee),
+          feeCalculation.bookkeeping.monthlyFee,
+          feeCalculation.bookkeeping.setupFee, // ✅ FIXED: Use separated bookkeeping setup fee!
           quote,
           quote.serviceTier || 'Standard',
           // Add all the missing service parameters with CALCULATED fees
