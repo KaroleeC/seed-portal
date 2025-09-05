@@ -110,6 +110,14 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
       let hubspotQuote = null;
       try {
         hubspotLogger.info({ quoteId, dealId: deal.id }, '📋 Creating HubSpot quote');
+        hubspotLogger.info({ quoteId, services: {
+          servicePayroll: quote.servicePayroll,
+          servicePayrollService: quote.servicePayrollService,
+          serviceAgentOfService: quote.serviceAgentOfService,
+          servicePriorYearFilings: quote.servicePriorYearFilings,
+          taasPriorYearsFee: quote.taasPriorYearsFee
+        }}, '🔧 Quote service fields for line items');
+        
         hubspotQuote = await hubSpotService.createQuote(
           deal.id,
           companyName,
@@ -125,7 +133,22 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
           parseFloat(quote.monthlyFee),
           parseFloat(quote.setupFee),
           quote,
-          quote.serviceTier || 'Standard'
+          quote.serviceTier || 'Standard',
+          // Add all the missing service parameters
+          quote.servicePayroll || quote.servicePayrollService,  // includesPayroll
+          parseFloat(quote.payrollServiceFee || '0'),           // payrollFee
+          quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService, // includesAP
+          parseFloat(quote.apServiceFee || '0'),              // apFee
+          quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService, // includesAR
+          parseFloat(quote.arServiceFee || '0'),              // arFee
+          quote.serviceAgentOfService,                        // includesAgentOfService
+          parseFloat(quote.agentOfServiceFee || '0'),         // agentOfServiceFee
+          quote.serviceCfoAdvisory,                           // includesCfoAdvisory
+          parseFloat(quote.cfoAdvisoryFee || '0'),            // cfoAdvisoryFee
+          parseFloat(quote.cleanupProjectFee || '0'),         // cleanupProjectFee
+          parseFloat(quote.taasPriorYearsFee || '0'),         // priorYearFilingsFee
+          quote.serviceFpaBuild,                              // includesFpaBuild
+          parseFloat(quote.fpaServiceFee || '0')              // fpaServiceFee
         );
         hubspotLogger.info({ quoteId, hubspotQuoteId: hubspotQuote?.id }, '✅ HubSpot quote created successfully');
       } catch (quoteError) {

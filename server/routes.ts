@@ -1411,6 +1411,14 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
             if (deal) {
               try {
                 console.log('📋 Creating HubSpot quote for deal:', deal.id);
+                console.log('🔧 Quote service fields:', {
+                  servicePayroll: quote.servicePayroll,
+                  servicePayrollService: quote.servicePayrollService,
+                  serviceAgentOfService: quote.serviceAgentOfService,
+                  servicePriorYearFilings: quote.servicePriorYearFilings,
+                  taasPriorYearsFee: quote.taasPriorYearsFee
+                });
+                
                 const hubspotQuote = await hubSpotService.createQuote(
                   deal.id,
                   companyName,
@@ -1426,7 +1434,22 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                   parseFloat(quote.monthlyFee),
                   parseFloat(quote.setupFee),
                   quote,
-                  quote.serviceTier || 'Standard'
+                  quote.serviceTier || 'Standard',
+                  // Add all the missing service parameters
+                  quote.servicePayroll || quote.servicePayrollService,  // includesPayroll
+                  parseFloat(quote.payrollServiceFee || '0'),           // payrollFee
+                  quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService, // includesAP
+                  parseFloat(quote.apServiceFee || '0'),              // apFee
+                  quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService, // includesAR
+                  parseFloat(quote.arServiceFee || '0'),              // arFee
+                  quote.serviceAgentOfService,                        // includesAgentOfService
+                  parseFloat(quote.agentOfServiceFee || '0'),         // agentOfServiceFee
+                  quote.serviceCfoAdvisory,                           // includesCfoAdvisory
+                  parseFloat(quote.cfoAdvisoryFee || '0'),            // cfoAdvisoryFee
+                  parseFloat(quote.cleanupProjectFee || '0'),         // cleanupProjectFee
+                  parseFloat(quote.taasPriorYearsFee || '0'),         // priorYearFilingsFee
+                  quote.serviceFpaBuild,                              // includesFpaBuild
+                  parseFloat(quote.fpaServiceFee || '0')              // fpaServiceFee
                 );
                 console.log('✅ HubSpot quote created successfully:', hubspotQuote?.id);
               } catch (quoteError) {
