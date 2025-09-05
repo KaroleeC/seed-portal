@@ -1,16 +1,11 @@
-// COPY-PASTED from working home.tsx - all imports and helpers preserved exactly
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { Copy, Save, Check, Search, ArrowUpDown, Edit, AlertCircle, Archive, CheckCircle, XCircle, Loader2, Upload, User, LogOut, Calculator, FileText, DollarSign, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, HelpCircle, Bell, Settings, Lock, Unlock, Building, Users, CreditCard, Receipt, Sparkles, TrendingUp, Info } from "lucide-react";
+import { Copy, Save, Check, Search, ArrowUpDown, Edit, AlertCircle, Archive, CheckCircle, XCircle, Loader2, Upload, User, LogOut, Calculator, FileText, Sparkles, DollarSign, X, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { insertQuoteSchema, type Quote } from "@shared/schema";
-import { calculateCombinedFees } from "@shared/pricing";
-import { mapQuoteToFormServices, getServiceKeys, getAllServices } from "@shared/services";
-
 import { apiRequest, queryClient } from "@/lib/queryClient";
-
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,84 +20,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
-import { UniversalNavbar } from "@/components/UniversalNavbar";
-import { ServiceTierCards } from "@/components/quote-form/ServiceTierCards";
-import { ServiceCards } from "@/components/quote-form/ServiceCards";
-import { TaasSection } from "@/components/quote-form/TaasSection";
-import { PriorYearFilingsSection } from "@/components/quote-form/PriorYearFilingsSection";
-import { BookkeepingCleanupSection } from "@/components/quote-form/BookkeepingCleanupSection";
-import { CfoAdvisorySection } from "@/components/quote-form/CfoAdvisorySection";
-import PayrollSection from "@/components/quote-form/PayrollSection";
-import APSection from "@/components/quote-form/APSection";
-import ARSection from "@/components/quote-form/ARSection";
-import AgentOfServiceSection from "@/components/quote-form/AgentOfServiceSection";
-import { PricingDisplayPanel } from "./PricingDisplayPanel";
-import { QuoteFormCore } from "./QuoteFormCore";
-import { QuoteSubmissionFlow } from "./QuoteSubmissionFlow";
+import logoPath from "@assets/Seed Financial Logo (1)_1753043325029.png";
 
-// COPY-PASTED: All helper constants and functions preserved exactly
+// Get current month number (1-12)
 const currentMonth = new Date().getMonth() + 1;
 
-const validateRequiredFields = (formValues: any): { isValid: boolean; missingFields: string[] } => {
-  const missingFields: string[] = [];
-  
-  if (!formValues.contactFirstName) missingFields.push("First Name");
-  if (!formValues.contactLastName) missingFields.push("Last Name");
-  if (!formValues.industry) missingFields.push("Industry");
-  if (!formValues.monthlyRevenueRange) missingFields.push("Monthly Revenue Range");
-  if (!formValues.entityType) missingFields.push("Entity Type");
-  
-  if (!formValues.clientStreetAddress || !formValues.clientCity || !formValues.clientState || !formValues.clientZipCode) {
-    missingFields.push("Company Address (all fields)");
-  }
-  
-  if (formValues.serviceBookkeeping) {
-    if (!formValues.monthlyTransactions) missingFields.push("Monthly Transactions");
-    if (!formValues.cleanupComplexity) missingFields.push("Initial Cleanup Complexity");
-    if (!formValues.accountingBasis) missingFields.push("Accounting Basis");
-  }
-  
-  if (formValues.serviceTaas) {
-    if (!formValues.bookkeepingQuality) missingFields.push("Bookkeeping Quality");
-  }
-  
-  return {
-    isValid: missingFields.length === 0,
-    missingFields
-  };
-};
-
-const getApprovalButtonDisabledReason = (formValues: any, isRequestingApproval: boolean, hasRequestedApproval: boolean): string | null => {
-  if (isRequestingApproval) return null;
-  if (!formValues.contactEmail) return "Contact email is required";
-  if (!formValues.overrideReason) return "Please select a reason for override";
-  
-  const overrideReason = formValues.overrideReason;
-  const cleanupMonths = formValues.cleanupMonths || 0;
-  const customSetupFee = formValues.customSetupFee?.trim();
-  const customOverrideReason = formValues.customOverrideReason?.trim();
-  
-  if (overrideReason === "Other") {
-    if (!customOverrideReason) return "Please explain the reason for override";
-    const hasCustomSetupFee = customSetupFee && customSetupFee !== "";
-    const hasDecreasedMonths = cleanupMonths < currentMonth;
-    if (!hasCustomSetupFee && !hasDecreasedMonths) {
-      return "Enter a custom setup fee OR reduce cleanup months below the minimum";
-    }
-  } else if (overrideReason === "Brand New Business" || overrideReason === "Books Confirmed Current") {
-    if (cleanupMonths >= currentMonth) {
-      return "Reduce cleanup months below the minimum to request approval";
-    }
-  }
-  
-  return null;
-};
-
-const isApprovalButtonDisabled = (formValues: any, isRequestingApproval: boolean, hasRequestedApproval: boolean): boolean => {
-  return getApprovalButtonDisabledReason(formValues, isRequestingApproval, hasRequestedApproval) !== null;
-};
-
-// COPY-PASTED: Exact form schema preserved
+// Create form schema without the calculated fields
 const formSchema = insertQuoteSchema.omit({
   monthlyFee: true,
   setupFee: true,
@@ -113,63 +36,57 @@ const formSchema = insertQuoteSchema.omit({
   hubspotQuoteId: true,
   hubspotContactVerified: true,
 }).extend({
-  contactEmail: z.string().min(1, "Email is required").email("Please enter a valid email address"),
+  contactEmail: z.string().email("Please enter a valid email address"),
   cleanupMonths: z.number().min(0, "Cannot be negative"),
+  cleanupOverride: z.boolean().default(false),
   overrideReason: z.string().optional(),
   customOverrideReason: z.string().optional(),
-  customSetupFee: z.string().optional(),
   companyName: z.string().optional(),
-  serviceMonthlyBookkeeping: z.boolean().default(false),
-  serviceTaasMonthly: z.boolean().default(false),
-  serviceCleanupProjects: z.boolean().default(false),
-  servicePriorYearFilings: z.boolean().default(false),
-  serviceCfoAdvisory: z.boolean().default(false),
-  servicePayrollService: z.boolean().default(false),
-  serviceApArService: z.boolean().default(false),
-  serviceArService: z.boolean().default(false),
-  serviceFpaBuild: z.boolean().default(false),
-  serviceFpaSupport: z.boolean().default(false),
-  serviceNexusStudy: z.boolean().default(false),
-  serviceEntityOptimization: z.boolean().default(false),
-  serviceCostSegregation: z.boolean().default(false),
-  serviceRdCredit: z.boolean().default(false),
-  serviceRealEstateAdvisory: z.boolean().default(false),
-  serviceAgentOfService: z.boolean().default(false),
-  clientStreetAddress: z.string().optional(),
-  clientCity: z.string().optional(),
-  clientState: z.string().optional(),
-  clientZipCode: z.string().optional(),
-  clientCountry: z.string().default("US"),
-  companyNameLocked: z.boolean().default(false),
-  contactFirstName: z.string().optional(),
-  contactFirstNameLocked: z.boolean().default(false),
-  contactLastName: z.string().optional(),
-  contactLastNameLocked: z.boolean().default(false),
-  industryLocked: z.boolean().default(false),
-  companyAddressLocked: z.boolean().default(false),
-  monthlyRevenueRange: z.string().optional(),
+  // TaaS fields
   numEntities: z.number().min(1, "Must have at least 1 entity").optional(),
-  customNumEntities: z.number().min(6, "Custom entities must be at least 6").optional(),
   statesFiled: z.number().min(1, "Must file in at least 1 state").optional(),
-  customStatesFiled: z.number().min(7, "Custom states must be at least 7").max(50, "Maximum 50 states").optional(),
   internationalFiling: z.boolean().optional(),
   numBusinessOwners: z.number().min(1, "Must have at least 1 business owner").optional(),
-  customNumBusinessOwners: z.number().min(6, "Custom owners must be at least 6").optional(),
   include1040s: z.boolean().optional(),
   priorYearsUnfiled: z.number().min(0, "Cannot be negative").max(5, "Maximum 5 years").optional(),
-  priorYearFilings: z.array(z.number()).optional(),
   alreadyOnSeedBookkeeping: z.boolean().optional(),
-  qboSubscription: z.boolean().optional(),
 }).superRefine((data, ctx) => {
-  if (data.quoteType === 'bookkeeping' && data.cleanupMonths < currentMonth) {
+  // If cleanup override is checked, require a reason
+  if (data.cleanupOverride && !data.overrideReason) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: `Minimum ${currentMonth} months required (current calendar year)`,
+      message: "Override reason is required when cleanup override is enabled",
+      path: ["overrideReason"],
+    });
+  }
+  
+  // If "Other" is selected as reason, require custom text
+  if (data.cleanupOverride && data.overrideReason === "Other" && (!data.customOverrideReason || data.customOverrideReason.trim() === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please provide a detailed reason for the override",
+      path: ["customOverrideReason"]
+    });
+  }
+  
+  // If override is not checked or not approved, enforce minimum cleanup months (only for bookkeeping)
+  if (data.quoteType === 'bookkeeping' && !data.cleanupOverride && data.cleanupMonths < currentMonth) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Minimum ${currentMonth} months required (current calendar year) unless override is approved`,
       path: ["cleanupMonths"],
     });
   }
   
+  // TaaS validations
   if (data.quoteType === 'taas') {
+    if (!data.entityType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Entity type is required for TaaS quotes",
+        path: ["entityType"],
+      });
+    }
     if (!data.numEntities) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -191,21 +108,32 @@ const formSchema = insertQuoteSchema.omit({
         path: ["numBusinessOwners"],
       });
     }
-    if (!data.serviceMonthlyBookkeeping && !data.bookkeepingQuality) {
+    if (!data.bookkeepingQuality) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Bookkeeping quality is required for TaaS quotes when bookkeeping service is not included",
+        message: "Bookkeeping quality is required for TaaS quotes",
         path: ["bookkeepingQuality"],
       });
     }
-  }
-  
-  if (data.servicePriorYearFilings) {
-    if (!data.priorYearFilings || data.priorYearFilings.length === 0) {
+    if (data.include1040s === undefined) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Please select at least one prior year for filing",
-        path: ["priorYearFilings"],
+        message: "Please specify if 1040s should be included",
+        path: ["include1040s"],
+      });
+    }
+    if (data.priorYearsUnfiled === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Prior years unfiled is required for TaaS quotes",
+        path: ["priorYearsUnfiled"],
+      });
+    }
+    if (data.alreadyOnSeedBookkeeping === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please specify if already on Seed Bookkeeping",
+        path: ["alreadyOnSeedBookkeeping"],
       });
     }
   }
@@ -213,8 +141,8 @@ const formSchema = insertQuoteSchema.omit({
 
 type FormData = z.infer<typeof formSchema>;
 
-// COPY-PASTED: Pricing constants from working original
-const baseMonthlyFee = 150;
+// Pricing data
+const baseMonthlyFee = 150; // Starting base fee (updated to $150/mo)
 
 const revenueMultipliers = {
   '<$10K': 1.0,
@@ -243,7 +171,6 @@ const industryMultipliers = {
   'Property Management': { monthly: 1.3, cleanup: 1.2 },
   'E-commerce/Retail': { monthly: 1.35, cleanup: 1.15 },
   'Restaurant/Food Service': { monthly: 1.6, cleanup: 1.4 },
-  'Hospitality': { monthly: 1.6, cleanup: 1.4 },
   'Construction/Trades': { monthly: 1.5, cleanup: 1.08 },
   'Manufacturing': { monthly: 1.45, cleanup: 1.25 },
   'Transportation/Logistics': { monthly: 1.4, cleanup: 1.2 },
@@ -270,9 +197,144 @@ function roundToNearest25(num: number): number {
   return Math.ceil(num / 25) * 25;
 }
 
-// Container component with the EXACT same functionality
+function calculateFees(data: Partial<FormData>) {
+  if (!data.revenueBand || !data.monthlyTransactions || !data.industry || data.cleanupMonths === undefined) {
+    return { monthlyFee: 0, setupFee: 0 };
+  }
+  
+  // If cleanup months is 0, cleanup complexity is not required
+  if (data.cleanupMonths > 0 && !data.cleanupComplexity) {
+    return { monthlyFee: 0, setupFee: 0 };
+  }
+
+  const revenueMultiplier = revenueMultipliers[data.revenueBand as keyof typeof revenueMultipliers] || 1.0;
+  const txFee = txSurcharge[data.monthlyTransactions as keyof typeof txSurcharge] || 0;
+  const industryData = industryMultipliers[data.industry as keyof typeof industryMultipliers] || { monthly: 1, cleanup: 1 };
+  
+  // Dynamic calculation: base fee * revenue multiplier + transaction surcharge, then apply industry multiplier
+  const monthlyFee = Math.round((baseMonthlyFee * revenueMultiplier + txFee) * industryData.monthly);
+  
+  // Use the actual cleanup months value (override just allows values below normal minimum)
+  const effectiveCleanupMonths = data.cleanupMonths;
+  
+  // If no cleanup months, setup fee is $0, but monthly fee remains normal
+  let setupFee = 0;
+  if (effectiveCleanupMonths > 0) {
+    const cleanupMultiplier = parseFloat(data.cleanupComplexity || "0.75") * industryData.cleanup;
+    setupFee = roundToNearest25(Math.max(monthlyFee, monthlyFee * cleanupMultiplier * effectiveCleanupMonths));
+  }
+  
+  return { monthlyFee, setupFee };
+}
+
+// TaaS-specific calculation function based on provided logic
+function calculateTaaSFees(data: Partial<FormData>, existingBookkeepingFees?: { monthlyFee: number; setupFee: number }) {
+  if (!data.revenueBand || !data.industry || !data.entityType || !data.numEntities || !data.statesFiled || 
+      data.internationalFiling === undefined || !data.numBusinessOwners || !data.bookkeepingQuality || 
+      data.include1040s === undefined || data.priorYearsUnfiled === undefined || data.alreadyOnSeedBookkeeping === undefined) {
+    return { monthlyFee: 0, setupFee: 0 };
+  }
+
+  const base = 150;
+
+  // Entity upcharge
+  const entityUpcharge = data.numEntities === 1 ? 0 : data.numEntities <= 3 ? 75 : 150;
+  
+  // State upcharge
+  const stateUpcharge = data.statesFiled <= 1 ? 0 : data.statesFiled <= 5 ? 50 : 150;
+  
+  // International filing upcharge
+  const intlUpcharge = data.internationalFiling ? 200 : 0;
+  
+  // Owner upcharge
+  const ownerUpcharge = data.numBusinessOwners <= 1 ? 0 : data.numBusinessOwners <= 3 ? 50 : 100;
+  
+  // Bookkeeping quality upcharge
+  const bookUpcharge = data.bookkeepingQuality === 'Clean (Seed)' ? 0 : 
+                       data.bookkeepingQuality === 'Outside CPA' ? 75 : 150;
+  
+  // Personal 1040s
+  const personal1040 = data.include1040s ? data.numBusinessOwners * 25 : 0;
+
+  // Industry multiplier (simplified mapping from TaaS logic to our existing industries)
+  const taasIndustryMult: Record<string, number> = {
+    'Software/SaaS': 1.0,
+    'Professional Services': 1.1, // Agencies
+    'Consulting': 1.1, // Agencies  
+    'Real Estate': 1.2,
+    'E-commerce/Retail': 1.3,
+    'Construction/Trades': 1.4,
+    'Multi-entity/Holding Companies': 1.5,
+    // Default to SaaS multiplier for others
+  };
+  
+  const industryMult = taasIndustryMult[data.industry] || 1.0;
+
+  // Revenue multiplier (map our revenue bands to average monthly revenue)
+  const avgMonthlyRevenue = data.revenueBand === '<$10K' ? 5000 :
+                           data.revenueBand === '10K-25K' ? 17500 :
+                           data.revenueBand === '25K-75K' ? 50000 :
+                           data.revenueBand === '75K-250K' ? 162500 :
+                           data.revenueBand === '250K-1M' ? 625000 :
+                           data.revenueBand === '1M+' ? 1000000 : 5000;
+
+  const revenueMult = avgMonthlyRevenue <= 10000 ? 1.0 :
+                     avgMonthlyRevenue <= 25000 ? 1.2 :
+                     avgMonthlyRevenue <= 75000 ? 1.4 :
+                     avgMonthlyRevenue <= 250000 ? 1.6 :
+                     avgMonthlyRevenue <= 1000000 ? 1.8 : 2.0;
+
+  // Calculate raw fee
+  const rawFee = (base + entityUpcharge + stateUpcharge + intlUpcharge + ownerUpcharge + bookUpcharge + personal1040) * industryMult * revenueMult;
+
+  // Apply Seed Bookkeeping discount if applicable
+  const isBookkeepingClient = data.alreadyOnSeedBookkeeping;
+  const monthlyFee = Math.max(150, Math.round((isBookkeepingClient ? rawFee * 0.9 : rawFee) / 5) * 5);
+
+  // Setup fee calculation
+  const perYearFee = monthlyFee * 0.8 * 12;
+  const setupFee = Math.max(monthlyFee, perYearFee * data.priorYearsUnfiled);
+
+  // If we have existing bookkeeping fees, add them on top
+  if (existingBookkeepingFees) {
+    return {
+      monthlyFee: monthlyFee + existingBookkeepingFees.monthlyFee,
+      setupFee: setupFee + existingBookkeepingFees.setupFee
+    };
+  }
+
+  return { monthlyFee, setupFee };
+}
+
+// Combined calculation function for quotes that include both services
+function calculateCombinedFees(data: Partial<FormData>) {
+  const includesBookkeeping = data.includesBookkeeping !== false; // Default to true
+  const includesTaas = data.includesTaas === true;
+  
+  let bookkeepingFees = { monthlyFee: 0, setupFee: 0 };
+  let taasFees = { monthlyFee: 0, setupFee: 0 };
+  
+  if (includesBookkeeping) {
+    bookkeepingFees = calculateFees(data);
+  }
+  
+  if (includesTaas) {
+    taasFees = calculateTaaSFees(data);
+  }
+  
+  return {
+    bookkeeping: bookkeepingFees,
+    taas: taasFees,
+    combined: {
+      monthlyFee: bookkeepingFees.monthlyFee + taasFees.monthlyFee,
+      setupFee: bookkeepingFees.setupFee + taasFees.setupFee
+    },
+    includesBookkeeping,
+    includesTaas
+  };
+}
+
 export function QuoteCalculatorContainer() {
-  // COPY-PASTED: All state variables from HomePage exactly preserved
   const { toast } = useToast();
   const { user, logoutMutation } = useAuth();
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -282,13 +344,13 @@ export function QuoteCalculatorContainer() {
   const [sortField, setSortField] = useState<string>("updatedAt");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
-  // Duplicate quote approval system state
+  // Approval system state
   const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
   const [approvalCode, setApprovalCode] = useState("");
+  const [isApproved, setIsApproved] = useState(false);
   const [isRequestingApproval, setIsRequestingApproval] = useState(false);
   const [isValidatingCode, setIsValidatingCode] = useState(false);
-  const [hasRequestedApproval, setHasRequestedApproval] = useState(false);
-  const [isApproved, setIsApproved] = useState(false);
+  const [customOverrideReason, setCustomOverrideReason] = useState("");
   
   // Archive dialog state
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
@@ -314,69 +376,67 @@ export function QuoteCalculatorContainer() {
   // Debounce state for HubSpot verification
   const [verificationTimeoutId, setVerificationTimeoutId] = useState<NodeJS.Timeout | null>(null);
   
-  // New UX flow state
-  const [showContactSearch, setShowContactSearch] = useState(false);
-  const [contactSearchTerm, setContactSearchTerm] = useState("");
-  const [selectedContact, setSelectedContact] = useState<any>(null);
-  const [isContactSearching, setIsContactSearching] = useState(false);
-  const [hubspotContacts, setHubspotContacts] = useState<any[]>([]);
-  const [triggerEmail, setTriggerEmail] = useState("");
-  const [showClientDetails, setShowClientDetails] = useState(false);
-  
-  // Live search for email input
-  const [showLiveResults, setShowLiveResults] = useState(false);
-  const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
-  const [isLiveSearching, setIsLiveSearching] = useState(false);
-  
-  // Existing quotes modal
-  const [showExistingQuotesModal, setShowExistingQuotesModal] = useState(false);
-  
   // TaaS state
+
   const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(false);
   
-  // Service details collapsible states
-  const [isBookkeepingExpanded, setIsBookkeepingExpanded] = useState(true);
-  const [isPayrollExpanded, setIsPayrollExpanded] = useState(true);
-  const [isCfoAdvisoryExpanded, setIsCfoAdvisoryExpanded] = useState(true);
-  const [isApExpanded, setIsApExpanded] = useState(true);
-  const [isArExpanded, setIsArExpanded] = useState(true);
-  const [isAgentOfServiceExpanded, setIsAgentOfServiceExpanded] = useState(true);
-  
   // Form navigation state
-  const [currentFormView, setCurrentFormView] = useState<'bookkeeping' | 'taas' | 'placeholder'>('placeholder');
-
-  // COPY-PASTED: Form initialization from HomePage exactly preserved
+  const [currentFormView, setCurrentFormView] = useState<'bookkeeping' | 'taas'>('bookkeeping');
+  
+  // Helper functions for navigation
+  const getActiveServices = () => {
+    const services: ('bookkeeping' | 'taas')[] = [];
+    if (feeCalculation.includesBookkeeping) services.push('bookkeeping');
+    if (feeCalculation.includesTaas) services.push('taas');
+    return services;
+  };
+  
+  const canNavigateLeft = () => {
+    const activeServices = getActiveServices();
+    const currentIndex = activeServices.indexOf(currentFormView);
+    return currentIndex > 0;
+  };
+  
+  const canNavigateRight = () => {
+    const activeServices = getActiveServices();
+    const currentIndex = activeServices.indexOf(currentFormView);
+    return currentIndex < activeServices.length - 1;
+  };
+  
+  const navigateLeft = () => {
+    const activeServices = getActiveServices();
+    const currentIndex = activeServices.indexOf(currentFormView);
+    if (currentIndex > 0) {
+      setCurrentFormView(activeServices[currentIndex - 1]);
+    }
+  };
+  
+  const navigateRight = () => {
+    const activeServices = getActiveServices();
+    const currentIndex = activeServices.indexOf(currentFormView);
+    if (currentIndex < activeServices.length - 1) {
+      setCurrentFormView(activeServices[currentIndex + 1]);
+    }
+  };
+  
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       contactEmail: "",
-      monthlyRevenueRange: "",
+      revenueBand: "",
       monthlyTransactions: "",
       industry: "",
       cleanupMonths: currentMonth,
       cleanupComplexity: "",
+      cleanupOverride: false,
       overrideReason: "",
       customOverrideReason: "",
-      customSetupFee: "",
       companyName: "",
       quoteType: "bookkeeping",
-      serviceMonthlyBookkeeping: false,
-      serviceTaasMonthly: false,
-      serviceCleanupProjects: false,
-      servicePriorYearFilings: false,
-      serviceCfoAdvisory: false,
-      servicePayrollService: false,
-      serviceApArService: false,
-      serviceArService: false,
-      serviceFpaBuild: false,
-      serviceFpaSupport: false,
-      serviceNexusStudy: false,
-      serviceEntityOptimization: false,
-      serviceCostSegregation: false,
-      serviceRdCredit: false,
-      serviceRealEstateAdvisory: false,
-      includesBookkeeping: false,
+      // Service flags for combined quotes
+      includesBookkeeping: true,
       includesTaas: false,
+      // TaaS defaults
       numEntities: 1,
       statesFiled: 1,
       internationalFiling: false,
@@ -384,100 +444,48 @@ export function QuoteCalculatorContainer() {
       include1040s: false,
       priorYearsUnfiled: 0,
       alreadyOnSeedBookkeeping: false,
-      qboSubscription: false,
-      serviceTier: "Standard",
-      serviceAgentOfService: false,
-      agentOfServiceAdditionalStates: 0,
-      agentOfServiceComplexCase: false,
     },
   });
 
-  // COPY-PASTED: Queries and mutations from HomePage exactly preserved
+  // Query to fetch all quotes
   const { data: allQuotes = [], refetch: refetchQuotes } = useQuery<Quote[]>({
     queryKey: ["/api/quotes", { search: searchTerm, sortField, sortOrder }],
-    queryFn: async () => {
+    queryFn: () => {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       if (sortField) params.append('sortField', sortField);
       if (sortOrder) params.append('sortOrder', sortOrder);
       
-      const response = await fetch(`/api/quotes?${params.toString()}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch quotes');
-      }
-      
-      const data = await response.json();
-      return data || [];
-    },
-    retry: false,
+      return fetch(`/api/quotes?${params.toString()}`)
+        .then(res => res.json());
+    }
   });
 
   const createQuoteMutation = useMutation({
     mutationFn: async (data: FormData) => {
       console.log('Submitting quote data:', data);
       
-      try {
-        const feeCalculation = calculateCombinedFees(data);
-
-        const quoteData = {
-          ...data,
-          monthlyFee: feeCalculation.combined.monthlyFee.toString(),
-          setupFee: feeCalculation.combined.setupFee.toString(),
-          taasMonthlyFee: feeCalculation.taas.monthlyFee.toString(),
-          taasPriorYearsFee: feeCalculation.taas.setupFee.toString(),
-          companyName: data.companyName || '',
-          contactFirstName: data.contactFirstName || '',
-          contactLastName: data.contactLastName || '',
-          industry: data.industry || '',
-          monthlyRevenueRange: data.monthlyRevenueRange || '',
-          entityType: data.entityType || '',
-          clientStreetAddress: data.clientStreetAddress || '',
-          clientCity: data.clientCity || '',
-          clientState: data.clientState || '',
-          clientZipCode: data.clientZipCode || '',
-          companyNameLocked: data.companyNameLocked || false,
-          contactFirstNameLocked: data.contactFirstNameLocked || false,
-          contactLastNameLocked: data.contactLastNameLocked || false,
-          industryLocked: data.industryLocked || false,
-          companyAddressLocked: data.companyAddressLocked || false,
-          serviceBookkeeping: data.serviceBookkeeping || false,
-          serviceTaas: data.serviceTaas || false,
-          servicePayroll: data.servicePayroll || false,
-          serviceApArLite: data.serviceApArLite || false,
-          serviceFpaLite: data.serviceFpaLite || false,
-        };
-        
-        console.log('Final quote data:', quoteData);
-        
-        let result;
-        if (editingQuoteId) {
-          console.log('💡 Updating existing quote with ID:', editingQuoteId);
-          result = await apiRequest(`/api/quotes/${editingQuoteId}`, {
-            method: "PUT",
-            body: JSON.stringify(quoteData)
-          });
-        } else {
-          console.log('💡 Creating new quote');
-          result = await apiRequest("/api/quotes", {
-            method: "POST",
-            body: JSON.stringify(quoteData)
-          });
-        }
-        
-        console.log('💡 Quote API success response:', result);
-        return result;
-      } catch (error: any) {
-        console.error('💡 createQuoteMutation full error:', error);
-        console.error('💡 Error type:', typeof error);
-        console.error('💡 Error message:', error?.message);
-        console.error('💡 Error stack:', error?.stack);
-        throw error;
+      // Use combined calculation system
+      const feeCalculation = calculateCombinedFees(data);
+      console.log('Calculated combined fees:', feeCalculation);
+      
+      const quoteData = {
+        ...data,
+        monthlyFee: feeCalculation.combined.monthlyFee.toString(),
+        setupFee: feeCalculation.combined.setupFee.toString(),
+        taasMonthlyFee: feeCalculation.taas.monthlyFee.toString(),
+        taasPriorYearsFee: feeCalculation.taas.setupFee.toString(),
+        approvalRequired: data.cleanupOverride && isApproved,
+      };
+      
+      console.log('Final quote data:', quoteData);
+      
+      if (editingQuoteId) {
+        const response = await apiRequest("PUT", `/api/quotes/${editingQuoteId}`, quoteData);
+        return response.json();
+      } else {
+        const response = await apiRequest("POST", "/api/quotes", quoteData);
+        return response.json();
       }
     },
     onSuccess: (data) => {
@@ -486,9 +494,7 @@ export function QuoteCalculatorContainer() {
         title: editingQuoteId ? "Quote Updated" : "Quote Saved",
         description: editingQuoteId ? "Your quote has been updated successfully." : "Your quote has been saved successfully.",
       });
-      if (!editingQuoteId && data.id) {
-        setEditingQuoteId(data.id);
-      }
+      setEditingQuoteId(null);
       setHasUnsavedChanges(false);
       queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
       refetchQuotes();
@@ -503,13 +509,11 @@ export function QuoteCalculatorContainer() {
     },
   });
 
-  // COPY-PASTED: Archive mutation
+  // Archive quote mutation
   const archiveQuoteMutation = useMutation({
     mutationFn: async (quoteId: number) => {
-      return await apiRequest(`/api/quotes/${quoteId}/archive`, {
-        method: "PATCH",
-        body: JSON.stringify({})
-      });
+      const response = await apiRequest("PATCH", `/api/quotes/${quoteId}/archive`, {});
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -529,65 +533,38 @@ export function QuoteCalculatorContainer() {
     },
   });
 
-  // COPY-PASTED: HubSpot mutations
-  const pushToHubSpotMutation = useMutation({
-    mutationFn: async (quoteId: number) => {
-      console.log('🚀 pushToHubSpotMutation called with quoteId:', quoteId);
-      try {
-        const result = await apiRequest("/api/hubspot/push-quote", {
-          method: "POST",
-          body: JSON.stringify({ quoteId })
-        });
-        
-        console.log('🚀 HubSpot API success response:', result);
-        return { ...result, quoteId };
-      } catch (error: any) {
-        console.error('🚀 pushToHubSpotMutation error:', error);
-        console.error('🚀 Error type:', typeof error);
-        console.error('🚀 Error message:', error?.message);
-        console.error('🚀 Error stack:', error?.stack);
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Pushed to HubSpot",
-        description: `Deal "${data.dealName}" created successfully in HubSpot.`,
-      });
-      if (data.quoteId) {
-        setEditingQuoteId(data.quoteId);
-      }
-      queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
-      refetchQuotes();
-    },
-    onError: (error: any) => {
-      console.error('Push to HubSpot error:', error);
-      toast({
-        title: "HubSpot Error",
-        description: error.message || "Failed to push quote to HubSpot. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const watchedValues = form.watch();
-  const feeCalculation = calculateCombinedFees(watchedValues);
-  const monthlyFee = feeCalculation.combined.monthlyFee;
-  const setupFee = feeCalculation.combined.setupFee;
-  
-  const isCalculated = (() => {
-    const hasMonthlyFees = monthlyFee > 0;
-    const hasSetupFees = setupFee > 0;
-    const hasProjectFees = feeCalculation.priorYearFilingsFee > 0 || feeCalculation.cleanupProjectFee > 0 || feeCalculation.cfoAdvisoryFee > 0;
-    const hasServiceFees = feeCalculation.payrollFee > 0 || feeCalculation.apFee > 0 || feeCalculation.arFee > 0 || feeCalculation.agentOfServiceFee > 0;
+  const handleArchiveQuote = (quoteId: number, contactEmail: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click event
     
-    return hasMonthlyFees || hasSetupFees || hasProjectFees || hasServiceFees;
-  })();
+    // If user has chosen to not show the dialog, directly archive
+    if (dontShowArchiveDialog) {
+      archiveQuoteMutation.mutate(quoteId);
+      return;
+    }
+    
+    // Otherwise, show the custom dialog
+    setSelectedQuoteForArchive({ id: quoteId, email: contactEmail });
+    setArchiveDialogOpen(true);
+  };
 
-  // COPY-PASTED: ALL handler functions from HomePage - this is a MASSIVE amount of functionality
+  const handleConfirmArchive = () => {
+    if (selectedQuoteForArchive) {
+      archiveQuoteMutation.mutate(selectedQuoteForArchive.id);
+      setArchiveDialogOpen(false);
+      setSelectedQuoteForArchive(null);
+    }
+  };
+
+  const handleArchiveDialogDontShow = (checked: boolean) => {
+    setDontShowArchiveDialog(checked);
+    localStorage.setItem('dontShowArchiveDialog', checked.toString());
+  };
+
+  // HubSpot email verification with proper debouncing
   const verifyHubSpotEmail = async (email: string) => {
     if (!email || email === lastVerifiedEmail) return;
     
+    // Clear any pending verification timeout
     if (verificationTimeoutId) {
       clearTimeout(verificationTimeoutId);
     }
@@ -596,22 +573,21 @@ export function QuoteCalculatorContainer() {
     setLastVerifiedEmail(email);
     
     try {
-      const [hubspotResult, existingQuotesResult] = await Promise.all([
-        apiRequest('/api/hubspot/verify-contact', {
-          method: 'POST',
-          body: JSON.stringify({ email })
-        }),
-        apiRequest('/api/quotes/check-existing', {
-          method: 'POST',
-          body: JSON.stringify({ email })
-        })
+      // Check for existing quotes and verify HubSpot contact in parallel
+      const [hubspotResponse, existingQuotesResponse] = await Promise.all([
+        apiRequest('POST', '/api/hubspot/verify-contact', { email }),
+        apiRequest('POST', '/api/quotes/check-existing', { email })
       ]);
       
+      const hubspotResult = await hubspotResponse.json();
+      const existingQuotesResult = await existingQuotesResponse.json();
+      
+      // Handle HubSpot verification
       if (hubspotResult.verified && hubspotResult.contact) {
         setHubspotVerificationStatus('verified');
         setHubspotContact(hubspotResult.contact);
-        form.clearErrors('contactEmail');
         
+        // Auto-fill company name if available
         if (hubspotResult.contact.properties.company && !form.getValues('companyName')) {
           form.setValue('companyName', hubspotResult.contact.properties.company);
         }
@@ -620,9 +596,11 @@ export function QuoteCalculatorContainer() {
         setHubspotContact(null);
       }
       
+      // Handle existing quotes
       if (existingQuotesResult.hasExistingQuotes) {
         setExistingQuotesForEmail(existingQuotesResult.quotes);
         setShowExistingQuotesNotification(true);
+        // Automatically filter the saved quotes table to show only this email's quotes
         setSearchTerm(email);
       } else {
         setExistingQuotesForEmail([]);
@@ -637,33 +615,115 @@ export function QuoteCalculatorContainer() {
     }
   };
 
+  // Debounced email verification function
   const debouncedVerifyEmail = (email: string) => {
+    // Clear any existing timeout
     if (verificationTimeoutId) {
       clearTimeout(verificationTimeoutId);
     }
     
+    // Set verification status to idle while waiting
     setHubspotVerificationStatus('idle');
     
+    // Set new timeout
     const timeoutId = setTimeout(() => {
       if (email && email.includes('@') && email.includes('.')) {
         verifyHubSpotEmail(email);
       }
-    }, 750);
+    }, 750); // Increased debounce delay to 750ms for better UX
     
     setVerificationTimeoutId(timeoutId);
   };
 
-  const handleArchiveQuote = (quoteId: number, contactEmail: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    if (dontShowArchiveDialog) {
-      archiveQuoteMutation.mutate(quoteId);
-      return;
-    }
-    
-    setSelectedQuoteForArchive({ id: quoteId, email: contactEmail });
-    setArchiveDialogOpen(true);
-  };
+  // Push to HubSpot mutation
+  const pushToHubSpotMutation = useMutation({
+    mutationFn: async (quoteId: number) => {
+      const response = await apiRequest("POST", "/api/hubspot/push-quote", { quoteId });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Pushed to HubSpot",
+        description: `Deal "${data.dealName}" created successfully in HubSpot.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
+      refetchQuotes();
+    },
+    onError: (error: any) => {
+      console.error('Push to HubSpot error:', error);
+      toast({
+        title: "HubSpot Error",
+        description: error.message || "Failed to push quote to HubSpot. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update HubSpot quote mutation
+  const updateHubSpotMutation = useMutation({
+    mutationFn: async (quoteId: number) => {
+      const currentFormData = form.getValues();
+      const response = await apiRequest("POST", "/api/hubspot/update-quote", { 
+        quoteId, 
+        currentFormData 
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: "HubSpot Updated",
+          description: "Quote successfully updated in HubSpot and saved.",
+        });
+        // Refresh the quotes list to show updated data
+        queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
+        refetchQuotes();
+        setHasUnsavedChanges(false);
+      } else if (data.needsNewQuote) {
+        toast({
+          title: "Quote Expired",
+          description: "The HubSpot quote is no longer active. Use 'Push to HubSpot' to create a new quote.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: any) => {
+      console.error('Update HubSpot error:', error);
+      toast({
+        title: "HubSpot Error",
+        description: error.message || "Failed to update quote in HubSpot. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const watchedValues = form.watch();
+  
+  // Calculate fees using combined system
+  const feeCalculation = calculateCombinedFees(watchedValues);
+  const monthlyFee = feeCalculation.combined.monthlyFee;
+  const setupFee = feeCalculation.combined.setupFee;
+  
+  const isCalculated = monthlyFee > 0;
+  
+
+
+  // Track form changes for unsaved changes detection
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      setHasUnsavedChanges(true);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  // Cleanup timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (verificationTimeoutId) {
+        clearTimeout(verificationTimeoutId);
+      }
+    };
+  }, [verificationTimeoutId]);
 
   const loadQuoteIntoForm = async (quote: Quote) => {
     if (hasUnsavedChanges) {
@@ -675,70 +735,60 @@ export function QuoteCalculatorContainer() {
     doLoadQuote(quote);
   };
 
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const resetForm = () => {
+    // Always show confirmation dialog when there are changes or when editing a quote
+    if (hasUnsavedChanges || editingQuoteId !== null) {
+      setResetConfirmDialog(true);
+      return;
+    }
+    
+    doResetForm();
+  };
+
+  // Helper function to actually load a quote (used by both direct loading and after dialog confirmation)
   const doLoadQuote = (quote: Quote) => {
     console.log('Loading quote into form:', quote);
     setEditingQuoteId(quote.id);
     
+    // Set approval state before form reset
     setIsApproved(quote.approvalRequired || false);
     
+    // Reset form with quote data
     const formData = {
       contactEmail: quote.contactEmail,
+      revenueBand: quote.revenueBand,
       monthlyTransactions: quote.monthlyTransactions,
       industry: quote.industry,
       cleanupMonths: quote.cleanupMonths,
-      cleanupComplexity: parseFloat(quote.cleanupComplexity).toString(),
+      cleanupComplexity: parseFloat(quote.cleanupComplexity).toString(), // Convert "1.00" to "1"
+      cleanupOverride: quote.cleanupOverride || false,
       overrideReason: quote.overrideReason || "",
       companyName: quote.companyName || "",
-      contactFirstName: quote.contactFirstName || "",
-      contactLastName: quote.contactLastName || "",
-      monthlyRevenueRange: quote.monthlyRevenueRange || "",
-      entityType: quote.entityType || "S-Corp",
-      serviceTier: quote.serviceTier || "Automated",
-      clientStreetAddress: quote.clientStreetAddress || "",
-      clientCity: quote.clientCity || "",
-      clientState: quote.clientState || "",
-      clientZipCode: quote.clientZipCode || "",
-      clientCountry: quote.clientCountry || "US",
-      accountingBasis: quote.accountingBasis || "Accrual",
-      businessLoans: quote.businessLoans ?? false,
-      companyNameLocked: !!(quote.companyName),
-      contactFirstNameLocked: !!(quote.contactFirstName),
-      contactLastNameLocked: !!(quote.contactLastName),
-      industryLocked: !!(quote.industry),
-      companyAddressLocked: !!(quote.clientStreetAddress || quote.clientCity || quote.clientState || quote.clientZipCode),
-      quoteType: quote.quoteType || "bookkeeping",
-      includesBookkeeping: quote.includesBookkeeping ?? true,
-      includesTaas: quote.includesTaas ?? false,
-      ...mapQuoteToFormServices(quote),
-      numEntities: quote.numEntities ? Number(quote.numEntities) : 1,
-      statesFiled: quote.statesFiled ? Number(quote.statesFiled) : 1,
-      internationalFiling: quote.internationalFiling ?? false,
-      numBusinessOwners: quote.numBusinessOwners ? Number(quote.numBusinessOwners) : 1,
-      bookkeepingQuality: quote.bookkeepingQuality || "Clean (Seed)",
-      include1040s: quote.include1040s ?? false,
-      priorYearsUnfiled: quote.priorYearsUnfiled ? Number(quote.priorYearsUnfiled) : 0,
-      priorYearFilings: quote.priorYearFilings || [],
-      alreadyOnSeedBookkeeping: quote.alreadyOnSeedBookkeeping ?? false,
-      qboSubscription: quote.qboSubscription ?? false,
     };
     
+    console.log('Resetting form with data:', formData);
     form.reset(formData);
     
+    // Use setTimeout to ensure form is reset before checking values
     setTimeout(() => {
-      if (quote.entityType) form.setValue('entityType', quote.entityType);
-      if (quote.numEntities) form.setValue('numEntities', Number(quote.numEntities));
-      if (quote.statesFiled) form.setValue('statesFiled', Number(quote.statesFiled));
-      if (quote.numBusinessOwners) form.setValue('numBusinessOwners', Number(quote.numBusinessOwners));
-      if (quote.priorYearsUnfiled !== undefined) form.setValue('priorYearsUnfiled', Number(quote.priorYearsUnfiled));
-      if (quote.bookkeepingQuality) form.setValue('bookkeepingQuality', quote.bookkeepingQuality);
-      
-      form.trigger();
-    }, 100);
+      console.log('Form values after reset:', form.getValues());
+    }, 50);
     
+    // Reset HubSpot verification state and re-verify if email exists
     setHubspotVerificationStatus('idle');
     setHubspotContact(null);
     setLastVerifiedEmail('');
     
+    // Re-verify the email if it exists
     if (quote.contactEmail) {
       debouncedVerifyEmail(quote.contactEmail);
     }
@@ -746,18 +796,148 @@ export function QuoteCalculatorContainer() {
     setHasUnsavedChanges(false);
   };
 
-  const onSubmit = async (data: FormData) => {
-    console.log('onSubmit called with data:', data);
+  // Helper function to actually reset the form (used by both direct reset and after dialog confirmation)
+  const doResetForm = () => {
+    setEditingQuoteId(null);
+    form.reset({
+      contactEmail: "",
+      revenueBand: "",
+      monthlyTransactions: "",
+      industry: "",
+      cleanupMonths: currentMonth,
+      cleanupComplexity: "",
+      cleanupOverride: false,
+      overrideReason: "",
+      customOverrideReason: "",
+      companyName: "",
+    });
     
-    if (existingQuotesForEmail.length > 0) {
+    // Reset all HubSpot verification state
+    setHubspotVerificationStatus('idle');
+    setHubspotContact(null);
+    setLastVerifiedEmail('');
+    setIsApproved(false);
+    
+    // Reset existing quotes state
+    setExistingQuotesForEmail([]);
+    setShowExistingQuotesNotification(false);
+    
+    // Clear search term to show all quotes again
+    setSearchTerm("");
+    
+    setHasUnsavedChanges(false);
+  };
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
       toast({
-        title: "Approval Required",
-        description: "You must get approval before creating additional quotes for this contact.",
+        title: "Copied to Clipboard",
+        description: `$${text} has been copied to your clipboard.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Copy Failed",
+        description: "Failed to copy to clipboard. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Request approval code from server and send Slack notification
+  const requestApproval = async () => {
+    setIsRequestingApproval(true);
+    try {
+      const formData = form.getValues();
+      const fees = calculateFees(formData);
+      
+      const response = await apiRequest("POST", "/api/approval/request", {
+        contactEmail: formData.contactEmail,
+        quoteData: {
+          contactEmail: formData.contactEmail,
+          revenueBand: formData.revenueBand,
+          monthlyTransactions: formData.monthlyTransactions,
+          industry: formData.industry,
+          cleanupMonths: formData.cleanupMonths,
+          overrideReason: formData.overrideReason || "",
+          customOverrideReason: formData.customOverrideReason || "",
+          monthlyFee: fees.monthlyFee,
+          setupFee: fees.setupFee
+        }
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Approval Requested",
+          description: "Check Slack for the approval code.",
+        });
+        setIsApprovalDialogOpen(true);
+      } else {
+        throw new Error('Failed to request approval');
+      }
+    } catch (error) {
+      console.error('Error requesting approval:', error);
+      toast({
+        title: "Request Failed",
+        description: "Failed to request approval. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRequestingApproval(false);
+    }
+  };
+
+  // Validate approval code entered by user
+  const validateApprovalCode = async () => {
+    if (!approvalCode || approvalCode.length !== 4) {
+      toast({
+        title: "Invalid Code",
+        description: "Please enter a 4-digit approval code.",
         variant: "destructive",
       });
       return;
     }
-    
+
+    setIsValidatingCode(true);
+    try {
+      const response = await apiRequest("POST", "/api/approval/validate", {
+        code: approvalCode,
+        contactEmail: form.getValues().contactEmail
+      });
+      
+      const result = await response.json();
+      
+      if (result.valid) {
+        setIsApproved(true);
+        setIsApprovalDialogOpen(false);
+        setApprovalCode("");
+        toast({
+          title: "Approval Granted",
+          description: "You can now modify cleanup months.",
+        });
+      } else {
+        toast({
+          title: "Invalid Code",
+          description: result.message || "Please check the code and try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error validating approval code:', error);
+      toast({
+        title: "Validation Failed",
+        description: "Failed to validate code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidatingCode(false);
+    }
+  };
+
+  const onSubmit = (data: FormData) => {
+    console.log('onSubmit called with data:', data);
     if (!isCalculated) {
       console.log('Form not calculated, isCalculated:', isCalculated);
       toast({
@@ -772,338 +952,826 @@ export function QuoteCalculatorContainer() {
     createQuoteMutation.mutate(data);
   };
 
-  // MORE COPY-PASTED: Email trigger and search handlers
-  const handleEmailTrigger = async (email: string) => {
-    console.log('Email trigger activated for:', email);
-    form.setValue('contactEmail', email);
-    debouncedVerifyEmail(email);
-    setShowContactSearch(true);
-  };
-
-  const liveSearchContacts = async (searchTerm: string) => {
-    if (searchTerm.length < 3) {
-      setLiveSearchResults([]);
-      setShowLiveResults(false);
-      return;
-    }
-
-    setIsLiveSearching(true);
-    try {
-      const response = await apiRequest('/api/hubspot/search-contacts', {
-        method: 'POST',
-        body: JSON.stringify({ searchTerm, limit: 5 })
-      });
-
-      if (response.contacts) {
-        setLiveSearchResults(response.contacts);
-        setShowLiveResults(true);
-      }
-    } catch (error) {
-      console.error('Error searching contacts:', error);
-      setLiveSearchResults([]);
-    } finally {
-      setIsLiveSearching(false);
-    }
-  };
-
-  const searchHubSpotContacts = async (searchTerm: string) => {
-    if (searchTerm.length < 2) {
-      setHubspotContacts([]);
-      return;
-    }
-
-    setIsContactSearching(true);
-    try {
-      const response = await apiRequest('/api/hubspot/search-contacts', {
-        method: 'POST',
-        body: JSON.stringify({ searchTerm, limit: 10 })
-      });
-
-      if (response.contacts) {
-        setHubspotContacts(response.contacts);
-      }
-    } catch (error) {
-      console.error('Error searching HubSpot contacts:', error);
-      setHubspotContacts([]);
-    } finally {
-      setIsContactSearching(false);
-    }
-  };
-
-  const handleContactSelection = (contact: any) => {
-    console.log('Contact selected:', contact);
-    setSelectedContact(contact);
-    form.setValue('contactEmail', contact.properties.email);
-    
-    if (contact.properties.company && !form.watch('companyNameLocked')) {
-      form.setValue('companyName', contact.properties.company);
-      form.setValue('companyNameLocked', true);
-    }
-    
-    if (contact.properties.firstname && !form.watch('contactFirstNameLocked')) {
-      form.setValue('contactFirstName', contact.properties.firstname);
-      form.setValue('contactFirstNameLocked', true);
-    }
-    
-    if (contact.properties.lastname && !form.watch('contactLastNameLocked')) {
-      form.setValue('contactLastName', contact.properties.lastname);
-      form.setValue('contactLastNameLocked', true);
-    }
-    
-    if (contact.properties.industry && !form.watch('industryLocked')) {
-      form.setValue('industry', contact.properties.industry);
-      form.setValue('industryLocked', true);
-    }
-
-    setHubspotVerificationStatus('verified');
-    setHubspotContact(contact);
-    setShowContactSearch(false);
-    setShowClientDetails(true);
-    debouncedVerifyEmail(contact.properties.email);
-  };
-
-  // COPY-PASTED: All useEffect hooks
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      setHasUnsavedChanges(true);
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
-
-  useEffect(() => {
-    return () => {
-      if (verificationTimeoutId) {
-        clearTimeout(verificationTimeoutId);
-      }
-    };
-  }, [verificationTimeoutId]);
+  // Remove the old breakdown function since it's now handled in the calculation logic above
 
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a] py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <UniversalNavbar 
-            showBackButton={true} 
-            backButtonText="Back to Portal" 
-            backButtonPath="/" 
-          />
+    <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a] py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="relative mb-8">
+          {/* User Menu - Top Right */}
+          <div className="absolute top-0 right-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-white hover:text-orange-200 hover:bg-white/10 backdrop-blur-sm border border-white/20">
+                  <User className="h-4 w-4 mr-2" />
+                  {user?.email}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem disabled>
+                  <User className="h-4 w-4 mr-2" />
+                  {user?.email}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {logoutMutation.isPending ? "Signing out..." : "Sign out"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          
+          {/* Logo and Title - Center */}
+          <div className="text-center">
+            <img 
+              src={logoPath} 
+              alt="Seed Financial Logo" 
+              className="h-16 mx-auto mb-4"
+            />
+            <p className="text-lg text-gray-200">
+              Internal Pricing Calculator
+            </p>
+          </div>
+        </div>
 
-          {/* MASSIVE COPY-PASTE OPERATION: All the UI from the original file */}
-          {!showClientDetails && (
-            <Card className="max-w-lg mx-auto mb-8 bg-white/95 backdrop-blur-sm shadow-xl border-0">
-              <CardContent className="p-8 text-center">
-                <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-full mx-auto mb-6">
-                  <User className="h-8 w-8 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Start New Quote</h2>
-                <p className="text-gray-600 mb-6">Enter a client email to begin the quoting process</p>
+        {/* Service Selection Cards - Optimized for desktop */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Bookkeeping Service Card */}
+            <div 
+              className={`
+                cursor-pointer transition-all duration-200 rounded-xl p-5 border-2 shadow-sm
+                ${feeCalculation.includesBookkeeping 
+                  ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-green-100' 
+                  : 'bg-gray-50 border-gray-200 hover:border-green-200 hover:bg-green-50/50'
+                }
+              `}
+              onClick={() => {
+                const newValue = !feeCalculation.includesBookkeeping;
+                form.setValue('includesBookkeeping', newValue);
+                form.trigger();
                 
-                <div className="space-y-4">
-                  <div className="relative">
-                    <Input 
-                      type="email"
-                      placeholder="client@company.com"
-                      value={triggerEmail}
-                      onChange={(e) => {
-                        const email = e.target.value;
-                        setTriggerEmail(email);
-                        if (email.length >= 3) {
-                          liveSearchContacts(email);
-                        } else {
-                          setShowLiveResults(false);
-                          setLiveSearchResults([]);
-                        }
-                      }}
-                      className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-center text-lg py-3"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && triggerEmail.includes('@')) {
-                          if (liveSearchResults.length > 0) {
-                            handleContactSelection(liveSearchResults[0]);
-                          } else {
-                            handleEmailTrigger(triggerEmail);
-                          }
-                        }
-                      }}
-                      onFocus={() => {
-                        if (triggerEmail.length >= 3) {
-                          setShowLiveResults(true);
-                        }
-                      }}
-                      onBlur={() => {
-                        setTimeout(() => setShowLiveResults(false), 300);
-                      }}
-                    />
-                    
-                    {/* Live search results dropdown */}
-                    {showLiveResults && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
-                        {isLiveSearching ? (
-                          <div className="flex items-center justify-center py-4">
-                            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                            <span className="ml-2 text-sm text-gray-600">Searching...</span>
-                          </div>
-                        ) : liveSearchResults.length > 0 ? (
-                          <div className="py-1">
-                            {liveSearchResults.slice(0, 5).map((contact) => (
-                              <div
-                                key={contact.id}
-                                className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-left"
-                                onClick={() => handleContactSelection(contact)}
-                                onMouseDown={(e) => e.preventDefault()}
-                              >
-                                <div className="font-medium text-gray-900">
-                                  {contact.properties.firstname} {contact.properties.lastname}
-                                </div>
-                                <div className="text-sm text-blue-600">{contact.properties.email}</div>
-                                {contact.properties.company && (
-                                  <div className="text-sm text-gray-500">{contact.properties.company}</div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        ) : triggerEmail.length >= 3 ? (
-                          <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                            No matching contacts found
-                          </div>
-                        ) : null}
-                      </div>
-                    )}
-                  </div>
+                // Navigation logic
+                if (!feeCalculation.includesBookkeeping) {
+                  // Activating bookkeeping - navigate to bookkeeping form
+                  setCurrentFormView('bookkeeping');
+                } else {
+                  // Deactivating bookkeeping - navigate to next active service
+                  if (feeCalculation.includesTaas) {
+                    setCurrentFormView('taas');
+                  }
+                }
+              }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                  feeCalculation.includesBookkeeping ? 'bg-green-500' : 'bg-gray-300'
+                }`}>
+                  {feeCalculation.includesBookkeeping && <Check className="h-4 w-4 text-white" />}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <h4 className={`font-semibold ${
+                  feeCalculation.includesBookkeeping ? 'text-green-800' : 'text-gray-600'
+                }`}>
+                  Bookkeeping
+                </h4>
+              </div>
+              <div className={`text-2xl font-bold mb-1 ${
+                feeCalculation.includesBookkeeping ? 'text-green-800' : 'text-gray-400'
+              }`}>
+                ${feeCalculation.includesBookkeeping ? feeCalculation.bookkeeping.monthlyFee.toLocaleString() : '0'} / mo
+              </div>
+              <div className={`text-sm font-medium mb-2 ${
+                feeCalculation.includesBookkeeping ? 'text-green-700' : 'text-gray-400'
+              }`}>
+                ${feeCalculation.includesBookkeeping ? feeCalculation.bookkeeping.setupFee.toLocaleString() : '0'} setup
+              </div>
+              <p className={`text-xs ${
+                feeCalculation.includesBookkeeping ? 'text-green-600' : 'text-gray-500'
+              }`}>
+                Monthly bookkeeping, cleanup, and financial management
+              </p>
+            </div>
 
-          {/* HubSpot Contact Search Modal */}
-          <Dialog open={showContactSearch} onOpenChange={setShowContactSearch}>
-            <DialogContent className="sm:max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Search HubSpot Contacts</DialogTitle>
-                <DialogDescription>
-                  Find an existing contact or create a new quote for "{triggerEmail}"
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search by name, email, or company..."
-                    value={contactSearchTerm}
-                    onChange={(e) => {
-                      setContactSearchTerm(e.target.value);
-                      searchHubSpotContacts(e.target.value);
-                    }}
-                    className="pl-10"
-                  />
+            {/* TaaS Service Card */}
+            <div 
+              className={`
+                cursor-pointer transition-all duration-200 rounded-xl p-5 border-2 shadow-sm
+                ${feeCalculation.includesTaas 
+                  ? 'bg-gradient-to-br from-blue-50 to-sky-50 border-blue-300 shadow-blue-100' 
+                  : 'bg-gray-50 border-gray-200 hover:border-blue-200 hover:bg-blue-50/50'
+                }
+              `}
+              onClick={() => {
+                const newValue = !feeCalculation.includesTaas;
+                form.setValue('includesTaas', newValue);
+                form.trigger();
+                
+                // Navigation logic
+                if (!feeCalculation.includesTaas) {
+                  // Activating TaaS - navigate to TaaS form
+                  setCurrentFormView('taas');
+                } else {
+                  // Deactivating TaaS - navigate to next active service
+                  if (feeCalculation.includesBookkeeping) {
+                    setCurrentFormView('bookkeeping');
+                  }
+                }
+              }}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                  feeCalculation.includesTaas ? 'bg-blue-500' : 'bg-gray-300'
+                }`}>
+                  {feeCalculation.includesTaas && <Check className="h-4 w-4 text-white" />}
                 </div>
+                <h4 className={`font-semibold ${
+                  feeCalculation.includesTaas ? 'text-blue-800' : 'text-gray-600'
+                }`}>
+                  TaaS
+                </h4>
+              </div>
+              <div className={`text-2xl font-bold mb-1 ${
+                feeCalculation.includesTaas ? 'text-blue-800' : 'text-gray-400'
+              }`}>
+                ${feeCalculation.includesTaas ? feeCalculation.taas.monthlyFee.toLocaleString() : '0'} / mo
+              </div>
+              <div className={`text-sm font-medium mb-2 ${
+                feeCalculation.includesTaas ? 'text-blue-700' : 'text-gray-400'
+              }`}>
+                ${feeCalculation.includesTaas ? feeCalculation.taas.setupFee.toLocaleString() : '0'} prior years
+              </div>
+              <p className={`text-xs ${
+                feeCalculation.includesTaas ? 'text-blue-600' : 'text-gray-500'
+              }`}>
+                Tax preparation, filing, and compliance services
+              </p>
+            </div>
 
-                {isContactSearching && (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                    <span className="ml-2 text-gray-600">Searching contacts...</span>
-                  </div>
-                )}
+            {/* Other Services Card - Coming Soon */}
+            <div className="cursor-not-allowed rounded-xl p-5 border-2 border-dashed border-gray-300 shadow-sm bg-gray-50">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
+                  <Plus className="h-4 w-4 text-gray-500" />
+                </div>
+                <h4 className="font-semibold text-gray-500">Other Services</h4>
+              </div>
+              <div className="text-2xl font-bold mb-1 text-gray-400">
+                Coming Soon
+              </div>
+              <div className="text-sm font-medium mb-2 text-gray-400">
+                Additional services
+              </div>
+              <p className="text-xs text-gray-500">
+                Payroll, FBAR filing, APAP Lite, and more
+              </p>
+            </div>
+          </div>
+        </div>
 
-                {!isContactSearching && hubspotContacts.length > 0 && (
-                  <div className="max-h-60 overflow-y-auto space-y-2">
-                    {hubspotContacts.map((contact) => (
-                      <Card key={contact.id} className="cursor-pointer hover:bg-gray-50 transition-colors"
-                            onClick={() => handleContactSelection(contact)}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="font-medium text-gray-900">
-                                {contact.properties.firstname} {contact.properties.lastname}
-                              </p>
-                              <p className="text-sm text-blue-600">{contact.properties.email}</p>
-                              {contact.properties.company && (
-                                <p className="text-sm text-gray-600">{contact.properties.company}</p>
-                              )}
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-gray-400" />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-
-                {!isContactSearching && contactSearchTerm && hubspotContacts.length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600 mb-4">No contacts found matching "{contactSearchTerm}"</p>
-                    <Button 
-                      onClick={() => {
-                        form.setValue('contactEmail', triggerEmail);
-                        setShowContactSearch(false);
-                        setShowClientDetails(true);
-                      }}
-                      variant="outline"
-                    >
-                      Create New Quote for "{triggerEmail}"
-                    </Button>
-                  </div>
-                )}
-
-                {/* Show existing quotes for selected contact */}
-                {selectedContact && existingQuotesForEmail.length > 0 && (
-                  <div className="border-t pt-4 mt-4">
-                    <h4 className="font-medium text-gray-900 mb-3">Existing Quotes for {selectedContact.properties.email}</h4>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {existingQuotesForEmail.map((quote) => (
-                        <Card key={quote.id} className="cursor-pointer hover:bg-blue-50 transition-colors"
-                              onClick={() => {
-                                loadQuoteIntoForm(quote);
-                                setShowContactSearch(false);
-                                setShowClientDetails(true);
-                              }}>
-                          <CardContent className="p-3">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-sm font-medium">${parseFloat(quote.monthlyFee).toLocaleString()}/mo</p>
-                                <p className="text-xs text-gray-600">
-                                  {new Date(quote.updatedAt || quote.createdAt).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <Button size="sm" variant="ghost">Load Quote</Button>
-                            </div>
-                          </CardContent>
-                        </Card>
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Quote Builder Form Card */}
+          <Card className="bg-gray-50 shadow-xl border-0 quote-card">
+            <CardContent className="p-6 sm:p-8">
+              {/* Modern Navigation Toggle - Only show if multiple services are active */}
+              {getActiveServices().length > 1 && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-center">
+                    <div className="bg-gray-100 rounded-lg p-1 flex items-center gap-1">
+                      {getActiveServices().map((service) => (
+                        <button
+                          key={service}
+                          type="button"
+                          onClick={() => setCurrentFormView(service)}
+                          className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                            currentFormView === service
+                              ? 'bg-white shadow-sm text-[#e24c00] border border-gray-200'
+                              : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                          }`}
+                        >
+                          {service === 'bookkeeping' ? 'Bookkeeping' : 'Tax Service'}
+                        </button>
                       ))}
                     </div>
                   </div>
-                )}
+                </div>
+              )}
+
+              {/* Form Header */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-[#e24c00] to-[#ff6b35] rounded-lg">
+                  {currentFormView === 'bookkeeping' ? <Calculator className="h-5 w-5 text-white" /> : <FileText className="h-5 w-5 text-white" />}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    {currentFormView === 'bookkeeping' ? 'Bookkeeping Quote' : 'Tax as a Service (TaaS) Quote'}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {currentFormView === 'bookkeeping' ? 'Configure your bookkeeping pricing' : 'Configure your tax preparation requirements'}
+                  </p>
+                </div>
               </div>
-            </DialogContent>
-          </Dialog>
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Core Fields - Always Shown */}
+                  <div className="space-y-6">
+                    {/* Contact Email */}
+                  <FormField
+                    control={form.control}
+                    name="contactEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact Email</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input 
+                              type="email"
+                              placeholder="client@company.com"
+                              className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent pr-10"
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                const email = e.target.value;
+                                
+                                // If email is cleared, reset existing quotes state
+                                if (!email.trim()) {
+                                  setExistingQuotesForEmail([]);
+                                  setShowExistingQuotesNotification(false);
+                                  setHubspotVerificationStatus('idle');
+                                  setHubspotContact(null);
+                                  setLastVerifiedEmail('');
+                                  setSearchTerm(""); // Clear search filter when email is cleared
+                                  form.setValue('companyName', ''); // Clear company name when email is cleared
+                                }
+                                
+                                debouncedVerifyEmail(email);
+                              }}
+                            />
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                              {hubspotVerificationStatus === 'verifying' && (
+                                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                              )}
+                              {hubspotVerificationStatus === 'verified' && (
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              )}
+                              {hubspotVerificationStatus === 'not-found' && (
+                                <XCircle className="h-4 w-4 text-red-500" />
+                              )}
+                            </div>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-          {/* Quote Form Core - Following Battle Plan Architecture */}
-          <QuoteFormCore 
-            form={form}
-            showClientDetails={showClientDetails}
-            feeCalculation={feeCalculation}
-            onSubmit={onSubmit}
-          />
+                  {/* Company Name */}
+                  <FormField
+                    control={form.control}
+                    name="companyName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company Name (Optional)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Company Name"
+                            className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                        {hubspotVerificationStatus === 'verified' && hubspotContact?.properties.company && (
+                          <p className="text-xs text-green-600 mt-1">
+                            ✓ Found in HubSpot: {hubspotContact.properties.company}
+                          </p>
+                        )}
+                        {hubspotVerificationStatus === 'not-found' && (
+                          <p className="text-xs text-amber-600 mt-1">
+                            ⚠ Contact not found in HubSpot - quote will be saved but cannot be pushed to HubSpot
+                          </p>
+                        )}
+                      </FormItem>
+                    )}
+                  />
 
-          {/* Pricing Display Panel - Following Battle Plan Architecture */}
-          <PricingDisplayPanel 
-            feeCalculation={feeCalculation}
-            isCalculated={isCalculated}
-            isBreakdownExpanded={isBreakdownExpanded}
-            setIsBreakdownExpanded={setIsBreakdownExpanded}
-          />
+                  {/* Existing Quotes Notification */}
+                  {showExistingQuotesNotification && existingQuotesForEmail.length > 0 && (
+                    <Alert className="border-blue-200 bg-blue-50">
+                      <AlertCircle className="h-4 w-4 text-blue-600" />
+                      <AlertDescription className="text-blue-800">
+                        <strong>Existing quotes found!</strong> This email has {existingQuotesForEmail.length} existing quote{existingQuotesForEmail.length > 1 ? 's' : ''}. 
+                        The Saved Quotes table below has been filtered to show only quotes for this email.
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="sm"
+                          className="h-auto p-0 ml-2 text-blue-600 underline"
+                          onClick={() => setShowExistingQuotesNotification(false)}
+                        >
+                          Dismiss
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
-          {/* Quote Submission Flow - Following Battle Plan Architecture */}
-          <QuoteSubmissionFlow 
-            isCalculated={isCalculated}
-            isSubmitting={createQuoteMutation.isPending}
-            onSaveQuote={async () => {
-              const formData = form.getValues();
-              await createQuoteMutation.mutateAsync(formData);
-            }}
-          />
+                  {/* Industry */}
+                  <FormField
+                    control={form.control}
+                    name="industry"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Industry</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                              <SelectValue placeholder="Select industry" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Software/SaaS">Software/SaaS</SelectItem>
+                            <SelectItem value="Professional Services">Professional Services</SelectItem>
+                            <SelectItem value="Consulting">Consulting</SelectItem>
+                            <SelectItem value="Healthcare/Medical">Healthcare/Medical</SelectItem>
+                            <SelectItem value="Real Estate">Real Estate</SelectItem>
+                            <SelectItem value="Property Management">Property Management</SelectItem>
+                            <SelectItem value="E-commerce/Retail">E-commerce/Retail</SelectItem>
+                            <SelectItem value="Restaurant/Food Service">Restaurant/Food Service</SelectItem>
+                            <SelectItem value="Construction/Trades">Construction/Trades</SelectItem>
+                            <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                            <SelectItem value="Transportation/Logistics">Transportation/Logistics</SelectItem>
+                            <SelectItem value="Nonprofit">Nonprofit</SelectItem>
+                            <SelectItem value="Law Firm">Law Firm</SelectItem>
+                            <SelectItem value="Accounting/Finance">Accounting/Finance</SelectItem>
+                            <SelectItem value="Marketing/Advertising">Marketing/Advertising</SelectItem>
+                            <SelectItem value="Insurance">Insurance</SelectItem>
+                            <SelectItem value="Automotive">Automotive</SelectItem>
+                            <SelectItem value="Education">Education</SelectItem>
+                            <SelectItem value="Fitness/Wellness">Fitness/Wellness</SelectItem>
+                            <SelectItem value="Entertainment/Events">Entertainment/Events</SelectItem>
+                            <SelectItem value="Agriculture">Agriculture</SelectItem>
+                            <SelectItem value="Technology/IT Services">Technology/IT Services</SelectItem>
+                            <SelectItem value="Multi-entity/Holding Companies">Multi-entity/Holding Companies</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Revenue Band */}
+                  <FormField
+                    control={form.control}
+                    name="revenueBand"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Monthly Revenue Band</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                              <SelectValue placeholder="Select revenue band" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="<$10K">&lt;$10K</SelectItem>
+                            <SelectItem value="10K-25K">$10K - $25K</SelectItem>
+                            <SelectItem value="25K-75K">$25K - $75K</SelectItem>
+                            <SelectItem value="75K-250K">$75K - $250K</SelectItem>
+                            <SelectItem value="250K-1M">$250K - $1M</SelectItem>
+                            <SelectItem value="1M+">$1M+</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Monthly Transactions */}
+                  <FormField
+                    control={form.control}
+                    name="monthlyTransactions"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Monthly Transactions</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                              <SelectValue placeholder="Select transaction volume" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="<100">&lt;100</SelectItem>
+                            <SelectItem value="100-300">100 - 300</SelectItem>
+                            <SelectItem value="300-600">300 - 600</SelectItem>
+                            <SelectItem value="600-1000">600 - 1,000</SelectItem>
+                            <SelectItem value="1000-2000">1,000 - 2,000</SelectItem>
+                            <SelectItem value="2000+">2,000+</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Cleanup Complexity */}
+                  <FormField
+                    control={form.control}
+                    name="cleanupComplexity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cleanup Complexity</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                              <SelectValue placeholder="Select complexity" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="0.5">Clean and Current</SelectItem>
+                            <SelectItem value="0.75">Standard</SelectItem>
+                            <SelectItem value="1.0">Not Done / Years Behind</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Cleanup Months */}
+                  <FormField
+                    control={form.control}
+                    name="cleanupMonths"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Months of Cleanup Required</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number"
+                            min={(form.watch("cleanupOverride") && isApproved) ? "0" : currentMonth.toString()}
+                            max="120"
+                            placeholder={currentMonth.toString()}
+                            className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent"
+                            disabled={form.watch("cleanupOverride") && !isApproved}
+                            {...field}
+                            onChange={(e) => {
+                              const value = parseInt(e.target.value);
+                              if (isNaN(value)) {
+                                field.onChange(form.watch("cleanupOverride") && isApproved ? 0 : currentMonth);
+                              } else {
+                                field.onChange(Math.max(0, value));
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Cleanup Override Checkbox with Request Approval Button */}
+                  <FormField
+                    control={form.control}
+                    name="cleanupOverride"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between space-y-0">
+                        <div className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) => {
+                                field.onChange(checked);
+                                if (!checked) {
+                                  form.setValue("overrideReason", "");
+                                  setIsApproved(false);
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              Override Minimum Cleanup
+                            </FormLabel>
+                          </div>
+                        </div>
+                        
+                        {/* Request Approval Button */}
+                        {form.watch("cleanupOverride") && !isApproved && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={requestApproval}
+                            disabled={
+                              isRequestingApproval || 
+                              !form.watch("contactEmail") || 
+                              !form.watch("overrideReason") ||
+                              (form.watch("overrideReason") === "Other" && (!form.watch("customOverrideReason") || form.watch("customOverrideReason")?.trim() === ""))
+                            }
+                            className="ml-4"
+                          >
+                            {isRequestingApproval ? "Requesting..." : "Request Approval"}
+                          </Button>
+                        )}
+                        
+                        {/* Approval Status */}
+                        {form.watch("cleanupOverride") && isApproved && (
+                          <div className="text-sm text-green-600 font-medium ml-4">
+                            ✓ Approved
+                          </div>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Override Reason */}
+                  {form.watch("cleanupOverride") && (
+                    <FormField
+                      control={form.control}
+                      name="overrideReason"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Reason</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                                <SelectValue placeholder="Select reason for override" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Brand New Business">Brand New Business</SelectItem>
+                              <SelectItem value="Books Confirmed Current">Books Confirmed Current</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {/* Custom reason text field when "Other" is selected */}
+                  {form.watch("cleanupOverride") && form.watch("overrideReason") === "Other" && (
+                    <FormField
+                      control={form.control}
+                      name="customOverrideReason"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Please explain the reason for override</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Enter detailed reason for cleanup months override..."
+                              className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent min-h-[80px]"
+                              {...field}
+                              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                field.onChange(e);
+                                setCustomOverrideReason(e.target.value);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  </div>
+
+                  {/* TaaS-specific Fields - Only show when currentFormView is 'taas' */}
+                  {currentFormView === 'taas' && (
+                    <div className="space-y-6 border-t pt-6">
+                      <h3 className="text-lg font-semibold text-gray-800">Tax Service Details</h3>
+                      
+                      {/* Entity Type */}
+                      <FormField
+                        control={form.control}
+                        name="entityType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Entity Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                                  <SelectValue placeholder="Select entity type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="LLC">LLC</SelectItem>
+                                <SelectItem value="C-Corp">C-Corp</SelectItem>
+                                <SelectItem value="S-Corp">S-Corp</SelectItem>
+                                <SelectItem value="Partnership">Partnership</SelectItem>
+                                <SelectItem value="Sole Proprietorship">Sole Proprietorship</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Number of Entities */}
+                      <FormField
+                        control={form.control}
+                        name="numEntities"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Number of Entities</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                                  <SelectValue placeholder="Select number of entities" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="1">1</SelectItem>
+                                <SelectItem value="2">2</SelectItem>
+                                <SelectItem value="3">3</SelectItem>
+                                <SelectItem value="4">4</SelectItem>
+                                <SelectItem value="5">5+</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* States Filed */}
+                      <FormField
+                        control={form.control}
+                        name="statesFiled"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>States Filed</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                                  <SelectValue placeholder="Select number of states" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="1">1</SelectItem>
+                                <SelectItem value="2">2</SelectItem>
+                                <SelectItem value="3">3</SelectItem>
+                                <SelectItem value="4">4</SelectItem>
+                                <SelectItem value="5">5</SelectItem>
+                                <SelectItem value="6">6+</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* International Filing */}
+                      <FormField
+                        control={form.control}
+                        name="internationalFiling"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value || false}
+                                onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-[#e24c00] data-[state=checked]:border-[#e24c00]"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>International Filing Required</FormLabel>
+                              <p className="text-sm text-gray-500">Check if international tax filings are needed</p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Number of Business Owners */}
+                      <FormField
+                        control={form.control}
+                        name="numBusinessOwners"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Number of Business Owners</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                                  <SelectValue placeholder="Select number of owners" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="1">1</SelectItem>
+                                <SelectItem value="2">2</SelectItem>
+                                <SelectItem value="3">3</SelectItem>
+                                <SelectItem value="4">4</SelectItem>
+                                <SelectItem value="5">5+</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Include 1040s */}
+                      <FormField
+                        control={form.control}
+                        name="include1040s"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value || false}
+                                onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-[#e24c00] data-[state=checked]:border-[#e24c00]"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Include Personal 1040s</FormLabel>
+                              <p className="text-sm text-gray-500">Check if personal tax returns should be included</p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Prior Years Unfiled */}
+                      <FormField
+                        control={form.control}
+                        name="priorYearsUnfiled"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Prior Years Unfiled</FormLabel>
+                            <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString() || ""}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                                  <SelectValue placeholder="Select number of years" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="0">0</SelectItem>
+                                <SelectItem value="1">1</SelectItem>
+                                <SelectItem value="2">2</SelectItem>
+                                <SelectItem value="3">3</SelectItem>
+                                <SelectItem value="4">4</SelectItem>
+                                <SelectItem value="5">5</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Bookkeeping Quality */}
+                      <FormField
+                        control={form.control}
+                        name="bookkeepingQuality"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bookkeeping Quality</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white border-gray-300 focus:ring-[#e24c00] focus:border-transparent">
+                                  <SelectValue placeholder="Select bookkeeping quality" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Clean (Seed)">Clean (Seed)</SelectItem>
+                                <SelectItem value="Outside CPA">Outside CPA</SelectItem>
+                                <SelectItem value="Self-managed">Self-managed</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Already on Seed Bookkeeping */}
+                      <FormField
+                        control={form.control}
+                        name="alreadyOnSeedBookkeeping"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value || false}
+                                onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-[#e24c00] data-[state=checked]:border-[#e24c00]"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Already on Seed Bookkeeping</FormLabel>
+                              <p className="text-sm text-gray-500">Check if client is already using Seed Bookkeeping services</p>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </>
+    </div>
   );
 }
+
+export default QuoteCalculatorContainer;
