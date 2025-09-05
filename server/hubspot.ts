@@ -2865,17 +2865,22 @@ Generated: ${new Date().toLocaleDateString()}`;
 <a href="https://seedfinancial.io/legal/msa-v-2025-07-01">MSA v2025.07.01</a>`;
 
     const schedules: string[] = [];
+    const addedSchedules = new Set<string>(); // Prevent duplicates
 
     if (includesBookkeeping) {
-      schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
-      );
+      const scheduleA = '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>';
+      if (!addedSchedules.has('A')) {
+        schedules.push(scheduleA);
+        addedSchedules.add('A');
+      }
     }
 
     if (includesTaas) {
-      schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssb-v-2025-09-01">SCHEDULE B - TAX AS A SERVICE v2025.09.01</a>',
-      );
+      const scheduleB = '<a href="https://seedfinancial.io/legal/ssb-v-2025-09-01">SCHEDULE B - TAX AS A SERVICE v2025.09.01</a>';
+      if (!addedSchedules.has('B')) {
+        schedules.push(scheduleB);
+        addedSchedules.add('B');
+      }
     }
 
     if (includesPayroll) {
@@ -2903,27 +2908,35 @@ Generated: ${new Date().toLocaleDateString()}`;
     }
 
     if (includesCfoAdvisory) {
-      schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
-      );
+      const scheduleA = '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>';
+      if (!addedSchedules.has('A')) {
+        schedules.push(scheduleA);
+        addedSchedules.add('A');
+      }
     }
 
     if (includesCleanup) {
-      schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
-      );
+      const scheduleA = '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>';
+      if (!addedSchedules.has('A')) {
+        schedules.push(scheduleA);
+        addedSchedules.add('A');
+      }
     }
 
     if (includesPriorYears) {
-      schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssb-v-2025-09-01">SCHEDULE B - TAX AS A SERVICE v2025.09.01</a>',
-      );
+      const scheduleB = '<a href="https://seedfinancial.io/legal/ssb-v-2025-09-01">SCHEDULE B - TAX AS A SERVICE v2025.09.01</a>';
+      if (!addedSchedules.has('B')) {
+        schedules.push(scheduleB);
+        addedSchedules.add('B');
+      }
     }
 
     if (includesFpaBuild) {
-      schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
-      );
+      const scheduleA = '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>';
+      if (!addedSchedules.has('A')) {
+        schedules.push(scheduleA);
+        addedSchedules.add('A');
+      }
     }
 
     return schedules.length > 0
@@ -2997,10 +3010,6 @@ Generated: ${new Date().toLocaleDateString()}`;
         personal1040sText = numOwners.toString();
       }
       assumptions.push(`• Number of Personal 1040s: ${personal1040sText}`);
-
-      assumptions.push(
-        `• Number of Prior Years Filings: ${quoteData.priorYearsUnfiled || 0}`,
-      );
     }
 
     // Add assumptions for other services
@@ -3041,6 +3050,26 @@ Generated: ${new Date().toLocaleDateString()}`;
       assumptions.push(`• Customer Invoices Band: ${quoteData.arCustomerInvoicesBand || 'Not specified'}`);
       assumptions.push(`• Customer Count: ${quoteData.arCustomerCount || 'Not specified'}`);
       assumptions.push(`• Service Tier: ${quoteData.arServiceTier || 'Not specified'}`);
+    }
+
+    // Separate section for Prior Year Filings
+    const priorYearFilings = quoteData.priorYearFilings || [];
+    if (priorYearFilings.length > 0) {
+      assumptions.push("");
+      assumptions.push("PRIOR YEAR FILINGS:");
+      assumptions.push(`• Number of Years: ${priorYearFilings.length}`);
+      assumptions.push(`• Filing Years: ${priorYearFilings.join(", ")}`);
+    }
+
+    // Separate section for Cleanup/Catch-up Projects
+    if (quoteData.serviceCleanupProjects && quoteData.cleanupMonths > 0) {
+      assumptions.push("");
+      assumptions.push("CLEANUP/CATCH-UP PROJECT:");
+      assumptions.push(`• Cleanup Months Required: ${quoteData.cleanupMonths}`);
+      assumptions.push(`• Cleanup Periods: ${(quoteData.cleanupPeriods || []).join(", ")}`);
+      if (quoteData.cleanupComplexity && quoteData.cleanupComplexity !== '0.00') {
+        assumptions.push(`• Complexity Factor: ${quoteData.cleanupComplexity}`);
+      }
     }
 
     return assumptions.join("\n");
