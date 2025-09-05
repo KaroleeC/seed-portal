@@ -997,13 +997,25 @@ function HomePage() {
     mutationFn: async (quoteId: number) => {
       const currentFormData = form.getValues();
       
-      // Ensure calculated fees are included in form data
+      // Ensure ALL calculated fees are included in form data
       const enhancedFormData = {
         ...currentFormData,
+        // Combined totals
         monthlyFee: feeCalculation.combined.monthlyFee.toString(),
         setupFee: feeCalculation.combined.setupFee.toString(),
+        // Individual service fees (for HubSpot line items)
+        bookkeepingMonthlyFee: feeCalculation.bookkeeping.monthlyFee.toString(),
         taasMonthlyFee: feeCalculation.taas.monthlyFee.toString(),
-        taasPriorYearsFee: feeCalculation.taas.setupFee.toString()
+        taasPriorYearsFee: feeCalculation.taas.setupFee.toString(),
+        serviceTierFee: feeCalculation.serviceTierFee.toString(),
+        // Other individual service fees
+        cleanupProjectFee: feeCalculation.cleanupProjectFee.toString(),
+        priorYearFilingsFee: feeCalculation.priorYearFilingsFee.toString(),
+        payrollFee: feeCalculation.payrollFee.toString(),
+        apFee: feeCalculation.apFee.toString(),
+        arFee: feeCalculation.arFee.toString(),
+        agentOfServiceFee: feeCalculation.agentOfServiceFee.toString(),
+        cfoAdvisoryFee: feeCalculation.cfoAdvisoryFee.toString(),
       };
       
       const result = await apiRequest("/api/hubspot/update-quote", {
