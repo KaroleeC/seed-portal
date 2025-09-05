@@ -935,6 +935,10 @@ Services Include:
           priorYearFilingsFee || 0,
           includesFpaBuild,
           fpaServiceFee || 0,
+          // Pass AP/AR service tier and QBO subscription
+          quoteData?.apServiceTier,
+          quoteData?.arServiceTier,
+          quoteData?.qboSubscription,
         );
         console.log("📋 Line items added successfully to quote");
       } catch (lineItemError) {
@@ -996,6 +1000,10 @@ Services Include:
     priorYearFilingsFee?: number,
     includesFpaBuild?: boolean,
     fpaServiceFee?: number,
+    // Service tier information for AP/AR
+    apServiceTier?: string,
+    arServiceTier?: string,
+    qboSubscription?: boolean,
   ): Promise<void> {
     try {
       console.log("🔧 STARTING LINE ITEM CREATION");
@@ -1039,9 +1047,9 @@ Services Include:
         includesFpaBuild: includesFpaBuild ?? false,
         fpaServiceFee: fpaServiceFee || 0,
         // Pass service tier info for AP/AR product selection
-        apServiceTier: quoteData?.apServiceTier,
-        arServiceTier: quoteData?.arServiceTier,
-        qboSubscription: quoteData?.qboSubscription,
+        apServiceTier: apServiceTier,
+        arServiceTier: arServiceTier,
+        qboSubscription: qboSubscription,
       });
 
       console.log("✅ LINE ITEM CREATION COMPLETED SUCCESSFULLY");
