@@ -1211,8 +1211,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       const isValid = await storage.validateApprovalCode(code, contactEmail);
       
       if (isValid) {
-        // Mark the code as used
-        await storage.markApprovalCodeUsed(code, contactEmail);
+        // Do NOT mark code as used here - only mark as used when quote is actually created
+        console.log(`✅ Approval code ${code} validated for ${contactEmail} (not marked as used yet)`);
         res.json({ valid: true });
       } else {
         res.json({ valid: false, message: "Invalid or expired approval code" });
