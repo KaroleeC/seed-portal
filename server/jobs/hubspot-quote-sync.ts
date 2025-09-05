@@ -93,11 +93,30 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
         throw new Error('Failed to create deal in HubSpot');
       }
 
+      // Now create the quote in HubSpot linked to the deal
+      const hubspotQuote = await hubSpotService.createQuote(
+        deal.id,
+        companyName,
+        parseFloat(quote.monthlyFee),
+        parseFloat(quote.setupFee),
+        user.email,
+        contact.properties.firstname || 'Contact',
+        contact.properties.lastname || '',
+        dealIncludesBookkeeping,
+        dealIncludesTaas,
+        parseFloat(quote.taasMonthlyFee || '0'),
+        parseFloat(quote.taasPriorYearsFee || '0'),
+        parseFloat(quote.monthlyFee),
+        parseFloat(quote.setupFee),
+        quote,
+        quote.serviceTier || 'Standard'
+      );
+
       result = {
         success: true,
         quoteId,
         dealId: deal.id,
-        hubspotQuoteId: deal.hubspotQuoteId
+        hubspotQuoteId: hubspotQuote?.id
       };
 
       hubspotLogger.info({ 

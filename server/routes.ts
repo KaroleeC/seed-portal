@@ -1370,7 +1370,7 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
             const dealIncludesBookkeeping = quote.serviceBookkeeping || quote.includesBookkeeping;
             const dealIncludesTaas = quote.serviceTaas || quote.includesTaas;
             
-            await hubSpotService.createDeal(
+            const deal = await hubSpotService.createDeal(
               contact.id,
               companyName,
               parseFloat(quote.monthlyFee),
@@ -1381,6 +1381,27 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
               quote.serviceTier || 'Standard',
               quote
             );
+
+            // Now create the quote in HubSpot linked to the deal
+            if (deal) {
+              await hubSpotService.createQuote(
+                deal.id,
+                companyName,
+                parseFloat(quote.monthlyFee),
+                parseFloat(quote.setupFee),
+                req.user.email,
+                contact.properties.firstname || 'Contact',
+                contact.properties.lastname || '',
+                dealIncludesBookkeeping,
+                dealIncludesTaas,
+                parseFloat(quote.taasMonthlyFee || '0'),
+                parseFloat(quote.taasPriorYearsFee || '0'),
+                parseFloat(quote.monthlyFee),
+                parseFloat(quote.setupFee),
+                quote,
+                quote.serviceTier || 'Standard'
+              );
+            }
 
             console.log(`✅ Direct HubSpot sync completed for quote ${quoteId}`);
           } catch (directSyncError) {
