@@ -1346,6 +1346,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                 
                 console.log('🔧 Calculated individual service fees:', {
                   bookkeepingMonthlyFee: feeCalculation.bookkeeping.monthlyFee,
+                  bookkeepingSetupFee: feeCalculation.bookkeeping.setupFee,
+                  combinedSetupFee: parseFloat(quote.setupFee),
                   taasMonthlyFee: feeCalculation.taas.monthlyFee,
                   serviceTierFee: feeCalculation.serviceTierFee,
                   payrollFee: feeCalculation.payrollFee,
@@ -1370,8 +1372,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                   dealIncludesTaas,
                   parseFloat(quote.taasMonthlyFee || '0'),
                   parseFloat(quote.taasPriorYearsFee || '0'),
-                  parseFloat(quote.monthlyFee),
-                  parseFloat(quote.setupFee),
+                  feeCalculation.bookkeeping.monthlyFee,
+                  feeCalculation.bookkeeping.setupFee, // ✅ FINAL FIX: Use separated bookkeeping setup fee!
                   quote,
                   quote.serviceTier || 'Standard',
                   // ✅ FIXED: Use RECALCULATED service fees instead of trying to read from database
