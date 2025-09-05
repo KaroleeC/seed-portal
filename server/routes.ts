@@ -1415,18 +1415,23 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
               try {
                 console.log('📋 Creating HubSpot quote for deal:', deal.id);
                 
-                // Use individual service fees calculated by frontend (no recalculation needed!)
-                console.log('🔧 Using frontend-calculated individual service fees:', {
-                  bookkeepingMonthlyFee: parseFloat(quote.bookkeepingMonthlyFee || '0'),
-                  taasMonthlyFee: parseFloat(quote.taasMonthlyFee || '0'),
-                  serviceTierFee: parseFloat(quote.serviceTierFee || '0'),
-                  payrollFee: parseFloat(quote.payrollFee || '0'),
-                  agentOfServiceFee: parseFloat(quote.agentOfServiceFee || '0'),
-                  apFee: parseFloat(quote.apFee || '0'),
-                  arFee: parseFloat(quote.arFee || '0'),
-                  cfoAdvisoryFee: parseFloat(quote.cfoAdvisoryFee || '0'),
-                  cleanupProjectFee: parseFloat(quote.cleanupProjectFee || '0'),
-                  priorYearFilingsFee: parseFloat(quote.priorYearFilingsFee || '0')
+                // ✅ FIXED: Recalculate individual service fees using the same logic as frontend
+                console.log('🔧 Recalculating individual service fees from quote data (same as frontend)');
+                const { calculateCombinedFees } = await import('../../shared/pricing');
+                const feeCalculation = calculateCombinedFees(quote);
+                
+                console.log('🔧 Calculated individual service fees:', {
+                  bookkeepingMonthlyFee: feeCalculation.bookkeeping.monthlyFee,
+                  taasMonthlyFee: feeCalculation.taas.monthlyFee,
+                  serviceTierFee: feeCalculation.serviceTierFee,
+                  payrollFee: feeCalculation.payrollFee,
+                  agentOfServiceFee: feeCalculation.agentOfServiceFee,
+                  apFee: feeCalculation.apFee,
+                  arFee: feeCalculation.arFee,
+                  cfoAdvisoryFee: feeCalculation.cfoAdvisoryFee,
+                  cleanupProjectFee: feeCalculation.cleanupProjectFee,
+                  priorYearFilingsFee: feeCalculation.priorYearFilingsFee,
+                  qboFee: feeCalculation.bookkeeping.breakdown?.qboFee || 0
                 });
                 
                 const hubspotQuote = await hubSpotService.createQuote(
@@ -1445,25 +1450,25 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                   parseFloat(quote.setupFee),
                   quote,
                   quote.serviceTier || 'Standard',
-                  // Add all the missing service parameters with FRONTEND-CALCULATED fees
+                  // ✅ FIXED: Use RECALCULATED service fees instead of trying to read from database
                   Boolean(quote.servicePayroll || quote.servicePayrollService),  // includesPayroll
-                  parseFloat(quote.payrollFee || '0'),                // payrollFee (from frontend)
+                  feeCalculation.payrollFee,                          // payrollFee (RECALCULATED)
                   Boolean(quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService), // includesAP
-                  parseFloat(quote.apFee || '0'),                     // apFee (from frontend)
+                  feeCalculation.apFee,                               // apFee (RECALCULATED)
                   Boolean(quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService), // includesAR
-                  parseFloat(quote.arFee || '0'),                     // arFee (from frontend)
+                  feeCalculation.arFee,                               // arFee (RECALCULATED)
                   Boolean(quote.serviceAgentOfService),               // includesAgentOfService
-                  parseFloat(quote.agentOfServiceFee || '0'),          // agentOfServiceFee (from frontend)
+                  feeCalculation.agentOfServiceFee,                   // agentOfServiceFee (RECALCULATED)
                   Boolean(quote.serviceCfoAdvisory),                  // includesCfoAdvisory
-                  parseFloat(quote.cfoAdvisoryFee || '0'),            // cfoAdvisoryFee (from frontend)
-                  parseFloat(quote.cleanupProjectFee || '0'),         // cleanupProjectFee (from frontend)
-                  parseFloat(quote.priorYearFilingsFee || '0'),       // priorYearFilingsFee (from frontend)
+                  feeCalculation.cfoAdvisoryFee,                      // cfoAdvisoryFee (RECALCULATED)
+                  feeCalculation.cleanupProjectFee,                   // cleanupProjectFee (RECALCULATED)
+                  feeCalculation.priorYearFilingsFee,                 // priorYearFilingsFee (RECALCULATED)
                   Boolean(quote.serviceFpaBuild),                     // includesFpaBuild
-                  parseFloat(quote.fpaServiceFee || '0'),             // fpaServiceFee (TODO: calculate)
-                  // Pass the individual frontend-calculated service fees for line items
-                  parseFloat(quote.bookkeepingMonthlyFee || '0'),     // calculatedBookkeepingMonthlyFee
-                  parseFloat(quote.taasMonthlyFee || '0'),            // calculatedTaasMonthlyFee
-                  parseFloat(quote.serviceTierFee || '0')             // calculatedServiceTierFee
+                  0,                                                  // fpaServiceFee (not implemented yet)
+                  // Pass the individual RECALCULATED service fees for line items
+                  feeCalculation.bookkeeping.monthlyFee,              // calculatedBookkeepingMonthlyFee
+                  feeCalculation.taas.monthlyFee,                     // calculatedTaasMonthlyFee
+                  feeCalculation.serviceTierFee                       // calculatedServiceTierFee
                 );
                 console.log('✅ HubSpot quote created successfully:', hubspotQuote?.id);
               } catch (quoteError) {

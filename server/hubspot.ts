@@ -31,6 +31,7 @@ import { cache, CacheTTL, CachePrefix } from "./cache.js";
 const HUBSPOT_PRODUCT_IDS = {
   // Core Services
   MONTHLY_BOOKKEEPING: "25687054003",           // Monthly Bookkeeping
+  MONTHLY_BOOKKEEPING_SETUP: "29049077309",    // Monthly Bookkeeping Setup Fee
   CLEANUP_PROJECT: "25683750263",               // Clean-Up / Catch-Up Project
   TAAS: "26203849099",                          // Tax as a Service (Monthly)
   MANAGED_QBO_SUBSCRIPTION: "26213746490",     // Managed QBO Subscription
@@ -1035,6 +1036,14 @@ Services Include:
       const bookkeepingPrice = serviceConfig.bookkeepingMonthlyFee;
       if (bookkeepingPrice > 0) {
         services.push({price: bookkeepingPrice, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING});
+      }
+    }
+    
+    // Monthly Bookkeeping Setup Fee - USE CALCULATED SETUP FEE
+    if (serviceConfig.includesBookkeeping) {
+      const bookkeepingSetupFee = serviceConfig.bookkeeping?.setupFee || serviceConfig.setupFee;
+      if (bookkeepingSetupFee > 0) {
+        services.push({price: bookkeepingSetupFee, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING_SETUP});
       }
     }
     

@@ -3809,6 +3809,48 @@ function HomePage() {
                           </div>
                         </div>
                       )}
+
+                      {/* Monthly Bookkeeping Setup Fee Card */}
+                      {feeCalculation.includesBookkeeping && form.watch('serviceMonthlyBookkeeping') && feeCalculation.bookkeeping.setupFee > 0 && (
+                        <div className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">⚙️</span>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-orange-800">Monthly Bookkeeping Setup Fee</h4>
+                                <p className="text-xs text-orange-600">One-time setup and onboarding</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-orange-800">${feeCalculation.bookkeeping.setupFee.toLocaleString()}</div>
+                              <div className="text-xs text-orange-600">one-time setup</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Managed QBO Subscription Card */}
+                      {form.watch('qboSubscription') && (
+                        <div className="bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-bold">💳</span>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-teal-800">Managed QBO Subscription</h4>
+                                <p className="text-xs text-teal-600">QuickBooks Online management</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-teal-800">$60</div>
+                              <div className="text-xs text-teal-600">per month</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* No Services Selected */}
