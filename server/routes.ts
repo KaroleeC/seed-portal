@@ -1373,6 +1373,17 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       );
 
       if (!deal) {
+        console.error("🚨 CRITICAL ERROR: createDeal returned null/undefined");
+        console.error("🚨 Deal creation parameters were:", {
+          contactId: existingContact.contactId,
+          companyName: quote.companyName,
+          monthlyFee: parseFloat(quote.monthlyFee),
+          setupFee: parseFloat(quote.setupFee),
+          ownerId: ownerId || "undefined",
+          dealIncludesBookkeeping,
+          dealIncludesTaas,
+          serviceTier: quote.serviceTier || 'Standard'
+        });
         res.status(500).json({ message: "Failed to create deal in HubSpot" });
         return;
       }

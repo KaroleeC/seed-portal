@@ -577,6 +577,9 @@ export class HubSpotService {
     serviceTier?: string,
     quoteData?: any,
   ): Promise<HubSpotDeal | null> {
+    console.log("🚨 [CREATEDEAL] Starting createDeal method with params:", {
+      contactId, companyName, monthlyFee, setupFee, ownerId, includesBookkeeping, includesTaas, serviceTier
+    });
     try {
       // Generate dynamic deal name based on services
       let serviceName = "";
