@@ -961,8 +961,7 @@ Services Include:
         stack: error instanceof Error ? error.stack : undefined,
       });
       console.error(
-        "🔍 QUOTE BODY THAT FAILED:",
-        JSON.stringify(quoteBody, null, 2),
+        "🔍 QUOTE CREATION FAILED - No quote body available for debugging"
       );
 
       // REMOVE MISLEADING FALLBACK - throw the actual error
@@ -1067,7 +1066,7 @@ Services Include:
       console.log("🔍 VERIFYING HUBSPOT PRODUCT IDS");
 
       const currentIds = {
-        bookkeeping: "25687054003",
+        bookkeeping: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING,
         cleanup: "25683750263",
       };
 
@@ -1151,7 +1150,7 @@ Services Include:
     } catch (error) {
       console.error("❌ Error verifying product IDs:", error);
       return {
-        bookkeeping: "25687054003",
+        bookkeeping: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING,
         cleanup: "25683750263",
         valid: false,
       };
@@ -2488,18 +2487,18 @@ Generated: ${new Date().toLocaleDateString()}`;
         console.log("📋 Scope assumptions updated:", scopeAssumptions);
       }
 
-      // Generate payment terms based on service selection
+      // Generate payment terms based on service selection (updateQuote method)
       const paymentTerms = this.generatePaymentTerms(
         includesBookkeeping,
         includesTaas,
-        includesPayroll,
-        includesAP,
-        includesAR,
-        includesAgentOfService,
-        includesCfoAdvisory,
-        cleanupProjectFee > 0,
-        priorYearFilingsFee > 0,
-        includesFpaBuild,
+        quoteData?.includesPayroll || false,
+        quoteData?.includesAP || false,
+        quoteData?.includesAR || false,
+        quoteData?.includesAgentOfService || false,
+        quoteData?.includesCfoAdvisory || false,
+        (quoteData?.cleanupProjectFee || 0) > 0,
+        (quoteData?.priorYearFilingsFee || 0) > 0,
+        quoteData?.includesFpaBuild || false,
       );
       console.log("📋 Payment terms updated:", paymentTerms);
 
@@ -2563,7 +2562,7 @@ Generated: ${new Date().toLocaleDateString()}`;
             let newPrice;
 
             // Determine which price to use based on product ID and custom name
-            if (productId === "25687054003") {
+            if (productId === HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING) {
               if (lineItemName.includes("TaaS Monthly")) {
                 // TaaS Monthly line item
                 newPrice = taasMonthlyFee || 0;
@@ -2580,7 +2579,7 @@ Generated: ${new Date().toLocaleDateString()}`;
                   `Updating bookkeeping monthly line item ${lineItemId} to $${newPrice}`,
                 );
               }
-            } else if (productId === "25683750263") {
+            } else if (productId === HUBSPOT_PRODUCT_IDS.CLEANUP_PROJECT) {
               if (lineItemName.includes("TaaS Prior Years")) {
                 // TaaS Prior Years line item
                 newPrice = taasPriorYearsFee || 0;
