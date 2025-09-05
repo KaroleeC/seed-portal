@@ -1297,7 +1297,7 @@ Services Include:
                 lineItemConfig.productId,
                 lineItemConfig.price,
                 1,
-                lineItemConfig.name,
+                null, // Use HubSpot's native product name
               );
 
               totalLineItemsCreated++;
