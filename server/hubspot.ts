@@ -1040,9 +1040,12 @@ Services Include:
       }
     }
     
-    // Monthly Bookkeeping Setup Fee - USE CALCULATED SETUP FEE  
-    if (serviceConfig.includesBookkeeping && serviceConfig.setupFee > 0) {
-      services.push({price: serviceConfig.setupFee, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING_SETUP});
+    // Monthly Bookkeeping Setup Fee - USE SEPARATED BOOKKEEPING SETUP FEE (NOT COMBINED)
+    if (serviceConfig.includesBookkeeping) {
+      const bookkeepingSetupFee = serviceConfig.bookkeepingSetupFee || serviceConfig.setupFee;
+      if (bookkeepingSetupFee > 0) {
+        services.push({price: bookkeepingSetupFee, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING_SETUP});
+      }
     }
     
     // Tax as a Service - USE CALCULATED FEE ONLY
