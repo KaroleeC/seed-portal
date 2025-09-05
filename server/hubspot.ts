@@ -2721,9 +2721,38 @@ Generated: ${new Date().toLocaleDateString()}`;
         ),
       );
 
-      // Line items are now handled by the main createInitialServiceLineItems method during quote creation
-      // No need to recreate them during updates - just update the existing quote properties
-      console.log(`🔵 Quote line items managed by main creation system - skipping duplicate creation`);
+      // ✅ FIXED: If we have individual service fee data in quoteData, recreate line items
+      // This ensures line items match the current service configuration and pricing
+      if (quoteData && (quoteData.bookkeepingMonthlyFee !== undefined || 
+                        quoteData.serviceTierFee !== undefined ||
+                        quoteData.payrollFee !== undefined)) {
+        console.log(`🔧 RECREATING line items - service configuration changed`);
+        
+        // Delete existing line items first
+        try {
+          const existingLineItems = await this.makeRequest(
+            `/crm/v4/objects/quotes/${quoteId}/associations/line_items`,
+            { method: "GET" }
+          );
+          
+          if (existingLineItems?.results?.length > 0) {
+            for (const association of existingLineItems.results) {
+              await this.makeRequest(
+                `/crm/v3/objects/line_items/${association.toObjectId}`,
+                { method: "DELETE" }
+              );
+            }
+            console.log(`🗑️ Deleted ${existingLineItems.results.length} existing line items`);
+          }
+        } catch (deleteError) {
+          console.log('Non-critical: Failed to delete existing line items:', deleteError);
+        }
+        
+        // Create new line items with updated configuration
+        await this.createInitialServiceLineItems(quoteId, quoteData);
+      } else {
+        console.log(`🔵 No individual service fees provided - skipping line item recreation`);
+      }
 
       // Update the associated deal amount and name
       let actualDealId = dealId;
