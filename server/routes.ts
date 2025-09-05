@@ -105,26 +105,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
   await setupAuth(app, null);
   console.log('[Routes] ✅ Auth setup completed');
 
-  // Apply CSRF protection after sessions are initialized
-  app.use((req, res, next) => {
-    console.log('Before CSRF - Request:', {
-      method: req.method,
-      url: req.url,
-      headers: req.headers['x-csrf-token'] ? 'CSRF token present' : 'No CSRF token'
-    });
-    next();
-  });
-  // Apply CSRF protection, but skip for user creation endpoint
-  app.use((req, res, next) => {
-    if (req.path === '/api/create-user') {
-      return next(); // Skip CSRF for user creation
-    }
-    conditionalCsrf(req, res, next);
-  });
-  app.use((req, res, next) => {
-    console.log('After CSRF - Request passed CSRF check');
-    next();
-  });
+  // Apply CSRF protection after sessions are initialized - simplified
+  app.use(conditionalCsrf);
   app.use(provideCsrfToken);
 
   // Debug middleware to track all API requests

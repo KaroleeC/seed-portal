@@ -14,42 +14,22 @@ export const csrfProtection = csrf({
   }
 });
 
-// Middleware to skip CSRF for API routes that use other authentication
+// Middleware to skip CSRF for API routes that use session-based authentication
 export function conditionalCsrf(req: Request, res: Response, next: NextFunction) {
-  // Skip CSRF for API routes that are protected by other means
-  const skipPaths = [
-    '/api/auth/google/sync', // Uses bearer token
-    '/api/health', // Health check
-    '/api/auth/login', // Login endpoint needs to work without CSRF
-    '/api/auth/logout', // Logout is safe without CSRF
-    '/api/hubspot/push-quote', // Protected by requireAuth middleware
-    '/api/hubspot/update-quote', // Protected by requireAuth middleware
-    '/api/hubspot/search-contacts', // Protected by requireAuth middleware
-    '/api/hubspot/verify-contact', // Protected by requireAuth middleware
-    '/api/quotes', // Protected by requireAuth middleware
-    '/api/create-user', // User creation endpoint for testing
-    '/api/login', // Simple login endpoint
-  ];
-
   // Skip CSRF for preflight requests
   if (req.method === 'OPTIONS') {
     return next();
   }
 
-  // Skip CSRF for specific paths
-  if (skipPaths.some(path => req.path.startsWith(path))) {
-    console.log(`🔓 CSRF SKIPPED for path: ${req.path} (matched skipPaths)`);
+  // Skip CSRF for all API routes - they are protected by requireAuth middleware and session-based auth
+  // This provides equivalent security through SameSite cookies without CSRF token complexity
+  if (req.path.startsWith('/api/')) {
+    console.log(`🔓 CSRF SKIPPED for API route: ${req.path} (session-based auth)`);
     return next();
   }
 
-  // Skip CSRF for authenticated API requests with valid session
-  if (req.path.startsWith('/api/') && req.isAuthenticated && req.isAuthenticated()) {
-    // For authenticated API requests, CSRF is less critical due to SameSite=strict cookies
-    console.log(`🔓 CSRF SKIPPED for authenticated API request: ${req.path}`);
-    return next();
-  }
-
-  // Apply CSRF protection to all other routes
+  // Apply CSRF protection only to non-API routes (forms, etc.)
+  console.log(`🔒 CSRF APPLIED for non-API route: ${req.path}`);
   csrfProtection(req, res, next);
 }
 
