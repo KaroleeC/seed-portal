@@ -1015,10 +1015,13 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       const quote = await storage.updateQuote(quoteData);
       res.json(quote);
     } catch (error) {
+      console.error("❌ Quote update error:", error);
       if (error instanceof z.ZodError) {
+        console.error("🔍 Zod validation errors:", error.errors);
         res.status(400).json({ message: "Invalid quote data", errors: error.errors });
       } else {
-        res.status(500).json({ message: "Failed to update quote" });
+        console.error("🔍 Database/storage error:", error.message, error.stack);
+        res.status(500).json({ message: "Failed to update quote", error: error.message });
       }
     }
   });
