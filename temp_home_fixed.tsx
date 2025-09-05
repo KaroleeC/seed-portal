@@ -334,7 +334,7 @@ function calculateCombinedFees(data: Partial<FormData>) {
   };
 }
 
-export function QuoteCalculatorContainer() {
+export default function Home() {
   const { toast } = useToast();
   const { user, logoutMutation } = useAuth();
   const [copiedField, setCopiedField] = useState<string | null>(null);
