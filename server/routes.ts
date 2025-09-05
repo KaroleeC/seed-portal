@@ -1862,10 +1862,32 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       console.log(`   Mapped to HubSpot includesBookkeeping: ${currentServiceBookkeeping}`);
       console.log(`   Mapped to HubSpot includesTaas: ${currentServiceTaas}`);
       
-      // ✅ USE SEPARATED BOOKKEEPING SETUP FEE FROM FRONTEND
-      // Frontend now correctly sends the already-separated bookkeeping setup fee
-      const bookkeepingSetupFee = parseFloat(currentFormData?.bookkeepingSetupFee || "0");
-      console.log(`🔧 FRONTEND PROVIDED separated bookkeeping setup fee: $${bookkeepingSetupFee} (was calculating incorrectly before)`);
+      // ✅ RECALCULATE SEPARATED BOOKKEEPING SETUP FEE USING PRICING LOGIC
+      // Since database doesn't store separated bookkeeping setup fee, recalculate it
+      let bookkeepingSetupFee = 0;
+      
+      if (currentServiceBookkeeping) {
+        // Import pricing calculation to get the actual separated bookkeeping setup fee
+        const { calculateCombinedFees } = await import('@shared/pricing');
+        
+        // Recreate pricing calculation from current quote data
+        const pricingData = {
+          ...currentFormData,
+          monthlyRevenueRange: currentFormData?.monthlyRevenueRange || quote.monthlyRevenueRange,
+          monthlyTransactions: currentFormData?.monthlyTransactions || quote.monthlyTransactions,
+          industry: currentFormData?.industry || quote.industry,
+        };
+        
+        try {
+          const calculation = calculateCombinedFees(pricingData);
+          bookkeepingSetupFee = calculation.bookkeeping.setupFee;
+          console.log(`🔧 RECALCULATED separated bookkeeping setup fee: $${bookkeepingSetupFee} (from pricing logic)`);
+        } catch (error) {
+          console.error('Error recalculating bookkeeping setup fee:', error);
+          bookkeepingSetupFee = 0;
+        }
+      }
+      
       console.log(`🔧 Combined setup fee for reference: $${setupFee}`);
 
       // ✅ NEW: Use the unified syncQuoteToHubSpot method with all individual service fees
