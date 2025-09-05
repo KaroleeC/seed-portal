@@ -988,12 +988,6 @@ Services Include:
     }
     console.log(`✅ Created ${services.length} line items`);
   }
-      return result.results || [];
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      return [];
-    }
-  }
 
   // Verify product IDs and potentially find alternatives
   async verifyAndGetProductIds(): Promise<{
