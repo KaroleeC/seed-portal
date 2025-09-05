@@ -1041,9 +1041,9 @@ Services Include:
       }
     }
     
-    // Monthly Bookkeeping Setup Fee - USE SEPARATED BOOKKEEPING SETUP FEE (NOT COMBINED)
+    // Monthly Bookkeeping Setup Fee - USE SEPARATED BOOKKEEPING SETUP FEE ONLY
     if (serviceConfig.includesBookkeeping) {
-      const bookkeepingSetupFee = serviceConfig.bookkeepingSetupFee || serviceConfig.setupFee;
+      const bookkeepingSetupFee = serviceConfig.bookkeepingSetupFee || 0;
       console.log("🔧 CRITICAL DEBUG - Monthly Bookkeeping Setup Fee Calculation:");
       console.log("  serviceConfig.bookkeepingSetupFee:", serviceConfig.bookkeepingSetupFee);
       console.log("  serviceConfig.setupFee:", serviceConfig.setupFee);
@@ -1051,6 +1051,8 @@ Services Include:
       if (bookkeepingSetupFee > 0) {
         services.push({price: bookkeepingSetupFee, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING_SETUP});
         console.log("  ✅ Added Monthly Bookkeeping Setup Fee line item with price:", bookkeepingSetupFee);
+      } else {
+        console.log("  ❌ No Monthly Bookkeeping Setup Fee line item added (value is 0 or missing)");
       }
     }
     
