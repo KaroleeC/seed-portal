@@ -1166,7 +1166,6 @@ function HomePage() {
     // Reset form with quote data and auto-lock populated fields
     const formData = {
       contactEmail: quote.contactEmail,
-      revenueBand: quote.revenueBand,
       monthlyTransactions: quote.monthlyTransactions,
       industry: quote.industry,
       cleanupMonths: quote.cleanupMonths,
@@ -1177,11 +1176,22 @@ function HomePage() {
       contactLastName: quote.contactLastName || "",
       monthlyRevenueRange: quote.monthlyRevenueRange || "",
       entityType: quote.entityType || "S-Corp",
-      serviceTier: quote.serviceTier || "Standard",
+      serviceTier: quote.serviceTier || "Automated",
       clientStreetAddress: quote.clientStreetAddress || "",
       clientCity: quote.clientCity || "",
       clientState: quote.clientState || "",
       clientZipCode: quote.clientZipCode || "",
+      clientCountry: quote.clientCountry || "US",
+      accountingBasis: quote.accountingBasis || "Accrual",
+      businessLoans: quote.businessLoans ?? false,
+      currentBookkeepingSoftware: quote.currentBookkeepingSoftware || "",
+      otherBookkeepingSoftware: quote.otherBookkeepingSoftware || "",
+      primaryBank: quote.primaryBank || "",
+      otherPrimaryBank: quote.otherPrimaryBank || "",
+      additionalBanks: quote.additionalBanks || [],
+      otherAdditionalBanks: quote.otherAdditionalBanks || [],
+      merchantProviders: quote.merchantProviders || [],
+      otherMerchantProvider: quote.otherMerchantProvider || "",
       // Auto-lock fields that have data
       companyNameLocked: !!(quote.companyName),
       contactFirstNameLocked: !!(quote.contactFirstName),
@@ -1192,8 +1202,38 @@ function HomePage() {
       quoteType: quote.quoteType || "bookkeeping",
       includesBookkeeping: quote.includesBookkeeping ?? true,
       includesTaas: quote.includesTaas ?? false,
-      serviceBookkeeping: quote.includesBookkeeping ?? true,
-      serviceTaas: quote.includesTaas ?? false,
+      // ALL comprehensive service selections (from database)
+      serviceMonthlyBookkeeping: quote.serviceMonthlyBookkeeping ?? false,
+      serviceTaasMonthly: quote.serviceTaasMonthly ?? false,
+      serviceCleanupProjects: quote.serviceCleanupProjects ?? false,
+      servicePriorYearFilings: quote.servicePriorYearFilings ?? false,
+      serviceCfoAdvisory: quote.serviceCfoAdvisory ?? false,
+      servicePayrollService: quote.servicePayrollService ?? false,
+      serviceApArService: quote.serviceApArService ?? false,
+      serviceArService: quote.serviceArService ?? false,
+      serviceFpaBuild: quote.serviceFpaBuild ?? false,
+      serviceFpaSupport: quote.serviceFpaSupport ?? false,
+      serviceNexusStudy: quote.serviceNexusStudy ?? false,
+      serviceEntityOptimization: quote.serviceEntityOptimization ?? false,
+      serviceCostSegregation: quote.serviceCostSegregation ?? false,
+      serviceRdCredit: quote.serviceRdCredit ?? false,
+      serviceRealEstateAdvisory: quote.serviceRealEstateAdvisory ?? false,
+      serviceAgentOfService: quote.serviceAgentOfService ?? false,
+      // Service-specific configuration fields
+      cfoAdvisoryType: quote.cfoAdvisoryType || "",
+      cfoAdvisoryBundleHours: quote.cfoAdvisoryBundleHours || 8,
+      payrollEmployeeCount: quote.payrollEmployeeCount || 1,
+      payrollStateCount: quote.payrollStateCount || 1,
+      apVendorBillsBand: quote.apVendorBillsBand || "",
+      apVendorCount: quote.apVendorCount || 5,
+      customApVendorCount: quote.customApVendorCount || null,
+      apServiceTier: quote.apServiceTier || "lite",
+      arCustomerInvoicesBand: quote.arCustomerInvoicesBand || "",
+      arCustomerCount: quote.arCustomerCount || 6,
+      customArCustomerCount: quote.customArCustomerCount || null,
+      arServiceTier: quote.arServiceTier || "advanced",
+      agentOfServiceAdditionalStates: quote.agentOfServiceAdditionalStates || 0,
+      agentOfServiceComplexCase: quote.agentOfServiceComplexCase ?? false,
       // TaaS-specific fields (ensure proper type conversion)
       numEntities: quote.numEntities ? Number(quote.numEntities) : 1,
       statesFiled: quote.statesFiled ? Number(quote.statesFiled) : 1,
@@ -1202,7 +1242,11 @@ function HomePage() {
       bookkeepingQuality: quote.bookkeepingQuality || "Clean (Seed)",
       include1040s: quote.include1040s ?? false,
       priorYearsUnfiled: quote.priorYearsUnfiled ? Number(quote.priorYearsUnfiled) : 0,
+      priorYearFilings: quote.priorYearFilings || [],
       alreadyOnSeedBookkeeping: quote.alreadyOnSeedBookkeeping ?? false,
+      qboSubscription: quote.qboSubscription ?? false,
+      // Cleanup periods
+      cleanupPeriods: quote.cleanupPeriods || [],
     };
     
     console.log('Loading quote into form:', quote.id);
@@ -1234,14 +1278,22 @@ function HomePage() {
     
     // Set the appropriate form view based on the quote's services (delayed to ensure form reset completes)
     setTimeout(() => {
-      if (quote.includesBookkeeping && quote.includesTaas) {
-        // Combined quote - default to bookkeeping view
+      // Determine which services are selected to set the appropriate view
+      const hasBookkeepingServices = quote.serviceMonthlyBookkeeping || quote.serviceCleanupProjects;
+      const hasTaasServices = quote.serviceTaasMonthly || quote.servicePriorYearFilings;
+      const hasOtherServices = quote.serviceCfoAdvisory || quote.servicePayrollService || quote.serviceApArService || 
+                               quote.serviceArService || quote.serviceFpaBuild || quote.serviceFpaSupport ||
+                               quote.serviceNexusStudy || quote.serviceEntityOptimization || quote.serviceCostSegregation ||
+                               quote.serviceRdCredit || quote.serviceRealEstateAdvisory || quote.serviceAgentOfService;
+      
+      if (hasBookkeepingServices || (!hasTaasServices && !hasOtherServices)) {
+        // Default to bookkeeping view if bookkeeping services or no clear preference
         setCurrentFormView('bookkeeping');
-      } else if (quote.includesTaas) {
-        // TaaS only
+      } else if (hasTaasServices) {
+        // TaaS services detected
         setCurrentFormView('taas');
       } else {
-        // Bookkeeping only (default)
+        // Other services - default to bookkeeping view
         setCurrentFormView('bookkeeping');
       }
     }, 150);
