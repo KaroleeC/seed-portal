@@ -3870,8 +3870,8 @@ function HomePage() {
                                 variant: "destructive",
                               });
                             }
-                          } else if (editingQuoteId || hasHubSpotIds) {
-                            // Update existing quote - auto-save first, then update HubSpot
+                          } else if (hasHubSpotIds) {
+                            // Update existing HubSpot quote - auto-save first, then update HubSpot
                             const quoteId = editingQuoteId || currentQuote?.id;
                             if (quoteId && hasUnsavedChanges) {
                               // Auto-save the form changes first (editingQuoteId is already set)
@@ -3890,7 +3890,7 @@ function HomePage() {
                                   description: `Quote #${quoteId} has been updated. Syncing to HubSpot in background...`,
                                 });
                                 
-                                // Background HubSpot sync with queue system
+                                // Background HubSpot sync with queue system - only if quote has HubSpot IDs
                                 setTimeout(async () => {
                                   try {
                                     await apiRequest("/api/hubspot/queue-sync", {
@@ -3907,7 +3907,7 @@ function HomePage() {
                                     });
                                   } catch (error: any) {
                                     console.error('Failed to queue HubSpot update:', error);
-                                    // Fallback to direct sync for immediate feedback
+                                    // Fallback to direct sync for immediate feedback - only if HubSpot IDs exist
                                     updateHubSpotMutation.mutate(quoteId, {
                                       onSuccess: () => {
                                         toast({
@@ -3935,12 +3935,35 @@ function HomePage() {
                                 });
                               }
                             } else if (quoteId) {
-                              // No unsaved changes, just update HubSpot
+                              // No unsaved changes, just update HubSpot directly
                               toast({
                                 title: "🔄 Syncing to HubSpot",
                                 description: "Updating quote in HubSpot...",
                               });
                               updateHubSpotMutation.mutate(quoteId);
+                            }
+                          } else if (editingQuoteId) {
+                            // Quote exists but no HubSpot IDs - save to database only, offer to push to HubSpot
+                            const formData = form.getValues();
+                            try {
+                              const savedQuote = await new Promise<any>((resolve, reject) => {
+                                createQuoteMutation.mutate(formData, {
+                                  onSuccess: resolve,
+                                  onError: reject
+                                });
+                              });
+                              
+                              toast({
+                                title: "✅ Quote Updated",
+                                description: "Quote has been updated in database. Use 'Push to HubSpot' to sync with HubSpot.",
+                              });
+                            } catch (error) {
+                              console.error('Failed to save quote:', error);
+                              toast({
+                                title: "Error",
+                                description: "Failed to update quote. Please try again.",
+                                variant: "destructive",
+                              });
                             }
                           } else {
                             // This should not happen in normal flow, but handle as fallback
@@ -3981,7 +4004,7 @@ function HomePage() {
                               // Check if current quote has HubSpot IDs
                               const currentQuote = editingQuoteId ? allQuotes?.find((q: Quote) => q.id === editingQuoteId) : null;
                               const hasHubSpotIds = currentQuote?.hubspotQuoteId && currentQuote?.hubspotDealId;
-                              return (editingQuoteId || hasHubSpotIds) ? 'Update in HubSpot' : 'Push to HubSpot';
+                              return hasHubSpotIds ? 'Update in HubSpot' : 'Push to HubSpot';
                             })()
                         }
                       </Button>
