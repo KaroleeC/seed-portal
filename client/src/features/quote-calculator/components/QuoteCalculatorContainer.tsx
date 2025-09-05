@@ -1220,6 +1220,67 @@ export function QuoteCalculatorContainer() {
                       />
                     </div>
 
+                    {/* Company Address Section */}
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Company Address</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <FormField
+                            control={form.control}
+                            name="clientStreetAddress"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Street Address *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="123 Main Street" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name="clientCity"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>City *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="San Francisco" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="clientState"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>State *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="CA" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="clientZipCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>ZIP Code *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="94102" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
                     {/* Service Tier Selection */}
                     <div className="mt-6">
                       <ServiceTierCards form={form} />
@@ -1388,66 +1449,6 @@ export function QuoteCalculatorContainer() {
                       </div>
                     )}
 
-                    {/* Company Address Section */}
-                    <div className="mt-6 p-6 bg-gray-50 rounded-lg border">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Company Address</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-2">
-                          <FormField
-                            control={form.control}
-                            name="clientStreetAddress"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Street Address *</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="123 Main Street" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <FormField
-                          control={form.control}
-                          name="clientCity"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>City *</FormLabel>
-                              <FormControl>
-                                <Input placeholder="San Francisco" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="clientState"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>State *</FormLabel>
-                              <FormControl>
-                                <Input placeholder="CA" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="clientZipCode"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>ZIP Code *</FormLabel>
-                              <FormControl>
-                                <Input placeholder="94102" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
 
                     {/* Service-Specific Configuration Sections */}
                     
@@ -1507,27 +1508,120 @@ export function QuoteCalculatorContainer() {
                       </div>
                     )}
 
-                    {/* Simple pricing display */}
+                    {/* Enhanced pricing display with breakdown */}
                     {isCalculated && (
-                      <div className="mt-8 bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg">
-                        <div className="text-center">
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            <Calculator className="h-5 w-5 text-blue-600" />
-                            <span className="text-sm font-medium text-blue-600 uppercase tracking-wide">Total Monthly Fee</span>
-                          </div>
-                          <div className="text-4xl font-bold text-blue-800 mb-2">
-                            ${feeCalculation.combined.monthlyFee.toLocaleString()}
-                            <span className="text-lg font-medium text-blue-600">
-                              {feeCalculation.combined.monthlyFee > 0 ? '/month' : ' monthly'}
-                            </span>
-                          </div>
-                          {feeCalculation.combined.setupFee > 0 && (
-                            <div className="text-lg text-blue-700">
-                              <span className="font-semibold">${feeCalculation.combined.setupFee.toLocaleString()}</span>
-                              <span className="text-sm"> setup fee</span>
+                      <div className="max-w-6xl mx-auto mt-8">
+                        <Card className="bg-gradient-to-br from-white to-gray-50 shadow-2xl border-0 quote-card w-full overflow-hidden">
+                          <div className="bg-gradient-to-r from-[#e24c00] to-[#ff6b35] p-1">
+                            <div className="bg-white rounded-t-lg">
+                              <CardContent className="p-6 sm:p-8">
+                                <div className="flex items-center gap-4 mb-8">
+                                  <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-[#e24c00] to-[#ff6b35] rounded-xl shadow-lg">
+                                    <DollarSign className="h-6 w-6 text-white" />
+                                  </div>
+                                  <div>
+                                    <h2 className="text-2xl font-bold text-gray-800">
+                                      Pricing Summary
+                                    </h2>
+                                    <p className="text-sm text-gray-600">Your calculated quote breakdown</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="space-y-6">
+                                  {/* Main Total Display - Clickable for detailed breakdown */}
+                                  <div 
+                                    className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:from-blue-100 hover:to-indigo-200"
+                                    onClick={() => setIsBreakdownExpanded(!isBreakdownExpanded)}
+                                  >
+                                    <div className="text-center">
+                                      <div className="flex items-center justify-center gap-2 mb-2">
+                                        <Calculator className="h-5 w-5 text-blue-600" />
+                                        <span className="text-sm font-medium text-blue-600 uppercase tracking-wide">Total Monthly Fee</span>
+                                        <button 
+                                          className="ml-2 p-1 rounded-full hover:bg-blue-200/50 transition-colors"
+                                          title={isBreakdownExpanded ? "Hide breakdown" : "Show detailed breakdown"}
+                                        >
+                                          {isBreakdownExpanded ? (
+                                            <ChevronUp className="h-4 w-4 text-blue-600" />
+                                          ) : (
+                                            <ChevronDown className="h-4 w-4 text-blue-600" />
+                                          )}
+                                        </button>
+                                      </div>
+                                      <div className="text-4xl font-bold text-blue-800 mb-2">
+                                        ${feeCalculation.combined.monthlyFee.toLocaleString()}
+                                        <span className="text-lg font-medium text-blue-600">
+                                          {feeCalculation.combined.monthlyFee > 0 ? '/month' : ' monthly'}
+                                        </span>
+                                      </div>
+                                      {feeCalculation.combined.setupFee > 0 && (
+                                        <div className="text-lg text-blue-700">
+                                          <span className="font-semibold">${feeCalculation.combined.setupFee.toLocaleString()}</span>
+                                          <span className="text-sm">
+                                            {(form.watch('servicePriorYearFilings') || form.watch('serviceCfoAdvisory')) && !form.watch('serviceTaasMonthly') && !form.watch('serviceMonthlyBookkeeping') ? 
+                                              ' one-time fee' : ' setup fee'}
+                                          </span>
+                                        </div>
+                                      )}
+                                      <div className="mt-3 text-xs text-blue-600">
+                                        {isBreakdownExpanded ? "Click to hide detailed breakdown" : "Click to see detailed breakdown"}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Detailed Breakdown Accordion */}
+                                  {isBreakdownExpanded && (
+                                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                                      <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <FileText className="h-4 w-4" />
+                                        Detailed Breakdown
+                                      </h4>
+                                      <div className="space-y-3">
+                                        {/* Show breakdown items based on selected services */}
+                                        {feeCalculation.includesBookkeeping && feeCalculation.bookkeeping && feeCalculation.bookkeeping.monthlyFee > 0 && (
+                                          <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                                            <span className="font-medium text-green-800">Monthly Bookkeeping</span>
+                                            <span className="font-semibold text-green-700">${feeCalculation.bookkeeping.monthlyFee.toLocaleString()}/mo</span>
+                                          </div>
+                                        )}
+                                        {feeCalculation.includesTaas && feeCalculation.taas && feeCalculation.taas.monthlyFee > 0 && (
+                                          <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                                            <span className="font-medium text-purple-800">Tax Advisory Service</span>
+                                            <span className="font-semibold text-purple-700">${feeCalculation.taas.monthlyFee.toLocaleString()}/mo</span>
+                                          </div>
+                                        )}
+                                        {feeCalculation.payrollFee > 0 && (
+                                          <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                                            <span className="font-medium text-blue-800">Payroll Service</span>
+                                            <span className="font-semibold text-blue-700">${feeCalculation.payrollFee.toLocaleString()}/mo</span>
+                                          </div>
+                                        )}
+                                        {feeCalculation.priorYearFilingsFee > 0 && (
+                                          <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                                            <span className="font-medium text-orange-800">Prior Year Filings</span>
+                                            <span className="font-semibold text-orange-700">${feeCalculation.priorYearFilingsFee.toLocaleString()}</span>
+                                          </div>
+                                        )}
+                                        {feeCalculation.cleanupProjectFee > 0 && (
+                                          <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                                            <span className="font-medium text-yellow-800">Cleanup Project</span>
+                                            <span className="font-semibold text-yellow-700">${feeCalculation.cleanupProjectFee.toLocaleString()}</span>
+                                          </div>
+                                        )}
+                                        {feeCalculation.cfoAdvisoryFee > 0 && (
+                                          <div className="flex justify-between items-center p-3 bg-indigo-50 rounded-lg">
+                                            <span className="font-medium text-indigo-800">CFO Advisory</span>
+                                            <span className="font-semibold text-indigo-700">${feeCalculation.cfoAdvisoryFee.toLocaleString()}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </CardContent>
                             </div>
-                          )}
-                        </div>
+                          </div>
+                        </Card>
                       </div>
                     )}
 
