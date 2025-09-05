@@ -3803,21 +3803,48 @@ function HomePage() {
                           const hasHubSpotIds = currentQuote?.hubspotQuoteId && currentQuote?.hubspotDealId;
                           
                           if (!editingQuoteId && hasUnsavedChanges) {
-                            // Auto-save the quote first, then push to HubSpot
+                            // Auto-save the quote first - ALWAYS SUCCESS
                             const formData = form.getValues();
                             try {
-                              await new Promise((resolve, reject) => {
+                              const savedQuote = await new Promise<any>((resolve, reject) => {
                                 createQuoteMutation.mutate(formData, {
-                                  onSuccess: (savedQuote) => {
-                                    // Now push to HubSpot
-                                    pushToHubSpotMutation.mutate(savedQuote.id);
-                                    resolve(savedQuote);
-                                  },
+                                  onSuccess: resolve,
                                   onError: reject
                                 });
                               });
+                              
+                              // Show immediate success - quote is saved!
+                              toast({
+                                title: "✅ Quote Saved Successfully",
+                                description: `Quote #${savedQuote.id} has been saved. Syncing to HubSpot in background...`,
+                              });
+                              
+                              // Background HubSpot sync with separate status
+                              setTimeout(() => {
+                                pushToHubSpotMutation.mutate(savedQuote.id, {
+                                  onSuccess: () => {
+                                    toast({
+                                      title: "🎯 HubSpot Sync Complete",
+                                      description: "Quote successfully synchronized to HubSpot!",
+                                    });
+                                  },
+                                  onError: (error: any) => {
+                                    toast({
+                                      title: "⚠️ HubSpot Sync Issue",
+                                      description: "Quote is saved, but HubSpot sync failed. You can retry sync later.",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                });
+                              }, 100);
+                              
                             } catch (error) {
-                              console.error('Failed to save quote before pushing to HubSpot:', error);
+                              console.error('Failed to save quote:', error);
+                              toast({
+                                title: "Error",
+                                description: "Failed to save quote. Please try again.",
+                                variant: "destructive",
+                              });
                             }
                           } else if (editingQuoteId || hasHubSpotIds) {
                             // Update existing quote - auto-save first, then update HubSpot
@@ -3826,21 +3853,52 @@ function HomePage() {
                               // Auto-save the form changes first (editingQuoteId is already set)
                               const formData = form.getValues();
                               try {
-                                await new Promise((resolve, reject) => {
+                                const savedQuote = await new Promise<any>((resolve, reject) => {
                                   createQuoteMutation.mutate(formData, {
-                                    onSuccess: (savedQuote) => {
-                                      // Now update in HubSpot
-                                      updateHubSpotMutation.mutate(quoteId);
-                                      resolve(savedQuote);
-                                    },
+                                    onSuccess: resolve,
                                     onError: reject
                                   });
                                 });
+                                
+                                // Show immediate success - quote is updated!
+                                toast({
+                                  title: "✅ Quote Updated Successfully",
+                                  description: `Quote #${quoteId} has been updated. Syncing to HubSpot in background...`,
+                                });
+                                
+                                // Background HubSpot sync with separate status
+                                setTimeout(() => {
+                                  updateHubSpotMutation.mutate(quoteId, {
+                                    onSuccess: () => {
+                                      toast({
+                                        title: "🎯 HubSpot Sync Complete",
+                                        description: "Quote changes successfully synchronized to HubSpot!",
+                                      });
+                                    },
+                                    onError: (error: any) => {
+                                      toast({
+                                        title: "⚠️ HubSpot Sync Issue",
+                                        description: "Quote is updated, but HubSpot sync failed. You can retry sync later.",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  });
+                                }, 100);
+                                
                               } catch (error) {
                                 console.error('Failed to save quote before updating HubSpot:', error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to update quote. Please try again.",
+                                  variant: "destructive",
+                                });
                               }
                             } else if (quoteId) {
                               // No unsaved changes, just update HubSpot
+                              toast({
+                                title: "🔄 Syncing to HubSpot",
+                                description: "Updating quote in HubSpot...",
+                              });
                               updateHubSpotMutation.mutate(quoteId);
                             }
                           } else {
