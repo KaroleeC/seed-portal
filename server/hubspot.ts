@@ -87,8 +87,15 @@ export class HubSpotService {
   // Get pipeline information to find the correct pipeline and stage IDs
   async getPipelines(): Promise<any> {
     try {
-      return await this.makeRequest("/crm/v3/pipelines/deals");
+      console.log("🔍 Fetching HubSpot pipelines...");
+      const result = await this.makeRequest("/crm/v3/pipelines/deals");
+      console.log("✅ Pipeline fetch successful:", result ? "Got data" : "No data");
+      if (result?.results) {
+        console.log("📋 Found pipelines:", result.results.map((p: any) => p.label));
+      }
+      return result;
     } catch (error) {
+      console.error("❌ Pipeline fetch failed:", error);
       console.error("Error fetching pipelines:", error);
       return null;
     }
@@ -143,6 +150,7 @@ export class HubSpotService {
       };
     } catch (error) {
       console.error("Error finding pipeline/stage:", error);
+      console.error("Full error details:", JSON.stringify(error, null, 2));
       return null;
     }
   }
