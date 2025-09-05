@@ -910,30 +910,31 @@ Services Include:
       console.log("✅ Quote created successfully:", result.id);
 
       // Use the comprehensive service management system for creating line items
-      console.log("🔧 Using comprehensive service line item system");
-      await this.createInitialServiceLineItems(result.id, {
-        includesBookkeeping: includesBookkeeping ?? true,
-        includesTaas: includesTaas ?? false,
-        includesPayroll: includesPayroll ?? false,
-        includesAP: includesAP ?? false,
-        includesAR: includesAR ?? false,
-        includesAgentOfService: includesAgentOfService ?? false,
-        includesCfoAdvisory: includesCfoAdvisory ?? false,
-        cleanupProjectFee: cleanupProjectFee || 0,
-        priorYearFilingsFee: priorYearFilingsFee || 0,
-        includesFpaBuild: includesFpaBuild ?? false,
-        fpaServiceFee: fpaServiceFee || 0,
-        payrollFee: payrollFee || 0,
-        apFee: apFee || 0,
-        arFee: arFee || 0,
-        agentOfServiceFee: agentOfServiceFee || 0,
-        cfoAdvisoryFee: cfoAdvisoryFee || 0,
-        apServiceTier: quoteData?.apServiceTier,
-        arServiceTier: quoteData?.arServiceTier,
-        qboSubscription: quoteData?.qboSubscription ?? false,
-      });
-      console.log("📋 Comprehensive line items added successfully to quote");
-    } catch (lineItemError) {
+      try {
+        console.log("🔧 Using comprehensive service line item system");
+        await this.createInitialServiceLineItems(result.id, {
+          includesBookkeeping: includesBookkeeping ?? true,
+          includesTaas: includesTaas ?? false,
+          includesPayroll: includesPayroll ?? false,
+          includesAP: includesAP ?? false,
+          includesAR: includesAR ?? false,
+          includesAgentOfService: includesAgentOfService ?? false,
+          includesCfoAdvisory: includesCfoAdvisory ?? false,
+          cleanupProjectFee: cleanupProjectFee || 0,
+          priorYearFilingsFee: priorYearFilingsFee || 0,
+          includesFpaBuild: includesFpaBuild ?? false,
+          fpaServiceFee: fpaServiceFee || 0,
+          payrollFee: payrollFee || 0,
+          apFee: apFee || 0,
+          arFee: arFee || 0,
+          agentOfServiceFee: agentOfServiceFee || 0,
+          cfoAdvisoryFee: cfoAdvisoryFee || 0,
+          apServiceTier: quoteData?.apServiceTier,
+          arServiceTier: quoteData?.arServiceTier,
+          qboSubscription: quoteData?.qboSubscription ?? false,
+        });
+        console.log("📋 Comprehensive line items added successfully to quote");
+      } catch (lineItemError) {
         console.error(
           "⚠️ Line item creation failed, but quote was created successfully:",
           lineItemError,
