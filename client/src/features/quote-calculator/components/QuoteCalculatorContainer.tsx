@@ -1267,6 +1267,246 @@ export function QuoteCalculatorContainer() {
                       />
                     </div>
 
+                    {/* Service-specific configuration fields */}
+                    {(form.watch('serviceMonthlyBookkeeping') || form.watch('serviceCleanupProjects')) && (
+                      <div className="mt-6 p-6 bg-gray-50 rounded-lg border">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4">Bookkeeping Configuration</h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="monthlyTransactions"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Monthly Transaction Volume *</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select transaction volume" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="<100">&lt;100</SelectItem>
+                                    <SelectItem value="100-300">100-300</SelectItem>
+                                    <SelectItem value="300-600">300-600</SelectItem>
+                                    <SelectItem value="600-1000">600-1000</SelectItem>
+                                    <SelectItem value="1000-2000">1000-2000</SelectItem>
+                                    <SelectItem value="2000+">2000+</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="cleanupComplexity"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Initial Cleanup Complexity *</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select complexity" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="1.0">1.0 - Clean Books</SelectItem>
+                                    <SelectItem value="1.5">1.5 - Minor Cleanup</SelectItem>
+                                    <SelectItem value="2.0">2.0 - Moderate Cleanup</SelectItem>
+                                    <SelectItem value="2.5">2.5 - Significant Cleanup</SelectItem>
+                                    <SelectItem value="3.0">3.0 - Major Cleanup</SelectItem>
+                                    <SelectItem value="3.5">3.5 - Extensive Cleanup</SelectItem>
+                                    <SelectItem value="4.0">4.0 - Complete Rebuild</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                          <FormField
+                            control={form.control}
+                            name="accountingBasis"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Accounting Basis *</FormLabel>
+                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                  {['Cash', 'Accrual'].map((basis) => (
+                                    <button
+                                      key={basis}
+                                      type="button"
+                                      onClick={() => field.onChange(basis)}
+                                      className={`p-3 border-2 rounded-lg text-center font-medium transition-all hover:shadow-md ${
+                                        field.value === basis
+                                          ? 'border-green-500 bg-green-50 text-green-700'
+                                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                      }`}
+                                    >
+                                      {basis} Basis
+                                    </button>
+                                  ))}
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="businessLoans"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Business Loans or Financing</FormLabel>
+                                <div className="grid grid-cols-1 gap-2 mt-2">
+                                  {[
+                                    { value: false, label: 'No business loans' },
+                                    { value: true, label: 'Has business loans' }
+                                  ].map((option) => (
+                                    <button
+                                      key={option.label}
+                                      type="button"
+                                      onClick={() => field.onChange(option.value)}
+                                      className={`p-3 border-2 rounded-lg text-center font-medium transition-all hover:shadow-md ${
+                                        field.value === option.value
+                                          ? 'border-orange-500 bg-orange-50 text-orange-700'
+                                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                                      }`}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  ))}
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Company Address Section */}
+                    <div className="mt-6 p-6 bg-gray-50 rounded-lg border">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">Company Address</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <FormField
+                            control={form.control}
+                            name="clientStreetAddress"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Street Address *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="123 Main Street" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name="clientCity"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>City *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="San Francisco" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="clientState"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>State *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="CA" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="clientZipCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>ZIP Code *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="94102" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Service-Specific Configuration Sections */}
+                    
+                    {/* TaaS Configuration */}
+                    {form.watch('serviceTaasMonthly') && (
+                      <div className="mt-8">
+                        <TaasSection control={form.control} form={form} />
+                      </div>
+                    )}
+
+                    {/* Prior Year Filings Configuration */}
+                    {form.watch('servicePriorYearFilings') && (
+                      <div className="mt-8">
+                        <PriorYearFilingsSection control={form.control} form={form} />
+                      </div>
+                    )}
+
+                    {/* Cleanup Projects Configuration */}
+                    {form.watch('serviceCleanupProjects') && (
+                      <div className="mt-8">
+                        <BookkeepingCleanupSection control={form.control} form={form} />
+                      </div>
+                    )}
+
+                    {/* CFO Advisory Configuration */}
+                    {form.watch('serviceCfoAdvisory') && (
+                      <div className="mt-8">
+                        <CfoAdvisorySection control={form.control} form={form} />
+                      </div>
+                    )}
+
+                    {/* Payroll Service Configuration */}
+                    {form.watch('servicePayrollService') && (
+                      <div className="mt-8">
+                        <PayrollSection form={form} />
+                      </div>
+                    )}
+
+                    {/* AP Service Configuration */}
+                    {form.watch('serviceApArService') && (
+                      <div className="mt-8">
+                        <APSection form={form} />
+                      </div>
+                    )}
+
+                    {/* AR Service Configuration */}
+                    {form.watch('serviceArService') && (
+                      <div className="mt-8">
+                        <ARSection form={form} />
+                      </div>
+                    )}
+
+                    {/* Agent of Service Configuration */}
+                    {form.watch('serviceAgentOfService') && (
+                      <div className="mt-8">
+                        <AgentOfServiceSection form={form} />
+                      </div>
+                    )}
+
                     {/* Simple pricing display */}
                     {isCalculated && (
                       <div className="mt-8 bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg">
