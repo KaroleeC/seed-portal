@@ -2969,8 +2969,8 @@ Generated: ${new Date().toLocaleDateString()}`;
         ),
       );
 
-      // Handle service-specific line items based on quote configuration
-      console.log(`🔵 CALLING manageServiceLineItems with:`);
+      // Handle service-specific line items based on quote configuration using the comprehensive system
+      console.log(`🔵 CALLING createInitialServiceLineItems (comprehensive system) with:`);
       console.log(`   includesBookkeeping: ${includesBookkeeping ?? false}`);
       console.log(`   includesTaas: ${includesTaas ?? false}`);
       console.log(`   taasMonthlyFee: $${taasMonthlyFee || 0}`);
@@ -2978,13 +2978,49 @@ Generated: ${new Date().toLocaleDateString()}`;
       console.log(`   bookkeepingMonthlyFee: $${bookkeepingMonthlyFee || 0}`);
       console.log(`   bookkeepingSetupFee: $${bookkeepingSetupFee || 0}`);
 
-      await this.manageServiceLineItems(quoteId, refreshedLineItems, {
+      // Clear existing line items first since we're recreating them with the comprehensive system
+      if (refreshedLineItems.length > 0) {
+        console.log(`🗑️ Clearing ${refreshedLineItems.length} existing line items before recreation`);
+        for (const item of refreshedLineItems) {
+          try {
+            await this.makeRequest(`/crm/v3/objects/line_items/${item.id}`, {
+              method: "DELETE",
+            });
+            console.log(`🗑️ Deleted existing line item: ${item.id}`);
+          } catch (error) {
+            console.log(`⚠️ Could not delete line item ${item.id}:`, error);
+          }
+        }
+      }
+
+      // Use the comprehensive service line item system
+      await this.createInitialServiceLineItems(quoteId, {
         includesBookkeeping: includesBookkeeping ?? false,
         includesTaas: includesTaas ?? false,
         taasMonthlyFee: taasMonthlyFee || 0,
         taasPriorYearsFee: taasPriorYearsFee || 0,
         bookkeepingMonthlyFee: bookkeepingMonthlyFee || 0,
         bookkeepingSetupFee: bookkeepingSetupFee || 0,
+        serviceTier: serviceTier,
+        // Pass all the new services
+        includesPayroll: includesPayroll ?? false,
+        payrollFee: payrollFee || 0,
+        includesAP: includesAP ?? false,
+        apFee: apFee || 0,
+        includesAR: includesAR ?? false,
+        arFee: arFee || 0,
+        includesAgentOfService: includesAgentOfService ?? false,
+        agentOfServiceFee: agentOfServiceFee || 0,
+        includesCfoAdvisory: includesCfoAdvisory ?? false,
+        cfoAdvisoryFee: cfoAdvisoryFee || 0,
+        cleanupProjectFee: cleanupProjectFee || 0,
+        priorYearFilingsFee: priorYearFilingsFee || 0,
+        includesFpaBuild: includesFpaBuild ?? false,
+        fpaServiceFee: fpaServiceFee || 0,
+        // Service tier information for AP/AR
+        apServiceTier: quoteData?.apServiceTier,
+        arServiceTier: quoteData?.arServiceTier,
+        qboSubscription: quoteData?.qboSubscription,
       });
 
       // Update the associated deal amount and name
