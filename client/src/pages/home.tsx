@@ -3990,7 +3990,7 @@ function HomePage() {
                               updateHubSpotMutation.mutate(quoteId);
                             }
                           } else if (editingQuoteId) {
-                            // Quote exists but no HubSpot IDs - save to database only, offer to push to HubSpot
+                            // Quote exists but no HubSpot IDs - save to database and push to HubSpot
                             const formData = form.getValues();
                             try {
                               const savedQuote = await new Promise<any>((resolve, reject) => {
@@ -4002,8 +4002,11 @@ function HomePage() {
                               
                               toast({
                                 title: "✅ Quote Updated",
-                                description: "Quote has been updated in database. Use 'Push to HubSpot' to sync with HubSpot.",
+                                description: "Quote updated in database. Now pushing to HubSpot...",
                               });
+                              
+                              // Now push to HubSpot
+                              pushToHubSpotMutation.mutate(editingQuoteId);
                             } catch (error) {
                               console.error('Failed to save quote:', error);
                               toast({
