@@ -1411,12 +1411,28 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
             if (deal) {
               try {
                 console.log('📋 Creating HubSpot quote for deal:', deal.id);
-                console.log('🔧 Quote service fields:', {
+                console.log('🔧 ALL Quote fields from database:', Object.keys(quote));
+                console.log('🔧 Quote service fields debug:', {
+                  // All possible service fields
                   servicePayroll: quote.servicePayroll,
                   servicePayrollService: quote.servicePayrollService,
                   serviceAgentOfService: quote.serviceAgentOfService,
                   servicePriorYearFilings: quote.servicePriorYearFilings,
-                  taasPriorYearsFee: quote.taasPriorYearsFee
+                  serviceCfoAdvisory: quote.serviceCfoAdvisory,
+                  serviceApLite: quote.serviceApLite,
+                  serviceArLite: quote.serviceArLite,
+                  serviceMonthlyBookkeeping: quote.serviceMonthlyBookkeeping,
+                  serviceCleanupProjects: quote.serviceCleanupProjects,
+                  serviceTaasMonthly: quote.serviceTaasMonthly,
+                  // Fee fields
+                  taasPriorYearsFee: quote.taasPriorYearsFee,
+                  payrollServiceFee: quote.payrollServiceFee,
+                  agentOfServiceFee: quote.agentOfServiceFee,
+                  cfoAdvisoryFee: quote.cfoAdvisoryFee,
+                  apServiceFee: quote.apServiceFee,
+                  arServiceFee: quote.arServiceFee,
+                  cleanupProjectFee: quote.cleanupProjectFee,
+                  fpaServiceFee: quote.fpaServiceFee
                 });
                 
                 const hubspotQuote = await hubSpotService.createQuote(

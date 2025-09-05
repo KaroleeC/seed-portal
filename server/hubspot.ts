@@ -3171,8 +3171,8 @@ Generated: ${new Date().toLocaleDateString()}`;
     assumptions.push("SCOPE ASSUMPTIONS:");
     assumptions.push("===================");
 
-    // Bookkeeping scope assumptions
-    if (quoteData.serviceBookkeeping || quoteData.includesBookkeeping) {
+    // Bookkeeping scope assumptions  
+    if (quoteData.serviceBookkeeping || quoteData.includesBookkeeping || quoteData.serviceMonthlyBookkeeping) {
       assumptions.push("");
       assumptions.push("BOOKKEEPING SERVICE:");
       assumptions.push(
@@ -3193,7 +3193,7 @@ Generated: ${new Date().toLocaleDateString()}`;
     }
 
     // TaaS scope assumptions
-    if (quoteData.serviceTaas || quoteData.includesTaas) {
+    if (quoteData.serviceTaas || quoteData.includesTaas || quoteData.serviceTaasMonthly) {
       assumptions.push("");
       assumptions.push("TAX AS A SERVICE (TaaS):");
 
@@ -3235,6 +3235,46 @@ Generated: ${new Date().toLocaleDateString()}`;
       assumptions.push(
         `• Number of Prior Years Filings: ${quoteData.priorYearsUnfiled || 0}`,
       );
+    }
+
+    // Add assumptions for other services
+    if (quoteData.servicePayroll || quoteData.servicePayrollService) {
+      assumptions.push("");
+      assumptions.push("PAYROLL SERVICE:");
+      assumptions.push(`• Employee Count: ${quoteData.payrollEmployeeCount || 'Not specified'}`);
+      assumptions.push(`• States Count: ${quoteData.payrollStateCount || 'Not specified'}`);
+    }
+
+    if (quoteData.serviceAgentOfService) {
+      assumptions.push("");
+      assumptions.push("AGENT OF SERVICE:");
+      assumptions.push(`• Additional States: ${quoteData.agentOfServiceAdditionalStates || 0}`);
+      assumptions.push(`• Complex Case: ${quoteData.agentOfServiceComplexCase ? 'Yes' : 'No'}`);
+    }
+
+    if (quoteData.serviceCfoAdvisory) {
+      assumptions.push("");
+      assumptions.push("CFO ADVISORY SERVICE:");
+      assumptions.push(`• Type: ${quoteData.cfoAdvisoryType || 'Not specified'}`);
+      if (quoteData.cfoAdvisoryBundleHours) {
+        assumptions.push(`• Bundle Hours: ${quoteData.cfoAdvisoryBundleHours}`);
+      }
+    }
+
+    if (quoteData.serviceApLite || quoteData.serviceApAdvanced || quoteData.serviceApArService) {
+      assumptions.push("");
+      assumptions.push("ACCOUNTS PAYABLE SERVICE:");
+      assumptions.push(`• Vendor Bills Band: ${quoteData.apVendorBillsBand || 'Not specified'}`);
+      assumptions.push(`• Vendor Count: ${quoteData.apVendorCount || 'Not specified'}`);
+      assumptions.push(`• Service Tier: ${quoteData.apServiceTier || 'Not specified'}`);
+    }
+
+    if (quoteData.serviceArLite || quoteData.serviceArAdvanced || quoteData.serviceArService) {
+      assumptions.push("");
+      assumptions.push("ACCOUNTS RECEIVABLE SERVICE:");
+      assumptions.push(`• Customer Invoices Band: ${quoteData.arCustomerInvoicesBand || 'Not specified'}`);
+      assumptions.push(`• Customer Count: ${quoteData.arCustomerCount || 'Not specified'}`);
+      assumptions.push(`• Service Tier: ${quoteData.arServiceTier || 'Not specified'}`);
     }
 
     return assumptions.join("\n");
