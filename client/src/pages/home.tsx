@@ -1502,6 +1502,8 @@ function HomePage() {
         // For duplicate quote approval, proceed to client details
         if (selectedContact) {
           setIsApprovalDialogOpen(false);
+          // Store the validated approval code in form before clearing it
+          form.setValue('approvalCode', approvalCode);
           setApprovalCode("");
           toast({
             title: "Approval Granted",
