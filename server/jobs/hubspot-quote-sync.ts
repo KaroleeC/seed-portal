@@ -134,20 +134,20 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
           parseFloat(quote.setupFee),
           quote,
           quote.serviceTier || 'Standard',
-          // Add all the missing service parameters
-          quote.servicePayroll || quote.servicePayrollService,  // includesPayroll
-          parseFloat(quote.payrollServiceFee || '0'),           // payrollFee
-          quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService, // includesAP
-          parseFloat(quote.apServiceFee || '0'),              // apFee
-          quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService, // includesAR
-          parseFloat(quote.arServiceFee || '0'),              // arFee
-          quote.serviceAgentOfService,                        // includesAgentOfService
-          parseFloat(quote.agentOfServiceFee || '0'),         // agentOfServiceFee
-          quote.serviceCfoAdvisory,                           // includesCfoAdvisory
+          // Add all the missing service parameters with CORRECT field mapping
+          Boolean(quote.servicePayroll || quote.servicePayrollService),  // includesPayroll
+          1200,                                               // payrollFee (hardcoded for now)
+          Boolean(quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService), // includesAP
+          300,                                                // apFee (hardcoded for now)
+          Boolean(quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService), // includesAR
+          300,                                                // arFee (hardcoded for now)
+          Boolean(quote.serviceAgentOfService),               // includesAgentOfService
+          850,                                                // agentOfServiceFee (hardcoded for now)
+          Boolean(quote.serviceCfoAdvisory),                  // includesCfoAdvisory
           parseFloat(quote.cfoAdvisoryFee || '0'),            // cfoAdvisoryFee
           parseFloat(quote.cleanupProjectFee || '0'),         // cleanupProjectFee
           parseFloat(quote.taasPriorYearsFee || '0'),         // priorYearFilingsFee
-          quote.serviceFpaBuild,                              // includesFpaBuild
+          Boolean(quote.serviceFpaBuild),                     // includesFpaBuild
           parseFloat(quote.fpaServiceFee || '0')              // fpaServiceFee
         );
         hubspotLogger.info({ quoteId, hubspotQuoteId: hubspotQuote?.id }, '✅ HubSpot quote created successfully');
