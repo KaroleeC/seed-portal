@@ -1397,6 +1397,27 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                   feeCalculation.serviceTierFee                       // calculatedServiceTierFee
                 );
                 console.log('✅ HubSpot quote created successfully:', hubspotQuote?.id);
+                
+                // Update the quote in our database with HubSpot IDs
+                if (hubspotQuote?.id) {
+                  try {
+                    const updatedQuote = await storage.updateQuote({
+                      id: quoteId,
+                      hubspotContactId: contact.id,
+                      hubspotDealId: deal.id,
+                      hubspotQuoteId: hubspotQuote.id,
+                      hubspotContactVerified: true,
+                      companyName: companyName
+                    });
+                    console.log('✅ Quote updated with HubSpot IDs:', {
+                      quoteId,
+                      hubspotDealId: deal.id,
+                      hubspotQuoteId: hubspotQuote.id
+                    });
+                  } catch (updateError) {
+                    console.error('❌ Failed to update quote with HubSpot IDs:', updateError);
+                  }
+                }
               } catch (quoteError) {
                 console.error('❌ Quote creation failed:', quoteError);
               }
