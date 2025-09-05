@@ -963,7 +963,8 @@ Services Include:
           bookkeepingMonthlyFee: calculatedBookkeepingMonthlyFee || 0,
           taasMonthlyFee: calculatedTaasMonthlyFee || 0,
           monthlyFee: monthlyFee,
-          setupFee: setupFee, // ✅ CRITICAL FIX: Add missing setupFee parameter!
+          setupFee: setupFee, // Combined setup fee for reference
+          bookkeepingSetupFee: bookkeepingSetupFee, // ⭐ CRITICAL: Add separated bookkeeping setup fee!
         });
         console.log("📋 Comprehensive line items added successfully to quote");
       } catch (lineItemError) {
