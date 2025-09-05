@@ -111,7 +111,7 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
       try {
         hubspotLogger.info({ quoteId, dealId: deal.id }, '📋 Creating HubSpot quote');
         // Calculate individual service fees from quote data
-        const { calculateCombinedFees } = await import('@shared/pricing');
+        const { calculateCombinedFees } = await import('../../shared/pricing.js');
         const feeCalculation = calculateCombinedFees(quote as any);
         
         hubspotLogger.info({ quoteId, calculatedFees: {

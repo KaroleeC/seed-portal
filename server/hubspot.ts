@@ -963,6 +963,7 @@ Services Include:
           bookkeepingMonthlyFee: calculatedBookkeepingMonthlyFee || 0,
           taasMonthlyFee: calculatedTaasMonthlyFee || 0,
           monthlyFee: monthlyFee,
+          setupFee: setupFee, // ✅ CRITICAL FIX: Add missing setupFee parameter!
         });
         console.log("📋 Comprehensive line items added successfully to quote");
       } catch (lineItemError) {
@@ -1039,12 +1040,9 @@ Services Include:
       }
     }
     
-    // Monthly Bookkeeping Setup Fee - USE CALCULATED SETUP FEE
-    if (serviceConfig.includesBookkeeping) {
-      const bookkeepingSetupFee = serviceConfig.bookkeeping?.setupFee || serviceConfig.setupFee;
-      if (bookkeepingSetupFee > 0) {
-        services.push({price: bookkeepingSetupFee, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING_SETUP});
-      }
+    // Monthly Bookkeeping Setup Fee - USE CALCULATED SETUP FEE  
+    if (serviceConfig.includesBookkeeping && serviceConfig.setupFee > 0) {
+      services.push({price: serviceConfig.setupFee, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING_SETUP});
     }
     
     // Tax as a Service - USE CALCULATED FEE ONLY

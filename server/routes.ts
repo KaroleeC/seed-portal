@@ -1417,7 +1417,6 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                 
                 // ✅ FIXED: Recalculate individual service fees using the same logic as frontend
                 console.log('🔧 Recalculating individual service fees from quote data (same as frontend)');
-                const { calculateCombinedFees } = await import('../shared/pricing.js');
                 const feeCalculation = calculateCombinedFees(quote);
                 
                 console.log('🔧 Calculated individual service fees:', {
