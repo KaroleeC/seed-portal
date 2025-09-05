@@ -575,16 +575,50 @@ export class HubSpotService {
     quoteData?: any,
   ): Promise<HubSpotDeal | null> {
     try {
-      // Generate dynamic deal name based on services
-      let serviceName = "";
-      if (includesBookkeeping && includesTaas) {
-        serviceName = "Bookkeeping + TaaS";
-      } else if (includesTaas) {
-        serviceName = "TaaS";
-      } else {
-        serviceName = "Bookkeeping";
+      // Generate comprehensive deal name based on ALL services
+      const services = [];
+      
+      // Check for all service types from quote data
+      if (includesBookkeeping || quoteData?.serviceBookkeeping || quoteData?.serviceMonthlyBookkeeping) {
+        services.push("Bookkeeping");
       }
+      if (includesTaas || quoteData?.serviceTaas || quoteData?.serviceTaasMonthly) {
+        services.push("TaaS");
+      }
+      if (quoteData?.servicePayroll || quoteData?.servicePayrollService) {
+        services.push("Payroll");
+      }
+      if (quoteData?.serviceApArLite || quoteData?.serviceApArService || quoteData?.serviceApLite || quoteData?.serviceApAdvanced) {
+        services.push("AP");
+      }
+      if (quoteData?.serviceArService || quoteData?.serviceArLite || quoteData?.serviceArAdvanced) {
+        services.push("AR");
+      }
+      if (quoteData?.serviceAgentOfService) {
+        services.push("Agent of Service");
+      }
+      if (quoteData?.serviceCfoAdvisory) {
+        services.push("CFO Advisory");
+      }
+      if (quoteData?.serviceFpaLite || quoteData?.serviceFpaBuild || quoteData?.serviceFpaSupport) {
+        services.push("FP&A");
+      }
+      if (quoteData?.serviceCleanupProjects) {
+        services.push("Cleanup");
+      }
+      if (quoteData?.servicePriorYearFilings) {
+        services.push("Prior Year Filings");
+      }
+      
+      // Fallback if no services detected
+      if (services.length === 0) {
+        services.push("Services");
+      }
+      
+      const serviceName = services.join(" + ");
       const dealName = `${companyName} - ${serviceName}`;
+      
+      console.log(`🏷️ Generated deal name: "${dealName}" for services:`, services);
       const totalAmount = (monthlyFee * 12 + setupFee).toString();
 
       // Get the correct pipeline and stage IDs dynamically
@@ -733,16 +767,50 @@ export class HubSpotService {
       // Get the user's profile information from HubSpot
       const userProfile = await this.getUserProfile(userEmail);
 
-      // Generate dynamic quote name based on services
-      let serviceName = "";
-      if (includesBookkeeping && includesTaas) {
-        serviceName = "Bookkeeping + TaaS Services";
-      } else if (includesTaas) {
-        serviceName = "TaaS Services";
-      } else {
-        serviceName = "Bookkeeping Services";
+      // Generate comprehensive quote name based on ALL services
+      const services = [];
+      
+      // Check for all service types from quote data
+      if (includesBookkeeping || quoteData?.serviceBookkeeping || quoteData?.serviceMonthlyBookkeeping) {
+        services.push("Bookkeeping");
       }
+      if (includesTaas || quoteData?.serviceTaas || quoteData?.serviceTaasMonthly) {
+        services.push("TaaS");
+      }
+      if (quoteData?.servicePayroll || quoteData?.servicePayrollService) {
+        services.push("Payroll");
+      }
+      if (quoteData?.serviceApArLite || quoteData?.serviceApArService || quoteData?.serviceApLite || quoteData?.serviceApAdvanced) {
+        services.push("AP");
+      }
+      if (quoteData?.serviceArService || quoteData?.serviceArLite || quoteData?.serviceArAdvanced) {
+        services.push("AR");
+      }
+      if (quoteData?.serviceAgentOfService) {
+        services.push("Agent of Service");
+      }
+      if (quoteData?.serviceCfoAdvisory) {
+        services.push("CFO Advisory");
+      }
+      if (quoteData?.serviceFpaLite || quoteData?.serviceFpaBuild || quoteData?.serviceFpaSupport) {
+        services.push("FP&A");
+      }
+      if (quoteData?.serviceCleanupProjects) {
+        services.push("Cleanup");
+      }
+      if (quoteData?.servicePriorYearFilings) {
+        services.push("Prior Year Filings");
+      }
+      
+      // Fallback if no services detected
+      if (services.length === 0) {
+        services.push("Services");
+      }
+      
+      const serviceName = services.join(" + ") + " Services";
       const quoteName = `${companyName} - ${serviceName} Quote`;
+      
+      console.log(`📋 Generated quote name: "${quoteName}" for services:`, services);
 
       // Set expiration date to 30 days from now
       const expirationDate = new Date();

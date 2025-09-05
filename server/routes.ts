@@ -1353,26 +1353,42 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         // Perform direct sync in background
         setTimeout(async () => {
           try {
+            console.log(`🚀 Starting direct HubSpot sync for quote ${quoteId}`);
+            console.log(`📧 Contact email: ${quote.contactEmail}`);
+            console.log(`💼 Quote data keys:`, Object.keys(quote));
+            
             // Verify contact exists in HubSpot
+            console.log(`🔍 Verifying contact: ${quote.contactEmail}`);
             const contactResult = await hubSpotService.verifyContactByEmail(quote.contactEmail);
             if (!contactResult.verified || !contactResult.contact) {
-              console.error(`Contact ${quote.contactEmail} not found in HubSpot`);
+              console.error(`❌ Contact ${quote.contactEmail} not found in HubSpot`);
               return;
             }
 
             const contact = contactResult.contact;
             const companyName = contact.properties.company || 'Unknown Company';
+            console.log(`🏢 Company name: ${companyName}`);
 
             // Get HubSpot owner ID
+            console.log(`👤 Getting HubSpot owner for: ${req.user.email}`);
             const ownerId = await hubSpotService.getOwnerByEmail(req.user.email);
+            console.log(`👤 Owner ID: ${ownerId || 'none'}`);
 
             // Update company address from quote data first
             try {
-              console.log('🏢 Syncing company address from quote data...');
+              console.log('🏢 Starting company address sync from quote data...');
+              console.log('📍 Quote address fields:', {
+                clientStreetAddress: quote.clientStreetAddress,
+                clientCity: quote.clientCity,
+                clientState: quote.clientState,
+                clientZipCode: quote.clientZipCode,
+                clientCountry: quote.clientCountry
+              });
               await hubSpotService.updateOrCreateCompanyFromQuote(quote, contact);
-              console.log('✅ Company address sync completed');
+              console.log('✅ Company address sync completed successfully');
             } catch (companyError) {
               console.error('⚠️ Company address sync failed:', companyError);
+              console.error('Company error details:', companyError.message);
             }
 
             // Create deal in HubSpot
