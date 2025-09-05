@@ -38,12 +38,14 @@ export function conditionalCsrf(req: Request, res: Response, next: NextFunction)
 
   // Skip CSRF for specific paths
   if (skipPaths.some(path => req.path.startsWith(path))) {
+    console.log(`🔓 CSRF SKIPPED for path: ${req.path} (matched skipPaths)`);
     return next();
   }
 
   // Skip CSRF for authenticated API requests with valid session
   if (req.path.startsWith('/api/') && req.isAuthenticated && req.isAuthenticated()) {
     // For authenticated API requests, CSRF is less critical due to SameSite=strict cookies
+    console.log(`🔓 CSRF SKIPPED for authenticated API request: ${req.path}`);
     return next();
   }
 

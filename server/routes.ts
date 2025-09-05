@@ -772,6 +772,14 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
   console.log('🔍 REACHED QUOTE ROUTE REGISTRATION SECTION - Line 768');
   console.log('🔍 About to register POST /api/quotes route...');
   
+  // TEMPORARY DEBUG ROUTE - Test if routes are loading properly
+  app.post("/api/test-quote-debug", requireAuth, async (req, res) => {
+    console.log('🧪 TEST ROUTE HIT - This means routes.ts is loading and auth works');
+    console.log('🧪 User:', req.user?.email);
+    console.log('🧪 Request body:', JSON.stringify(req.body, null, 2));
+    res.json({ success: true, message: "Test route works", user: req.user?.email });
+  });
+  
   // Create a new quote (protected) - DEBUGGING ROUTE REGISTRATION
   console.log('📋 REGISTERING QUOTE ROUTE: /api/quotes POST');
   app.post("/api/quotes", (req, res, next) => {
