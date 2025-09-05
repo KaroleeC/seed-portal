@@ -28,7 +28,7 @@ import { cache, CacheTTL, CachePrefix } from "./cache.js";
 
 // HubSpot Product Record IDs for All Services - CORRECTED VALID IDs
 const HUBSPOT_PRODUCT_IDS = {
-  MONTHLY_BOOKKEEPING: "25683750262", // ✅ FIXED - was 25687054003
+  MONTHLY_BOOKKEEPING: "25687054003", // ✅ CORRECTED - this is the actual valid ID from HubSpot
   TAAS: "26203849099", // ✅ FIXED - correct product ID provided by user
   GUIDED_SERVICE_TIER: "28884795543",
   CONCIERGE_SERVICE_TIER: "28891925782",
@@ -1066,7 +1066,7 @@ Services Include:
       console.log("🔍 VERIFYING HUBSPOT PRODUCT IDS");
 
       const currentIds = {
-        bookkeeping: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING,
+        bookkeeping: "25687054003", // Direct valid ID from HubSpot product list
         cleanup: "25683750263",
       };
 
@@ -1150,7 +1150,7 @@ Services Include:
     } catch (error) {
       console.error("❌ Error verifying product IDs:", error);
       return {
-        bookkeeping: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING,
+        bookkeeping: "25687054003", // Direct valid ID from HubSpot product list
         cleanup: "25683750263",
         valid: false,
       };
