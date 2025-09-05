@@ -1426,18 +1426,29 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
             }
 
             console.log(`✅ Direct HubSpot sync completed for quote ${quoteId}`);
+            
+            // Send response AFTER database update is complete
+            res.json({ 
+              success: true,
+              message: "HubSpot sync completed successfully",
+              quoteId,
+              action,
+              method: "direct"
+            });
           } catch (directSyncError) {
             console.error(`❌ Direct HubSpot sync failed for quote ${quoteId}:`, directSyncError);
+            
+            // Send error response
+            res.status(500).json({ 
+              success: false,
+              message: "HubSpot sync failed",
+              error: directSyncError.message,
+              quoteId,
+              action,
+              method: "direct"
+            });
           }
         }, 1000);
-
-        res.json({ 
-          success: true,
-          message: "HubSpot sync initiated (direct fallback)",
-          quoteId,
-          action,
-          method: "direct"
-        });
       }
     } catch (error: any) {
       console.error('Failed to sync to HubSpot:', error);
