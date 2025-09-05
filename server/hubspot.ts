@@ -1101,10 +1101,10 @@ Services Include:
           lineItems: [
             {
               condition: serviceConfig.bookkeepingMonthlyFee > 0,
-              name: "Monthly Bookkeeping (Custom)",
+              name: "Monthly Bookkeeping",
               price: serviceConfig.bookkeepingMonthlyFee,
               productId: productIds.bookkeeping,
-              description: "Seed Financial Monthly Bookkeeping (Custom)",
+              description: "Seed Financial Monthly Bookkeeping",
             },
             {
               condition: serviceConfig.bookkeepingSetupFee > 0,
@@ -1124,17 +1124,17 @@ Services Include:
           lineItems: [
             {
               condition: serviceConfig.taasMonthlyFee > 0,
-              name: "Monthly TaaS (Custom)",
+              name: "Monthly TaaS",
               price: serviceConfig.taasMonthlyFee,
               productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
-              description: "Seed Financial Monthly TaaS (Custom)",
+              description: "Seed Financial Monthly TaaS",
             },
             {
               condition: serviceConfig.taasPriorYearsFee > 0,
-              name: "TaaS Prior Years (Custom)",
+              name: "TaaS Prior Years",
               price: serviceConfig.taasPriorYearsFee,
               productId: productIds.cleanup, // Using cleanup product ID as placeholder
-              description: "Seed Financial TaaS Prior Years (Custom)",
+              description: "Seed Financial TaaS Prior Years",
             },
           ],
         },
@@ -1165,7 +1165,7 @@ Services Include:
           lineItems: [
             {
               condition: serviceConfig.payrollFee > 0,
-              name: "Payroll Service (Custom)",
+              name: "Payroll Service",
               price: serviceConfig.payrollFee,
               productId: HUBSPOT_PRODUCT_IDS.PAYROLL_SERVICE,
               description: "Seed Financial Payroll Service - Complete payroll processing and compliance",
@@ -1179,7 +1179,7 @@ Services Include:
           lineItems: [
             {
               condition: serviceConfig.apFee > 0,
-              name: "Accounts Payable Service (Custom)",
+              name: "Accounts Payable Service",
               price: serviceConfig.apFee,
               productId: HUBSPOT_PRODUCT_IDS.AP_LITE_SERVICE, // Will need logic to determine Lite vs Advanced
               description: "Seed Financial Accounts Payable Service - Automated vendor bill processing and payment management",
@@ -1193,7 +1193,7 @@ Services Include:
           lineItems: [
             {
               condition: serviceConfig.arFee > 0,
-              name: "Accounts Receivable Service (Custom)",
+              name: "Accounts Receivable Service",
               price: serviceConfig.arFee,
               productId: HUBSPOT_PRODUCT_IDS.AR_LITE_SERVICE, // Will need logic to determine Lite vs Advanced
               description: "Seed Financial Accounts Receivable Service - Customer invoice processing and collection management",
@@ -1207,7 +1207,7 @@ Services Include:
           lineItems: [
             {
               condition: serviceConfig.agentOfServiceFee > 0,
-              name: "Agent of Service (Custom)",
+              name: "Agent of Service",
               price: serviceConfig.agentOfServiceFee,
               productId: HUBSPOT_PRODUCT_IDS.AGENT_OF_SERVICE,
               description: "Seed Financial Agent of Service - Legal agent representation services for entity compliance",
@@ -1221,7 +1221,7 @@ Services Include:
           lineItems: [
             {
               condition: serviceConfig.cfoAdvisoryFee > 0,
-              name: "CFO Advisory Services (Custom)",
+              name: "CFO Advisory Services",
               price: serviceConfig.cfoAdvisoryFee,
               productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
               description: "Seed Financial CFO Advisory Services - Strategic financial planning and CFO-level advisory",
@@ -1235,7 +1235,7 @@ Services Include:
           lineItems: [
             {
               condition: serviceConfig.cleanupProjectFee > 0,
-              name: "Bookkeeping Cleanup Project (Custom)",
+              name: "Bookkeeping Cleanup Project",
               price: serviceConfig.cleanupProjectFee,
               productId: productIds.cleanup,
               description: "Seed Financial Bookkeeping Cleanup Project - One-time bookkeeping cleanup and catch-up work",
@@ -1249,7 +1249,7 @@ Services Include:
           lineItems: [
             {
               condition: serviceConfig.priorYearFilingsFee > 0,
-              name: "Prior Year Tax Filings (Custom)",
+              name: "Prior Year Tax Filings",
               price: serviceConfig.priorYearFilingsFee,
               productId: productIds.cleanup, // Using cleanup product ID as placeholder
               description: "Seed Financial Prior Year Tax Filings - Catch-up tax filings for previous years",
@@ -1263,7 +1263,7 @@ Services Include:
           lineItems: [
             {
               condition: serviceConfig.fpaServiceFee > 0,
-              name: "FP&A Services (Custom)",
+              name: "FP&A Services",
               price: serviceConfig.fpaServiceFee,
               productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
               description: "Seed Financial FP&A Services - Financial planning and analysis build-out and support",
@@ -3321,10 +3321,10 @@ Generated: ${new Date().toLocaleDateString()}`;
         );
         if (serviceConfig.bookkeepingMonthlyFee > 0) {
           requiredLineItems.set("bookkeeping_monthly", {
-            name: "Monthly Bookkeeping (Custom)",
+            name: "Monthly Bookkeeping",
             price: serviceConfig.bookkeepingMonthlyFee,
             productId: "25687054003",
-            description: "Seed Financial Monthly Bookkeeping (Custom)",
+            description: "Seed Financial Monthly Bookkeeping",
             identifiers: ["Monthly Bookkeeping"],
           });
           console.log(
@@ -3354,10 +3354,10 @@ Generated: ${new Date().toLocaleDateString()}`;
         console.log(`✅ TaaS service ENABLED - Adding required line items`);
         if (serviceConfig.taasMonthlyFee > 0) {
           requiredLineItems.set("taas_monthly", {
-            name: "Monthly TaaS (Custom)",
+            name: "Monthly TaaS",
             price: serviceConfig.taasMonthlyFee,
             productId: "26203849099", // Tax as a Service product ID
-            description: "Seed Financial Monthly TaaS (Custom)",
+            description: "Seed Financial Monthly TaaS",
             identifiers: ["Monthly TaaS", "TaaS (Custom)"],
           });
           console.log(
@@ -3366,10 +3366,10 @@ Generated: ${new Date().toLocaleDateString()}`;
         }
         if (serviceConfig.taasPriorYearsFee > 0) {
           requiredLineItems.set("taas_setup", {
-            name: "TaaS Prior Years (Custom)",
+            name: "TaaS Prior Years",
             price: serviceConfig.taasPriorYearsFee,
             productId: "26354718811", // Prior Years Tax Filing product ID
-            description: "Seed Financial TaaS Prior Years (Custom)",
+            description: "Seed Financial TaaS Prior Years",
             identifiers: ["TaaS Prior Years", "Prior Years (Custom)"],
           });
           console.log(
