@@ -26,20 +26,35 @@ export interface HubSpotDeal {
 
 import { cache, CacheTTL, CachePrefix } from "./cache.js";
 
-// HubSpot Product Record IDs for All Services - CORRECTED VALID IDs
+// HubSpot Product Record IDs - OFFICIAL SINGLE SOURCE OF TRUTH
+// All IDs verified with HubSpot native product names (September 2025)
 const HUBSPOT_PRODUCT_IDS = {
-  MONTHLY_BOOKKEEPING: "25687054003", // ✅ CORRECTED - this is the actual valid ID from HubSpot
-  TAAS: "26203849099", // ✅ FIXED - correct product ID provided by user
-  GUIDED_SERVICE_TIER: "28884795543",
-  CONCIERGE_SERVICE_TIER: "28891925782",
-  PAYROLL_SERVICE: "25683750265", // Updated to match services.ts
-  AP_LITE_SERVICE: "25683750266", // Updated to match services.ts  
-  AR_LITE_SERVICE: "25683750267", // Updated to match services.ts
-  AP_ADVANCED_SERVICE: "28960182653",
-  AR_ADVANCED_SERVICE: "28928071009",
-  AGENT_OF_SERVICE: "29001355021",
-  CLEANUP_PROJECT: "25683750263",
-  PRIOR_YEAR_FILINGS: "26354718811"
+  // Core Services
+  MONTHLY_BOOKKEEPING: "25687054003",           // Monthly Bookkeeping
+  CLEANUP_PROJECT: "25683750263",               // Clean-Up / Catch-Up Project
+  TAAS: "26203849099",                          // Tax as a Service (Monthly)
+  MANAGED_QBO_SUBSCRIPTION: "26213746490",     // Managed QBO Subscription
+  PRIOR_YEAR_FILINGS: "26354718811",           // Prior Years Tax Filing(s)
+  
+  // Service Tier Upgrades
+  GUIDED_SERVICE_TIER: "28884795543",          // Guided Service Tier Upgrade
+  CONCIERGE_SERVICE_TIER: "28891925782",       // Concierge Service Tier Upgrade
+  
+  // CFO Advisory Services
+  CFO_ADVISORY_DEPOSIT: "28945017957",         // CFO Advisory Pay-as-you-Go Deposit
+  CFO_ADVISORY_8_HOUR: "28928008785",          // CFO Advisory 8-Hour Bundle
+  CFO_ADVISORY_16_HOUR: "28945017959",         // CFO Advisory 16-Hour Bundle
+  CFO_ADVISORY_32_HOUR: "28960863883",         // CFO Advisory 32-Hour Bundle
+  CFO_ADVISORY_40_HOUR: "28960863884",         // CFO Advisory 40-Hour Bundle
+  
+  // Accounts Receivable/Payable Services
+  AR_LITE_SERVICE: "28960244571",              // AR Lite
+  AP_LITE_SERVICE: "28960182651",              // AP Lite
+  AR_ADVANCED_SERVICE: "28928071009",          // AR Advanced
+  AP_ADVANCED_SERVICE: "28960182653",          // AP Advanced
+  
+  // Agent Services
+  AGENT_OF_SERVICE: "29001355021",             // Agent of Service
 } as const;
 
 export class HubSpotService {
@@ -1066,8 +1081,8 @@ Services Include:
       console.log("🔍 VERIFYING HUBSPOT PRODUCT IDS");
 
       const currentIds = {
-        bookkeeping: "25687054003", // Direct valid ID from HubSpot product list
-        cleanup: "25683750263",
+        bookkeeping: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING,
+        cleanup: HUBSPOT_PRODUCT_IDS.CLEANUP_PROJECT,
       };
 
       // Test current product IDs
@@ -1150,8 +1165,8 @@ Services Include:
     } catch (error) {
       console.error("❌ Error verifying product IDs:", error);
       return {
-        bookkeeping: "25687054003", // Direct valid ID from HubSpot product list
-        cleanup: "25683750263",
+        bookkeeping: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING,
+        cleanup: HUBSPOT_PRODUCT_IDS.CLEANUP_PROJECT,
         valid: false,
       };
     }

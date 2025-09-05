@@ -28,7 +28,7 @@ export const SERVICE_REGISTRY = {
     name: 'Monthly Bookkeeping',
     description: 'Ongoing monthly bookkeeping and financial statements',
     category: SERVICE_CATEGORIES.CORE,
-    hubspotProductId: '25683750262', // Monthly bookkeeping product ID
+    hubspotProductId: '25687054003', // Monthly Bookkeeping
     pricingKey: 'bookkeeping',
     msaDescription: 'bookkeeping and financial reporting',
     commissionType: 'monthly',
@@ -41,7 +41,7 @@ export const SERVICE_REGISTRY = {
     name: 'TaaS',
     description: 'Tax as a Service - comprehensive tax advisory and preparation',
     category: SERVICE_CATEGORIES.CORE,
-    hubspotProductId: '25683750264', // TaaS monthly product ID
+    hubspotProductId: '26203849099', // Tax as a Service (Monthly)
     pricingKey: 'taas',
     msaDescription: 'tax preparation and filing services',
     commissionType: 'monthly',
@@ -54,7 +54,7 @@ export const SERVICE_REGISTRY = {
     name: 'Bookkeeping Cleanup Project',
     description: 'One-time bookkeeping cleanup and catch-up work',
     category: SERVICE_CATEGORIES.CORE,
-    hubspotProductId: '25683750263', // Cleanup projects product ID
+    hubspotProductId: '25683750263', // Clean-Up / Catch-Up Project
     pricingKey: 'cleanup',
     msaDescription: 'bookkeeping cleanup and catch-up services',
     commissionType: 'setup',
@@ -67,7 +67,7 @@ export const SERVICE_REGISTRY = {
     name: 'Prior Years Tax Filings',
     description: 'Catch-up tax filings for previous years',
     category: SERVICE_CATEGORIES.CORE,
-    hubspotProductId: '26354718811', // Prior year filings product ID
+    hubspotProductId: '26354718811', // Prior Years Tax Filing(s)
     pricingKey: 'priorYears',
     msaDescription: 'prior year tax preparation and filing',
     commissionType: 'setup',
@@ -94,7 +94,7 @@ export const SERVICE_REGISTRY = {
     name: 'Payroll',
     description: 'Complete payroll processing and compliance',
     category: SERVICE_CATEGORIES.OPERATIONAL,
-    hubspotProductId: '25683750265', // Payroll product ID
+    hubspotProductId: '', // No direct payroll product in current HubSpot list
     pricingKey: 'payroll',
     msaDescription: 'payroll administration services',
     commissionType: 'monthly',
@@ -108,7 +108,7 @@ export const SERVICE_REGISTRY = {
     name: 'Accounts Payable (AP)',
     description: 'Automated vendor bill processing and payment management',
     category: SERVICE_CATEGORIES.OPERATIONAL,
-    hubspotProductId: '25683750266', // AP service product ID
+    hubspotProductId: '28960182651', // AP Lite
     pricingKey: 'ap',
     msaDescription: 'accounts payable management',
     commissionType: 'monthly',
@@ -122,7 +122,7 @@ export const SERVICE_REGISTRY = {
     name: 'Accounts Receivable (AR)',
     description: 'Customer invoice processing and collection management',
     category: SERVICE_CATEGORIES.OPERATIONAL,
-    hubspotProductId: '25683750267', // AR service product ID
+    hubspotProductId: '28960244571', // AR Lite
     pricingKey: 'ar',
     msaDescription: 'accounts receivable management',
     commissionType: 'monthly',
