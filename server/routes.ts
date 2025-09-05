@@ -772,12 +772,17 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
   console.log('🔍 REACHED QUOTE ROUTE REGISTRATION SECTION - Line 768');
   console.log('🔍 About to register POST /api/quotes route...');
   
-  // TEMPORARY DEBUG ROUTE - Test if routes are loading properly
-  app.post("/api/test-quote-debug", requireAuth, async (req, res) => {
-    console.log('🧪 TEST ROUTE HIT - This means routes.ts is loading and auth works');
-    console.log('🧪 User:', req.user?.email);
-    console.log('🧪 Request body:', JSON.stringify(req.body, null, 2));
-    res.json({ success: true, message: "Test route works", user: req.user?.email });
+  // Add comprehensive logging for debugging
+  app.use('/api/quotes', (req, res, next) => {
+    console.log('📊 QUOTE MIDDLEWARE - Request details:');
+    console.log('Method:', req.method);
+    console.log('Path:', req.path);  
+    console.log('URL:', req.url);
+    console.log('Body keys:', Object.keys(req.body || {}));
+    console.log('User:', req.user?.email || 'Not authenticated');
+    console.log('Session exists:', !!req.session);
+    console.log('Is authenticated:', req.isAuthenticated?.() || false);
+    next();
   });
   
   // Create a new quote (protected) - DEBUGGING ROUTE REGISTRATION
