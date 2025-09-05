@@ -44,6 +44,7 @@ function Router() {
         <ProtectedRoute path="/sales-dashboard" component={SalesDashboard} />
         <ProtectedRoute path="/service-dashboard" component={ServiceDashboard} />
         <ProtectedRoute path="/calculator" component={Calculator} />
+        <ProtectedRoute path="/quote-calculator" component={Calculator} />
         <ProtectedRoute path="/commission-tracker" component={CommissionTracker} />
         <ProtectedRoute path="/admin-commission-tracker" component={AdminCommissionTracker} />
         <ProtectedRoute path="/admin/commission-tracker" component={AdminCommissionTracker} />

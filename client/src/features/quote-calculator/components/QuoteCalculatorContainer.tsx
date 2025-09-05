@@ -38,6 +38,7 @@ import ARSection from "@/components/quote-form/ARSection";
 import AgentOfServiceSection from "@/components/quote-form/AgentOfServiceSection";
 import { PricingDisplayPanel } from "./PricingDisplayPanel";
 import { QuoteFormCore } from "./QuoteFormCore";
+import { QuoteSubmissionFlow } from "./QuoteSubmissionFlow";
 
 // COPY-PASTED: All helper constants and functions preserved exactly
 const currentMonth = new Date().getMonth() + 1;
