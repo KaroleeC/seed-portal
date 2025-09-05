@@ -937,6 +937,10 @@ Services Include:
       // Use the comprehensive service management system for creating line items
       try {
         console.log("🔧 Using comprehensive service line item system");
+        console.log("🚨 DEBUGGING createQuote parameters:");
+        console.log("  includesBookkeeping parameter:", includesBookkeeping, "type:", typeof includesBookkeeping);
+        console.log("  includesTaas parameter:", includesTaas, "type:", typeof includesTaas);
+        console.log("  bookkeepingSetupFee parameter:", bookkeepingSetupFee, "type:", typeof bookkeepingSetupFee);
         await this.createInitialServiceLineItems(result.id, {
           includesBookkeeping: includesBookkeeping ?? true,
           includesTaas: includesTaas ?? false,
