@@ -4,8 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { Copy, Save, Check, Search, ArrowUpDown, Edit, AlertCircle, Archive, CheckCircle, XCircle, Loader2, Upload, User, LogOut, Calculator, FileText, Sparkles, DollarSign, X, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, HelpCircle, Bell, Settings, Lock, Unlock, Building, Users, CreditCard, Receipt } from "lucide-react";
-import { useLocation } from "wouter";
+import { Copy, Save, Check, Search, ArrowUpDown, Edit, AlertCircle, Archive, CheckCircle, XCircle, Loader2, Upload, User, LogOut, Calculator, FileText, DollarSign, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, HelpCircle, Bell, Settings, Lock, Unlock, Building, Users, CreditCard, Receipt } from "lucide-react";
 import { insertQuoteSchema, type Quote } from "@shared/schema";
 import { calculateCombinedFees } from "@shared/pricing";
 import { mapQuoteToFormServices, getServiceKeys, getAllServices } from "@shared/services";
@@ -290,76 +289,12 @@ function roundToNearest25(num: number): number {
   return Math.ceil(num / 25) * 25;
 }
 
-function calculateFees(data: Partial<FormData>) {
-  // Only require core pricing fields - cleanup fields not needed for automatic setup fee
-  if (!data.monthlyRevenueRange || !data.monthlyTransactions || !data.industry) {
-    return { 
-      monthlyFee: 0, 
-      setupFee: 0,
-      breakdown: {
-        baseFee: 0,
-        revenueMultiplier: 1,
-        afterRevenue: 0,
-        txFee: 0,
-        afterTx: 0,
-        industryMultiplier: 1,
-        finalMonthly: 0,
-        cleanupComplexity: 0,
-        cleanupMonths: 0,
-        setupCalc: 0
-      }
-    };
-  }
-
-  const revenueMultiplier = revenueMultipliers[data.monthlyRevenueRange as keyof typeof revenueMultipliers] || 1.0;
-  const txFee = txSurcharge[data.monthlyTransactions as keyof typeof txSurcharge] || 0;
-  const industryData = industryMultipliers[data.industry as keyof typeof industryMultipliers] || { monthly: 1, cleanup: 1 };
-  
-  // Step-by-step calculation for breakdown
-  const afterRevenue = baseMonthlyFee * revenueMultiplier;
-  const afterTx = afterRevenue + txFee;
-  const monthlyFeeBeforeQBO = Math.round(afterTx * industryData.monthly);
-  
-  // Add QBO Subscription fee if selected
-  let monthlyFee = monthlyFeeBeforeQBO;
-  if (data.qboSubscription) {
-    monthlyFee += 60;
-  }
-  
-  // Calculate setup fee using new formula: monthly fee before discount * current month * 0.25
-  const currentMonth = new Date().getMonth() + 1; // Get current month (1-12)
-  const setupFee = Math.round(monthlyFeeBeforeQBO * currentMonth * 0.25);
-  
-  // For breakdown display
-  const setupCalc = setupFee;
-  
-  return { 
-    monthlyFee, 
-    setupFee,
-    breakdown: {
-      baseFee: baseMonthlyFee,
-      revenueMultiplier,
-      afterRevenue: Math.round(afterRevenue),
-      txFee,
-      afterTx: Math.round(afterTx),
-      industryMultiplier: industryData.monthly,
-      finalMonthly: monthlyFee,
-      cleanupComplexity: 0, // Not used in new formula
-      cleanupMonths: currentMonth, // Current month number for setup fee
-      setupCalc: Math.round(setupCalc),
-      cleanupBeforeIndustry: Math.round(monthlyFeeBeforeQBO), // Monthly fee before QBO
-      industryCleanupMultiplier: 0.25 // The 0.25 multiplier from new formula
-    }
-  };
-}
-
-// Local TaaS calculation function removed - now using shared/pricing.ts
+// Local calculation functions removed - now using shared/pricing.ts
 
 
 function HomePage() {
   const { toast } = useToast();
   const { user, logoutMutation } = useAuth();
-  const [, setLocation] = useLocation();
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [editingQuoteId, setEditingQuoteId] = useState<number | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -1435,12 +1370,12 @@ function HomePage() {
         }
       } else {
         // This is a cleanup override approval request (existing logic)
-        const fees = calculateFees(formData);
+        const fees = calculateCombinedFees(formData);
         
         // Include custom setup fee if "Other" reason is selected
         const setupFee = formData.overrideReason === "Other" && formData.customSetupFee 
           ? parseFloat(formData.customSetupFee) 
-          : fees.setupFee;
+          : fees.bookkeeping.setupFee;
       
       const result = await apiRequest("/api/approval/request", {
         method: "POST",
@@ -1456,7 +1391,7 @@ function HomePage() {
             overrideReason: formData.overrideReason || "",
             customOverrideReason: formData.customOverrideReason || "",
             customSetupFee: formData.customSetupFee || "",
-            monthlyFee: fees.monthlyFee,
+            monthlyFee: fees.totalMonthlyFee,
             setupFee: setupFee,
             originalCleanupMonths: currentMonth // Include original minimum
           }

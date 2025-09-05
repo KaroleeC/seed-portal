@@ -92,45 +92,15 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export async function registerRoutes(app: Express, sessionRedis?: Redis | null): Promise<Server> {
-  console.log('[Routes] ============= REGISTERROUTES CALLED =============');
-  console.log('[Routes] Function entry point reached');
-  console.log('[Routes] sessionRedis parameter:', !!sessionRedis);
-  console.log('[Routes] REDIS_URL available:', !!process.env.REDIS_URL);
-  console.log('[Routes] 🚀 Starting direct session setup...');
-  
   // Session setup is now centralized and handled elsewhere
-  console.log('[Routes] Session setup handled centrally, proceeding with routes...');
   
   // Setup authentication after sessions
   await setupAuth(app, null);
-  console.log('[Routes] ✅ Auth setup completed');
 
   // Apply CSRF protection after sessions are initialized - simplified
   app.use(conditionalCsrf);
   app.use(provideCsrfToken);
 
-  // Debug middleware to track all API requests
-  app.use('/api', (req, res, next) => {
-    if (req.method === 'POST' && req.url.includes('quotes') && !req.url.includes('check-existing')) {
-      console.log('🔴🔴🔴 QUOTES POST MIDDLEWARE HIT:', {
-        method: req.method,
-        url: req.url,
-        path: req.path,
-        originalUrl: req.originalUrl,
-        query: req.query,
-        timestamp: new Date().toISOString()
-      });
-    }
-    console.log('API Debug - Request intercepted:', {
-      method: req.method,
-      url: req.url,
-      path: req.path,
-      originalUrl: req.originalUrl,
-      query: req.query,
-      timestamp: new Date().toISOString()
-    });
-    next();
-  });
 
   // Apply rate limiting to all API routes
   app.use('/api', apiRateLimit);
@@ -147,14 +117,6 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
   
   // Login endpoint - FIXED to use proper passport authentication
   app.post("/api/login", (req, res, next) => {
-    console.log('[Login] 🔑 Starting PASSPORT authentication for:', req.body.email);
-    console.log('[Login] Environment debug:', {
-      NODE_ENV: process.env.NODE_ENV,
-      REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
-      sessionId: req.sessionID,
-      cookieSecure: req.session?.cookie?.secure,
-      cookieSameSite: req.session?.cookie?.sameSite
-    });
 
     // Use passport.authenticate() instead of manual authentication
     passport.authenticate('local', (err, user, info) => {
@@ -240,37 +202,6 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
 
   // Get user endpoint for frontend
   app.get("/api/user", (req, res) => {
-    console.log('🔐 /api/user endpoint called');
-    
-    // CRITICAL: Log incoming cookie details for debugging
-    console.log('🔐 🍪 INCOMING COOKIE DEBUG:', {
-      hasCookieHeader: !!req.headers.cookie,
-      cookieHeader: req.headers.cookie?.substring(0, 100) + '...',
-      oseedSidPresent: req.headers.cookie?.includes('oseed.sid'),
-      userAgent: req.headers['user-agent']?.substring(0, 50),
-      origin: req.headers.origin,
-      referer: req.headers.referer
-    });
-    
-    console.log('🔐 Session ID:', req.sessionID);
-    console.log('🔐 Session exists:', !!req.session);
-    console.log('🔐 Session store type:', req.session.constructor.name);
-    console.log('🔐 Session data keys:', Object.keys(req.session));
-    console.log('🔐 Raw session dump:', req.session);
-    console.log('🔐 Serialized session:', JSON.stringify(req.session, null, 2));
-    console.log('🔐 Authenticated:', req.isAuthenticated());
-    console.log('🔐 User:', req.user ? `${req.user.email} (${req.user.id})` : 'None');
-    console.log('🔐 Session passport:', (req.session as any)?.passport);
-    console.log('🔐 Session user:', (req.session as any)?.user);
-    console.log('🔐 Session isImpersonating:', (req.session as any)?.isImpersonating);
-    console.log('🔐 Session originalUser:', (req.session as any)?.originalUser);
-    console.log('🔐 Cookie details:', {
-      secure: req.session?.cookie?.secure,
-      httpOnly: req.session?.cookie?.httpOnly,
-      sameSite: req.session?.cookie?.sameSite,
-      domain: req.session?.cookie?.domain,
-      path: req.session?.cookie?.path
-    });
     
     // Check both passport and manual session
     const user = req.user || (req.session as any)?.user;
@@ -285,12 +216,6 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         originalUser
       };
       
-      console.log('🔐 Final user data:', {
-        id: userData.id,
-        email: userData.email,
-        isImpersonating: userData.isImpersonating,
-        originalUser: userData.originalUser ? userData.originalUser.email : null
-      });
       
       res.json(userData);
     } else {
@@ -299,7 +224,6 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
     }
   });
 
-  console.log('🔍 CHECKPOINT B: Finished /api/user route, continuing...');
 
   // Simple user creation endpoint for initial setup - CSRF exempt for testing
   app.post("/api/create-user", (req, res, next) => {
