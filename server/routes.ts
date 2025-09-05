@@ -905,13 +905,20 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       console.log('🚀 SENDING RESPONSE via res.json()');
       res.json(quote);
     } catch (error) {
-      console.error('Quote creation error:', error);
+      console.error('🚨 QUOTE CREATION ERROR CAUGHT:', error);
+      console.error('🚨 Error type:', typeof error);
+      console.error('🚨 Error constructor:', error.constructor.name);
+      console.error('🚨 Error message:', error.message);
+      console.error('🚨 Error stack:', error.stack);
+      
       if (error instanceof z.ZodError) {
-        console.error('Validation errors:', error.errors);
+        console.error('🚨 ZOD VALIDATION ERROR - Details:', error.errors);
+        console.error('🚨 ZOD VALIDATION ERROR - Full:', JSON.stringify(error.errors, null, 2));
         res.status(400).json({ message: "Invalid quote data", errors: error.errors });
       } else {
-        console.error('Database or other error:', error.message);
-        res.status(500).json({ message: "Failed to create quote" });
+        console.error('🚨 NON-ZOD ERROR - Database or other error:', error.message);
+        console.error('🚨 NON-ZOD ERROR - Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+        res.status(500).json({ message: "Failed to create quote", debug: error.message });
       }
     }
   });
