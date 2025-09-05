@@ -47,6 +47,9 @@ const HUBSPOT_PRODUCT_IDS = {
   CFO_ADVISORY_32_HOUR: "28960863883",         // CFO Advisory 32-Hour Bundle
   CFO_ADVISORY_40_HOUR: "28960863884",         // CFO Advisory 40-Hour Bundle
   
+  // Payroll Services
+  PAYROLL_SERVICE: "25683750265",              // Payroll Service (from your list - I missed adding this!)
+  
   // Accounts Receivable/Payable Services
   AR_LITE_SERVICE: "28960244571",              // AR Lite
   AP_LITE_SERVICE: "28960182651",              // AP Lite
@@ -1030,11 +1033,9 @@ Services Include:
       services.push({price: serviceConfig.priorYearFilingsFee, productId: HUBSPOT_PRODUCT_IDS.PRIOR_YEAR_FILINGS});
     }
     
-    // Payroll Service - Create as additional service line item
+    // Payroll Service - NOW WITH PROPER PRODUCT ID!
     if (serviceConfig.includesPayroll) {
-      console.log('📋 Adding Payroll service line item (no specific HubSpot product, will use generic approach)');
-      // For now, we'll skip payroll until we have a proper product ID
-      // services.push({price: serviceConfig.payrollFee || 137, productId: 'CREATE_CUSTOM_PAYROLL'});
+      services.push({price: serviceConfig.payrollFee || 137, productId: HUBSPOT_PRODUCT_IDS.PAYROLL_SERVICE});
     }
     
     // Accounts Payable Service
