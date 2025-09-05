@@ -372,6 +372,7 @@ function HomePage() {
   const [isRequestingApproval, setIsRequestingApproval] = useState(false);
   const [isValidatingCode, setIsValidatingCode] = useState(false);
   const [hasRequestedApproval, setHasRequestedApproval] = useState(false);
+  const [isApproved, setIsApproved] = useState(false);
   
   // Archive dialog state
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
