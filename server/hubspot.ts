@@ -35,7 +35,9 @@ const HUBSPOT_PRODUCT_IDS = {
   AR_LITE_SERVICE: "28960244571",
   AP_ADVANCED_SERVICE: "28960182653",
   AR_ADVANCED_SERVICE: "28928071009",
-  AGENT_OF_SERVICE: "29001355021"
+  AGENT_OF_SERVICE: "29001355021",
+  CLEANUP_PROJECT: "25683750263",
+  PRIOR_YEAR_FILINGS: "26354718811"
 } as const;
 
 export class HubSpotService {
@@ -1257,7 +1259,7 @@ Services Include:
               condition: serviceConfig.cleanupProjectFee > 0,
               name: "Bookkeeping Cleanup Project",
               price: serviceConfig.cleanupProjectFee,
-              productId: productIds.cleanup,
+              productId: HUBSPOT_PRODUCT_IDS.CLEANUP_PROJECT,
               description: "Seed Financial Bookkeeping Cleanup Project - One-time bookkeeping cleanup and catch-up work",
             },
           ],
@@ -1271,7 +1273,7 @@ Services Include:
               condition: serviceConfig.priorYearFilingsFee > 0,
               name: "Prior Year Tax Filings",
               price: serviceConfig.priorYearFilingsFee,
-              productId: productIds.cleanup, // Using cleanup product ID as placeholder
+              productId: HUBSPOT_PRODUCT_IDS.PRIOR_YEAR_FILINGS,
               description: "Seed Financial Prior Year Tax Filings - Catch-up tax filings for previous years",
             },
           ],
@@ -1514,7 +1516,7 @@ Services Include:
       console.log(`🏗️ Step 2: Creating line item`);
       const lineItem = {
         properties: {
-          name: customName || product.properties?.name || "Service",
+          name: product.properties?.name || "Service",
           price: price.toString(),
           quantity: quantity.toString(),
           hs_product_id: productId,
