@@ -48,7 +48,7 @@ const HUBSPOT_PRODUCT_IDS = {
   CFO_ADVISORY_40_HOUR: "28960863884",         // CFO Advisory 40-Hour Bundle
   
   // Payroll Services
-  PAYROLL_SERVICE: "25683750265",              // Payroll Service (from your list - I missed adding this!)
+  PAYROLL_SERVICE: "29038614325",              // Payroll Administration
   
   // Accounts Receivable/Payable Services
   AR_LITE_SERVICE: "28960244571",              // AR Lite
