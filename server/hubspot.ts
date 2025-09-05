@@ -1044,8 +1044,13 @@ Services Include:
     // Monthly Bookkeeping Setup Fee - USE SEPARATED BOOKKEEPING SETUP FEE (NOT COMBINED)
     if (serviceConfig.includesBookkeeping) {
       const bookkeepingSetupFee = serviceConfig.bookkeepingSetupFee || serviceConfig.setupFee;
+      console.log("🔧 CRITICAL DEBUG - Monthly Bookkeeping Setup Fee Calculation:");
+      console.log("  serviceConfig.bookkeepingSetupFee:", serviceConfig.bookkeepingSetupFee);
+      console.log("  serviceConfig.setupFee:", serviceConfig.setupFee);
+      console.log("  FINAL bookkeepingSetupFee value used:", bookkeepingSetupFee);
       if (bookkeepingSetupFee > 0) {
         services.push({price: bookkeepingSetupFee, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING_SETUP});
+        console.log("  ✅ Added Monthly Bookkeeping Setup Fee line item with price:", bookkeepingSetupFee);
       }
     }
     
