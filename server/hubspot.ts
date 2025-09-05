@@ -29,7 +29,7 @@ import { cache, CacheTTL, CachePrefix } from "./cache.js";
 // HubSpot Product Record IDs for All Services - CORRECTED VALID IDs
 const HUBSPOT_PRODUCT_IDS = {
   MONTHLY_BOOKKEEPING: "25683750262", // ✅ FIXED - was 25687054003
-  TAAS: "25683750264", // ✅ FIXED - was 25684853779 (invalid/404)
+  TAAS: "26203849099", // ✅ FIXED - correct product ID provided by user
   GUIDED_SERVICE_TIER: "28884795543",
   CONCIERGE_SERVICE_TIER: "28891925782",
   PAYROLL_SERVICE: "25683750265", // Updated to match services.ts
