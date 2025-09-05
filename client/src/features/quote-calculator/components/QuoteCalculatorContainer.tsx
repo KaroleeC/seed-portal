@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { Copy, Save, Check, Search, ArrowUpDown, Edit, AlertCircle, Archive, CheckCircle, XCircle, Loader2, Upload, User, LogOut, Calculator, FileText, DollarSign, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, HelpCircle, Bell, Settings, Lock, Unlock, Building, Users, CreditCard, Receipt } from "lucide-react";
+import { Copy, Save, Check, Search, ArrowUpDown, Edit, AlertCircle, Archive, CheckCircle, XCircle, Loader2, Upload, User, LogOut, Calculator, FileText, DollarSign, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, HelpCircle, Bell, Settings, Lock, Unlock, Building, Users, CreditCard, Receipt, Sparkles, TrendingUp, Info } from "lucide-react";
 import { insertQuoteSchema, type Quote } from "@shared/schema";
 import { calculateCombinedFees } from "@shared/pricing";
 import { mapQuoteToFormServices, getServiceKeys, getAllServices } from "@shared/services";
@@ -1508,121 +1508,254 @@ export function QuoteCalculatorContainer() {
                       </div>
                     )}
 
-                    {/* Enhanced pricing display with breakdown */}
+                    {/* Complete Pricing Summary */}
                     {isCalculated && (
-                      <div className="max-w-6xl mx-auto mt-8">
-                        <Card className="bg-gradient-to-br from-white to-gray-50 shadow-2xl border-0 quote-card w-full overflow-hidden">
-                          <div className="bg-gradient-to-r from-[#e24c00] to-[#ff6b35] p-1">
-                            <div className="bg-white rounded-t-lg">
-                              <CardContent className="p-6 sm:p-8">
-                                <div className="flex items-center gap-4 mb-8">
-                                  <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-[#e24c00] to-[#ff6b35] rounded-xl shadow-lg">
-                                    <DollarSign className="h-6 w-6 text-white" />
-                                  </div>
-                                  <div>
-                                    <h2 className="text-2xl font-bold text-gray-800">
-                                      Pricing Summary
-                                    </h2>
-                                    <p className="text-sm text-gray-600">Your calculated quote breakdown</p>
-                                  </div>
-                                </div>
-                                
-                                <div className="space-y-6">
-                                  {/* Main Total Display - Clickable for detailed breakdown */}
-                                  <div 
-                                    className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 shadow-lg cursor-pointer hover:shadow-xl transition-all duration-200 hover:from-blue-100 hover:to-indigo-200"
-                                    onClick={() => setIsBreakdownExpanded(!isBreakdownExpanded)}
-                                  >
-                                    <div className="text-center">
-                                      <div className="flex items-center justify-center gap-2 mb-2">
-                                        <Calculator className="h-5 w-5 text-blue-600" />
-                                        <span className="text-sm font-medium text-blue-600 uppercase tracking-wide">Total Monthly Fee</span>
-                                        <button 
-                                          className="ml-2 p-1 rounded-full hover:bg-blue-200/50 transition-colors"
-                                          title={isBreakdownExpanded ? "Hide breakdown" : "Show detailed breakdown"}
-                                        >
-                                          {isBreakdownExpanded ? (
-                                            <ChevronUp className="h-4 w-4 text-blue-600" />
-                                          ) : (
-                                            <ChevronDown className="h-4 w-4 text-blue-600" />
-                                          )}
-                                        </button>
-                                      </div>
-                                      <div className="text-4xl font-bold text-blue-800 mb-2">
-                                        ${feeCalculation.combined.monthlyFee.toLocaleString()}
-                                        <span className="text-lg font-medium text-blue-600">
-                                          {feeCalculation.combined.monthlyFee > 0 ? '/month' : ' monthly'}
-                                        </span>
-                                      </div>
-                                      {feeCalculation.combined.setupFee > 0 && (
-                                        <div className="text-lg text-blue-700">
-                                          <span className="font-semibold">${feeCalculation.combined.setupFee.toLocaleString()}</span>
-                                          <span className="text-sm">
-                                            {(form.watch('servicePriorYearFilings') || form.watch('serviceCfoAdvisory')) && !form.watch('serviceTaasMonthly') && !form.watch('serviceMonthlyBookkeeping') ? 
-                                              ' one-time fee' : ' setup fee'}
-                                          </span>
-                                        </div>
-                                      )}
-                                      <div className="mt-3 text-xs text-blue-600">
-                                        {isBreakdownExpanded ? "Click to hide detailed breakdown" : "Click to see detailed breakdown"}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Detailed Breakdown Accordion */}
-                                  {isBreakdownExpanded && (
-                                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                                      <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                                        <FileText className="h-4 w-4" />
-                                        Detailed Breakdown
-                                      </h4>
-                                      <div className="space-y-3">
-                                        {/* Show breakdown items based on selected services */}
-                                        {feeCalculation.includesBookkeeping && feeCalculation.bookkeeping && feeCalculation.bookkeeping.monthlyFee > 0 && (
-                                          <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                                            <span className="font-medium text-green-800">Monthly Bookkeeping</span>
-                                            <span className="font-semibold text-green-700">${feeCalculation.bookkeeping.monthlyFee.toLocaleString()}/mo</span>
-                                          </div>
-                                        )}
-                                        {feeCalculation.includesTaas && feeCalculation.taas && feeCalculation.taas.monthlyFee > 0 && (
-                                          <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                                            <span className="font-medium text-purple-800">Tax Advisory Service</span>
-                                            <span className="font-semibold text-purple-700">${feeCalculation.taas.monthlyFee.toLocaleString()}/mo</span>
-                                          </div>
-                                        )}
-                                        {feeCalculation.payrollFee > 0 && (
-                                          <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                                            <span className="font-medium text-blue-800">Payroll Service</span>
-                                            <span className="font-semibold text-blue-700">${feeCalculation.payrollFee.toLocaleString()}/mo</span>
-                                          </div>
-                                        )}
-                                        {feeCalculation.priorYearFilingsFee > 0 && (
-                                          <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-                                            <span className="font-medium text-orange-800">Prior Year Filings</span>
-                                            <span className="font-semibold text-orange-700">${feeCalculation.priorYearFilingsFee.toLocaleString()}</span>
-                                          </div>
-                                        )}
-                                        {feeCalculation.cleanupProjectFee > 0 && (
-                                          <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
-                                            <span className="font-medium text-yellow-800">Cleanup Project</span>
-                                            <span className="font-semibold text-yellow-700">${feeCalculation.cleanupProjectFee.toLocaleString()}</span>
-                                          </div>
-                                        )}
-                                        {feeCalculation.cfoAdvisoryFee > 0 && (
-                                          <div className="flex justify-between items-center p-3 bg-indigo-50 rounded-lg">
-                                            <span className="font-medium text-indigo-800">CFO Advisory</span>
-                                            <span className="font-semibold text-indigo-700">${feeCalculation.cfoAdvisoryFee.toLocaleString()}</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </CardContent>
+                      <Card className="bg-white shadow-xl border-0 quote-card">
+                        <CardContent className="p-6 sm:p-8">
+                          <div className="flex items-center gap-3 mb-6">
+                            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-[#e24c00] to-[#ff6b35] rounded-lg">
+                              <DollarSign className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                              <h2 className="text-2xl font-bold text-gray-800">
+                                Pricing Summary
+                              </h2>
+                              <p className="text-sm text-gray-500">Your calculated quote breakdown</p>
                             </div>
                           </div>
-                        </Card>
-                      </div>
+                          
+                          <div className="space-y-4">
+                            {/* Combined Total Card */}
+                            {(feeCalculation.includesBookkeeping && feeCalculation.includesTaas) && (
+                              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center">
+                                      <Calculator className="h-4 w-4 text-white" />
+                                    </div>
+                                    <h4 className="font-semibold text-purple-800">Combined Total</h4>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 px-3 text-xs bg-purple-600 text-white border-purple-600 hover:bg-purple-700 shadow-sm"
+                                    onClick={() => navigator.clipboard?.writeText(feeCalculation.combined.monthlyFee.toLocaleString())}
+                                  >
+                                    <Copy className="h-3 w-3 mr-1" />
+                                    Copy
+                                  </Button>
+                                </div>
+                                <div className="text-3xl font-bold text-purple-800 mb-2">
+                                  ${feeCalculation.combined.monthlyFee.toLocaleString()} / mo
+                                </div>
+                                <div className="text-xl font-semibold text-purple-700 mb-2">
+                                  ${feeCalculation.combined.setupFee.toLocaleString()} total setup
+                                </div>
+                                <p className="text-sm text-purple-600">
+                                  Complete bookkeeping and tax services package
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Single Service Total - Bookkeeping */}
+                            {(feeCalculation.includesBookkeeping && !feeCalculation.includesTaas) && (
+                              <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h4 className="font-semibold text-green-800">Bookkeeping Package Total</h4>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 px-3 text-xs bg-green-600 text-white border-green-600 hover:bg-green-700 shadow-sm"
+                                    onClick={() => navigator.clipboard?.writeText(feeCalculation.bookkeeping.monthlyFee.toLocaleString())}
+                                  >
+                                    <Copy className="h-3 w-3 mr-1" />
+                                    Copy
+                                  </Button>
+                                </div>
+                                <div className="text-3xl font-bold text-green-800 mb-2">
+                                  ${feeCalculation.bookkeeping.monthlyFee.toLocaleString()} / mo
+                                </div>
+                                <div className="text-xl font-semibold text-green-700">
+                                  ${feeCalculation.bookkeeping.setupFee.toLocaleString()} setup fee
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Single Service Total - TaaS */}
+                            {(!feeCalculation.includesBookkeeping && feeCalculation.includesTaas) && (
+                              <div className="bg-gradient-to-br from-blue-50 to-sky-50 border-2 border-blue-200 rounded-xl p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h4 className="font-semibold text-blue-800">TaaS Package Total</h4>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 px-3 text-xs bg-blue-600 text-white border-blue-600 hover:bg-blue-700 shadow-sm"
+                                    onClick={() => navigator.clipboard?.writeText(feeCalculation.taas.monthlyFee.toLocaleString())}
+                                  >
+                                    <Copy className="h-3 w-3 mr-1" />
+                                    Copy
+                                  </Button>
+                                </div>
+                                <div className="text-3xl font-bold text-blue-800 mb-2">
+                                  ${feeCalculation.taas.monthlyFee.toLocaleString()} / mo
+                                </div>
+                                <div className="text-xl font-semibold text-blue-700">
+                                  ${feeCalculation.taas.setupFee.toLocaleString()} prior years fee
+                                </div>
+                              </div>
+                            )}
+
+                            {/* No Services Selected */}
+                            {(!feeCalculation.includesBookkeeping && !feeCalculation.includesTaas) && (
+                              <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
+                                <div className="text-gray-500 mb-2">
+                                  <Calculator className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                </div>
+                                <h4 className="font-semibold text-gray-600 mb-1">No Services Selected</h4>
+                                <p className="text-sm text-gray-500">Click on the service cards above to start building your quote</p>
+                              </div>
+                            )}
+
+                            {/* Calculation Breakdown */}
+                            {isCalculated && (feeCalculation.includesBookkeeping || feeCalculation.includesTaas) && (
+                              <div className="border-t pt-6">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsBreakdownExpanded(!isBreakdownExpanded)}
+                                  className="flex items-center gap-2 mb-4 w-full text-left hover:bg-gray-50 p-2 rounded-md transition-colors"
+                                >
+                                  <Sparkles className="h-5 w-5 text-purple-500" />
+                                  <h3 className="text-lg font-bold text-gray-800 flex-1">
+                                    Calculation Breakdown
+                                  </h3>
+                                  <div className={`transition-transform duration-200 ${isBreakdownExpanded ? 'rotate-180' : ''}`}>
+                                    <ArrowUpDown className="h-4 w-4 text-gray-500" />
+                                  </div>
+                                </button>
+                                
+                                {isBreakdownExpanded && (
+                                  <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+                                    {feeCalculation.includesBookkeeping && (
+                                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                        <div className="font-medium text-green-800 mb-2">Bookkeeping Service</div>
+                                        <div className="space-y-2 text-sm">
+                                          <div className="flex justify-between">
+                                            <span className="text-green-600">Monthly Fee:</span>
+                                            <span className="font-medium text-green-800">${feeCalculation.bookkeeping.monthlyFee.toLocaleString()}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span className="text-green-600">Setup/Cleanup Fee:</span>
+                                            <span className="font-medium text-green-800">${feeCalculation.bookkeeping.setupFee.toLocaleString()}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {feeCalculation.includesTaas && (
+                                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                        <div className="font-medium text-blue-800 mb-2">Tax as a Service (TaaS)</div>
+                                        <div className="space-y-2 text-sm">
+                                          <div className="flex justify-between">
+                                            <span className="text-blue-600">Monthly Fee:</span>
+                                            <span className="font-medium text-blue-800">${feeCalculation.taas.monthlyFee.toLocaleString()}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span className="text-blue-600">Prior Years Fee:</span>
+                                            <span className="font-medium text-blue-800">${feeCalculation.taas.setupFee.toLocaleString()}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {feeCalculation.includesBookkeeping && feeCalculation.includesTaas && (
+                                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                        <div className="font-medium text-gray-800 mb-2">Combined Total</div>
+                                        <div className="space-y-2 text-sm">
+                                          <div className="flex justify-between font-semibold">
+                                            <span className="text-gray-600">Total Monthly:</span>
+                                            <span className="text-gray-800">${feeCalculation.combined.monthlyFee.toLocaleString()}</span>
+                                          </div>
+                                          <div className="flex justify-between font-semibold">
+                                            <span className="text-gray-600">Total Setup:</span>
+                                            <span className="text-gray-800">${feeCalculation.combined.setupFee.toLocaleString()}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Commission Estimation */}
+                    {isCalculated && (feeCalculation.combined.monthlyFee > 0 || feeCalculation.combined.setupFee > 0) && (
+                      <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 shadow-lg">
+                        <CardContent className="p-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg">
+                              <TrendingUp className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-bold text-gray-800">Projected Commission</h3>
+                              <p className="text-sm text-gray-600">Based on current pricing</p>
+                            </div>
+                          </div>
+                          
+                          {(() => {
+                            const setupCommission = feeCalculation.combined.setupFee * 0.2; // 20% setup commission
+                            const firstMonthCommission = feeCalculation.combined.monthlyFee * 0.4; // 40% first month
+                            const monthlyCommission = feeCalculation.combined.monthlyFee * 0.1; // 10% recurring
+                            const firstMonth = setupCommission + firstMonthCommission;
+                            const annualTotal = firstMonth + (monthlyCommission * 11); // 12-month projection
+                            
+                            return (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="bg-white border border-yellow-300 rounded-lg p-4 text-center">
+                                  <div className="text-2xl font-bold text-yellow-700 mb-1">
+                                    ${Math.round(firstMonth).toLocaleString()}
+                                  </div>
+                                  <div className="text-sm font-medium text-yellow-600">First Month</div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Setup + Initial Monthly
+                                  </div>
+                                </div>
+                                <div className="bg-white border border-orange-300 rounded-lg p-4 text-center">
+                                  <div className="text-2xl font-bold text-orange-700 mb-1">
+                                    ${Math.round(monthlyCommission).toLocaleString()}
+                                  </div>
+                                  <div className="text-sm font-medium text-orange-600">Monthly Recurring</div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    10% of monthly fee
+                                  </div>
+                                </div>
+                                <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg p-4 text-center">
+                                  <div className="text-2xl font-bold mb-1">
+                                    ${Math.round(annualTotal).toLocaleString()}
+                                  </div>
+                                  <div className="text-sm font-medium">12-Month Total</div>
+                                  <div className="text-xs opacity-90 mt-1">
+                                    Projected annual commission
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                          
+                          <div className="mt-4 p-3 bg-white border border-yellow-300 rounded-lg">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Info className="h-4 w-4" />
+                              <span>Commission rates: 20% setup, 40% first month, 10% recurring</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     )}
 
                     {/* Action buttons */}
