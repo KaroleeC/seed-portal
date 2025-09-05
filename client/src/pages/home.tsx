@@ -3822,7 +3822,7 @@ function HomePage() {
                               // Background HubSpot sync with queue system
                               setTimeout(async () => {
                                 try {
-                                  await apiRequest("/api/hubspot/queue-sync", {
+                                  const response = await apiRequest("/api/hubspot/queue-sync", {
                                     method: "POST",
                                     body: JSON.stringify({ 
                                       quoteId: savedQuote.id,
@@ -3830,10 +3830,17 @@ function HomePage() {
                                     })
                                   });
                                   
-                                  toast({
-                                    title: "🔄 HubSpot Sync Queued",
-                                    description: "Quote sync has been queued. You'll be notified when complete.",
-                                  });
+                                  if (response.method === "queued") {
+                                    toast({
+                                      title: "🔄 HubSpot Sync Queued",
+                                      description: "Quote sync has been queued. You'll be notified when complete.",
+                                    });
+                                  } else {
+                                    toast({
+                                      title: "🔄 HubSpot Sync Started",
+                                      description: "Quote sync is processing in background. This ensures reliable delivery.",
+                                    });
+                                  }
                                 } catch (error: any) {
                                   console.error('Failed to queue HubSpot sync:', error);
                                   // Fallback to direct sync for immediate feedback

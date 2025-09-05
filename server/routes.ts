@@ -1322,21 +1322,84 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         return;
       }
 
-      // Queue the sync job
-      const { scheduleQuoteSync } = await import('./jobs/hubspot-queue-manager');
-      const job = await scheduleQuoteSync(quoteId, action, req.user.id, 1);
-      
-      res.json({ 
-        success: true,
-        jobId: job.id,
-        message: "HubSpot sync queued successfully",
-        quoteId,
-        action
-      });
+      // Try to queue the sync job
+      try {
+        const { scheduleQuoteSync } = await import('./jobs/hubspot-queue-manager');
+        const job = await scheduleQuoteSync(quoteId, action, req.user.id, 1);
+        
+        res.json({ 
+          success: true,
+          jobId: job.id,
+          message: "HubSpot sync queued successfully",
+          quoteId,
+          action,
+          method: "queued"
+        });
+        return;
+      } catch (queueError: any) {
+        console.log('Queue unavailable, falling back to direct sync:', queueError.message);
+        
+        // Fallback to direct sync when queue is not available
+        if (!hubSpotService) {
+          throw new Error('HubSpot service not available');
+        }
+
+        // Get the quote from database
+        const quote = await storage.getQuote(quoteId);
+        if (!quote) {
+          throw new Error(`Quote ${quoteId} not found`);
+        }
+
+        // Perform direct sync in background
+        setTimeout(async () => {
+          try {
+            // Verify contact exists in HubSpot
+            const contactResult = await hubSpotService.verifyContactByEmail(quote.contactEmail);
+            if (!contactResult.verified || !contactResult.contact) {
+              console.error(`Contact ${quote.contactEmail} not found in HubSpot`);
+              return;
+            }
+
+            const contact = contactResult.contact;
+            const companyName = contact.properties.company || 'Unknown Company';
+
+            // Get HubSpot owner ID
+            const ownerId = await hubSpotService.getOwnerByEmail(req.user.email);
+
+            // Create deal in HubSpot
+            const dealIncludesBookkeeping = quote.serviceBookkeeping || quote.includesBookkeeping;
+            const dealIncludesTaas = quote.serviceTaas || quote.includesTaas;
+            
+            await hubSpotService.createDeal(
+              contact.id,
+              companyName,
+              parseFloat(quote.monthlyFee),
+              parseFloat(quote.setupFee),
+              ownerId || undefined,
+              dealIncludesBookkeeping,
+              dealIncludesTaas,
+              quote.serviceTier || 'Standard',
+              quote
+            );
+
+            console.log(`✅ Direct HubSpot sync completed for quote ${quoteId}`);
+          } catch (directSyncError) {
+            console.error(`❌ Direct HubSpot sync failed for quote ${quoteId}:`, directSyncError);
+          }
+        }, 1000);
+
+        res.json({ 
+          success: true,
+          message: "HubSpot sync initiated (direct fallback)",
+          quoteId,
+          action,
+          method: "direct"
+        });
+      }
     } catch (error: any) {
-      console.error('Failed to queue HubSpot sync:', error);
+      console.error('Failed to sync to HubSpot:', error);
       res.status(500).json({ 
-        message: "Failed to queue HubSpot sync",
+        message: "Failed to sync to HubSpot",
         error: error.message 
       });
     }

@@ -16,7 +16,7 @@ export async function initializeHubSpotQueue() {
     // Wait for Redis to be available
     const redis = await getRedisAsync();
     if (!redis) {
-      queueLogger.warn('Redis not available, skipping HubSpot queue initialization');
+      queueLogger.warn('Redis not available, HubSpot queue will use fallback direct sync');
       return null;
     }
 
