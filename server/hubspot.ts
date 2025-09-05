@@ -952,7 +952,12 @@ Services Include:
           apServiceTier: quoteData?.apServiceTier,
           arServiceTier: quoteData?.arServiceTier,
           serviceTier: quoteData?.serviceTier,
+          serviceTierFee: quoteData?.serviceTierFee || 0,
           qboSubscription: quoteData?.qboSubscription ?? false,
+          qboFee: quoteData?.qboFee || (quoteData?.qboSubscription ? 60 : 0),
+          bookkeepingMonthlyFee: quoteData?.bookkeepingMonthlyFee || 0,
+          taasMonthlyFee: quoteData?.taasMonthlyFee || 0,
+          monthlyFee: monthlyFee,
         });
         console.log("📋 Comprehensive line items added successfully to quote");
       } catch (lineItemError) {
@@ -1013,16 +1018,20 @@ Services Include:
     
     const services = [];
     
-    // Monthly Bookkeeping Service - USE CALCULATED FEE
+    // Monthly Bookkeeping Service - USE CALCULATED FEE ONLY
     if (serviceConfig.includesBookkeeping) {
-      const bookkeepingPrice = serviceConfig.bookkeepingMonthlyFee || serviceConfig.monthlyFee - (serviceConfig.taasMonthlyFee || 0) || 310;
-      services.push({price: bookkeepingPrice, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING});
+      const bookkeepingPrice = serviceConfig.bookkeepingMonthlyFee || (serviceConfig.monthlyFee - (serviceConfig.taasMonthlyFee || 0));
+      if (bookkeepingPrice > 0) {
+        services.push({price: bookkeepingPrice, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING});
+      }
     }
     
-    // Tax as a Service - USE CALCULATED FEE
+    // Tax as a Service - USE CALCULATED FEE ONLY
     if (serviceConfig.includesTaas) {
-      const taasPrice = serviceConfig.taasMonthlyFee || 600;
-      services.push({price: taasPrice, productId: HUBSPOT_PRODUCT_IDS.TAAS});
+      const taasPrice = serviceConfig.taasMonthlyFee;
+      if (taasPrice > 0) {
+        services.push({price: taasPrice, productId: HUBSPOT_PRODUCT_IDS.TAAS});
+      }
     }
     
     // Cleanup/Catch-up Project
@@ -1035,42 +1044,47 @@ Services Include:
       services.push({price: serviceConfig.priorYearFilingsFee, productId: HUBSPOT_PRODUCT_IDS.PRIOR_YEAR_FILINGS});
     }
     
-    // Payroll Service - NOW WITH PROPER PRODUCT ID!
-    if (serviceConfig.includesPayroll) {
-      services.push({price: serviceConfig.payrollFee || 137, productId: HUBSPOT_PRODUCT_IDS.PAYROLL_SERVICE});
+    // Payroll Service - USE CALCULATED FEE ONLY
+    if (serviceConfig.includesPayroll && serviceConfig.payrollFee > 0) {
+      services.push({price: serviceConfig.payrollFee, productId: HUBSPOT_PRODUCT_IDS.PAYROLL_SERVICE});
     }
     
     // Accounts Payable Service
     if (serviceConfig.includesAP) {
       const apProductId = serviceConfig.apServiceTier === 'advanced' ? 
         HUBSPOT_PRODUCT_IDS.AP_ADVANCED_SERVICE : HUBSPOT_PRODUCT_IDS.AP_LITE_SERVICE;
-      services.push({price: serviceConfig.apFee || 162, productId: apProductId});
+      if (serviceConfig.apFee > 0) {
+        services.push({price: serviceConfig.apFee, productId: apProductId});
+      }
     }
     
     // Accounts Receivable Service
     if (serviceConfig.includesAR) {
       const arProductId = serviceConfig.arServiceTier === 'advanced' ? 
         HUBSPOT_PRODUCT_IDS.AR_ADVANCED_SERVICE : HUBSPOT_PRODUCT_IDS.AR_LITE_SERVICE;
-      services.push({price: serviceConfig.arFee || 405, productId: arProductId});
+      if (serviceConfig.arFee > 0) {
+        services.push({price: serviceConfig.arFee, productId: arProductId});
+      }
     }
     
     // Agent of Service
     if (serviceConfig.includesAgentOfService) {
-      services.push({price: serviceConfig.agentOfServiceFee || 900, productId: HUBSPOT_PRODUCT_IDS.AGENT_OF_SERVICE});
+      if (serviceConfig.agentOfServiceFee > 0) {
+        services.push({price: serviceConfig.agentOfServiceFee, productId: HUBSPOT_PRODUCT_IDS.AGENT_OF_SERVICE});
+      }
     }
     
-    // Service Tier (Concierge/Guided) - USE CALCULATED FEE
-    if (serviceConfig.serviceTier === 'Concierge') {
-      const conciergePrice = serviceConfig.serviceTierFee || 249;
-      services.push({price: conciergePrice, productId: HUBSPOT_PRODUCT_IDS.CONCIERGE_SERVICE_TIER});
-    } else if (serviceConfig.serviceTier === 'Guided') {
-      const guidedPrice = serviceConfig.serviceTierFee || 79;
-      services.push({price: guidedPrice, productId: HUBSPOT_PRODUCT_IDS.GUIDED_SERVICE_TIER});
+    // Service Tier (Concierge/Guided) - USE CALCULATED FEE ONLY
+    if (serviceConfig.serviceTier === 'Concierge' && serviceConfig.serviceTierFee > 0) {
+      services.push({price: serviceConfig.serviceTierFee, productId: HUBSPOT_PRODUCT_IDS.CONCIERGE_SERVICE_TIER});
+    } else if (serviceConfig.serviceTier === 'Guided' && serviceConfig.serviceTierFee > 0) {
+      services.push({price: serviceConfig.serviceTierFee, productId: HUBSPOT_PRODUCT_IDS.GUIDED_SERVICE_TIER});
     }
     
     // QBO Subscription
     if (serviceConfig.qboSubscription) {
-      services.push({price: 60, productId: HUBSPOT_PRODUCT_IDS.MANAGED_QBO_SUBSCRIPTION});
+      const qboPrice = serviceConfig.qboFee || 60;
+      services.push({price: qboPrice, productId: HUBSPOT_PRODUCT_IDS.MANAGED_QBO_SUBSCRIPTION});
     }
     
     for (const service of services) {
