@@ -1181,7 +1181,9 @@ Services Include:
               condition: serviceConfig.apFee > 0,
               name: "Accounts Payable Service",
               price: serviceConfig.apFee,
-              productId: HUBSPOT_PRODUCT_IDS.AP_LITE_SERVICE, // Will need logic to determine Lite vs Advanced
+              productId: quoteData.apServiceTier === 'advanced' 
+                ? HUBSPOT_PRODUCT_IDS.AP_ADVANCED_SERVICE 
+                : HUBSPOT_PRODUCT_IDS.AP_LITE_SERVICE,
               description: "Seed Financial Accounts Payable Service - Automated vendor bill processing and payment management",
             },
           ],
@@ -1195,7 +1197,9 @@ Services Include:
               condition: serviceConfig.arFee > 0,
               name: "Accounts Receivable Service",
               price: serviceConfig.arFee,
-              productId: HUBSPOT_PRODUCT_IDS.AR_LITE_SERVICE, // Will need logic to determine Lite vs Advanced
+              productId: quoteData.arServiceTier === 'advanced' 
+                ? HUBSPOT_PRODUCT_IDS.AR_ADVANCED_SERVICE 
+                : HUBSPOT_PRODUCT_IDS.AR_LITE_SERVICE,
               description: "Seed Financial Accounts Receivable Service - Customer invoice processing and collection management",
             },
           ],
@@ -1267,6 +1271,20 @@ Services Include:
               price: serviceConfig.fpaServiceFee,
               productId: productIds.bookkeeping, // Using bookkeeping product ID as placeholder
               description: "Seed Financial FP&A Services - Financial planning and analysis build-out and support",
+            },
+          ],
+        },
+        // QBO Managed Subscription
+        qboSubscription: {
+          shouldInclude: quoteData.qboSubscription === true,
+          serviceAgreementLink: "www.seedfinancial.io/legal/ssa-v-2025-09-01", // QBO uses bookkeeping agreement
+          lineItems: [
+            {
+              condition: quoteData.qboSubscription === true,
+              name: "QBO Managed Subscription",
+              price: 60, // QBO subscription fee
+              productId: "26213746490", // QBO Managed Subscription product ID
+              description: "Seed Financial QBO Managed Subscription - Monthly QuickBooks Online subscription management",
             },
           ],
         },
