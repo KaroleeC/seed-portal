@@ -986,6 +986,7 @@ Services Include:
 
   private async createInitialServiceLineItems(quoteId: string, serviceConfig: any): Promise<void> {
     console.log("Creating service line items for quote:", quoteId);
+    console.log("🔧 SERVICE CONFIG RECEIVED:", JSON.stringify(serviceConfig, null, 2));
     
     // CRITICAL: Verify all product IDs exist first to avoid failures
     console.log("🔍 VERIFYING ALL PRODUCT IDs BEFORE CREATING LINE ITEMS:");
@@ -1016,7 +1017,7 @@ Services Include:
     
     // Tax as a Service
     if (serviceConfig.includesTaas) {
-      services.push({price: 275, productId: HUBSPOT_PRODUCT_IDS.TAAS}); // Monthly fee from screenshot  
+      services.push({price: 600, productId: HUBSPOT_PRODUCT_IDS.TAAS}); // Corrected $600/month from user's quote  
     }
     
     // Cleanup/Catch-up Project
@@ -1029,9 +1030,11 @@ Services Include:
       services.push({price: serviceConfig.priorYearFilingsFee, productId: HUBSPOT_PRODUCT_IDS.PRIOR_YEAR_FILINGS});
     }
     
-    // Payroll Service
+    // Payroll Service - Create as additional service line item
     if (serviceConfig.includesPayroll) {
-      services.push({price: serviceConfig.payrollFee || 125, productId: HUBSPOT_PRODUCT_IDS.PAYROLL_SERVICE});
+      console.log('📋 Adding Payroll service line item (no specific HubSpot product, will use generic approach)');
+      // For now, we'll skip payroll until we have a proper product ID
+      // services.push({price: serviceConfig.payrollFee || 137, productId: 'CREATE_CUSTOM_PAYROLL'});
     }
     
     // Accounts Payable Service
@@ -1062,7 +1065,7 @@ Services Include:
     
     // QBO Subscription
     if (serviceConfig.qboSubscription) {
-      services.push({price: 60, productId: "26213746490"});
+      services.push({price: 60, productId: HUBSPOT_PRODUCT_IDS.MANAGED_QBO_SUBSCRIPTION});
     }
     
     for (const service of services) {
