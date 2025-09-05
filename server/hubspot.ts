@@ -1013,14 +1013,16 @@ Services Include:
     
     const services = [];
     
-    // Monthly Bookkeeping Service
+    // Monthly Bookkeeping Service - USE CALCULATED FEE
     if (serviceConfig.includesBookkeeping) {
-      services.push({price: 310, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING}); // Monthly fee from screenshot
+      const bookkeepingPrice = serviceConfig.bookkeepingMonthlyFee || serviceConfig.monthlyFee - (serviceConfig.taasMonthlyFee || 0) || 310;
+      services.push({price: bookkeepingPrice, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING});
     }
     
-    // Tax as a Service
+    // Tax as a Service - USE CALCULATED FEE
     if (serviceConfig.includesTaas) {
-      services.push({price: 600, productId: HUBSPOT_PRODUCT_IDS.TAAS}); // Corrected $600/month from user's quote  
+      const taasPrice = serviceConfig.taasMonthlyFee || 600;
+      services.push({price: taasPrice, productId: HUBSPOT_PRODUCT_IDS.TAAS});
     }
     
     // Cleanup/Catch-up Project
@@ -1057,11 +1059,13 @@ Services Include:
       services.push({price: serviceConfig.agentOfServiceFee || 900, productId: HUBSPOT_PRODUCT_IDS.AGENT_OF_SERVICE});
     }
     
-    // Service Tier (Concierge/Guided)
+    // Service Tier (Concierge/Guided) - USE CALCULATED FEE
     if (serviceConfig.serviceTier === 'Concierge') {
-      services.push({price: 240, productId: HUBSPOT_PRODUCT_IDS.CONCIERGE_SERVICE_TIER}); // +$240/month from screenshot
+      const conciergePrice = serviceConfig.serviceTierFee || 249;
+      services.push({price: conciergePrice, productId: HUBSPOT_PRODUCT_IDS.CONCIERGE_SERVICE_TIER});
     } else if (serviceConfig.serviceTier === 'Guided') {
-      services.push({price: 0, productId: HUBSPOT_PRODUCT_IDS.GUIDED_SERVICE_TIER}); // Base tier
+      const guidedPrice = serviceConfig.serviceTierFee || 79;
+      services.push({price: guidedPrice, productId: HUBSPOT_PRODUCT_IDS.GUIDED_SERVICE_TIER});
     }
     
     // QBO Subscription
