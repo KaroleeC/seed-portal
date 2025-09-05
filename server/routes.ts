@@ -1862,11 +1862,32 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       console.log(`   Mapped to HubSpot includesBookkeeping: ${currentServiceBookkeeping}`);
       console.log(`   Mapped to HubSpot includesTaas: ${currentServiceTaas}`);
       
+      // ✅ CALCULATE SEPARATED BOOKKEEPING SETUP FEE 
+      // The setupFee is combined (bookkeeping + TaaS + other services)
+      // We need to extract just the bookkeeping portion for the Monthly Bookkeeping Setup Fee line item
+      let bookkeepingSetupFee = setupFee; // Start with combined fee as fallback
+      
+      if (currentServiceBookkeeping && currentServiceTaas) {
+        // If both services are included, separate the fees
+        // Combined setup includes: bookkeeping setup + TaaS setup + other project fees
+        const nonBookkeepingSetupFees = taasPriorYearsFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee + agentOfServiceFee;
+        bookkeepingSetupFee = Math.max(0, setupFee - nonBookkeepingSetupFees);
+        console.log(`🔧 SEPARATED setup fees - Combined: $${setupFee}, Non-bookkeeping: $${nonBookkeepingSetupFees}, Bookkeeping only: $${bookkeepingSetupFee}`);
+      } else if (currentServiceBookkeeping) {
+        // Only bookkeeping service, but setup might include cleanup/other project fees
+        const projectOnlyFees = cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee + agentOfServiceFee;
+        bookkeepingSetupFee = Math.max(0, setupFee - projectOnlyFees);
+        console.log(`🔧 BOOKKEEPING ONLY setup fees - Combined: $${setupFee}, Project fees: $${projectOnlyFees}, Bookkeeping setup: $${bookkeepingSetupFee}`);
+      }
+
       // ✅ NEW: Use the unified syncQuoteToHubSpot method with all individual service fees
       const serviceConfig = {
         // Core totals
         monthlyFee,
         setupFee,
+        
+        // ⭐ CRITICAL: Add separated bookkeeping setup fee for correct HubSpot line item
+        bookkeepingSetupFee,
         
         // Individual service fees (all that we calculate)
         bookkeepingMonthlyFee,
