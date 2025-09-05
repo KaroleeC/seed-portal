@@ -317,6 +317,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
     }
   });
 
+  console.log('🔍 CHECKPOINT B: Finished /api/user route, continuing...');
+
   // Simple user creation endpoint for initial setup - CSRF exempt for testing
   app.post("/api/create-user", (req, res, next) => {
     req.csrfToken = () => 'skip'; // Skip CSRF for this endpoint
@@ -697,6 +699,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
 
   // Removed duplicate logout endpoint - using /api/logout from auth.ts instead
 
+  console.log('🔍 CHECKPOINT A: About to register /api/test/db-quote');
+  
   // Test endpoint for database operations
   app.get("/api/test/db-quote", requireAuth, async (req, res) => {
     console.log('🔵 TEST DB ENDPOINT - Testing direct database operations');
@@ -765,7 +769,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
     }
   });
 
-  console.log('🔍 REACHED QUOTE ROUTE REGISTRATION SECTION');
+  console.log('🔍 REACHED QUOTE ROUTE REGISTRATION SECTION - Line 768');
+  console.log('🔍 About to register POST /api/quotes route...');
   
   // Create a new quote (protected) - DEBUGGING ROUTE REGISTRATION
   console.log('📋 REGISTERING QUOTE ROUTE: /api/quotes POST');
