@@ -220,9 +220,14 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
 
       // Initialize HubSpot background jobs
       console.log('[Server] Initializing HubSpot background jobs...');
-      const { initializeHubSpotQueue, scheduleRecurringSync } = await import('./hubspot-background-jobs.js');
+      const { initializeHubSpotQueue: initializeHubSpotQueueOld, scheduleRecurringSync } = await import('./hubspot-background-jobs.js');
       const { startHubSpotSyncWorker } = await import('./workers/hubspot-sync-worker.js');
+      
+      // Initialize new HubSpot quote sync queue
+      console.log('[Server] Initializing HubSpot quote sync queue...');
+      const { initializeHubSpotQueue } = await import('./jobs/hubspot-queue-manager.js');
       await initializeHubSpotQueue();
+      await initializeHubSpotQueueOld();
       const hubspotWorker = await startHubSpotSyncWorker();
       await scheduleRecurringSync();
       console.log('[Server] HubSpot background jobs initialized successfully');

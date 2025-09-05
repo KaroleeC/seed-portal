@@ -3819,23 +3819,40 @@ function HomePage() {
                                 description: `Quote #${savedQuote.id} has been saved. Syncing to HubSpot in background...`,
                               });
                               
-                              // Background HubSpot sync with separate status
-                              setTimeout(() => {
-                                pushToHubSpotMutation.mutate(savedQuote.id, {
-                                  onSuccess: () => {
-                                    toast({
-                                      title: "🎯 HubSpot Sync Complete",
-                                      description: "Quote successfully synchronized to HubSpot!",
-                                    });
-                                  },
-                                  onError: (error: any) => {
-                                    toast({
-                                      title: "⚠️ HubSpot Sync Issue",
-                                      description: "Quote is saved, but HubSpot sync failed. You can retry sync later.",
-                                      variant: "destructive",
-                                    });
-                                  }
-                                });
+                              // Background HubSpot sync with queue system
+                              setTimeout(async () => {
+                                try {
+                                  await apiRequest("/api/hubspot/queue-sync", {
+                                    method: "POST",
+                                    body: JSON.stringify({ 
+                                      quoteId: savedQuote.id,
+                                      action: 'create'
+                                    })
+                                  });
+                                  
+                                  toast({
+                                    title: "🔄 HubSpot Sync Queued",
+                                    description: "Quote sync has been queued. You'll be notified when complete.",
+                                  });
+                                } catch (error: any) {
+                                  console.error('Failed to queue HubSpot sync:', error);
+                                  // Fallback to direct sync for immediate feedback
+                                  pushToHubSpotMutation.mutate(savedQuote.id, {
+                                    onSuccess: () => {
+                                      toast({
+                                        title: "🎯 HubSpot Sync Complete",
+                                        description: "Quote successfully synchronized to HubSpot!",
+                                      });
+                                    },
+                                    onError: (error: any) => {
+                                      toast({
+                                        title: "⚠️ HubSpot Sync Issue",
+                                        description: "Quote is saved, but HubSpot sync failed. You can retry sync later.",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  });
+                                }
                               }, 100);
                               
                             } catch (error) {
@@ -3866,23 +3883,40 @@ function HomePage() {
                                   description: `Quote #${quoteId} has been updated. Syncing to HubSpot in background...`,
                                 });
                                 
-                                // Background HubSpot sync with separate status
-                                setTimeout(() => {
-                                  updateHubSpotMutation.mutate(quoteId, {
-                                    onSuccess: () => {
-                                      toast({
-                                        title: "🎯 HubSpot Sync Complete",
-                                        description: "Quote changes successfully synchronized to HubSpot!",
-                                      });
-                                    },
-                                    onError: (error: any) => {
-                                      toast({
-                                        title: "⚠️ HubSpot Sync Issue",
-                                        description: "Quote is updated, but HubSpot sync failed. You can retry sync later.",
-                                        variant: "destructive",
-                                      });
-                                    }
-                                  });
+                                // Background HubSpot sync with queue system
+                                setTimeout(async () => {
+                                  try {
+                                    await apiRequest("/api/hubspot/queue-sync", {
+                                      method: "POST",
+                                      body: JSON.stringify({ 
+                                        quoteId: quoteId,
+                                        action: 'update'
+                                      })
+                                    });
+                                    
+                                    toast({
+                                      title: "🔄 HubSpot Update Queued",
+                                      description: "Quote update sync has been queued. You'll be notified when complete.",
+                                    });
+                                  } catch (error: any) {
+                                    console.error('Failed to queue HubSpot update:', error);
+                                    // Fallback to direct sync for immediate feedback
+                                    updateHubSpotMutation.mutate(quoteId, {
+                                      onSuccess: () => {
+                                        toast({
+                                          title: "🎯 HubSpot Sync Complete",
+                                          description: "Quote changes successfully synchronized to HubSpot!",
+                                        });
+                                      },
+                                      onError: (error: any) => {
+                                        toast({
+                                          title: "⚠️ HubSpot Sync Issue",
+                                          description: "Quote is updated, but HubSpot sync failed. You can retry sync later.",
+                                          variant: "destructive",
+                                        });
+                                      }
+                                    });
+                                  }
                                 }, 100);
                                 
                               } catch (error) {

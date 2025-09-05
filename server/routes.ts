@@ -1307,7 +1307,88 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
     }
   });
 
-  // Push quote to HubSpot (create deal and quote)
+  // Queue HubSpot quote sync (new reliable background system)
+  app.post("/api/hubspot/queue-sync", requireAuth, async (req, res) => {
+    try {
+      const { quoteId, action = 'create' } = req.body;
+      
+      if (!quoteId) {
+        res.status(400).json({ message: "Quote ID is required" });
+        return;
+      }
+
+      if (!req.user) {
+        res.status(401).json({ message: "User not authenticated" });
+        return;
+      }
+
+      // Queue the sync job
+      const { scheduleQuoteSync } = await import('./jobs/hubspot-queue-manager');
+      const job = await scheduleQuoteSync(quoteId, action, req.user.id, 1);
+      
+      res.json({ 
+        success: true,
+        jobId: job.id,
+        message: "HubSpot sync queued successfully",
+        quoteId,
+        action
+      });
+    } catch (error: any) {
+      console.error('Failed to queue HubSpot sync:', error);
+      res.status(500).json({ 
+        message: "Failed to queue HubSpot sync",
+        error: error.message 
+      });
+    }
+  });
+
+  // Get queue status for admin dashboard
+  app.get("/api/hubspot/queue-status", requireAuth, async (req, res) => {
+    try {
+      const { getQueueStatus } = await import('./jobs/hubspot-queue-manager');
+      const status = await getQueueStatus();
+      res.json(status);
+    } catch (error: any) {
+      console.error('Failed to get queue status:', error);
+      res.status(500).json({ 
+        message: "Failed to get queue status",
+        error: error.message 
+      });
+    }
+  });
+
+  // Retry failed job (admin only)
+  app.post("/api/hubspot/retry-job", requireAuth, async (req, res) => {
+    try {
+      if (req.user?.role !== 'admin') {
+        res.status(403).json({ message: "Admin access required" });
+        return;
+      }
+
+      const { jobId } = req.body;
+      if (!jobId) {
+        res.status(400).json({ message: "Job ID is required" });
+        return;
+      }
+
+      const { retryFailedJob } = await import('./jobs/hubspot-queue-manager');
+      await retryFailedJob(jobId);
+      
+      res.json({ 
+        success: true,
+        message: "Job retry initiated",
+        jobId
+      });
+    } catch (error: any) {
+      console.error('Failed to retry job:', error);
+      res.status(500).json({ 
+        message: "Failed to retry job",
+        error: error.message 
+      });
+    }
+  });
+
+  // Push quote to HubSpot (create deal and quote) - Legacy direct sync endpoint
   app.post("/api/hubspot/push-quote", requireAuth, async (req, res) => {
     console.log('🚀 HUBSPOT PUSH START - Quote ID:', req.body.quoteId);
     console.log('🚀 User authenticated:', req.user?.email);
