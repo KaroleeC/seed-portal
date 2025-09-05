@@ -1038,6 +1038,10 @@ Services Include:
         priorYearFilingsFee: priorYearFilingsFee || 0,
         includesFpaBuild: includesFpaBuild ?? false,
         fpaServiceFee: fpaServiceFee || 0,
+        // Pass service tier info for AP/AR product selection
+        apServiceTier: quoteData?.apServiceTier,
+        arServiceTier: quoteData?.arServiceTier,
+        qboSubscription: quoteData?.qboSubscription,
       });
 
       console.log("✅ LINE ITEM CREATION COMPLETED SUCCESSFULLY");
@@ -1078,6 +1082,10 @@ Services Include:
       priorYearFilingsFee: number;
       includesFpaBuild: boolean;
       fpaServiceFee: number;
+      // Service tier information for AP/AR
+      apServiceTier?: string;
+      arServiceTier?: string;
+      qboSubscription?: boolean;
     },
   ): Promise<void> {
     try {
@@ -1181,7 +1189,7 @@ Services Include:
               condition: serviceConfig.apFee > 0,
               name: "Accounts Payable Service",
               price: serviceConfig.apFee,
-              productId: quoteData.apServiceTier === 'advanced' 
+              productId: serviceConfig.apServiceTier === 'advanced' 
                 ? HUBSPOT_PRODUCT_IDS.AP_ADVANCED_SERVICE 
                 : HUBSPOT_PRODUCT_IDS.AP_LITE_SERVICE,
               description: "Seed Financial Accounts Payable Service - Automated vendor bill processing and payment management",
@@ -1197,7 +1205,7 @@ Services Include:
               condition: serviceConfig.arFee > 0,
               name: "Accounts Receivable Service",
               price: serviceConfig.arFee,
-              productId: quoteData.arServiceTier === 'advanced' 
+              productId: serviceConfig.arServiceTier === 'advanced' 
                 ? HUBSPOT_PRODUCT_IDS.AR_ADVANCED_SERVICE 
                 : HUBSPOT_PRODUCT_IDS.AR_LITE_SERVICE,
               description: "Seed Financial Accounts Receivable Service - Customer invoice processing and collection management",
@@ -1276,11 +1284,11 @@ Services Include:
         },
         // QBO Managed Subscription
         qboSubscription: {
-          shouldInclude: quoteData.qboSubscription === true,
+          shouldInclude: serviceConfig.qboSubscription === true,
           serviceAgreementLink: "www.seedfinancial.io/legal/ssa-v-2025-09-01", // QBO uses bookkeeping agreement
           lineItems: [
             {
-              condition: quoteData.qboSubscription === true,
+              condition: serviceConfig.qboSubscription === true,
               name: "QBO Managed Subscription",
               price: 60, // QBO subscription fee
               productId: "26213746490", // QBO Managed Subscription product ID
