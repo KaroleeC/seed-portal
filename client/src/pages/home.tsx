@@ -8,6 +8,7 @@ import { Copy, Save, Check, Search, ArrowUpDown, Edit, AlertCircle, Archive, Che
 import { useLocation } from "wouter";
 import { insertQuoteSchema, type Quote } from "@shared/schema";
 import { calculateCombinedFees } from "@shared/pricing";
+import { mapQuoteToFormServices, getServiceKeys, getAllServices } from "@shared/services";
 
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -1202,23 +1203,8 @@ function HomePage() {
       quoteType: quote.quoteType || "bookkeeping",
       includesBookkeeping: quote.includesBookkeeping ?? true,
       includesTaas: quote.includesTaas ?? false,
-      // ALL comprehensive service selections (from database)
-      serviceMonthlyBookkeeping: quote.serviceMonthlyBookkeeping ?? false,
-      serviceTaasMonthly: quote.serviceTaasMonthly ?? false,
-      serviceCleanupProjects: quote.serviceCleanupProjects ?? false,
-      servicePriorYearFilings: quote.servicePriorYearFilings ?? false,
-      serviceCfoAdvisory: quote.serviceCfoAdvisory ?? false,
-      servicePayrollService: quote.servicePayrollService ?? false,
-      serviceApArService: quote.serviceApArService ?? false,
-      serviceArService: quote.serviceArService ?? false,
-      serviceFpaBuild: quote.serviceFpaBuild ?? false,
-      serviceFpaSupport: quote.serviceFpaSupport ?? false,
-      serviceNexusStudy: quote.serviceNexusStudy ?? false,
-      serviceEntityOptimization: quote.serviceEntityOptimization ?? false,
-      serviceCostSegregation: quote.serviceCostSegregation ?? false,
-      serviceRdCredit: quote.serviceRdCredit ?? false,
-      serviceRealEstateAdvisory: quote.serviceRealEstateAdvisory ?? false,
-      serviceAgentOfService: quote.serviceAgentOfService ?? false,
+      // ALL comprehensive service selections (automatically mapped from service registry)
+      ...mapQuoteToFormServices(quote),
       // Service-specific configuration fields
       cfoAdvisoryType: quote.cfoAdvisoryType || "",
       cfoAdvisoryBundleHours: quote.cfoAdvisoryBundleHours || 8,
@@ -1278,13 +1264,21 @@ function HomePage() {
     
     // Set the appropriate form view based on the quote's services (delayed to ensure form reset completes)
     setTimeout(() => {
-      // Determine which services are selected to set the appropriate view
-      const hasBookkeepingServices = quote.serviceMonthlyBookkeeping || quote.serviceCleanupProjects;
-      const hasTaasServices = quote.serviceTaasMonthly || quote.servicePriorYearFilings;
-      const hasOtherServices = quote.serviceCfoAdvisory || quote.servicePayrollService || quote.serviceApArService || 
-                               quote.serviceArService || quote.serviceFpaBuild || quote.serviceFpaSupport ||
-                               quote.serviceNexusStudy || quote.serviceEntityOptimization || quote.serviceCostSegregation ||
-                               quote.serviceRdCredit || quote.serviceRealEstateAdvisory || quote.serviceAgentOfService;
+      // Use service registry to intelligently determine form view
+      const selectedServices = mapQuoteToFormServices(quote);
+      const allServices = getAllServices();
+      
+      // Check for bookkeeping services
+      const hasBookkeepingServices = selectedServices.serviceMonthlyBookkeeping || selectedServices.serviceCleanupProjects;
+      
+      // Check for TaaS services
+      const hasTaasServices = selectedServices.serviceTaasMonthly || selectedServices.servicePriorYearFilings;
+      
+      // Check for other services
+      const otherServiceKeys = allServices
+        .filter(s => !['serviceMonthlyBookkeeping', 'serviceCleanupProjects', 'serviceTaasMonthly', 'servicePriorYearFilings'].includes(s.key))
+        .map(s => s.key);
+      const hasOtherServices = otherServiceKeys.some(key => selectedServices[key as keyof typeof selectedServices]);
       
       if (hasBookkeepingServices || (!hasTaasServices && !hasOtherServices)) {
         // Default to bookkeeping view if bookkeeping services or no clear preference
