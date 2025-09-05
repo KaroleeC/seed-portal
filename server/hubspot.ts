@@ -966,26 +966,25 @@ Services Include:
     }
   }
 
-
   private async createInitialServiceLineItems(quoteId: string, serviceConfig: any): Promise<void> {
-    console.log("🏗️ Creating service line items for quote:", quoteId);
+    console.log("Creating service line items for quote:", quoteId);
     
     const services = [];
     if (serviceConfig.bookkeepingMonthlyFee > 0) {
-      services.push({name: "Monthly Bookkeeping Service", price: serviceConfig.bookkeepingMonthlyFee, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING});
+      services.push({price: serviceConfig.bookkeepingMonthlyFee, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING});
     }
     if (serviceConfig.cleanupProjectFee > 0) {
-      services.push({name: "Clean-Up / Catch-Up Project", price: serviceConfig.cleanupProjectFee, productId: HUBSPOT_PRODUCT_IDS.CLEANUP_PROJECT});
+      services.push({price: serviceConfig.cleanupProjectFee, productId: HUBSPOT_PRODUCT_IDS.CLEANUP_PROJECT});
     }
     if (serviceConfig.priorYearFilingsFee > 0) {
-      services.push({name: "Prior Year Tax Filings", price: serviceConfig.priorYearFilingsFee, productId: HUBSPOT_PRODUCT_IDS.PRIOR_YEAR_FILINGS});
+      services.push({price: serviceConfig.priorYearFilingsFee, productId: HUBSPOT_PRODUCT_IDS.PRIOR_YEAR_FILINGS});
     }
     if (serviceConfig.qboSubscription) {
-      services.push({name: "QBO Managed Subscription", price: 60, productId: "26213746490"});
+      services.push({price: 60, productId: "26213746490"});
     }
     
     for (const service of services) {
-      await this.associateProductWithQuote(quoteId, service.productId, service.price, 1, service.name);
+      await this.associateProductWithQuote(quoteId, service.productId, service.price, 1, null);
     }
     console.log(`✅ Created ${services.length} line items`);
   }
@@ -1138,7 +1137,7 @@ Services Include:
       console.log(`🏗️ Step 2: Creating line item`);
       const lineItem = {
         properties: {
-          name: customName || product.properties?.name || "Service",
+          name: product.properties?.name || "Service",
           price: price.toString(),
           quantity: quantity.toString(),
           hs_product_id: productId,
