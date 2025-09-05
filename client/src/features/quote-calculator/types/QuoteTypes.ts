@@ -219,8 +219,5 @@ export interface QuoteSubmissionProps {
   onError: (error: Error) => void;
 }
 
-// Zod-based form schema type
+// Zod-based form schema type (using the shared schema)
 export type QuoteFormSchema = z.infer<typeof insertQuoteSchema>;
-
-// Export the schema for validation
-export { insertQuoteSchema as quoteFormSchema };

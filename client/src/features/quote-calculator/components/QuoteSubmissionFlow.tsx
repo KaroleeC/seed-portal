@@ -79,13 +79,13 @@ export const QuoteSubmissionFlow: React.FC<QuoteSubmissionFlowProps> = ({
             <div className="flex justify-between">
               <span className="font-medium">Monthly Total:</span>
               <span className="font-bold text-green-700">
-                ${calculation.totalMonthlyFee.toLocaleString()}
+                ${(calculation.totalMonthlyFee || 0).toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="font-medium">Setup Total:</span>
               <span className="font-bold text-blue-700">
-                ${calculation.totalSetupFee.toLocaleString()}
+                ${(calculation.totalSetupFee || 0).toLocaleString()}
               </span>
             </div>
           </div>

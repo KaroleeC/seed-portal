@@ -17,10 +17,10 @@ import { calculateCombinedFees } from "@shared/pricing";
 import { 
   QuoteFormData, 
   PricingCalculationResult,
-  HubSpotContact,
-  quoteFormSchema 
+  HubSpotContact
 } from "../types/QuoteTypes";
 import { VALIDATION } from "../constants/PricingConstants";
+import { insertQuoteSchema } from "@shared/schema";
 
 // Import the new split components (will create these next)
 import { QuoteFormCore } from "./forms/QuoteFormCore";
@@ -43,12 +43,51 @@ export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> =
 
   // Form management with proper TypeScript typing
   const form = useForm<QuoteFormData>({
-    resolver: zodResolver(quoteFormSchema),
+    resolver: zodResolver(insertQuoteSchema.omit({
+      monthlyFee: true,
+      setupFee: true,
+      taasMonthlyFee: true,
+      taasPriorYearsFee: true,
+      hubspotContactId: true,
+      hubspotDealId: true,
+      hubspotQuoteId: true,
+      hubspotContactVerified: true,
+    })),
     defaultValues: {
-      // Initialize with proper defaults
-      cleanupMonths: 0,
+      // Contact Information
+      contactEmail: "",
+      contactFirstName: "",
+      contactLastName: "",
+      contactPhone: "",
+      companyName: "",
+      
+      // Company Address
+      clientStreetAddress: "",
+      clientCity: "",
+      clientState: "",
+      clientZipCode: "",
+      
+      // Business Details
+      industry: "",
+      monthlyRevenueRange: "",
+      entityType: "",
+      
+      // Service selections
+      serviceMonthlyBookkeeping: false,
+      serviceTaasMonthly: false,
+      serviceCleanupProjects: false,
+      servicePriorYearFilings: false,
+      serviceCfoAdvisory: false,
+      servicePayrollService: false,
+      serviceApArService: false,
+      serviceArService: false,
+      serviceAgentOfService: false,
+      
+      // Service tier
       serviceTier: 'Automated',
-      includesTaas: false,
+      
+      // Additional defaults
+      cleanupMonths: 0,
       qboSubscription: false,
       alreadyOnSeedBookkeeping: false,
     }

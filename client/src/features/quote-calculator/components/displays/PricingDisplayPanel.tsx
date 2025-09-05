@@ -27,9 +27,9 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
   calculation,
   formData
 }) => {
-  // Helper to format currency
-  const formatCurrency = (amount: number) => {
-    return `$${amount.toLocaleString()}`;
+  // Helper to format currency with safety check
+  const formatCurrency = (amount: number | undefined) => {
+    return `$${(amount || 0).toLocaleString()}`;
   };
 
   // Calculate savings display
