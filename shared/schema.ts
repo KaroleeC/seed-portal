@@ -119,10 +119,6 @@ export const quotes = pgTable("quotes", {
   clientCountry: text("client_country").default("US"),
   // Company name unlock status
   companyNameLocked: boolean("company_name_locked").default(true),
-  // HubSpot sync status tracking
-  hubspotSyncStatus: text("hubspot_sync_status").default("pending"), // 'pending', 'syncing', 'synced', 'failed'
-  hubspotSyncError: text("hubspot_sync_error"), // Store error message if sync fails
-  hubspotLastSyncAttempt: timestamp("hubspot_last_sync_attempt"),
   // Additional client detail fields with lock status
   contactFirstName: text("contact_first_name"),
   contactFirstNameLocked: boolean("contact_first_name_locked").default(true),
