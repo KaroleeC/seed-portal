@@ -617,12 +617,12 @@ export class HubSpotService {
                         quoteData.entityType.toLowerCase().replace('-', '_')
           }),
           
-          // Service tier - map to correct HubSpot values (with hyphens)
+          // Service tier - map to correct HubSpot values (NO hyphens as specified)
           ...(quoteData?.serviceTier && { 
-            service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 - Automated' :
-                         quoteData.serviceTier === 'Guided' ? 'Level 2 - Guided' :
-                         quoteData.serviceTier === 'Concierge' ? 'Level 3 - Concierge' :
-                         'Level 1 - Automated' // Default fallback
+            service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 Automated' :
+                         quoteData.serviceTier === 'Guided' ? 'Level 2 Guided' :
+                         quoteData.serviceTier === 'Concierge' ? 'Level 3 Concierge' :
+                         'Level 1 Automated' // Default fallback
           }),
           
           // Core numeric fields that exist in HubSpot
@@ -2945,12 +2945,12 @@ Generated: ${new Date().toLocaleDateString()}`;
                           'sole_prop' // Default fallback
             }),
             
-            // Service tier - map to correct HubSpot values (with hyphens)
+            // Service tier - map to correct HubSpot values (NO hyphens as specified)
             ...(quoteData?.serviceTier && { 
-              service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 - Automated' :
-                           quoteData.serviceTier === 'Guided' ? 'Level 2 - Guided' :
-                           quoteData.serviceTier === 'Concierge' ? 'Level 3 - Concierge' :
-                           'Level 1 - Automated' // Default fallback
+              service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 Automated' :
+                           quoteData.serviceTier === 'Guided' ? 'Level 2 Guided' :
+                           quoteData.serviceTier === 'Concierge' ? 'Level 3 Concierge' :
+                           'Level 1 Automated' // Default fallback
             }),
             
             // Core numeric fields that exist in HubSpot
