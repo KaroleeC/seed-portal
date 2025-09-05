@@ -1473,6 +1473,14 @@ function HomePage() {
             description: "Proceeding to quote calculator.",
           });
           proceedToClientDetails(selectedContact);
+        } else {
+          // For any other approval validation, also update the form
+          form.setValue('approvalCode', approvalCode);
+          setApprovalCode("");
+          toast({
+            title: "Approval Granted",
+            description: "Code validated successfully.",
+          });
         }
       } else {
         toast({
