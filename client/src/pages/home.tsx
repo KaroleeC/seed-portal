@@ -890,9 +890,12 @@ function HomePage() {
     mutationFn: async (quoteId: number) => {
       console.log('🚀 pushToHubSpotMutation called with quoteId:', quoteId);
       try {
-        const result = await apiRequest("/api/hubspot/push-quote", {
+        const result = await apiRequest("/api/hubspot/queue-sync", {
           method: "POST",
-          body: JSON.stringify({ quoteId })
+          body: JSON.stringify({ 
+            quoteId,
+            action: 'create'
+          })
         });
         
         console.log('🚀 HubSpot API success response:', result);
@@ -907,8 +910,10 @@ function HomePage() {
     },
     onSuccess: (data) => {
       toast({
-        title: "Pushed to HubSpot",
-        description: `Deal "${data.dealName}" created successfully in HubSpot.`,
+        title: "✅ Pushed to HubSpot",
+        description: data.method === "queued" 
+          ? "Quote sync has been queued for HubSpot. You'll be notified when complete."
+          : "Quote has been successfully synchronized to HubSpot!",
       });
       // Set editingQuoteId so subsequent changes can update the HubSpot quote
       if (data.quoteId) {
@@ -3873,10 +3878,16 @@ function HomePage() {
                                     });
                                   } else {
                                     toast({
-                                      title: "🔄 HubSpot Sync Started",
-                                      description: "Quote sync is processing in background. This ensures reliable delivery.",
+                                      title: "✅ HubSpot Sync Complete",
+                                      description: "Quote has been successfully synchronized to HubSpot!",
                                     });
                                   }
+                                  
+                                  // Refresh quotes to get updated HubSpot IDs
+                                  setTimeout(() => {
+                                    queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
+                                    refetchQuotes();
+                                  }, 2000);
                                 } catch (error: any) {
                                   console.error('Failed to queue HubSpot sync:', error);
                                   // Fallback to direct sync for immediate feedback

@@ -165,6 +165,22 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
         // Don't throw - deal was created successfully
       }
 
+      // Update the quote in our database with HubSpot IDs
+      try {
+        const { storage } = await import('../storage.js');
+        await storage.updateQuote({
+          id: quoteId,
+          hubspotContactId: contact.id,
+          hubspotDealId: deal.id,
+          hubspotQuoteId: hubspotQuote?.id,
+          hubspotContactVerified: true,
+          companyName
+        });
+        hubspotLogger.info({ quoteId, dealId: deal.id, hubspotQuoteId: hubspotQuote?.id }, '✅ Quote updated with HubSpot IDs');
+      } catch (updateError) {
+        hubspotLogger.error({ quoteId, error: updateError }, '❌ Failed to update quote with HubSpot IDs');
+      }
+
       result = {
         success: true,
         quoteId,
