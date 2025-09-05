@@ -713,21 +713,35 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       const includesBookkeeping = req.body.includesBookkeeping !== false; // Default to true
       const includesTaas = req.body.includesTaas === true;
       
+      // Sanitize numeric fields - convert empty strings to null to prevent SQL errors
+      const sanitizedBody = { ...req.body };
+      const numericFields = [
+        'monthlyFee', 'setupFee', 'taasMonthlyFee', 'taasPriorYearsFee', 'cleanupComplexity',
+        'cleanupMonths', 'numEntities', 'customNumEntities', 'statesFiled', 'customStatesFiled',
+        'numBusinessOwners', 'customNumBusinessOwners', 'priorYearsUnfiled'
+      ];
+      
+      numericFields.forEach(field => {
+        if (sanitizedBody[field] === '' || sanitizedBody[field] === undefined) {
+          sanitizedBody[field] = null;
+        }
+      });
+      
       // Prepare data for validation (without ownerId since schema omits it)
       const validationData = {
-        ...req.body,
-        // Use the frontend-calculated values directly
-        monthlyFee: req.body.monthlyFee || "0",
-        setupFee: req.body.setupFee || "0", 
-        taasMonthlyFee: req.body.taasMonthlyFee || "0",
-        taasPriorYearsFee: req.body.taasPriorYearsFee || "0",
+        ...sanitizedBody,
+        // Use the frontend-calculated values directly (with fallbacks for required fields)
+        monthlyFee: sanitizedBody.monthlyFee || "0",
+        setupFee: sanitizedBody.setupFee || "0", 
+        taasMonthlyFee: sanitizedBody.taasMonthlyFee || "0",
+        taasPriorYearsFee: sanitizedBody.taasPriorYearsFee || "0",
         // For TaaS-only quotes, provide defaults for bookkeeping-required fields
-        monthlyTransactions: req.body.monthlyTransactions || "N/A",
-        cleanupComplexity: req.body.cleanupComplexity || "0",
-        cleanupMonths: req.body.cleanupMonths || 0,
+        monthlyTransactions: sanitizedBody.monthlyTransactions || "N/A",
+        cleanupComplexity: sanitizedBody.cleanupComplexity || "0",
+        cleanupMonths: sanitizedBody.cleanupMonths || 0,
         // Required fields with defaults for validation
-        monthlyRevenueRange: req.body.monthlyRevenueRange || "Not specified",
-        industry: req.body.industry || "Not specified",
+        monthlyRevenueRange: sanitizedBody.monthlyRevenueRange || "Not specified",
+        industry: sanitizedBody.industry || "Not specified",
       };
       
       // Check for existing quotes - use approval system if needed
@@ -935,7 +949,21 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         return;
       }
       
-      const quoteData = updateQuoteSchema.parse({ ...req.body, id });
+      // Sanitize numeric fields - convert empty strings to null to prevent SQL errors
+      const sanitizedBody = { ...req.body };
+      const numericFields = [
+        'monthlyFee', 'setupFee', 'taasMonthlyFee', 'taasPriorYearsFee', 'cleanupComplexity',
+        'cleanupMonths', 'numEntities', 'customNumEntities', 'statesFiled', 'customStatesFiled',
+        'numBusinessOwners', 'customNumBusinessOwners', 'priorYearsUnfiled'
+      ];
+      
+      numericFields.forEach(field => {
+        if (sanitizedBody[field] === '' || sanitizedBody[field] === undefined) {
+          sanitizedBody[field] = null;
+        }
+      });
+      
+      const quoteData = updateQuoteSchema.parse({ ...sanitizedBody, id });
       const quote = await storage.updateQuote(quoteData);
       res.json(quote);
     } catch (error) {
