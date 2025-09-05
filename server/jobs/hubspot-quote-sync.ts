@@ -110,13 +110,19 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
       let hubspotQuote = null;
       try {
         hubspotLogger.info({ quoteId, dealId: deal.id }, '📋 Creating HubSpot quote');
-        hubspotLogger.info({ quoteId, services: {
-          servicePayroll: quote.servicePayroll,
-          servicePayrollService: quote.servicePayrollService,
-          serviceAgentOfService: quote.serviceAgentOfService,
-          servicePriorYearFilings: quote.servicePriorYearFilings,
-          taasPriorYearsFee: quote.taasPriorYearsFee
-        }}, '🔧 Quote service fields for line items');
+        // Calculate individual service fees from quote data
+        const { calculateCombinedFees } = await import('@shared/pricing');
+        const feeCalculation = calculateCombinedFees(quote as any);
+        
+        hubspotLogger.info({ quoteId, calculatedFees: {
+          payrollFee: feeCalculation.payrollFee,
+          agentOfServiceFee: feeCalculation.agentOfServiceFee,
+          apFee: feeCalculation.apFee,
+          arFee: feeCalculation.arFee,
+          cfoAdvisoryFee: feeCalculation.cfoAdvisoryFee,
+          cleanupProjectFee: feeCalculation.cleanupProjectFee,
+          priorYearFilingsFee: feeCalculation.priorYearFilingsFee
+        }}, '🔧 Calculated individual service fees');
         
         hubspotQuote = await hubSpotService.createQuote(
           deal.id,
@@ -134,21 +140,21 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
           parseFloat(quote.setupFee),
           quote,
           quote.serviceTier || 'Standard',
-          // Add all the missing service parameters with CORRECT field mapping
+          // Add all the missing service parameters with CALCULATED fees
           Boolean(quote.servicePayroll || quote.servicePayrollService),  // includesPayroll
-          parseFloat(quote.payrollServiceFee || '0'),         // payrollFee
+          feeCalculation.payrollFee,                          // payrollFee (calculated)
           Boolean(quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService), // includesAP
-          parseFloat(quote.apServiceFee || '0'),              // apFee
+          feeCalculation.apFee,                               // apFee (calculated)
           Boolean(quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService), // includesAR
-          parseFloat(quote.arServiceFee || '0'),              // arFee
+          feeCalculation.arFee,                               // arFee (calculated)
           Boolean(quote.serviceAgentOfService),               // includesAgentOfService
-          parseFloat(quote.agentOfServiceFee || '0'),         // agentOfServiceFee
+          feeCalculation.agentOfServiceFee,                   // agentOfServiceFee (calculated)
           Boolean(quote.serviceCfoAdvisory),                  // includesCfoAdvisory
-          parseFloat(quote.cfoAdvisoryFee || '0'),            // cfoAdvisoryFee
-          parseFloat(quote.cleanupProjectFee || '0'),         // cleanupProjectFee
-          parseFloat(quote.taasPriorYearsFee || '0'),         // priorYearFilingsFee
+          feeCalculation.cfoAdvisoryFee,                      // cfoAdvisoryFee (calculated)
+          feeCalculation.cleanupProjectFee,                   // cleanupProjectFee (calculated)
+          feeCalculation.priorYearFilingsFee,                 // priorYearFilingsFee (calculated)
           Boolean(quote.serviceFpaBuild),                     // includesFpaBuild
-          parseFloat(quote.fpaServiceFee || '0')              // fpaServiceFee
+          parseFloat(quote.fpaServiceFee || '0')              // fpaServiceFee (TODO: calculate)
         );
         hubspotLogger.info({ quoteId, hubspotQuoteId: hubspotQuote?.id }, '✅ HubSpot quote created successfully');
       } catch (quoteError) {

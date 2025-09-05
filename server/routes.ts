@@ -1411,28 +1411,19 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
             if (deal) {
               try {
                 console.log('📋 Creating HubSpot quote for deal:', deal.id);
-                console.log('🔧 ALL Quote fields from database:', Object.keys(quote));
-                console.log('🔧 Quote service fields debug:', {
-                  // All possible service fields
-                  servicePayroll: quote.servicePayroll,
-                  servicePayrollService: quote.servicePayrollService,
-                  serviceAgentOfService: quote.serviceAgentOfService,
-                  servicePriorYearFilings: quote.servicePriorYearFilings,
-                  serviceCfoAdvisory: quote.serviceCfoAdvisory,
-                  serviceApLite: quote.serviceApLite,
-                  serviceArLite: quote.serviceArLite,
-                  serviceMonthlyBookkeeping: quote.serviceMonthlyBookkeeping,
-                  serviceCleanupProjects: quote.serviceCleanupProjects,
-                  serviceTaasMonthly: quote.serviceTaasMonthly,
-                  // Fee fields
-                  taasPriorYearsFee: quote.taasPriorYearsFee,
-                  payrollServiceFee: quote.payrollServiceFee,
-                  agentOfServiceFee: quote.agentOfServiceFee,
-                  cfoAdvisoryFee: quote.cfoAdvisoryFee,
-                  apServiceFee: quote.apServiceFee,
-                  arServiceFee: quote.arServiceFee,
-                  cleanupProjectFee: quote.cleanupProjectFee,
-                  fpaServiceFee: quote.fpaServiceFee
+                
+                // Calculate individual service fees from quote data
+                const { calculateCombinedFees } = await import('@shared/pricing');
+                const feeCalculation = calculateCombinedFees(quote as any);
+                
+                console.log('🔧 Calculated individual service fees:', {
+                  payrollFee: feeCalculation.payrollFee,
+                  agentOfServiceFee: feeCalculation.agentOfServiceFee,
+                  apFee: feeCalculation.apFee,
+                  arFee: feeCalculation.arFee,
+                  cfoAdvisoryFee: feeCalculation.cfoAdvisoryFee,
+                  cleanupProjectFee: feeCalculation.cleanupProjectFee,
+                  priorYearFilingsFee: feeCalculation.priorYearFilingsFee
                 });
                 
                 const hubspotQuote = await hubSpotService.createQuote(
@@ -1451,21 +1442,21 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                   parseFloat(quote.setupFee),
                   quote,
                   quote.serviceTier || 'Standard',
-                  // Add all the missing service parameters with CORRECT field mapping
+                  // Add all the missing service parameters with CALCULATED fees
                   Boolean(quote.servicePayroll || quote.servicePayrollService),  // includesPayroll
-                  parseFloat(quote.payrollServiceFee || '0'),         // payrollFee
+                  feeCalculation.payrollFee,                          // payrollFee (calculated)
                   Boolean(quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService), // includesAP
-                  parseFloat(quote.apServiceFee || '0'),              // apFee
+                  feeCalculation.apFee,                               // apFee (calculated)
                   Boolean(quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService), // includesAR
-                  parseFloat(quote.arServiceFee || '0'),              // arFee
+                  feeCalculation.arFee,                               // arFee (calculated)
                   Boolean(quote.serviceAgentOfService),               // includesAgentOfService
-                  parseFloat(quote.agentOfServiceFee || '0'),         // agentOfServiceFee
+                  feeCalculation.agentOfServiceFee,                   // agentOfServiceFee (calculated)
                   Boolean(quote.serviceCfoAdvisory),                  // includesCfoAdvisory
-                  parseFloat(quote.cfoAdvisoryFee || '0'),            // cfoAdvisoryFee
-                  parseFloat(quote.cleanupProjectFee || '0'),         // cleanupProjectFee
-                  parseFloat(quote.taasPriorYearsFee || '0'),         // priorYearFilingsFee
+                  feeCalculation.cfoAdvisoryFee,                      // cfoAdvisoryFee (calculated)
+                  feeCalculation.cleanupProjectFee,                   // cleanupProjectFee (calculated)
+                  feeCalculation.priorYearFilingsFee,                 // priorYearFilingsFee (calculated)
                   Boolean(quote.serviceFpaBuild),                     // includesFpaBuild
-                  parseFloat(quote.fpaServiceFee || '0')              // fpaServiceFee
+                  parseFloat(quote.fpaServiceFee || '0')              // fpaServiceFee (TODO: calculate)
                 );
                 console.log('✅ HubSpot quote created successfully:', hubspotQuote?.id);
               } catch (quoteError) {
