@@ -40,11 +40,22 @@ export function useQuoteManagement() {
       
       const quoteData = {
         ...data,
+        // Combined totals
         monthlyFee: feeCalculation.combined.monthlyFee.toString(),
         setupFee: feeCalculation.combined.setupFee.toString(),
+        // Individual service fees (for HubSpot line items)
+        bookkeepingMonthlyFee: feeCalculation.bookkeeping.monthlyFee.toString(),
         taasMonthlyFee: feeCalculation.taas.monthlyFee.toString(),
         taasPriorYearsFee: feeCalculation.taas.setupFee.toString(),
-        // Removed cleanup override approval logic
+        serviceTierFee: feeCalculation.serviceTierFee.toString(),
+        // Other individual service fees
+        cleanupProjectFee: feeCalculation.cleanupProjectFee.toString(),
+        priorYearFilingsFee: feeCalculation.priorYearFilingsFee.toString(),
+        payrollFee: feeCalculation.payrollFee.toString(),
+        apFee: feeCalculation.apFee.toString(),
+        arFee: feeCalculation.arFee.toString(),
+        agentOfServiceFee: feeCalculation.agentOfServiceFee.toString(),
+        cfoAdvisoryFee: feeCalculation.cfoAdvisoryFee.toString(),
         // Include approval code if this is an approved duplicate quote creation
         approvalCode: data.approvalCode,
       };
