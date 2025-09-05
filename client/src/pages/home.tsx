@@ -3861,8 +3861,8 @@ function HomePage() {
                           const currentQuote = editingQuoteId ? allQuotes?.find((q: Quote) => q.id === editingQuoteId) : null;
                           const hasHubSpotIds = currentQuote?.hubspotQuoteId && currentQuote?.hubspotDealId;
                           
-                          if (!editingQuoteId && hasUnsavedChanges) {
-                            // Auto-save the quote first - ALWAYS SUCCESS
+                          if (!hasHubSpotIds && hasUnsavedChanges) {
+                            // Only create new quote if no HubSpot IDs exist - Auto-save the quote first
                             const formData = form.getValues();
                             try {
                               const savedQuote = await new Promise<any>((resolve, reject) => {
