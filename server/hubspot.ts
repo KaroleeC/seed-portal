@@ -605,52 +605,42 @@ export class HubSpotService {
           dealtype: "newbusiness", // Deal Type: New Business
           ...(ownerId && { hubspot_owner_id: ownerId }), // Set deal owner
           
-          // Comprehensive quote data mapping with proper field formatting
+          // HubSpot field mapping using only EXISTING properties with correct values
           
-          // Core financial information
-          ...(quoteData?.monthlyFee && { monthly_fee: quoteData.monthlyFee.toString() }),
-          ...(quoteData?.setupFee && { setup_fee: quoteData.setupFee.toString() }),
-          ...(quoteData?.taasMonthlyFee && { taas_monthly_fee: quoteData.taasMonthlyFee.toString() }),
-          ...(quoteData?.taasPriorYearsFee && { taas_prior_years_fee: quoteData.taasPriorYearsFee.toString() }),
+          // Entity type - map to correct HubSpot values
+          ...(quoteData?.entityType && { 
+            entity_type: quoteData.entityType === 'C-Corp' ? 'c-corp' :
+                        quoteData.entityType === 'S-Corp' ? 's-corp' :
+                        quoteData.entityType === 'Sole Proprietor' ? 'sole_prop' :
+                        quoteData.entityType === 'Partnership' ? 'partnership' :
+                        quoteData.entityType === 'Non-Profit' ? 'non-profit' :
+                        quoteData.entityType.toLowerCase().replace('-', '_')
+          }),
           
-          // Service inclusion flags (boolean to string conversion)
-          ...(quoteData?.includesBookkeeping !== undefined && { includes_bookkeeping: quoteData.includesBookkeeping ? 'true' : 'false' }),
-          ...(quoteData?.includesTaas !== undefined && { includes_taas: quoteData.includesTaas ? 'true' : 'false' }),
-          ...(quoteData?.serviceBookkeeping !== undefined && { service_bookkeeping: quoteData.serviceBookkeeping ? 'true' : 'false' }),
-          ...(quoteData?.serviceTaas !== undefined && { service_taas: quoteData.serviceTaas ? 'true' : 'false' }),
+          // Service tier - map to correct HubSpot values
+          ...(quoteData?.serviceTier && { 
+            service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 - Automated' :
+                         quoteData.serviceTier === 'Guided' ? 'Level 2 - Guided' :
+                         quoteData.serviceTier === 'Concierge' ? 'Level 3 - Concierge' :
+                         `Level 1 - ${quoteData.serviceTier}`
+          }),
           
-          // Entity and business information
-          ...(quoteData?.entityType && { entity_type: quoteData.entityType }),
+          // Core numeric fields that exist in HubSpot
           ...(quoteData?.numEntities && { number_of_entities: quoteData.numEntities.toString() }),
           ...(quoteData?.statesFiled && { number_of_state_filings: quoteData.statesFiled.toString() }),
           ...(quoteData?.numBusinessOwners && { number_of_owners_partners: quoteData.numBusinessOwners.toString() }),
-          ...(quoteData?.industry && { industry: quoteData.industry }),
-          ...(quoteData?.monthlyRevenueRange && { monthly_revenue_range: quoteData.monthlyRevenueRange }),
+          ...(quoteData?.cleanupMonths && { initial_clean_up_months: quoteData.cleanupMonths.toString() }),
+          ...(quoteData?.priorYearsUnfiled && { prior_years_unfiled: quoteData.priorYearsUnfiled.toString() }),
           
-          // Boolean field mappings (converting to proper string format)
+          // Boolean fields that exist in HubSpot (converted to string format)
           ...(quoteData?.include1040s !== undefined && { include_personal_1040s: quoteData.include1040s ? 'true' : 'false' }),
           ...(quoteData?.internationalFiling !== undefined && { international_filing: quoteData.internationalFiling ? 'true' : 'false' }),
           ...(quoteData?.businessLoans !== undefined && { business_loans: quoteData.businessLoans ? 'true' : 'false' }),
-          ...(quoteData?.alreadyOnSeedBookkeeping !== undefined && { already_on_seed_bookkeeping: quoteData.alreadyOnSeedBookkeeping ? 'true' : 'false' }),
-          ...(quoteData?.qboSubscription !== undefined && { qbo_subscription: quoteData.qboSubscription ? 'true' : 'false' }),
           
-          // Bookkeeping specific fields
-          ...(quoteData?.bookkeepingQuality && { bookkeeping_quality: quoteData.bookkeepingQuality }),
-          ...(quoteData?.cleanupMonths && { initial_clean_up_months: quoteData.cleanupMonths.toString() }),
-          ...(quoteData?.cleanupComplexity && { cleanup_complexity: quoteData.cleanupComplexity.toString() }),
+          // Other existing fields
           ...(quoteData?.accountingBasis && { accounting_basis: quoteData.accountingBasis }),
           ...(quoteData?.currentBookkeepingSoftware && { current_bookkeeping_software: quoteData.currentBookkeepingSoftware }),
           ...(quoteData?.primaryBank && { primary_bank: quoteData.primaryBank }),
-          
-          // Service tier and transaction information
-          ...(quoteData?.serviceTier && { service_tier: quoteData.serviceTier }),
-          ...(quoteData?.monthlyTransactions && { monthly_transactions: quoteData.monthlyTransactions }),
-          
-          // Prior years information
-          ...(quoteData?.priorYearsUnfiled && { prior_years_unfiled: quoteData.priorYearsUnfiled.toString() }),
-          ...(quoteData?.priorYearFilings && Array.isArray(quoteData.priorYearFilings) && { 
-            prior_year_filings: quoteData.priorYearFilings.join(', ') 
-          }),
         },
         associations: [
           {
@@ -2939,17 +2929,42 @@ Generated: ${new Date().toLocaleDateString()}`;
             amount: totalAmount.toString(),
             dealname: dealName,
             
-            // New bookkeeping deal properties for existing deals
-            ...(quoteData?.accountingBasis && { accounting_basis: quoteData.accountingBasis }),
-            ...(quoteData?.businessLoans !== undefined && { business_loans: quoteData.businessLoans ? 'true' : 'false' }),
-            ...(quoteData?.cleanupMonths && { initial_clean_up_months: quoteData.cleanupMonths.toString() }),
+            // Updated deal properties using only existing HubSpot fields with correct values
             
-            // New TaaS deal properties for existing deals
+            // Entity type - map to correct HubSpot values
+            ...(quoteData?.entityType && { 
+              entity_type: quoteData.entityType === 'C-Corp' ? 'c-corp' :
+                          quoteData.entityType === 'S-Corp' ? 's-corp' :
+                          quoteData.entityType === 'Sole Proprietor' ? 'sole_prop' :
+                          quoteData.entityType === 'Partnership' ? 'partnership' :
+                          quoteData.entityType === 'Non-Profit' ? 'non-profit' :
+                          quoteData.entityType.toLowerCase().replace('-', '_')
+            }),
+            
+            // Service tier - map to correct HubSpot values
+            ...(quoteData?.serviceTier && { 
+              service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 - Automated' :
+                           quoteData.serviceTier === 'Guided' ? 'Level 2 - Guided' :
+                           quoteData.serviceTier === 'Concierge' ? 'Level 3 - Concierge' :
+                           `Level 1 - ${quoteData.serviceTier}`
+            }),
+            
+            // Core numeric fields that exist in HubSpot
             ...(quoteData?.numEntities && { number_of_entities: quoteData.numEntities.toString() }),
             ...(quoteData?.statesFiled && { number_of_state_filings: quoteData.statesFiled.toString() }),
             ...(quoteData?.numBusinessOwners && { number_of_owners_partners: quoteData.numBusinessOwners.toString() }),
+            ...(quoteData?.cleanupMonths && { initial_clean_up_months: quoteData.cleanupMonths.toString() }),
+            ...(quoteData?.priorYearsUnfiled && { prior_years_unfiled: quoteData.priorYearsUnfiled.toString() }),
+            
+            // Boolean fields that exist in HubSpot (converted to string format)
             ...(quoteData?.include1040s !== undefined && { include_personal_1040s: quoteData.include1040s ? 'true' : 'false' }),
             ...(quoteData?.internationalFiling !== undefined && { international_filing: quoteData.internationalFiling ? 'true' : 'false' }),
+            ...(quoteData?.businessLoans !== undefined && { business_loans: quoteData.businessLoans ? 'true' : 'false' }),
+            
+            // Other existing fields
+            ...(quoteData?.accountingBasis && { accounting_basis: quoteData.accountingBasis }),
+            ...(quoteData?.currentBookkeepingSoftware && { current_bookkeeping_software: quoteData.currentBookkeepingSoftware }),
+            ...(quoteData?.primaryBank && { primary_bank: quoteData.primaryBank }),
           },
         };
 
