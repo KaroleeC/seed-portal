@@ -26,15 +26,15 @@ export interface HubSpotDeal {
 
 import { cache, CacheTTL, CachePrefix } from "./cache.js";
 
-// HubSpot Product Record IDs for All Services
+// HubSpot Product Record IDs for All Services - CORRECTED VALID IDs
 const HUBSPOT_PRODUCT_IDS = {
-  MONTHLY_BOOKKEEPING: "25687054003",
-  TAAS: "25684853779", 
+  MONTHLY_BOOKKEEPING: "25683750262", // ✅ FIXED - was 25687054003
+  TAAS: "25683750264", // ✅ FIXED - was 25684853779 (invalid/404)
   GUIDED_SERVICE_TIER: "28884795543",
   CONCIERGE_SERVICE_TIER: "28891925782",
-  PAYROLL_SERVICE: "29038614325",
-  AP_LITE_SERVICE: "28960182651",
-  AR_LITE_SERVICE: "28960244571",
+  PAYROLL_SERVICE: "25683750265", // Updated to match services.ts
+  AP_LITE_SERVICE: "25683750266", // Updated to match services.ts  
+  AR_LITE_SERVICE: "25683750267", // Updated to match services.ts
   AP_ADVANCED_SERVICE: "28960182653",
   AR_ADVANCED_SERVICE: "28928071009",
   AGENT_OF_SERVICE: "29001355021",
@@ -973,6 +973,26 @@ Services Include:
   private async createInitialServiceLineItems(quoteId: string, serviceConfig: any): Promise<void> {
     console.log("Creating service line items for quote:", quoteId);
     
+    // CRITICAL: Verify all product IDs exist first to avoid failures
+    console.log("🔍 VERIFYING ALL PRODUCT IDs BEFORE CREATING LINE ITEMS:");
+    const products = await this.getProducts();
+    
+    // Test TAAS specifically since it's failing
+    console.log(`🧪 TESTING TAAS PRODUCT ID: ${HUBSPOT_PRODUCT_IDS.TAAS}`);
+    try {
+      const taasProduct = await this.makeRequest(`/crm/v3/objects/products/${HUBSPOT_PRODUCT_IDS.TAAS}`);
+      console.log(`✅ TAAS Product ID is valid: ${taasProduct.properties?.name}`);
+    } catch (error) {
+      console.log(`❌ TAAS Product ID ${HUBSPOT_PRODUCT_IDS.TAAS} is INVALID - this explains missing line items!`);
+      console.log(`🔍 Searching for valid TAAS/Tax Service alternatives...`);
+      products.forEach(product => {
+        const name = product.properties?.name?.toLowerCase() || '';
+        if (name.includes('tax') || name.includes('taas')) {
+          console.log(`  💡 Found potential TAAS replacement: ID ${product.id} - "${product.properties?.name}"`);
+        }
+      });
+    }
+    
     const services = [];
     
     // Monthly Bookkeeping Service
@@ -1175,16 +1195,19 @@ Services Include:
         );
       }
 
-      // Step 2: Create line item
+      // Step 2: Create line item with HubSpot NATIVE name (eliminates Custom tags)
       console.log(`🏗️ Step 2: Creating line item`);
+      const nativeName = product.properties?.name || "Service";
+      console.log(`🏷️ Using HubSpot NATIVE product name: "${nativeName}" (should NOT contain 'Custom')`);
+      
       const lineItem = {
         properties: {
-          name: product.properties?.name || "Service",
+          name: nativeName, // Use exact HubSpot native name to avoid (Custom) tags
           price: price.toString(),
           quantity: quantity.toString(),
           hs_product_id: productId,
           hs_sku: product.properties?.hs_sku || productId,
-          description: product.properties?.description || "",
+          description: `Seed Financial - ${nativeName}`, // Clear description
         },
       };
 
@@ -1369,6 +1392,24 @@ Services Include:
       return response.results || [];
     } catch (error) {
       console.error("Error fetching custom objects:", error);
+      return [];
+    }
+  }
+
+  // Get all available products in HubSpot
+  async getProducts(): Promise<any[]> {
+    try {
+      console.log("🔍 FETCHING ALL HUBSPOT PRODUCTS...");
+      const result = await this.makeRequest("/crm/v3/objects/products");
+      console.log("🔍 ALL HUBSPOT PRODUCTS:");
+      if (result.results) {
+        result.results.forEach((product: any) => {
+          console.log(`  ID: ${product.id} | Name: "${product.properties?.name}" | SKU: ${product.properties?.hs_sku}`);
+        });
+      }
+      return result.results || [];
+    } catch (error) {
+      console.error("Error fetching products:", error);
       return [];
     }
   }
