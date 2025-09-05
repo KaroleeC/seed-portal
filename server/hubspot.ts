@@ -2475,6 +2475,166 @@ Generated: ${new Date().toLocaleDateString()}`;
     }
   }
 
+  /**
+   * NEW: Unified sync method that handles all 18 services correctly
+   * This replaces the old updateQuote method with a clean service-first design
+   */
+  async syncQuoteToHubSpot(
+    quoteId: string,
+    companyName: string,
+    serviceConfig: {
+      // Core totals
+      monthlyFee: number;
+      setupFee: number;
+      
+      // Individual service fees (all 18 services)
+      bookkeepingMonthlyFee: number;
+      serviceTierFee: number;
+      cleanupProjectFee: number;
+      priorYearFilingsFee: number;
+      taasMonthlyFee: number;
+      taasPriorYearsFee: number;
+      payrollFee: number;
+      apFee: number;
+      arFee: number;
+      agentOfServiceFee: number;
+      cfoAdvisoryFee: number;
+      qboFee: number;
+      
+      // Service selections (for deal naming and validation)
+      serviceBookkeeping: boolean;
+      serviceTaas: boolean;
+      servicePayroll: boolean;
+      serviceAP: boolean;
+      serviceAR: boolean;
+      
+      // Additional data for deal updates
+      entityType?: string;
+      serviceTier?: string;
+      industry?: string;
+    },
+    dealId?: string
+  ): Promise<boolean> {
+    try {
+      console.log(`🚀 SYNC QUOTE TO HUBSPOT - Quote ID: ${quoteId}`);
+      console.log(`🚀 Company: ${companyName}`);
+      console.log(`🚀 Total Monthly: $${serviceConfig.monthlyFee}, Total Setup: $${serviceConfig.setupFee}`);
+      
+      // 1. Validate quote still exists and is active
+      const quoteCheck = await this.makeRequest(
+        `/crm/v3/objects/quotes/${quoteId}`,
+        { method: "GET" }
+      );
+
+      if (!quoteCheck || quoteCheck.properties?.hs_status === "EXPIRED") {
+        console.log(`❌ Quote ${quoteId} is expired or not found`);
+        return false;
+      }
+
+      console.log(`✅ Quote ${quoteId} is valid and active`);
+
+      // 2. Delete ALL existing line items (clean slate approach)
+      console.log(`🗑️  Deleting existing line items for fresh sync`);
+      try {
+        const existingLineItems = await this.makeRequest(
+          `/crm/v4/objects/quotes/${quoteId}/associations/line_items`,
+          { method: "GET" }
+        );
+        
+        if (existingLineItems?.results?.length > 0) {
+          for (const association of existingLineItems.results) {
+            await this.makeRequest(
+              `/crm/v3/objects/line_items/${association.toObjectId}`,
+              { method: "DELETE" }
+            );
+          }
+          console.log(`🗑️  Deleted ${existingLineItems.results.length} existing line items`);
+        } else {
+          console.log(`🗑️  No existing line items found`);
+        }
+      } catch (deleteError) {
+        console.log('⚠️  Non-critical: Failed to delete existing line items:', deleteError);
+      }
+
+      // 3. Create fresh line items using the proven createInitialServiceLineItems method
+      console.log(`🔧 Creating fresh line items with all service configuration`);
+      await this.createInitialServiceLineItems(quoteId, serviceConfig);
+
+      // 4. Update quote title
+      let serviceType = "Services";
+      if (serviceConfig.serviceBookkeeping && serviceConfig.serviceTaas) {
+        serviceType = "Bookkeeping + TaaS";
+      } else if (serviceConfig.serviceTaas) {
+        serviceType = "TaaS";
+      } else if (serviceConfig.serviceBookkeeping) {
+        serviceType = "Bookkeeping Services";
+      }
+
+      const quoteTitle = `${companyName} - ${serviceType} Quote`;
+      
+      const quoteUpdateBody = {
+        properties: {
+          hs_title: quoteTitle,
+          hs_quote_amount: serviceConfig.monthlyFee.toString(),
+        },
+      };
+
+      await this.makeRequest(`/crm/v3/objects/quotes/${quoteId}`, {
+        method: "PATCH",
+        body: JSON.stringify(quoteUpdateBody),
+      });
+
+      console.log(`✅ Updated quote title: ${quoteTitle}`);
+
+      // 5. Update associated deal (if exists)
+      if (dealId) {
+        const totalAmount = (serviceConfig.monthlyFee * 12) + serviceConfig.setupFee;
+        const dealName = `${companyName} - ${serviceType}`;
+
+        const dealUpdateBody = {
+          properties: {
+            amount: totalAmount.toString(),
+            dealname: dealName,
+            
+            // Map entity type correctly
+            ...(serviceConfig.entityType && { 
+              entity_type: serviceConfig.entityType === 'C-Corp' ? 'c-corp' :
+                          serviceConfig.entityType === 'S-Corp' ? 's-corp' :
+                          serviceConfig.entityType === 'Sole Proprietor' ? 'sole_prop' :
+                          serviceConfig.entityType === 'Partnership' ? 'partnership' :
+                          serviceConfig.entityType === 'Non-Profit' ? 'non-profit' :
+                          'sole_prop'
+            }),
+            
+            // Map service tier correctly
+            ...(serviceConfig.serviceTier && { 
+              service_tier: serviceConfig.serviceTier === 'Automated' ? 'Level 1 - Automated' :
+                           serviceConfig.serviceTier === 'Guided' ? 'Level 2 - Guided' :
+                           serviceConfig.serviceTier === 'Concierge' ? 'Level 3 - Concierge' :
+                           'Level 1 - Automated'
+            }),
+            
+            ...(serviceConfig.industry && { industry: serviceConfig.industry })
+          },
+        };
+
+        await this.makeRequest(`/crm/v3/objects/deals/${dealId}`, {
+          method: "PATCH",
+          body: JSON.stringify(dealUpdateBody),
+        });
+
+        console.log(`✅ Updated deal ${dealId}: ${dealName} - $${totalAmount}`);
+      }
+
+      console.log(`🎉 Successfully synced quote ${quoteId} to HubSpot with all services`);
+      return true;
+
+    } catch (error) {
+      console.error('❌ Error syncing quote to HubSpot:', error);
+      return false;
+    }
+  }
+
   async updateQuote(
     quoteId: string,
     companyName: string,

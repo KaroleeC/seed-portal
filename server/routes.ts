@@ -1934,28 +1934,44 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       console.log(`   Mapped to HubSpot includesBookkeeping: ${currentServiceBookkeeping}`);
       console.log(`   Mapped to HubSpot includesTaas: ${currentServiceTaas}`);
       
-      const success = await hubSpotService.updateQuote(
-        quote.hubspotQuoteId,
-        companyName,
+      // ✅ NEW: Use the unified syncQuoteToHubSpot method with all individual service fees
+      const serviceConfig = {
+        // Core totals
         monthlyFee,
         setupFee,
-        currentServiceBookkeeping, // ✅ Fixed: Use serviceBookkeeping instead of includesBookkeeping
-        currentServiceTaas, // ✅ Fixed: Use serviceTaas instead of includesTaas
-        taasMonthlyFee,
-        taasPriorYearsFee,
-        bookkeepingMonthlyFee, // ✅ Use individual calculated fee
-        setupFee - taasPriorYearsFee, // Bookkeeping setup fee calculation
-        quote.hubspotDealId || undefined, // Pass deal ID for updating deal name and value
-        currentFormData, // Pass the complete current form data for scope assumptions
-        // Pass ALL individual service fees
+        
+        // Individual service fees (all that we calculate)
+        bookkeepingMonthlyFee,
         serviceTierFee,
         cleanupProjectFee,
         priorYearFilingsFee,
+        taasMonthlyFee,
+        taasPriorYearsFee,
         payrollFee,
         apFee,
         arFee,
         agentOfServiceFee,
-        cfoAdvisoryFee
+        cfoAdvisoryFee,
+        qboFee: parseFloat(currentFormData?.qboFee || "0"),
+        
+        // Service selections
+        serviceBookkeeping: currentServiceBookkeeping,
+        serviceTaas: currentServiceTaas,
+        servicePayroll: currentFormData?.servicePayroll === true,
+        serviceAP: currentFormData?.serviceAP === true,
+        serviceAR: currentFormData?.serviceAR === true,
+        
+        // Additional data for deal updates
+        entityType: currentFormData?.entityType,
+        serviceTier: currentFormData?.serviceTier,
+        industry: currentFormData?.industry
+      };
+
+      const success = await hubSpotService.syncQuoteToHubSpot(
+        quote.hubspotQuoteId,
+        companyName,
+        serviceConfig,
+        quote.hubspotDealId || undefined
       );
 
       if (success) {
