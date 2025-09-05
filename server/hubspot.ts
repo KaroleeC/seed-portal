@@ -588,7 +588,9 @@ export class HubSpotService {
       const totalAmount = (monthlyFee * 12 + setupFee).toString();
 
       // Get the correct pipeline and stage IDs dynamically
+      console.log("Fetching pipeline information...");
       const pipelineInfo = await this.getSeedSalesPipelineStage();
+      console.log("Pipeline info result:", pipelineInfo);
       if (!pipelineInfo) {
         console.error("Could not find Seed Sales Pipeline or Qualified stage");
         return null;
