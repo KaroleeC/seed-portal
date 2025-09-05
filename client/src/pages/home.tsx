@@ -122,7 +122,6 @@ const formSchema = insertQuoteSchema.omit({
 }).extend({
   contactEmail: z.string().min(1, "Email is required").email("Please enter a valid email address"),
   cleanupMonths: z.number().min(0, "Cannot be negative"),
-  cleanupOverride: z.boolean().default(false),
   overrideReason: z.string().optional(),
   customOverrideReason: z.string().optional(),
   customSetupFee: z.string().optional(),
@@ -174,38 +173,11 @@ const formSchema = insertQuoteSchema.omit({
   alreadyOnSeedBookkeeping: z.boolean().optional(),
   qboSubscription: z.boolean().optional(),
 }).superRefine((data, ctx) => {
-  // If cleanup override is checked, require a reason
-  if (data.cleanupOverride && !data.overrideReason) {
+  // Enforce minimum initial cleanup months for bookkeeping quotes
+  if (data.quoteType === 'bookkeeping' && data.cleanupMonths < currentMonth) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Override reason is required when cleanup override is enabled",
-      path: ["overrideReason"],
-    });
-  }
-  
-  // If "Other" is selected as reason, require custom text and setup fee
-  if (data.cleanupOverride && data.overrideReason === "Other") {
-    if (!data.customOverrideReason || data.customOverrideReason.trim() === "") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Please provide a detailed reason for the override",
-        path: ["customOverrideReason"]
-      });
-    }
-    if (!data.customSetupFee || data.customSetupFee.trim() === "") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Please enter a custom setup fee for manual approval",
-        path: ["customSetupFee"]
-      });
-    }
-  }
-  
-  // If override is not checked or not approved, enforce minimum initial cleanup months (only for bookkeeping)
-  if (data.quoteType === 'bookkeeping' && !data.cleanupOverride && data.cleanupMonths < currentMonth) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: `Minimum ${currentMonth} months required (current calendar year) unless override is approved`,
+      message: `Minimum ${currentMonth} months required (current calendar year)`,
       path: ["cleanupMonths"],
     });
   }
@@ -394,20 +366,12 @@ function HomePage() {
   const [sortField, setSortField] = useState<string>("updatedAt");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
-  // Approval system state
+  // Duplicate quote approval system state
   const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
   const [approvalCode, setApprovalCode] = useState("");
-  const [isApproved, setIsApproved] = useState(false);
   const [isRequestingApproval, setIsRequestingApproval] = useState(false);
   const [isValidatingCode, setIsValidatingCode] = useState(false);
-  const [customOverrideReason, setCustomOverrideReason] = useState("");
   const [hasRequestedApproval, setHasRequestedApproval] = useState(false);
-  const [customSetupFee, setCustomSetupFee] = useState<string>("");
-  
-  // Simplified approval system - lock fields permanently after approval
-  const [fieldsLocked, setFieldsLocked] = useState(false);
-  const [unlockConfirmDialog, setUnlockConfirmDialog] = useState(false);
-  const [originalCleanupMonths, setOriginalCleanupMonths] = useState<number>(currentMonth);
   
   // Archive dialog state
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
@@ -477,7 +441,7 @@ function HomePage() {
       industry: "",
       cleanupMonths: currentMonth,
       cleanupComplexity: "",
-      cleanupOverride: false,
+
       overrideReason: "",
       customOverrideReason: "",
       customSetupFee: "",
@@ -559,7 +523,7 @@ function HomePage() {
           setupFee: feeCalculation.combined.setupFee.toString(),
           taasMonthlyFee: feeCalculation.taas.monthlyFee.toString(),
           taasPriorYearsFee: feeCalculation.taas.setupFee.toString(),
-          approvalRequired: data.cleanupOverride && isApproved,
+          // Approval logic simplified for duplicate quotes only
           // Ensure all client details are stored for future ClickUp integration
           companyName: data.companyName || '',
           contactFirstName: data.contactFirstName || '',
@@ -1206,7 +1170,6 @@ function HomePage() {
       industry: quote.industry,
       cleanupMonths: quote.cleanupMonths,
       cleanupComplexity: parseFloat(quote.cleanupComplexity).toString(), // Convert "1.00" to "1"
-      cleanupOverride: quote.cleanupOverride || false,
       overrideReason: quote.overrideReason || "",
       companyName: quote.companyName || "",
       contactFirstName: quote.contactFirstName || "",
@@ -1295,7 +1258,7 @@ function HomePage() {
       industry: "",
       cleanupMonths: currentMonth,
       cleanupComplexity: "",
-      cleanupOverride: false,
+
       overrideReason: "",
       customOverrideReason: "",
       customSetupFee: "",
@@ -1510,16 +1473,6 @@ function HomePage() {
             description: "Proceeding to quote calculator.",
           });
           proceedToClientDetails(selectedContact);
-        } else {
-          // For cleanup override approval, lock fields 
-          setIsApproved(true);
-          setFieldsLocked(true);
-          setIsApprovalDialogOpen(false);
-          setApprovalCode("");
-          toast({
-            title: "Approval Granted",
-            description: "Setup fee fields are now locked. Use the unlock button to make changes.",
-          });
         }
       } else {
         toast({
@@ -1561,7 +1514,7 @@ function HomePage() {
     console.log('onSubmit called with data:', data);
     
     // Check if duplicate quote approval is required
-    if (existingQuotesForEmail.length > 0 && !isApproved) {
+    if (existingQuotesForEmail.length > 0) {
       toast({
         title: "Approval Required",
         description: "You must get approval before creating additional quotes for this contact.",
@@ -1580,15 +1533,7 @@ function HomePage() {
       return;
     }
     
-    // Check if override is used but not approved
-    if (data.cleanupOverride && !isApproved) {
-      toast({
-        title: "Approval Required",
-        description: "You must get approval before saving quotes with cleanup overrides.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Cleanup override logic removed
     
     console.log('Submitting quote via createQuoteMutation');
     createQuoteMutation.mutate(data);
@@ -2224,7 +2169,7 @@ function HomePage() {
                 if (!updatedServices.serviceCleanupProjects) {
                   form.setValue('cleanupMonths', 0);
                   form.setValue('cleanupComplexity', undefined);
-                  form.setValue('cleanupOverride', false);
+                  // Cleanup override removed
                 }
                 
                 // Update legacy fields for backward compatibility - only set for monthly services, not project-only

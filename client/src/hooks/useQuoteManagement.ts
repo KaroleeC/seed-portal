@@ -44,7 +44,7 @@ export function useQuoteManagement() {
         setupFee: feeCalculation.combined.setupFee.toString(),
         taasMonthlyFee: feeCalculation.taas.monthlyFee.toString(),
         taasPriorYearsFee: feeCalculation.taas.setupFee.toString(),
-        approvalRequired: data.cleanupOverride,
+        // Removed cleanup override approval logic
         // Include approval code if this is an approved duplicate quote creation
         approvalCode: data.approvalCode,
       };
