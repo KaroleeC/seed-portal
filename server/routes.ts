@@ -1338,6 +1338,7 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
             if (deal) {
               try {
                 console.log('📋 Creating HubSpot quote for deal:', deal.id);
+                console.log('🚨 ROUTE DEBUG: Taking PATH 1 (Line 1360) - Missing bookkeepingSetupFee parameter!');
                 
                 // ✅ FIXED: Recalculate individual service fees using the same logic as frontend
                 console.log('🔧 Recalculating individual service fees from quote data (same as frontend)');
@@ -1588,6 +1589,7 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       // Calculate all service fees using the pricing engine
       const allFees = calculateCombinedFees(quote);
       
+      console.log('🚨 ROUTE DEBUG: Taking PATH 2 (Line 1591) - Has bookkeepingSetupFee parameter!');
       const hubspotQuote = await hubSpotService.createQuote(
         deal.id,
         companyName,
