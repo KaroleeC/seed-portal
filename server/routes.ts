@@ -1812,12 +1812,34 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       let taasMonthlyFee = parseFloat(quote.taasMonthlyFee || "0");
       let taasPriorYearsFee = parseFloat(quote.taasPriorYearsFee || "0");
       
+      // Extract ALL individual service fees from form data
+      let bookkeepingMonthlyFee = 0;
+      let serviceTierFee = 0;
+      let cleanupProjectFee = 0;
+      let priorYearFilingsFee = 0;
+      let payrollFee = 0;
+      let apFee = 0;
+      let arFee = 0;
+      let agentOfServiceFee = 0;
+      let cfoAdvisoryFee = 0;
+      
       if (currentFormData) {
         // Use form data values directly to preserve custom overrides
         monthlyFee = parseFloat(currentFormData.monthlyFee || quote.monthlyFee);
         setupFee = parseFloat(currentFormData.setupFee || quote.setupFee);
         taasMonthlyFee = parseFloat(currentFormData.taasMonthlyFee || "0");
         taasPriorYearsFee = parseFloat(currentFormData.taasPriorYearsFee || "0");
+        
+        // Extract ALL individual service fees
+        bookkeepingMonthlyFee = parseFloat(currentFormData.bookkeepingMonthlyFee || "0");
+        serviceTierFee = parseFloat(currentFormData.serviceTierFee || "0");
+        cleanupProjectFee = parseFloat(currentFormData.cleanupProjectFee || "0");
+        priorYearFilingsFee = parseFloat(currentFormData.priorYearFilingsFee || "0");
+        payrollFee = parseFloat(currentFormData.payrollFee || "0");
+        apFee = parseFloat(currentFormData.apFee || "0");
+        arFee = parseFloat(currentFormData.arFee || "0");
+        agentOfServiceFee = parseFloat(currentFormData.agentOfServiceFee || "0");
+        cfoAdvisoryFee = parseFloat(currentFormData.cfoAdvisoryFee || "0");
         
         console.log(`Using form data fees - Monthly: $${monthlyFee}, Setup: $${setupFee}, TaaS Monthly: $${taasMonthlyFee}, TaaS Setup: $${taasPriorYearsFee}`);
         console.log(`Current form data includes TaaS: ${currentFormData.includesTaas}, TaaS monthly: ${currentFormData.taasMonthlyFee}, TaaS setup: ${currentFormData.taasPriorYearsFee}`);
@@ -1887,13 +1909,17 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       }
 
       // Use the form data fees directly instead of recalculating
-      const updateTaasMonthlyFee = taasMonthlyFee;
-      const updateTaasPriorYearsFee = taasPriorYearsFee;
-      
-      const updateBookkeepingMonthlyFee = monthlyFee - updateTaasMonthlyFee;
-      const updateBookkeepingSetupFee = setupFee - updateTaasPriorYearsFee;
-      
-      console.log(`Calculated individual service fees - Bookkeeping Monthly: $${updateBookkeepingMonthlyFee}, Bookkeeping Setup: $${updateBookkeepingSetupFee}, TaaS Monthly: $${updateTaasMonthlyFee}, TaaS Setup: $${updateTaasPriorYearsFee}`);
+      console.log(`✅ Using INDIVIDUAL service fees from frontend calculation:`);
+      console.log(`   Bookkeeping Monthly: $${bookkeepingMonthlyFee}`);
+      console.log(`   TaaS Monthly: $${taasMonthlyFee}`);
+      console.log(`   Service Tier: $${serviceTierFee}`);
+      console.log(`   Cleanup Project: $${cleanupProjectFee}`);
+      console.log(`   Prior Year Filings: $${priorYearFilingsFee}`);
+      console.log(`   Payroll: $${payrollFee}`);
+      console.log(`   AP: $${apFee}`);
+      console.log(`   AR: $${arFee}`);
+      console.log(`   Agent of Service: $${agentOfServiceFee}`);
+      console.log(`   CFO Advisory: $${cfoAdvisoryFee}`);
 
       // 🔧 FIXED: Use correct service field mapping for HubSpot integration
       // Use serviceBookkeeping/serviceTaas from form data instead of includes* fields
@@ -1913,12 +1939,21 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         setupFee,
         currentServiceBookkeeping, // ✅ Fixed: Use serviceBookkeeping instead of includesBookkeeping
         currentServiceTaas, // ✅ Fixed: Use serviceTaas instead of includesTaas
-        updateTaasMonthlyFee,
-        updateTaasPriorYearsFee,
-        updateBookkeepingMonthlyFee,
-        updateBookkeepingSetupFee,
+        taasMonthlyFee,
+        taasPriorYearsFee,
+        bookkeepingMonthlyFee, // ✅ Use individual calculated fee
+        setupFee - taasPriorYearsFee, // Bookkeeping setup fee calculation
         quote.hubspotDealId || undefined, // Pass deal ID for updating deal name and value
-        currentFormData // Pass the complete current form data for scope assumptions
+        currentFormData, // Pass the complete current form data for scope assumptions
+        // Pass ALL individual service fees
+        serviceTierFee,
+        cleanupProjectFee,
+        priorYearFilingsFee,
+        payrollFee,
+        apFee,
+        arFee,
+        agentOfServiceFee,
+        cfoAdvisoryFee
       );
 
       if (success) {
