@@ -168,20 +168,43 @@ router.post('/quotes/:id/sync-hubspot', requireAuth, async (req, res) => {
     const contactId = contactVerification.contact.id;
     const syncResults = { contact: false, company: false };
 
-    // Prepare contact properties for sync
+    // Prepare contact properties for sync (2-way sync with HubSpot override)
     const contactProperties: any = {};
     
-    // Only include properties that have values and map to correct HubSpot field names
+    // Basic contact fields - 2-way sync
     if (quote.contactFirstName) contactProperties.firstname = quote.contactFirstName;
     if (quote.contactLastName) contactProperties.lastname = quote.contactLastName;
-    if (quote.clientStreetAddress) contactProperties.address = quote.clientStreetAddress;
-    if (quote.clientCity) contactProperties.city = quote.clientCity;
-    if (quote.clientState) contactProperties.state = quote.clientState;
-    if (quote.clientZipCode) contactProperties.zip = quote.clientZipCode;
-    if (quote.clientCountry) contactProperties.country = quote.clientCountry;
+    if (quote.contactPhone) contactProperties.phone = quote.contactPhone;
+    
+    // Business fields for contacts
     if (quote.industry) contactProperties.industry = quote.industry;
-    if (quote.entityType) contactProperties.entity_type = quote.entityType;
-    if (quote.monthlyRevenueRange) contactProperties.monthly_revenue_range = quote.monthlyRevenueRange;
+    
+    // Monthly revenue mapping with correct field name and value mapping
+    if (quote.monthlyRevenueRange) {
+      let mappedRevenue = quote.monthlyRevenueRange;
+      // Map to HubSpot dropdown values
+      switch (quote.monthlyRevenueRange) {
+        case '<$10K':
+          mappedRevenue = 'less_than_$10,000';
+          break;
+        case '$10K-$25K':
+        case '$25K-$50K':
+          mappedRevenue = '$10,000-$50,000';
+          break;
+        case '$50K-$100K':
+        case '$100K-$200K':
+          mappedRevenue = '$50,000-$200,000';
+          break;
+        case '$200K+':
+          mappedRevenue = '$200,000 or more';
+          break;
+        default:
+          mappedRevenue = 'less_than_$10,000'; // Default fallback
+      }
+      contactProperties.monthly_revenue = mappedRevenue;
+    }
+    
+    // Note: Address fields moved to Company sync only, entity_type removed from contacts
 
     // Update contact if we have properties to sync
     if (Object.keys(contactProperties).length > 0) {

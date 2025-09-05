@@ -619,10 +619,10 @@ export class HubSpotService {
           
           // Service tier - map to correct HubSpot values
           ...(quoteData?.serviceTier && { 
-            service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 - Automated' :
-                         quoteData.serviceTier === 'Guided' ? 'Level 2 - Guided' :
-                         quoteData.serviceTier === 'Concierge' ? 'Level 3 - Concierge' :
-                         `Level 1 - ${quoteData.serviceTier}`
+            service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 Automated' :
+                         quoteData.serviceTier === 'Guided' ? 'Level 2 Guided' :
+                         quoteData.serviceTier === 'Concierge' ? 'Level 3 Concierge' :
+                         'Level 1 Automated' // Default fallback
           }),
           
           // Core numeric fields that exist in HubSpot
@@ -2931,22 +2931,22 @@ Generated: ${new Date().toLocaleDateString()}`;
             
             // Updated deal properties using only existing HubSpot fields with correct values
             
-            // Entity type - map to correct HubSpot values
+            // Entity type - map to correct HubSpot values (sole_prop, partnership, s-corp, c-corp, non-profit)
             ...(quoteData?.entityType && { 
               entity_type: quoteData.entityType === 'C-Corp' ? 'c-corp' :
                           quoteData.entityType === 'S-Corp' ? 's-corp' :
                           quoteData.entityType === 'Sole Proprietor' ? 'sole_prop' :
                           quoteData.entityType === 'Partnership' ? 'partnership' :
                           quoteData.entityType === 'Non-Profit' ? 'non-profit' :
-                          quoteData.entityType.toLowerCase().replace('-', '_')
+                          'sole_prop' // Default fallback
             }),
             
-            // Service tier - map to correct HubSpot values
+            // Service tier - map to correct HubSpot values (Level 1 Automated, Level 2 Guided, Level 3 Concierge)
             ...(quoteData?.serviceTier && { 
-              service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 - Automated' :
-                           quoteData.serviceTier === 'Guided' ? 'Level 2 - Guided' :
-                           quoteData.serviceTier === 'Concierge' ? 'Level 3 - Concierge' :
-                           `Level 1 - ${quoteData.serviceTier}`
+              service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 Automated' :
+                           quoteData.serviceTier === 'Guided' ? 'Level 2 Guided' :
+                           quoteData.serviceTier === 'Concierge' ? 'Level 3 Concierge' :
+                           'Level 1 Automated' // Default fallback
             }),
             
             // Core numeric fields that exist in HubSpot
@@ -3671,13 +3671,12 @@ Generated: ${new Date().toLocaleDateString()}`;
           );
           await this.associateContactWithCompany(contactId, companyId);
         } else {
-          // Create new company
+          // Create new company with address fields (removed domain, website, phone - per requirements)
           console.log(`Creating new company: ${companyName}`);
           const newCompany = await this.createCompany({
             name: companyName,
-            domain: this.extractDomainFromCompanyName(companyName),
-            industry: quote.industry,
-            // Add other fields from quote if available
+            // Address fields for company (moved from contact)
+            address: quote.clientStreetAddress,
             city: quote.clientCity,
             state: quote.clientState,
             zip: quote.clientZipCode,
@@ -3695,33 +3694,37 @@ Generated: ${new Date().toLocaleDateString()}`;
         }
       }
 
-      // Update company properties with quote data
+      // Update company properties with quote data (1-way sync - always override HubSpot)
       if (companyId) {
         const companyUpdateProperties: any = {};
 
-        // Company properties (industry, revenue, entity type, accounting basis)
-        if (quote.industry) {
-          companyUpdateProperties.industry = quote.industry;
-        }
-        if (quote.monthlyRevenueRange) {
-          companyUpdateProperties.monthly_revenue_range =
-            quote.monthlyRevenueRange;
-        }
-        if (quote.entityType) {
-          companyUpdateProperties.entity_type = quote.entityType;
-        }
-        if (quote.accountingBasis) {
-          companyUpdateProperties.accounting_basis = quote.accountingBasis;
+        // Force update company name (1-way sync from quote to HubSpot)
+        companyUpdateProperties.name = companyName;
+
+        // Address fields (2-way sync - moved from contact to company only)
+        if (quote.clientStreetAddress) companyUpdateProperties.address = quote.clientStreetAddress;
+        if (quote.clientCity) companyUpdateProperties.city = quote.clientCity;
+        if (quote.clientState) companyUpdateProperties.state = quote.clientState;
+        if (quote.clientZipCode) companyUpdateProperties.zip = quote.clientZipCode;
+        if (quote.clientCountry) companyUpdateProperties.country = quote.clientCountry;
+
+        // Conditional employee count (only if payroll service is selected)
+        if (quote.includesPayroll || quote.servicePayroll) {
+          // Add employee count from payroll data if available
+          if (quote.numberOfEmployees) {
+            companyUpdateProperties.numberofemployees = quote.numberOfEmployees.toString();
+          }
         }
 
-        // Update company if there are properties to change
-        if (Object.keys(companyUpdateProperties).length > 0) {
-          await this.updateCompany(companyId, companyUpdateProperties);
-          console.log(
-            "Updated HubSpot company properties:",
-            companyUpdateProperties,
-          );
-        }
+        // Note: industry and monthly_revenue synced via contact properties
+        // Note: removed domain, website, phone, linkedin_company_page, lead_source per requirements
+
+        // Always update company properties to ensure sync
+        await this.updateCompany(companyId, companyUpdateProperties);
+        console.log(
+          "Updated HubSpot company properties (1-way sync):",
+          companyUpdateProperties,
+        );
       }
     } catch (error) {
       console.error("Error updating/creating company from quote:", error);
