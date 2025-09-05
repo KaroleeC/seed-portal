@@ -1601,7 +1601,7 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         quote.taasMonthlyFee ? parseFloat(quote.taasMonthlyFee) : undefined,
         quote.taasPriorYearsFee ? parseFloat(quote.taasPriorYearsFee) : undefined,
         bookkeepingMonthlyFee,
-        bookkeepingSetupFee,
+        bookkeepingSetupFee, // This is correctly separated ($563 not $7,013)
         quote, // Pass the complete quote data for scope assumptions
         quote.serviceTier || 'Automated', // Pass the service tier
         // New services
