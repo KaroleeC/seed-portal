@@ -771,6 +771,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
     next();
   }, requireAuth, async (req, res) => {
     console.log('🟢 POST /api/quotes - HANDLER EXECUTING');
+    console.log('🔥 REQUEST BODY KEYS:', Object.keys(req.body));
+    console.log('🔥 REQUEST BODY CONTACT EMAIL:', req.body.contactEmail);
     try {
       console.log('=== QUOTE CREATION DEBUG ===');
       console.log('User:', req.user?.email, 'ID:', req.user?.id);
