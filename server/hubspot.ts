@@ -1024,7 +1024,7 @@ Services Include:
     
     // Monthly Bookkeeping Service - USE CALCULATED FEE ONLY
     if (serviceConfig.includesBookkeeping) {
-      const bookkeepingPrice = serviceConfig.bookkeepingMonthlyFee || (serviceConfig.monthlyFee - (serviceConfig.taasMonthlyFee || 0));
+      const bookkeepingPrice = serviceConfig.bookkeepingMonthlyFee;
       if (bookkeepingPrice > 0) {
         services.push({price: bookkeepingPrice, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING});
       }
@@ -1081,10 +1081,8 @@ Services Include:
     // Service Tier (Concierge/Guided) - USE CALCULATED FEE ONLY
     if (serviceConfig.serviceTier === 'Concierge' && serviceConfig.serviceTierFee > 0) {
       services.push({price: serviceConfig.serviceTierFee, productId: HUBSPOT_PRODUCT_IDS.CONCIERGE_SERVICE_TIER});
-    } else if (serviceConfig.serviceTier === 'Guided') {
-      // Guided tier should always show, even if fee is 0 or $79
-      const guidedFee = serviceConfig.serviceTierFee || 79;
-      services.push({price: guidedFee, productId: HUBSPOT_PRODUCT_IDS.GUIDED_SERVICE_TIER});
+    } else if (serviceConfig.serviceTier === 'Guided' && serviceConfig.serviceTierFee > 0) {
+      services.push({price: serviceConfig.serviceTierFee, productId: HUBSPOT_PRODUCT_IDS.GUIDED_SERVICE_TIER});
     }
     
     // QBO Subscription
