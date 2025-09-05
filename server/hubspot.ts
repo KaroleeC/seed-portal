@@ -909,41 +909,31 @@ Services Include:
 
       console.log("✅ Quote created successfully:", result.id);
 
-      // Add line items to the quote
-      try {
-        await this.addQuoteLineItems(
-          result.id,
-          monthlyFee,
-          setupFee,
-          includesBookkeeping,
-          includesTaas,
-          taasMonthlyFee || 0,
-          taasPriorYearsFee || 0,
-          bookkeepingMonthlyFee,
-          bookkeepingSetupFee,
-          serviceTier,
-          // New services
-          includesPayroll,
-          payrollFee || 0,
-          includesAP,
-          apFee || 0,
-          includesAR,
-          arFee || 0,
-          includesAgentOfService,
-          agentOfServiceFee || 0,
-          includesCfoAdvisory,
-          cfoAdvisoryFee || 0,
-          cleanupProjectFee || 0,
-          priorYearFilingsFee || 0,
-          includesFpaBuild,
-          fpaServiceFee || 0,
-          // Pass AP/AR service tier and QBO subscription
-          quoteData?.apServiceTier,
-          quoteData?.arServiceTier,
-          quoteData?.qboSubscription,
-        );
-        console.log("📋 Line items added successfully to quote");
-      } catch (lineItemError) {
+      // Use the comprehensive service management system for creating line items
+      console.log("🔧 Using comprehensive service line item system");
+      await this.createInitialServiceLineItems(result.id, {
+        includesBookkeeping: includesBookkeeping ?? true,
+        includesTaas: includesTaas ?? false,
+        includesPayroll: includesPayroll ?? false,
+        includesAP: includesAP ?? false,
+        includesAR: includesAR ?? false,
+        includesAgentOfService: includesAgentOfService ?? false,
+        includesCfoAdvisory: includesCfoAdvisory ?? false,
+        cleanupProjectFee: cleanupProjectFee || 0,
+        priorYearFilingsFee: priorYearFilingsFee || 0,
+        includesFpaBuild: includesFpaBuild ?? false,
+        fpaServiceFee: fpaServiceFee || 0,
+        payrollFee: payrollFee || 0,
+        apFee: apFee || 0,
+        arFee: arFee || 0,
+        agentOfServiceFee: agentOfServiceFee || 0,
+        cfoAdvisoryFee: cfoAdvisoryFee || 0,
+        apServiceTier: quoteData?.apServiceTier,
+        arServiceTier: quoteData?.arServiceTier,
+        qboSubscription: quoteData?.qboSubscription ?? false,
+      });
+      console.log("📋 Comprehensive line items added successfully to quote");
+    } catch (lineItemError) {
         console.error(
           "⚠️ Line item creation failed, but quote was created successfully:",
           lineItemError,
@@ -976,96 +966,6 @@ Services Include:
     }
   }
 
-  private async addQuoteLineItems(
-    quoteId: string,
-    monthlyFee: number,
-    setupFee: number,
-    includesBookkeeping?: boolean,
-    includesTaas?: boolean,
-    taasMonthlyFee?: number,
-    taasPriorYearsFee?: number,
-    bookkeepingMonthlyFee?: number,
-    bookkeepingSetupFee?: number,
-    serviceTier?: string,
-    // New services
-    includesPayroll?: boolean,
-    payrollFee?: number,
-    includesAP?: boolean,
-    apFee?: number,
-    includesAR?: boolean,
-    arFee?: number,
-    includesAgentOfService?: boolean,
-    agentOfServiceFee?: number,
-    includesCfoAdvisory?: boolean,
-    cfoAdvisoryFee?: number,
-    cleanupProjectFee?: number,
-    priorYearFilingsFee?: number,
-    includesFpaBuild?: boolean,
-    fpaServiceFee?: number,
-    // Service tier information for AP/AR
-    apServiceTier?: string,
-    arServiceTier?: string,
-    qboSubscription?: boolean,
-  ): Promise<void> {
-    try {
-      console.log("🔧 STARTING LINE ITEM CREATION");
-      console.log(`📋 Quote ID: ${quoteId}`);
-      console.log(`💰 Fees - Monthly: $${monthlyFee}, Setup: $${setupFee}`);
-      console.log(
-        `🔧 Services - Bookkeeping: ${includesBookkeeping ?? true}, TaaS: ${includesTaas ?? false}`,
-      );
-      console.log(
-        `💸 TaaS Fees - Monthly: $${taasMonthlyFee || 0}, Prior Years: $${taasPriorYearsFee || 0}`,
-      );
-      console.log(
-        `📊 Individual Fees - BK Monthly: $${bookkeepingMonthlyFee || monthlyFee}, BK Setup: $${bookkeepingSetupFee || setupFee}`,
-      );
-      console.log(
-        `🎯 Service Tier: ${serviceTier || 'Automated'} - Will add service tier line items if applicable`,
-      );
-
-      // Use the generic service management system for initial quote creation
-      await this.createInitialServiceLineItems(quoteId, {
-        includesBookkeeping: includesBookkeeping ?? true,
-        includesTaas: includesTaas ?? false,
-        taasMonthlyFee: taasMonthlyFee || 0,
-        taasPriorYearsFee: taasPriorYearsFee || 0,
-        bookkeepingMonthlyFee: bookkeepingMonthlyFee || monthlyFee,
-        bookkeepingSetupFee: bookkeepingSetupFee || setupFee,
-        serviceTier: serviceTier,
-        // New services
-        includesPayroll: includesPayroll ?? false,
-        payrollFee: payrollFee || 0,
-        includesAP: includesAP ?? false,
-        apFee: apFee || 0,
-        includesAR: includesAR ?? false,
-        arFee: arFee || 0,
-        includesAgentOfService: includesAgentOfService ?? false,
-        agentOfServiceFee: agentOfServiceFee || 0,
-        includesCfoAdvisory: includesCfoAdvisory ?? false,
-        cfoAdvisoryFee: cfoAdvisoryFee || 0,
-        cleanupProjectFee: cleanupProjectFee || 0,
-        priorYearFilingsFee: priorYearFilingsFee || 0,
-        includesFpaBuild: includesFpaBuild ?? false,
-        fpaServiceFee: fpaServiceFee || 0,
-        // Pass service tier info for AP/AR product selection
-        apServiceTier: apServiceTier,
-        arServiceTier: arServiceTier,
-        qboSubscription: qboSubscription,
-      });
-
-      console.log("✅ LINE ITEM CREATION COMPLETED SUCCESSFULLY");
-    } catch (error) {
-      console.error("❌ CRITICAL ERROR: Line item creation failed:", error);
-      console.error("📝 Error details:", {
-        message: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-        quoteId,
-        fees: { monthlyFee, setupFee, taasMonthlyFee, taasPriorYearsFee },
-      });
-      throw error; // Re-throw to ensure calling code knows about the failure
-    }
-  }
 
   private async createInitialServiceLineItems(
     quoteId: string,
@@ -1333,7 +1233,7 @@ Services Include:
                 lineItemConfig.productId,
                 lineItemConfig.price,
                 1,
-                null, // Use HubSpot's native product name
+                lineItemConfig.name, // Use our clean custom service name
               );
 
               totalLineItemsCreated++;
@@ -1516,14 +1416,12 @@ Services Include:
       console.log(`🏗️ Step 2: Creating line item`);
       const lineItem = {
         properties: {
-          name: product.properties?.name || "Service",
+          name: customName || product.properties?.name || "Service",
           price: price.toString(),
           quantity: quantity.toString(),
           hs_product_id: productId,
           hs_sku: product.properties?.hs_sku || productId,
-          description: customName
-            ? `Seed Financial ${customName}`
-            : product.properties?.description || "",
+          description: product.properties?.description || "",
         },
       };
 
