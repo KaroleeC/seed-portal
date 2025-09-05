@@ -93,6 +93,24 @@ export const quotes = pgTable("quotes", {
   // Agent of Service specific fields
   agentOfServiceAdditionalStates: integer("agent_of_service_additional_states").default(0), // Number of additional states beyond base
   agentOfServiceComplexCase: boolean("agent_of_service_complex_case").default(false), // Complex Case upgrade (+$300)
+  
+  // Additional FP&A service selections
+  serviceFpaBuild: boolean("service_fpa_build").default(false),
+  serviceFpaSupport: boolean("service_fpa_support").default(false),
+  
+  // Additional specialized service selections
+  serviceNexusStudy: boolean("service_nexus_study").default(false),
+  serviceEntityOptimization: boolean("service_entity_optimization").default(false),
+  serviceCostSegregation: boolean("service_cost_segregation").default(false),
+  serviceRdCredit: boolean("service_rd_credit").default(false),
+  serviceRealEstateAdvisory: boolean("service_real_estate_advisory").default(false),
+  
+  // Individual AP/AR service selections (separate from combined serviceApArService)
+  serviceApLite: boolean("service_ap_lite").default(false),
+  serviceArLite: boolean("service_ar_lite").default(false),
+  serviceApAdvanced: boolean("service_ap_advanced").default(false),
+  serviceArAdvanced: boolean("service_ar_advanced").default(false),
+  
   // Client address information for MSA generation
   clientStreetAddress: text("client_street_address"),
   clientCity: text("client_city"),
