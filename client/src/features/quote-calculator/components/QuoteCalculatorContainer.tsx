@@ -769,6 +769,96 @@ export function QuoteCalculatorContainer() {
     createQuoteMutation.mutate(data);
   };
 
+  // MORE COPY-PASTED: Email trigger and search handlers
+  const handleEmailTrigger = async (email: string) => {
+    console.log('Email trigger activated for:', email);
+    form.setValue('contactEmail', email);
+    debouncedVerifyEmail(email);
+    setShowContactSearch(true);
+  };
+
+  const liveSearchContacts = async (searchTerm: string) => {
+    if (searchTerm.length < 3) {
+      setLiveSearchResults([]);
+      setShowLiveResults(false);
+      return;
+    }
+
+    setIsLiveSearching(true);
+    try {
+      const response = await apiRequest('/api/hubspot/search-contacts', {
+        method: 'POST',
+        body: JSON.stringify({ searchTerm, limit: 5 })
+      });
+
+      if (response.contacts) {
+        setLiveSearchResults(response.contacts);
+        setShowLiveResults(true);
+      }
+    } catch (error) {
+      console.error('Error searching contacts:', error);
+      setLiveSearchResults([]);
+    } finally {
+      setIsLiveSearching(false);
+    }
+  };
+
+  const searchHubSpotContacts = async (searchTerm: string) => {
+    if (searchTerm.length < 2) {
+      setHubspotContacts([]);
+      return;
+    }
+
+    setIsContactSearching(true);
+    try {
+      const response = await apiRequest('/api/hubspot/search-contacts', {
+        method: 'POST',
+        body: JSON.stringify({ searchTerm, limit: 10 })
+      });
+
+      if (response.contacts) {
+        setHubspotContacts(response.contacts);
+      }
+    } catch (error) {
+      console.error('Error searching HubSpot contacts:', error);
+      setHubspotContacts([]);
+    } finally {
+      setIsContactSearching(false);
+    }
+  };
+
+  const handleContactSelection = (contact: any) => {
+    console.log('Contact selected:', contact);
+    setSelectedContact(contact);
+    form.setValue('contactEmail', contact.properties.email);
+    
+    if (contact.properties.company && !form.watch('companyNameLocked')) {
+      form.setValue('companyName', contact.properties.company);
+      form.setValue('companyNameLocked', true);
+    }
+    
+    if (contact.properties.firstname && !form.watch('contactFirstNameLocked')) {
+      form.setValue('contactFirstName', contact.properties.firstname);
+      form.setValue('contactFirstNameLocked', true);
+    }
+    
+    if (contact.properties.lastname && !form.watch('contactLastNameLocked')) {
+      form.setValue('contactLastName', contact.properties.lastname);
+      form.setValue('contactLastNameLocked', true);
+    }
+    
+    if (contact.properties.industry && !form.watch('industryLocked')) {
+      form.setValue('industry', contact.properties.industry);
+      form.setValue('industryLocked', true);
+    }
+
+    setHubspotVerificationStatus('verified');
+    setHubspotContact(contact);
+    setShowContactSearch(false);
+    setShowClientDetails(true);
+    debouncedVerifyEmail(contact.properties.email);
+  };
+
   // COPY-PASTED: All useEffect hooks
   useEffect(() => {
     const subscription = form.watch(() => {
@@ -815,7 +905,7 @@ export function QuoteCalculatorContainer() {
                         const email = e.target.value;
                         setTriggerEmail(email);
                         if (email.length >= 3) {
-                          // liveSearchContacts(email);
+                          liveSearchContacts(email);
                         } else {
                           setShowLiveResults(false);
                           setLiveSearchResults([]);
@@ -824,15 +914,165 @@ export function QuoteCalculatorContainer() {
                       className="bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-center text-lg py-3"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter' && triggerEmail.includes('@')) {
-                          // Handle email trigger logic here
+                          if (liveSearchResults.length > 0) {
+                            handleContactSelection(liveSearchResults[0]);
+                          } else {
+                            handleEmailTrigger(triggerEmail);
+                          }
                         }
                       }}
+                      onFocus={() => {
+                        if (triggerEmail.length >= 3) {
+                          setShowLiveResults(true);
+                        }
+                      }}
+                      onBlur={() => {
+                        setTimeout(() => setShowLiveResults(false), 300);
+                      }}
                     />
+                    
+                    {/* Live search results dropdown */}
+                    {showLiveResults && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
+                        {isLiveSearching ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                            <span className="ml-2 text-sm text-gray-600">Searching...</span>
+                          </div>
+                        ) : liveSearchResults.length > 0 ? (
+                          <div className="py-1">
+                            {liveSearchResults.slice(0, 5).map((contact) => (
+                              <div
+                                key={contact.id}
+                                className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-left"
+                                onClick={() => handleContactSelection(contact)}
+                                onMouseDown={(e) => e.preventDefault()}
+                              >
+                                <div className="font-medium text-gray-900">
+                                  {contact.properties.firstname} {contact.properties.lastname}
+                                </div>
+                                <div className="text-sm text-blue-600">{contact.properties.email}</div>
+                                {contact.properties.company && (
+                                  <div className="text-sm text-gray-500">{contact.properties.company}</div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : triggerEmail.length >= 3 ? (
+                          <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                            No matching contacts found
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
           )}
+
+          {/* HubSpot Contact Search Modal */}
+          <Dialog open={showContactSearch} onOpenChange={setShowContactSearch}>
+            <DialogContent className="sm:max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Search HubSpot Contacts</DialogTitle>
+                <DialogDescription>
+                  Find an existing contact or create a new quote for "{triggerEmail}"
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search by name, email, or company..."
+                    value={contactSearchTerm}
+                    onChange={(e) => {
+                      setContactSearchTerm(e.target.value);
+                      searchHubSpotContacts(e.target.value);
+                    }}
+                    className="pl-10"
+                  />
+                </div>
+
+                {isContactSearching && (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                    <span className="ml-2 text-gray-600">Searching contacts...</span>
+                  </div>
+                )}
+
+                {!isContactSearching && hubspotContacts.length > 0 && (
+                  <div className="max-h-60 overflow-y-auto space-y-2">
+                    {hubspotContacts.map((contact) => (
+                      <Card key={contact.id} className="cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() => handleContactSelection(contact)}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {contact.properties.firstname} {contact.properties.lastname}
+                              </p>
+                              <p className="text-sm text-blue-600">{contact.properties.email}</p>
+                              {contact.properties.company && (
+                                <p className="text-sm text-gray-600">{contact.properties.company}</p>
+                              )}
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {!isContactSearching && contactSearchTerm && hubspotContacts.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 mb-4">No contacts found matching "{contactSearchTerm}"</p>
+                    <Button 
+                      onClick={() => {
+                        form.setValue('contactEmail', triggerEmail);
+                        setShowContactSearch(false);
+                        setShowClientDetails(true);
+                      }}
+                      variant="outline"
+                    >
+                      Create New Quote for "{triggerEmail}"
+                    </Button>
+                  </div>
+                )}
+
+                {/* Show existing quotes for selected contact */}
+                {selectedContact && existingQuotesForEmail.length > 0 && (
+                  <div className="border-t pt-4 mt-4">
+                    <h4 className="font-medium text-gray-900 mb-3">Existing Quotes for {selectedContact.properties.email}</h4>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {existingQuotesForEmail.map((quote) => (
+                        <Card key={quote.id} className="cursor-pointer hover:bg-blue-50 transition-colors"
+                              onClick={() => {
+                                loadQuoteIntoForm(quote);
+                                setShowContactSearch(false);
+                                setShowClientDetails(true);
+                              }}>
+                          <CardContent className="p-3">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-medium">${parseFloat(quote.monthlyFee).toLocaleString()}/mo</p>
+                                <p className="text-xs text-gray-600">
+                                  {new Date(quote.updatedAt || quote.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <Button size="sm" variant="ghost">Load Quote</Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {showClientDetails && (
             <Card className="max-w-6xl mx-auto mb-8 bg-white/95 backdrop-blur-sm shadow-xl border-0">
@@ -894,6 +1134,100 @@ export function QuoteCalculatorContainer() {
                           </FormItem>
                         )}
                       />
+                    </div>
+
+                    {/* Second row: Industry, Revenue Range, Entity Type */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                      <FormField
+                        control={form.control}
+                        name="industry"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Industry *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select industry" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Software/SaaS">Software/SaaS</SelectItem>
+                                <SelectItem value="Professional Services">Professional Services</SelectItem>
+                                <SelectItem value="Consulting">Consulting</SelectItem>
+                                <SelectItem value="Healthcare/Medical">Healthcare/Medical</SelectItem>
+                                <SelectItem value="Real Estate">Real Estate</SelectItem>
+                                <SelectItem value="E-commerce/Retail">E-commerce/Retail</SelectItem>
+                                <SelectItem value="Restaurant/Food Service">Restaurant/Food Service</SelectItem>
+                                <SelectItem value="Construction/Trades">Construction/Trades</SelectItem>
+                                <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="monthlyRevenueRange"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Monthly Revenue *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select revenue range" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="<$10K">&lt;$10K</SelectItem>
+                                <SelectItem value="10K-25K">$10K - $25K</SelectItem>
+                                <SelectItem value="25K-75K">$25K - $75K</SelectItem>
+                                <SelectItem value="75K-250K">$75K - $250K</SelectItem>
+                                <SelectItem value="250K-1M">$250K - $1M</SelectItem>
+                                <SelectItem value="1M+">$1M+</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="entityType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Entity Type *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select entity type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="LLC">LLC</SelectItem>
+                                <SelectItem value="S-Corp">S-Corp</SelectItem>
+                                <SelectItem value="C-Corp">C-Corp</SelectItem>
+                                <SelectItem value="Partnership">Partnership</SelectItem>
+                                <SelectItem value="Sole Prop">Sole Proprietorship</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Service Tier Selection */}
+                    <div className="mt-6">
+                      <ServiceTierCards form={form} />
+                    </div>
+
+                    {/* Service Cards */}
+                    <div className="mt-6">
+                      <ServiceCards form={form} />
                     </div>
 
                     {/* Simple pricing display */}
