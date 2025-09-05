@@ -480,47 +480,6 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
       res.status(500).json({ message: "HubSpot test failed", error: error.message });
     }
   });
-  
-  // TEMPORARY: Add quote creation route directly to auth.ts to bypass routes.ts loading issue
-  app.post("/api/quotes", requireAuth, async (req, res) => {
-    console.log('🚀 TEMPORARY QUOTE ROUTE HIT - This route is in auth.ts');
-    console.log('Request body keys:', Object.keys(req.body || {}));
-    console.log('User:', req.user?.email);
-    
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      // Import storage here since it might not be available in the auth module scope
-      const { storage } = await import('./storage');
-
-      // Use the frontend-calculated values directly
-      const quoteData = {
-        ...req.body,
-        ownerId: req.user.id,
-        monthlyFee: req.body.monthlyFee || "0",
-        setupFee: req.body.setupFee || "0", 
-        taasMonthlyFee: req.body.taasMonthlyFee || "0",
-        taasPriorYearsFee: req.body.taasPriorYearsFee || "0",
-        monthlyTransactions: req.body.monthlyTransactions || "N/A",
-        cleanupComplexity: req.body.cleanupComplexity || "0",
-        cleanupMonths: req.body.cleanupMonths || 0,
-        monthlyRevenueRange: req.body.monthlyRevenueRange || "Not specified",
-        industry: req.body.industry || "Not specified",
-        accountingBasis: req.body.accountingBasis || "Cash"
-      };
-
-      console.log('Calling storage.createQuote...');
-      const quote = await storage.createQuote(quoteData);
-      console.log('Quote created successfully:', quote?.id);
-      
-      res.json(quote);
-    } catch (error) {
-      console.error('Quote creation error:', error);
-      res.status(500).json({ message: "Failed to create quote" });
-    }
-  });
 }
 
 // Middleware to require authentication (session-based only)
