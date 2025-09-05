@@ -617,12 +617,12 @@ export class HubSpotService {
                         quoteData.entityType.toLowerCase().replace('-', '_')
           }),
           
-          // Service tier - map to correct HubSpot values
+          // Service tier - map to correct HubSpot values (with hyphens)
           ...(quoteData?.serviceTier && { 
-            service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 Automated' :
-                         quoteData.serviceTier === 'Guided' ? 'Level 2 Guided' :
-                         quoteData.serviceTier === 'Concierge' ? 'Level 3 Concierge' :
-                         'Level 1 Automated' // Default fallback
+            service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 - Automated' :
+                         quoteData.serviceTier === 'Guided' ? 'Level 2 - Guided' :
+                         quoteData.serviceTier === 'Concierge' ? 'Level 3 - Concierge' :
+                         'Level 1 - Automated' // Default fallback
           }),
           
           // Core numeric fields that exist in HubSpot
@@ -637,8 +637,12 @@ export class HubSpotService {
           ...(quoteData?.internationalFiling !== undefined && { international_filing: quoteData.internationalFiling ? 'true' : 'false' }),
           ...(quoteData?.businessLoans !== undefined && { business_loans: quoteData.businessLoans ? 'true' : 'false' }),
           
-          // Other existing fields
-          ...(quoteData?.accountingBasis && { accounting_basis: quoteData.accountingBasis }),
+          // Other existing fields (lowercase values)
+          ...(quoteData?.accountingBasis && { 
+            accounting_basis: quoteData.accountingBasis === 'Cash' ? 'cash' :
+                             quoteData.accountingBasis === 'Accrual' ? 'accrual' :
+                             quoteData.accountingBasis.toLowerCase()
+          }),
           ...(quoteData?.currentBookkeepingSoftware && { current_bookkeeping_software: quoteData.currentBookkeepingSoftware }),
           ...(quoteData?.primaryBank && { primary_bank: quoteData.primaryBank }),
         },
@@ -2941,12 +2945,12 @@ Generated: ${new Date().toLocaleDateString()}`;
                           'sole_prop' // Default fallback
             }),
             
-            // Service tier - map to correct HubSpot values (Level 1 Automated, Level 2 Guided, Level 3 Concierge)
+            // Service tier - map to correct HubSpot values (with hyphens)
             ...(quoteData?.serviceTier && { 
-              service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 Automated' :
-                           quoteData.serviceTier === 'Guided' ? 'Level 2 Guided' :
-                           quoteData.serviceTier === 'Concierge' ? 'Level 3 Concierge' :
-                           'Level 1 Automated' // Default fallback
+              service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 - Automated' :
+                           quoteData.serviceTier === 'Guided' ? 'Level 2 - Guided' :
+                           quoteData.serviceTier === 'Concierge' ? 'Level 3 - Concierge' :
+                           'Level 1 - Automated' // Default fallback
             }),
             
             // Core numeric fields that exist in HubSpot
@@ -2961,8 +2965,12 @@ Generated: ${new Date().toLocaleDateString()}`;
             ...(quoteData?.internationalFiling !== undefined && { international_filing: quoteData.internationalFiling ? 'true' : 'false' }),
             ...(quoteData?.businessLoans !== undefined && { business_loans: quoteData.businessLoans ? 'true' : 'false' }),
             
-            // Other existing fields
-            ...(quoteData?.accountingBasis && { accounting_basis: quoteData.accountingBasis }),
+            // Other existing fields (lowercase values)
+            ...(quoteData?.accountingBasis && { 
+              accounting_basis: quoteData.accountingBasis === 'Cash' ? 'cash' :
+                               quoteData.accountingBasis === 'Accrual' ? 'accrual' :
+                               quoteData.accountingBasis.toLowerCase()
+            }),
             ...(quoteData?.currentBookkeepingSoftware && { current_bookkeeping_software: quoteData.currentBookkeepingSoftware }),
             ...(quoteData?.primaryBank && { primary_bank: quoteData.primaryBank }),
           },
