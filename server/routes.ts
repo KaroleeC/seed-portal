@@ -1862,23 +1862,11 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       console.log(`   Mapped to HubSpot includesBookkeeping: ${currentServiceBookkeeping}`);
       console.log(`   Mapped to HubSpot includesTaas: ${currentServiceTaas}`);
       
-      // ✅ CALCULATE SEPARATED BOOKKEEPING SETUP FEE 
-      // The setupFee is combined (bookkeeping + TaaS + other services)
-      // We need to extract just the bookkeeping portion for the Monthly Bookkeeping Setup Fee line item
-      let bookkeepingSetupFee = setupFee; // Start with combined fee as fallback
-      
-      if (currentServiceBookkeeping && currentServiceTaas) {
-        // If both services are included, separate the fees
-        // Combined setup includes: bookkeeping setup + TaaS setup + other project fees
-        const nonBookkeepingSetupFees = taasPriorYearsFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee + agentOfServiceFee;
-        bookkeepingSetupFee = Math.max(0, setupFee - nonBookkeepingSetupFees);
-        console.log(`🔧 SEPARATED setup fees - Combined: $${setupFee}, Non-bookkeeping: $${nonBookkeepingSetupFees}, Bookkeeping only: $${bookkeepingSetupFee}`);
-      } else if (currentServiceBookkeeping) {
-        // Only bookkeeping service, but setup might include cleanup/other project fees
-        const projectOnlyFees = cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee + agentOfServiceFee;
-        bookkeepingSetupFee = Math.max(0, setupFee - projectOnlyFees);
-        console.log(`🔧 BOOKKEEPING ONLY setup fees - Combined: $${setupFee}, Project fees: $${projectOnlyFees}, Bookkeeping setup: $${bookkeepingSetupFee}`);
-      }
+      // ✅ USE SEPARATED BOOKKEEPING SETUP FEE FROM FRONTEND
+      // Frontend now correctly sends the already-separated bookkeeping setup fee
+      const bookkeepingSetupFee = parseFloat(currentFormData?.bookkeepingSetupFee || "0");
+      console.log(`🔧 FRONTEND PROVIDED separated bookkeeping setup fee: $${bookkeepingSetupFee} (was calculating incorrectly before)`);
+      console.log(`🔧 Combined setup fee for reference: $${setupFee}`);
 
       // ✅ NEW: Use the unified syncQuoteToHubSpot method with all individual service fees
       const serviceConfig = {

@@ -45,6 +45,7 @@ export function useQuoteManagement() {
         setupFee: feeCalculation.combined.setupFee.toString(),
         // Individual service fees (for HubSpot line items)
         bookkeepingMonthlyFee: feeCalculation.bookkeeping.monthlyFee.toString(),
+        bookkeepingSetupFee: feeCalculation.bookkeeping.setupFee.toString(), // ⭐ MISSING FIELD - separated bookkeeping setup fee
         taasMonthlyFee: feeCalculation.taas.monthlyFee.toString(),
         taasPriorYearsFee: feeCalculation.taas.setupFee.toString(),
         serviceTierFee: feeCalculation.serviceTierFee.toString(),
