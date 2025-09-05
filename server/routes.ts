@@ -765,8 +765,14 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
     }
   });
 
-  // Create a new quote (protected)
-  app.post("/api/quotes", requireAuth, async (req, res) => {
+  console.log('🔍 REACHED QUOTE ROUTE REGISTRATION SECTION');
+  
+  // Create a new quote (protected) - DEBUGGING ROUTE REGISTRATION
+  console.log('📋 REGISTERING QUOTE ROUTE: /api/quotes POST');
+  app.post("/api/quotes", (req, res, next) => {
+    console.log('🚨 QUOTE ROUTE HIT! Method:', req.method, 'URL:', req.url);
+    next();
+  }, requireAuth, async (req, res) => {
     console.log('🟢 POST /api/quotes - HANDLER EXECUTING');
     console.log('🔥 REQUEST BODY KEYS:', Object.keys(req.body || {}));
     console.log('🔥 REQUEST BODY CONTACT EMAIL:', req.body?.contactEmail);

@@ -344,8 +344,18 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
     });
 
     // Register routes after session middleware is ready
-    const server = await registerRoutes(app, null);
-    console.log('[Server] ✅ Routes registered successfully');
+    console.log('[Server] 🔄 About to call registerRoutes...');
+    let server;
+    try {
+      server = await registerRoutes(app, null);
+      console.log('[Server] ✅ Routes registered successfully');
+    } catch (error) {
+      console.error('[Server] 🚨 CRITICAL ERROR during route registration:', error);
+      console.error('[Server] Error type:', typeof error);
+      console.error('[Server] Error message:', error?.message);
+      console.error('[Server] Error stack:', error?.stack);
+      throw error; // Re-throw to see the full error
+    }
 
     // Sentry error handling is integrated via expressIntegration
 
@@ -417,6 +427,8 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
         console.log('[Server] Application will continue with basic functionality');
       });
     });
+    
+    return server;
 
   } catch (error) {
     console.error('[Server] ❌ CRITICAL STARTUP ERROR:', error);
