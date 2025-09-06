@@ -217,7 +217,7 @@ export default function ServiceDashboard() {
             <div className="space-y-2">
               <Button
                 variant="ghost"
-                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'overview' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/80 hover:text-white hover:bg-white/8'}`}
+                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'overview' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/90 hover:text-white hover:bg-white/8'}`}
                 onClick={() => setActiveModule('overview')}
               >
                 <Activity className="mr-3 h-5 w-5" />
@@ -225,7 +225,7 @@ export default function ServiceDashboard() {
               </Button>
               <Button
                 variant="ghost"
-                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'sales-intelligence' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/80 hover:text-white hover:bg-white/8'}`}
+                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'sales-intelligence' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/90 hover:text-white hover:bg-white/8'}`}
                 onClick={() => setActiveModule('sales-intelligence')}
               >
                 <TrendingUp className="mr-3 h-5 w-5" />
@@ -233,7 +233,7 @@ export default function ServiceDashboard() {
               </Button>
               <Button
                 variant="ghost"
-                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'communications' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/80 hover:text-white hover:bg-white/8'}`}
+                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'communications' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/90 hover:text-white hover:bg-white/8'}`}
                 onClick={() => setActiveModule('communications')}
               >
                 <MessageSquare className="mr-3 h-5 w-5" />
@@ -241,7 +241,7 @@ export default function ServiceDashboard() {
               </Button>
               <Button
                 variant="ghost"
-                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'documents' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/80 hover:text-white hover:bg-white/8'}`}
+                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'documents' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/90 hover:text-white hover:bg-white/8'}`}
                 onClick={() => setActiveModule('documents')}
               >
                 <Folder className="mr-3 h-5 w-5" />
@@ -249,7 +249,7 @@ export default function ServiceDashboard() {
               </Button>
               <Button
                 variant="ghost"
-                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'ai-tools' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/80 hover:text-white hover:bg-white/8'}`}
+                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'ai-tools' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/90 hover:text-white hover:bg-white/8'}`}
                 onClick={() => setActiveModule('ai-tools')}
               >
                 <Bot className="mr-3 h-5 w-5" />
@@ -315,7 +315,7 @@ export default function ServiceDashboard() {
                 <Bell className="mr-2 h-4 w-4" />
                 <span className="bg-red-500 text-xs px-1.5 py-0.5 rounded-full ml-1">{serviceMetrics.urgentItems}</span>
               </Button>
-              <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+              <Button variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/40 hover:text-white transition-all duration-300">
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Sync
               </Button>
