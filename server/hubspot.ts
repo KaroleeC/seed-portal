@@ -762,9 +762,19 @@ export class HubSpotService {
     quoteData?: any,
   ): Promise<HubSpotDeal | null> {
     try {
-      console.log(`🔄 Updating deal ${dealId} with new values`);
+      console.log(`🔄 [DEAL UPDATE] Starting update for deal ${dealId}`);
+      console.log(`🔄 [DEAL UPDATE] Input values:`, {
+        dealId,
+        monthlyFee,
+        setupFee,
+        includesBookkeeping,
+        includesTaas,
+        serviceTier,
+        ownerId
+      });
       
       const totalAmount = (monthlyFee * 12 + setupFee).toString();
+      console.log(`🔄 [DEAL UPDATE] Calculated total amount: ${totalAmount}`);
 
       const updateBody = {
         properties: {
@@ -2759,16 +2769,20 @@ Generated: ${new Date().toLocaleDateString()}`;
     quoteData?: any,
   ): Promise<boolean> {
     try {
-      console.log(`🔵 UPDATE QUOTE START - Quote ID: ${quoteId}`);
-      console.log(`🔵 Service Configuration:`);
-      console.log(`   includesBookkeeping: ${includesBookkeeping}`);
-      console.log(`   includesTaas: ${includesTaas}`);
-      console.log(`   monthlyFee: $${monthlyFee}`);
-      console.log(`   setupFee: $${setupFee}`);
-      console.log(`   taasMonthlyFee: $${taasMonthlyFee || 0}`);
-      console.log(`   taasPriorYearsFee: $${taasPriorYearsFee || 0}`);
-      console.log(`   bookkeepingMonthlyFee: $${bookkeepingMonthlyFee || 0}`);
-      console.log(`   bookkeepingSetupFee: $${bookkeepingSetupFee || 0}`);
+      console.log(`🔵 [QUOTE UPDATE] Starting update for quote ${quoteId}`);
+      console.log(`🔵 [QUOTE UPDATE] Input values:`, {
+        quoteId,
+        companyName,
+        monthlyFee,
+        setupFee,
+        includesBookkeeping,
+        includesTaas,
+        taasMonthlyFee: taasMonthlyFee || 0,
+        taasPriorYearsFee: taasPriorYearsFee || 0,
+        bookkeepingMonthlyFee: bookkeepingMonthlyFee || 0,
+        bookkeepingSetupFee: bookkeepingSetupFee || 0,
+        dealId
+      });
 
       // First check if the quote still exists and is in a valid state
       const quoteCheck = await this.makeRequest(

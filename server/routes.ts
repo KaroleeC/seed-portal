@@ -1342,6 +1342,20 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
             console.log(`🚀 Starting direct HubSpot sync for quote ${quoteId}`);
             console.log(`📧 Contact email: ${quote.contactEmail}`);
             console.log(`💼 Quote data keys:`, Object.keys(quote));
+            console.log(`💰 Quote financial data:`, {
+              monthlyFee: quote.monthlyFee,
+              setupFee: quote.setupFee,
+              taasMonthlyFee: quote.taasMonthlyFee,
+              taasPriorYearsFee: quote.taasPriorYearsFee,
+              action: action
+            });
+            console.log(`🎯 Quote services:`, {
+              serviceBookkeeping: quote.serviceBookkeeping,
+              serviceTaas: quote.serviceTaas,
+              servicePayroll: quote.servicePayroll,
+              serviceApLite: quote.serviceApLite,
+              serviceArLite: quote.serviceArLite
+            });
             
             // Verify contact exists in HubSpot
             console.log(`🔍 Verifying contact: ${quote.contactEmail}`);
