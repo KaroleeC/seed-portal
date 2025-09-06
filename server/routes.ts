@@ -1941,6 +1941,7 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
 
   // Update existing HubSpot quote
   app.post("/api/hubspot/update-quote", requireAuth, async (req, res) => {
+    console.log(`🚨 ROUTE HANDLER ENTERED! Time: ${new Date().toISOString()}`);
     try {
       const { quoteId, currentFormData } = req.body;
       console.log(`🔥 UPDATE QUOTE ENDPOINT REACHED - Quote ID: ${quoteId}`);
