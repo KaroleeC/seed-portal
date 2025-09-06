@@ -2831,8 +2831,21 @@ Generated: ${new Date().toLocaleDateString()}`;
         },
       );
 
-      if (!quoteCheck || quoteCheck.properties?.hs_status === "EXPIRED") {
-        console.log(`❌ Quote ${quoteId} is expired or not found`);
+      if (!quoteCheck) {
+        console.log(`❌ Quote ${quoteId} not found in HubSpot`);
+        return false;
+      }
+      
+      console.log(`🔍 Quote ${quoteId} status check:`, {
+        id: quoteCheck.id,
+        status: quoteCheck.properties?.hs_status,
+        created: quoteCheck.properties?.hs_createdate,
+        lastModified: quoteCheck.properties?.hs_lastmodifieddate,
+        title: quoteCheck.properties?.hs_title
+      });
+      
+      if (quoteCheck.properties?.hs_status === "EXPIRED") {
+        console.log(`❌ Quote ${quoteId} is marked as EXPIRED in HubSpot`);
         return false;
       }
 
