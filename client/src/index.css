@@ -531,3 +531,21 @@
 .border-r-3 {
   border-right-width: 3px;
 }
+
+/* === UNIVERSAL DESIGN CONSISTENCY === */
+/* Force ALL buttons to have consistent rounded corners and smooth transitions */
+button,
+.seed-nav-item,
+[role="button"] {
+  border-radius: var(--radius-lg) !important;
+  transition: all 600ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Ensure input fields also follow the design language */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"] {
+  border-radius: var(--radius-lg) !important;
+  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
