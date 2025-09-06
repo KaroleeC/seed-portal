@@ -173,7 +173,7 @@ export default function ServiceDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 to-purple-600 flex">
+    <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a] flex">
       {/* Sidebar Navigation */}
       <div className="w-72 bg-white/10 backdrop-blur-md border-r border-white/20 shadow-xl fixed h-full overflow-y-auto">
         {/* SEEDOS Header */}
