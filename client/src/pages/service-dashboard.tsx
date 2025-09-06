@@ -334,7 +334,7 @@ export default function ServiceDashboard() {
                     <h2 className="text-3xl font-bold text-white mb-2">Today's Focus</h2>
                     <p className="text-white/70">Your personal task workspace for client service excellence</p>
                   </div>
-                  <Button className="bg-slate-700 hover:bg-slate-800 text-white shadow-lg">
+                  <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
                     <Plus className="mr-2 h-4 w-4" />
                     New Task
                   </Button>
@@ -566,7 +566,7 @@ export default function ServiceDashboard() {
                 <h2 className="text-4xl font-bold text-white mb-4">Sales Intelligence Command</h2>
                 <p className="text-white/70 text-lg mb-6">Prepare for incoming complexity before it arrives</p>
                 <div className="flex items-center justify-center gap-4">
-                  <Button className="bg-slate-700 hover:bg-slate-800 text-white shadow-lg">
+                  <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
                     <TrendingUp className="mr-2 h-4 w-4" />
                     Live Pipeline
                   </Button>
@@ -772,7 +772,7 @@ export default function ServiceDashboard() {
                 <h2 className="text-4xl font-bold text-white mb-4">Client Communication Central</h2>
                 <p className="text-white/70 text-lg mb-6">Real-time client relationship management</p>
                 <div className="flex items-center justify-center gap-4">
-                  <Button className="bg-slate-700 hover:bg-slate-800 text-white shadow-lg">
+                  <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
                     <MessageSquare className="mr-2 h-4 w-4" />
                     Active Conversations
                   </Button>
@@ -923,22 +923,22 @@ export default function ServiceDashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
-                    <Button className="w-full h-12 bg-slate-700 hover:bg-slate-800 text-white shadow-lg">
+                    <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
                       <MessageSquare className="mr-2 h-5 w-5" />
                       New Client Message
                     </Button>
                     
-                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                    <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
                       <Video className="mr-2 h-5 w-5" />
                       Start Video Call
                     </Button>
                     
-                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                    <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
                       <Calendar className="mr-2 h-5 w-5" />
                       Schedule Meeting
                     </Button>
                     
-                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                    <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
                       <Mail className="mr-2 h-5 w-5" />
                       Send Email Update
                     </Button>
@@ -1018,7 +1018,7 @@ export default function ServiceDashboard() {
                 <h2 className="text-4xl font-bold text-white mb-4">Document Command Center</h2>
                 <p className="text-white/70 text-lg mb-6">Intelligent document workflows for seamless client service</p>
                 <div className="flex items-center justify-center gap-4">
-                  <Button className="bg-slate-700 hover:bg-slate-800 text-white shadow-lg">
+                  <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
                     <FileText className="mr-2 h-4 w-4" />
                     Smart Documents
                   </Button>
@@ -1186,35 +1186,35 @@ export default function ServiceDashboard() {
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 gap-3">
-                        <Button className="w-full h-12 bg-slate-700 hover:bg-slate-800 text-white shadow-lg justify-start">
+                        <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
                           <FileText className="mr-3 h-5 w-5" />
                           <div className="text-left">
                             <div className="font-semibold">Client Onboarding</div>
-                            <div className="text-xs text-slate-200">Auto-generate welcome docs</div>
+                            <div className="text-xs text-orange-100">Auto-generate welcome docs</div>
                           </div>
                         </Button>
                         
-                        <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg justify-start">
+                        <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
                           <Calculator className="mr-3 h-5 w-5" />
                           <div className="text-left">
                             <div className="font-semibold">Tax Prep Package</div>
-                            <div className="text-xs text-slate-200">Complete tax documentation</div>
+                            <div className="text-xs text-orange-100">Complete tax documentation</div>
                           </div>
                         </Button>
                         
-                        <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg justify-start">
+                        <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
                           <Settings className="mr-3 h-5 w-5" />
                           <div className="text-left">
                             <div className="font-semibold">QBO Setup Guide</div>
-                            <div className="text-xs text-slate-200">Step-by-step configuration</div>
+                            <div className="text-xs text-orange-100">Step-by-step configuration</div>
                           </div>
                         </Button>
 
-                        <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg justify-start">
+                        <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
                           <Building className="mr-3 h-5 w-5" />
                           <div className="text-left">
                             <div className="font-semibold">Entity Formation</div>
-                            <div className="text-xs text-slate-200">Legal structure documents</div>
+                            <div className="text-xs text-orange-100">Legal structure documents</div>
                           </div>
                         </Button>
                       </div>
@@ -1295,7 +1295,7 @@ export default function ServiceDashboard() {
                 <h2 className="text-4xl font-bold text-white mb-4">AI Service Intelligence</h2>
                 <p className="text-white/70 text-lg mb-6">Advanced automation transforming accounting workflows</p>
                 <div className="flex items-center justify-center gap-4">
-                  <Button className="bg-slate-700 hover:bg-slate-800 text-white shadow-lg">
+                  <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
                     <Brain className="mr-2 h-4 w-4" />
                     Launch AI Assistant
                   </Button>
@@ -1310,7 +1310,7 @@ export default function ServiceDashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Financial Analysis */}
                 <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
-                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                  <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
                     <CardTitle className="text-center">
                       <BarChart3 className="h-8 w-8 mx-auto mb-2" />
                       Financial Analysis
@@ -1336,7 +1336,7 @@ export default function ServiceDashboard() {
 
                 {/* Tax Optimization */}
                 <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
-                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
+                  <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
                     <CardTitle className="text-center">
                       <DollarSign className="h-8 w-8 mx-auto mb-2" />
                       Tax Optimization
@@ -1362,7 +1362,7 @@ export default function ServiceDashboard() {
 
                 {/* Entity Management */}
                 <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
-                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
+                  <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
                     <CardTitle className="text-center">
                       <Building2 className="h-8 w-8 mx-auto mb-2" />
                       Entity Management
@@ -1388,7 +1388,7 @@ export default function ServiceDashboard() {
 
                 {/* Smart Automation */}
                 <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
-                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
+                  <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
                     <CardTitle className="text-center">
                       <Wand2 className="h-8 w-8 mx-auto mb-2" />
                       Smart Automation
