@@ -2123,36 +2123,35 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       console.log(`📤 Calling HubSpot updateQuote for quote ID ${quote.hubspotQuoteId}`);
       
       const success = await hubSpotService.updateQuote(
-        quote.hubspotQuoteId,
-        quote.hubspotDealId || undefined,
-        companyName,
-        monthlyFee,
-        setupFee,
-        quote.userEmail,
-        quote.firstName,
-        quote.lastName,
-        currentServiceBookkeeping,
-        currentServiceTaas,
-        taasMonthlyFee,
-        taasPriorYearsFee,
-        bookkeepingMonthlyFee,
-        bookkeepingSetupFee,
-        currentFormData?.serviceTier || 'Standard',
-        currentFormData?.servicePayroll === true,
-        payrollFee,
-        currentFormData?.serviceApLite === true,
-        apFee,
-        currentFormData?.serviceArLite === true,
-        arFee,
-        currentFormData?.serviceAgentOfService === true,
-        agentOfServiceFee,
-        currentFormData?.serviceCfoAdvisory === true,
-        cfoAdvisoryFee,
-        cleanupProjectFee,
-        priorYearFilingsFee,
-        currentFormData?.serviceFpaBuild === true,
-        parseFloat(currentFormData?.fpaServiceFee || "0"),
-        currentFormData // Pass full form data for additional configuration
+        quote.hubspotQuoteId,        // quoteId: string
+        companyName,                 // companyName: string
+        monthlyFee,                  // monthlyFee: number
+        setupFee,                    // setupFee: number
+        quote.userEmail,             // userEmail: string
+        quote.firstName,             // firstName: string
+        quote.lastName,              // lastName: string
+        currentServiceBookkeeping,   // includesBookkeeping?: boolean
+        currentServiceTaas,          // includesTaas?: boolean
+        taasMonthlyFee,              // taasMonthlyFee?: number
+        taasPriorYearsFee,           // taasPriorYearsFee?: number
+        bookkeepingMonthlyFee,       // bookkeepingMonthlyFee?: number
+        bookkeepingSetupFee,         // bookkeepingSetupFee?: number
+        currentFormData,             // quoteData?: any
+        currentFormData?.serviceTier || 'Standard', // serviceTier?: string
+        currentFormData?.servicePayroll === true,   // includesPayroll?: boolean
+        payrollFee,                  // payrollFee?: number
+        currentFormData?.serviceApLite === true,    // includesAP?: boolean
+        apFee,                       // apFee?: number
+        currentFormData?.serviceArLite === true,    // includesAR?: boolean
+        arFee,                       // arFee?: number
+        currentFormData?.serviceAgentOfService === true, // includesAgentOfService?: boolean
+        agentOfServiceFee,           // agentOfServiceFee?: number
+        currentFormData?.serviceCfoAdvisory === true,    // includesCfoAdvisory?: boolean
+        cfoAdvisoryFee,              // cfoAdvisoryFee?: number
+        cleanupProjectFee,           // cleanupProjectFee?: number
+        priorYearFilingsFee,         // priorYearFilingsFee?: number
+        currentFormData?.serviceFpaBuild === true,       // includesFpaBuild?: boolean
+        parseFloat(currentFormData?.fpaServiceFee || "0") // fpaServiceFee?: number
       );
 
       if (success) {
