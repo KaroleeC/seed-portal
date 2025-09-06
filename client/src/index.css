@@ -536,64 +536,50 @@
 }
 
 /* === UNIVERSAL DESIGN CONSISTENCY === */
-/* NUCLEAR OPTION: Force ALL elements to have rounded corners */
+/* SURGICAL PRECISION: Apply rounded corners only where appropriate */
 
-/* Apply to literally everything with maximum specificity */
-*,
-*::before,
-*::after,
-*:focus,
-*:hover,
-*:active {
-  border-radius: 1rem !important;
-}
-
-/* Buttons and interactive elements */
-button,
-.seed-nav-item,
-[role="button"],
-[data-testid*="button"] {
-  border-radius: var(--radius-lg) !important;
-  transition: all 600ms cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-/* Form inputs */
-input[type="text"],
-input[type="search"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-textarea,
-select {
-  border-radius: var(--radius-lg) !important;
-  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-/* Cards and containers */
+/* Cards and standalone containers */
 .card,
-[class*="card"],
-[data-testid*="card"],
+[class*="card"]:not([class*="card-header"]):not([class*="card-content"]):not([class*="card-footer"]),
 .modal,
 .dialog,
 .popover,
-.dropdown,
+.dropdown-menu,
 .tooltip,
-.sheet,
-.alert,
-.badge {
-  border-radius: var(--radius-lg) !important;
+.alert {
+  border-radius: 1rem !important;
 }
 
-/* Specific UI library components */
-[data-radix-popper-content-wrapper],
-[role="dialog"],
-[role="menu"],
-[role="listbox"],
-[role="tooltip"],
-[role="alert"],
-[role="alertdialog"] {
-  border-radius: var(--radius-lg) !important;
+/* Sidebar navigation buttons */
+.seed-nav-item {
+  border-radius: 1rem !important;
 }
+
+/* Form inputs that are standalone */
+input[type="text"]:not([class*="navbar"]):not([class*="header"]),
+input[type="search"]:not([class*="navbar"]):not([class*="header"]),
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  border-radius: 1rem !important;
+}
+
+/* Individual buttons that are standalone */
+button:not(.navbar-button):not(.header-button) {
+  border-radius: 1rem !important;
+}
+
+/* Reset navbar/header elements to have minimal rounding */
+.navbar button,
+.header button,
+header button,
+[class*="navbar"] button,
+[class*="header"] input {
+  border-radius: 0.5rem !important;
+}
+
+/* Clean up - these rules are now handled above with more precision */
 
 /* Image containers and avatars - smaller radius for visual balance */
 img,
