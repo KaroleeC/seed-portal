@@ -533,19 +533,116 @@
 }
 
 /* === UNIVERSAL DESIGN CONSISTENCY === */
-/* Force ALL buttons to have consistent rounded corners and smooth transitions */
+/* Force ALL interactive and container elements to have consistent rounded corners */
+
+/* Buttons and interactive elements */
 button,
 .seed-nav-item,
-[role="button"] {
+[role="button"],
+[data-testid*="button"] {
   border-radius: var(--radius-lg) !important;
   transition: all 600ms cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* Ensure input fields also follow the design language */
+/* Form inputs */
 input[type="text"],
 input[type="search"],
 input[type="email"],
-input[type="password"] {
+input[type="password"],
+input[type="number"],
+textarea,
+select {
   border-radius: var(--radius-lg) !important;
   transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Cards and containers */
+.card,
+[class*="card"],
+[data-testid*="card"],
+.modal,
+.dialog,
+.popover,
+.dropdown,
+.tooltip,
+.sheet,
+.alert,
+.badge {
+  border-radius: var(--radius-lg) !important;
+}
+
+/* Specific UI library components */
+[data-radix-popper-content-wrapper],
+[role="dialog"],
+[role="menu"],
+[role="listbox"],
+[role="tooltip"],
+[role="alert"],
+[role="alertdialog"] {
+  border-radius: var(--radius-lg) !important;
+}
+
+/* Image containers and avatars - smaller radius for visual balance */
+img,
+.avatar,
+[class*="avatar"] {
+  border-radius: var(--radius-md) !important;
+}
+
+/* Only round images that are in containers, not standalone */
+.avatar img,
+[class*="avatar"] img {
+  border-radius: var(--radius-md) !important;
+}
+
+/* Override specific Tailwind rounded classes with our standard */
+.rounded,
+.rounded-sm,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl,
+.rounded-3xl {
+  border-radius: var(--radius-lg) !important;
+}
+
+/* Keep rounded-full for circular elements like badges and avatars */
+.rounded-full {
+  border-radius: 9999px !important;
+}
+
+/* Special handling for card headers that need top-only rounding */
+.rounded-t,
+.rounded-t-sm,
+.rounded-t-md,
+.rounded-t-lg,
+.rounded-t-xl {
+  border-top-left-radius: var(--radius-lg) !important;
+  border-top-right-radius: var(--radius-lg) !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+/* Special handling for card content that needs bottom-only rounding */
+.rounded-b,
+.rounded-b-sm,
+.rounded-b-md,
+.rounded-b-lg,
+.rounded-b-xl {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: var(--radius-lg) !important;
+  border-bottom-right-radius: var(--radius-lg) !important;
+}
+
+/* Right-side rounding for elements like border highlights */
+.rounded-r,
+.rounded-r-sm,
+.rounded-r-md,
+.rounded-r-lg,
+.rounded-r-xl {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-top-right-radius: var(--radius-lg) !important;
+  border-bottom-right-radius: var(--radius-lg) !important;
 }
