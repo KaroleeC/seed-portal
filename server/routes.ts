@@ -1321,6 +1321,29 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
           throw new Error(`Quote ${quoteId} not found`);
         }
 
+        // Check if quote already has HubSpot IDs BEFORE starting sync
+        const hasHubSpotIds = quote.hubspotQuoteId && quote.hubspotDealId;
+        console.log(`🔍 Pre-sync Quote HubSpot status:`, {
+          hasHubSpotIds,
+          hubspotQuoteId: quote.hubspotQuoteId,
+          hubspotDealId: quote.hubspotDealId,
+          action
+        });
+
+        if (hasHubSpotIds && action === 'create') {
+          console.log('⚠️ Quote already has HubSpot IDs but action is "create" - no sync needed');
+          res.json({ 
+            success: true,
+            message: "Quote already synchronized to HubSpot",
+            quoteId,
+            action: 'already_synced',
+            method: "direct",
+            hubspotQuoteId: quote.hubspotQuoteId,
+            hubspotDealId: quote.hubspotDealId
+          });
+          return;
+        }
+
         // Perform direct sync in background
         setTimeout(async () => {
           try {
