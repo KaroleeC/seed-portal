@@ -2790,6 +2790,14 @@ Generated: ${new Date().toLocaleDateString()}`;
     calculatedTaasMonthlyFee?: number,
     calculatedServiceTierFee?: number,
   ): Promise<boolean> {
+    console.log(`🚨 UPDATEQUOTE METHOD CALLED! QuoteId: ${quoteId}`);
+    console.log(`🚨 Parameter types:`, {
+      quoteId: typeof quoteId,
+      companyName: typeof companyName,
+      monthlyFee: typeof monthlyFee,
+      setupFee: typeof setupFee,
+      userEmail: typeof userEmail
+    });
     try {
       console.log(`🔵 [QUOTE UPDATE] Starting update for quote ${quoteId}`);
       console.log(`🔵 [QUOTE UPDATE] Input values:`, {
