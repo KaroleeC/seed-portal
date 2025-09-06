@@ -72,6 +72,8 @@
   --radius-tight: 0.25rem;   /* 4px - Subtle softening */
   --radius-smooth: 0.5rem;   /* 8px - Comfortable rounding */
   --radius-gentle: 0.75rem;  /* 12px - Approachable curves */
+  --radius-md: 0.75rem;      /* 12px - Medium radius */
+  --radius-lg: 1rem;         /* 16px - Large radius (OUR STANDARD) */
   --radius-soft: 1rem;       /* 16px - Welcoming embrace */
   --radius-flowing: 1.5rem;  /* 24px - Organic flow */
   
@@ -536,9 +538,14 @@
 /* === UNIVERSAL DESIGN CONSISTENCY === */
 /* NUCLEAR OPTION: Force ALL elements to have rounded corners */
 
-/* Apply to literally everything */
-* {
-  border-radius: var(--radius-lg) !important;
+/* Apply to literally everything with maximum specificity */
+*,
+*::before,
+*::after,
+*:focus,
+*:hover,
+*:active {
+  border-radius: 1rem !important;
 }
 
 /* Buttons and interactive elements */
