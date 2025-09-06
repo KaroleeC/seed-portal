@@ -92,37 +92,21 @@ export default function ServiceDashboard() {
     urgentItems: 4
   });
 
-  const [hubspotDeals] = useState<HubSpotDeal[]>([
-    {
-      id: '1',
-      name: 'TechFlow Solutions - Multi-Entity Setup',
-      stage: 'Contract Sent',
-      amount: 75000,
-      closeDate: '2025-01-15',
-      probability: 85,
-      priority: 'high',
-      entityComplexity: 'very-complex'
-    },
-    {
-      id: '2', 
-      name: 'Wellness Hub Inc - Full Service Package',
-      stage: 'Proposal Review',
-      amount: 45000,
-      closeDate: '2025-01-20',
-      probability: 70,
-      priority: 'high',
-      entityComplexity: 'complex'
-    },
-    {
-      id: '3',
-      name: 'Marina Cafe - Standard Bookkeeping',
-      stage: 'Qualified',
-      amount: 18000,
-      closeDate: '2025-01-25',
-      probability: 60,
-      priority: 'medium',
-      entityComplexity: 'simple'
-    }
+  // Current self-created tasks for controllers/accountants
+  const [currentTasks] = useState([
+    { id: '1', title: 'Review TechFlow Q4 Financials', client: 'TechFlow Solutions', priority: 'urgent', dueTime: '2:00 PM', progress: 75, type: 'review' },
+    { id: '2', title: 'Prepare Wellness Hub Tax Documents', client: 'Wellness Hub Inc', priority: 'high', dueTime: '4:30 PM', progress: 30, type: 'tax-prep' },
+    { id: '3', title: 'Client Onboarding Call - Marina Cafe', client: 'Marina Cafe', priority: 'normal', dueTime: '11:00 AM', progress: 0, type: 'meeting' },
+    { id: '4', title: 'Monthly Bookkeeping - RetailCorp', client: 'RetailCorp', priority: 'normal', dueTime: 'Tomorrow', progress: 90, type: 'bookkeeping' },
+    { id: '5', title: 'Entity Structure Analysis', client: 'StartupXYZ', priority: 'high', dueTime: 'Jan 15', progress: 45, type: 'analysis' }
+  ]);
+
+  // ClickUp tasks monitoring
+  const [clickupTasks] = useState([
+    { id: '1', name: 'Monthly Bookkeeping - TechFlow', assignee: 'Sarah Chen', status: 'In Progress', dueDate: '2025-01-10', project: 'Bookkeeping', priority: 'High' },
+    { id: '2', name: 'Tax Preparation - Wellness Hub', assignee: 'Michael Torres', status: 'Review', dueDate: '2025-01-12', project: 'Tax Services', priority: 'Urgent' },
+    { id: '3', name: 'Cleanup Project - Marina Cafe', assignee: 'Sarah Chen', status: 'Planning', dueDate: '2025-01-15', project: 'Cleanup', priority: 'Normal' },
+    { id: '4', name: 'QBO Setup - RetailCorp', assignee: 'Michael Torres', status: 'Completed', dueDate: '2025-01-08', project: 'Setup', priority: 'Normal' }
   ]);
 
   const [slackChannels] = useState<SlackChannel[]>([
@@ -341,186 +325,234 @@ export default function ServiceDashboard() {
         <div className="p-6">
           {activeModule === 'overview' && (
             <>
-              {/* Key Metrics Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
-                <Card className="bg-white/90 backdrop-blur-sm border-white/20 shadow-lg">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-600 uppercase tracking-wide">Open Tickets</p>
-                        <p className="text-2xl font-bold text-gray-900">{serviceMetrics.openTickets}</p>
-                      </div>
-                      <AlertTriangle className="h-8 w-8 text-red-600" />
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Task-Focused Header */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-3xl font-bold text-white mb-2">Today's Focus</h2>
+                    <p className="text-white/70">Your personal task workspace for client service excellence</p>
+                  </div>
+                  <Button className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg">
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Task
+                  </Button>
+                </div>
 
-                <Card className="bg-white/90 backdrop-blur-sm border-white/20 shadow-lg">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-600 uppercase tracking-wide">Active Clients</p>
-                        <p className="text-2xl font-bold text-gray-900">{serviceMetrics.activeClients}</p>
-                      </div>
-                      <Users className="h-8 w-8 text-blue-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/90 backdrop-blur-sm border-white/20 shadow-lg">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-600 uppercase tracking-wide">Response Time</p>
-                        <p className="text-2xl font-bold text-gray-900">{serviceMetrics.avgResponseTime}</p>
-                      </div>
-                      <Clock className="h-8 w-8 text-green-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/90 backdrop-blur-sm border-white/20 shadow-lg">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-600 uppercase tracking-wide">Satisfaction</p>
-                        <p className="text-2xl font-bold text-gray-900">{serviceMetrics.satisfactionRate}%</p>
-                      </div>
-                      <CheckCircle className="h-8 w-8 text-purple-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/90 backdrop-blur-sm border-white/20 shadow-lg">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-600 uppercase tracking-wide">Today's Tasks</p>
-                        <p className="text-2xl font-bold text-gray-900">{serviceMetrics.todaysTasks}</p>
-                      </div>
-                      <Target className="h-8 w-8 text-indigo-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/90 backdrop-blur-sm border-white/20 shadow-lg">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-gray-600 uppercase tracking-wide">Urgent Items</p>
-                        <p className="text-2xl font-bold text-gray-900">{serviceMetrics.urgentItems}</p>
-                      </div>
-                      <Zap className="h-8 w-8 text-orange-600" />
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Quick Stats Bar */}
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4 text-center">
+                    <p className="text-2xl font-bold text-white">{currentTasks.length}</p>
+                    <p className="text-white/70 text-sm">Active Tasks</p>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4 text-center">
+                    <p className="text-2xl font-bold text-white">{currentTasks.filter(t => t.priority === 'urgent').length}</p>
+                    <p className="text-white/70 text-sm">Urgent</p>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4 text-center">
+                    <p className="text-2xl font-bold text-white">{Math.round(currentTasks.reduce((acc, t) => acc + t.progress, 0) / currentTasks.length)}%</p>
+                    <p className="text-white/70 text-sm">Avg Progress</p>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4 text-center">
+                    <p className="text-2xl font-bold text-white">{serviceMetrics.activeClients}</p>
+                    <p className="text-white/70 text-sm">Active Clients</p>
+                  </div>
+                </div>
               </div>
 
-              {/* Main Dashboard Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* HubSpot Sales Pipeline Preview */}
-                <Card className="lg:col-span-2 bg-white/90 backdrop-blur-sm border-white/20 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-gray-900">
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
-                      High-Value Pipeline
-                    </CardTitle>
-                    <CardDescription>Deals requiring service preparation</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {hubspotDeals.filter(deal => deal.priority === 'high').map((deal) => (
-                        <div key={deal.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <p className="font-semibold text-gray-900">{deal.name}</p>
-                              <Badge className={getPriorityColor(deal.priority)}>
-                                {deal.priority}
-                              </Badge>
-                              <Badge variant="outline" className={
-                                deal.entityComplexity === 'very-complex' ? 'border-red-500 text-red-700' :
-                                deal.entityComplexity === 'complex' ? 'border-orange-500 text-orange-700' : 
-                                'border-green-500 text-green-700'
-                              }>
-                                {deal.entityComplexity}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600">
-                              <span>Stage: {deal.stage}</span>
-                              <span>Close: {deal.closeDate}</span>
-                              <span className="font-medium">${deal.amount.toLocaleString()}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button size="sm" variant="outline">
-                              Prepare
-                            </Button>
-                            <ChevronRight className="h-4 w-4 text-gray-400" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Quick Actions & AI Status */}
-                <div className="space-y-6">
-                  {/* AI Tasks Status */}
-                  <Card className="bg-white/90 backdrop-blur-sm border-white/20 shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-gray-900">
-                        <Bot className="h-5 w-5 text-purple-600" />
-                        AI Assistant Status
+              {/* Main Task Workspace - Central Focus */}
+              <div className="grid grid-cols-12 gap-6 mb-8">
+                {/* Current Tasks - Main Real Estate */}
+                <div className="col-span-8">
+                  <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl h-full">
+                    <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center gap-2">
+                        <Target className="h-6 w-6" />
+                        My Current Tasks
                       </CardTitle>
+                      <CardDescription className="text-blue-100">
+                        Your personal task management center
+                      </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {aiTasks.map((task) => (
-                          <div key={task.id} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <p className="text-sm font-medium text-gray-900">
-                                {task.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                              </p>
-                              <span className={`text-xs ${getStatusColor(task.status)}`}>
-                                {task.status}
-                              </span>
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        {currentTasks.map((task) => (
+                          <div key={task.id} className="group relative">
+                            <div className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg ${
+                              task.priority === 'urgent' ? 'border-l-red-500 bg-red-50/80 hover:bg-red-50' :
+                              task.priority === 'high' ? 'border-l-orange-500 bg-orange-50/80 hover:bg-orange-50' :
+                              'border-l-blue-500 bg-blue-50/80 hover:bg-blue-50'
+                            }`}>
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-gray-900 mb-1">{task.title}</h4>
+                                  <p className="text-sm text-gray-600 mb-2">{task.client}</p>
+                                  <div className="flex items-center gap-3">
+                                    <Badge className={getPriorityColor(task.priority)} variant="outline">
+                                      {task.priority}
+                                    </Badge>
+                                    <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                                      {task.type.replace('-', ' ')}
+                                    </Badge>
+                                    <span className="text-sm text-gray-500 flex items-center gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      {task.dueTime}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-lg font-bold text-gray-900 mb-1">{task.progress}%</div>
+                                  <div className="w-16">
+                                    <Progress value={task.progress} className="h-2" />
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Action Buttons - Appear on Hover */}
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
+                                <Button size="sm" variant="outline" className="text-xs">
+                                  <Activity className="h-3 w-3 mr-1" />
+                                  Update
+                                </Button>
+                                <Button size="sm" variant="outline" className="text-xs">
+                                  <MessageSquare className="h-3 w-3 mr-1" />
+                                  Message Client
+                                </Button>
+                                <Button size="sm" variant="outline" className="text-xs">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Complete
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Progress value={task.progress} className="flex-1" />
-                              <span className="text-xs text-gray-500">{task.progress}%</span>
-                            </div>
-                            <p className="text-xs text-gray-600">{task.clientName}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Communication Alerts */}
-                  <Card className="bg-white/90 backdrop-blur-sm border-white/20 shadow-lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-gray-900">
-                        <MessageSquare className="h-5 w-5 text-green-600" />
-                        Recent Messages
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {slackChannels.filter(channel => channel.unreadCount > 0).map((channel) => (
-                          <div key={channel.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                            <div>
-                              <p className="font-medium text-gray-900">{channel.clientName}</p>
-                              <p className="text-xs text-gray-600">{channel.lastActivity}</p>
-                            </div>
-                            <Badge className="bg-green-500/20 text-green-700">
-                              {channel.unreadCount} new
-                            </Badge>
                           </div>
                         ))}
                       </div>
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Client Communication Hub */}
+                <div className="col-span-4">
+                  <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl h-full">
+                    <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-t-lg">
+                      <CardTitle className="flex items-center gap-2">
+                        <MessageSquare className="h-6 w-6" />
+                        Client Communications
+                      </CardTitle>
+                      <CardDescription className="text-green-100">
+                        Active Slack channels & messages
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="space-y-3">
+                        {slackChannels.map((channel) => (
+                          <div key={channel.id} className="group">
+                            <div className={`p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${
+                              channel.unreadCount > 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                            }`}>
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 rounded-full ${
+                                    channel.priority === 'urgent' ? 'bg-red-500' :
+                                    channel.priority === 'high' ? 'bg-orange-500' : 'bg-green-500'
+                                  }`}></div>
+                                  <span className="font-medium text-gray-900 text-sm">{channel.clientName}</span>
+                                </div>
+                                {channel.unreadCount > 0 && (
+                                  <Badge className="bg-red-500 text-white text-xs">
+                                    {channel.unreadCount}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-600 mb-2">{channel.name}</p>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-500">{channel.lastActivity}</span>
+                                <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 transition-opacity text-xs">
+                                  <ExternalLink className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              {/* ClickUp Integration & AI Tools */}
+              <div className="grid grid-cols-2 gap-6">
+                {/* ClickUp Task Monitor */}
+                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-t-lg">
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5" />
+                      ClickUp Task Monitor
+                    </CardTitle>
+                    <CardDescription className="text-purple-100">
+                      Live project management integration
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="space-y-3">
+                      {clickupTasks.map((task) => (
+                        <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900 text-sm">{task.name}</h4>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-xs text-gray-600">{task.assignee}</span>
+                              <Badge variant="outline" className={
+                                task.status === 'Completed' ? 'border-green-500 text-green-700' :
+                                task.status === 'In Progress' ? 'border-blue-500 text-blue-700' :
+                                task.status === 'Review' ? 'border-orange-500 text-orange-700' :
+                                'border-gray-500 text-gray-700'
+                              }>
+                                {task.status}
+                              </Badge>
+                              <span className="text-xs text-gray-500">{task.dueDate}</span>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="ghost">
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* AI Assistant Panel */}
+                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-xl">
+                  <CardHeader className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-t-lg">
+                    <CardTitle className="flex items-center gap-2">
+                      <Bot className="h-5 w-5" />
+                      AI Assistant
+                    </CardTitle>
+                    <CardDescription className="text-indigo-100">
+                      Intelligent automation status
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      {aiTasks.map((task) => (
+                        <div key={task.id} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-medium text-gray-900">
+                              {task.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </p>
+                            <span className={`text-xs ${getStatusColor(task.status)}`}>
+                              {task.status}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Progress value={task.progress} className="flex-1" />
+                            <span className="text-xs text-gray-500">{task.progress}%</span>
+                          </div>
+                          <p className="text-xs text-gray-600">{task.clientName} • ETA: {task.estimatedCompletion}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </>
           )}
@@ -543,7 +575,11 @@ export default function ServiceDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {hubspotDeals.map((deal) => (
+                      {/* Sample high-value deals that need service preparation */}
+                      {[
+                        { id: '1', name: 'TechFlow Solutions - Multi-Entity Setup', stage: 'Contract Sent', amount: 75000, probability: 85, priority: 'high', entityComplexity: 'very-complex', closeDate: '2025-01-15' },
+                        { id: '2', name: 'Wellness Hub Inc - Full Service Package', stage: 'Proposal Review', amount: 45000, probability: 70, priority: 'high', entityComplexity: 'complex', closeDate: '2025-01-20' }
+                      ].map((deal) => (
                         <div key={deal.id} className="p-4 border rounded-lg">
                           <div className="flex items-start justify-between mb-3">
                             <div>
