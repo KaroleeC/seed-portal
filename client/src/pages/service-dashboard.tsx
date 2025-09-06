@@ -14,7 +14,7 @@ import {
   Activity, Target, Zap, Brain, Calculator, BarChart3, PieChart,
   Mail, Phone, Calendar, Video, Slack, Box, HubSpot,
   ArrowUp, ArrowDown, Star, Clock3, AlertCircle, Info,
-  MonitorSpeaker, Database, Cloud, Wifi, Shield
+  MonitorSpeaker, Database, Cloud, Wifi, Shield, Building2
 } from "lucide-react";
 import navLogoPath from "@assets/Nav Logo_1753431362883.png";
 import { useAuth } from "@/hooks/use-auth";
