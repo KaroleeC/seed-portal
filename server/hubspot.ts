@@ -751,6 +751,93 @@ export class HubSpotService {
     }
   }
 
+  async updateDeal(
+    dealId: string,
+    monthlyFee: number,
+    setupFee: number,
+    ownerId?: string,
+    includesBookkeeping?: boolean,
+    includesTaas?: boolean,
+    serviceTier?: string,
+    quoteData?: any,
+  ): Promise<HubSpotDeal | null> {
+    try {
+      console.log(`🔄 Updating deal ${dealId} with new values`);
+      
+      const totalAmount = (monthlyFee * 12 + setupFee).toString();
+
+      const updateBody = {
+        properties: {
+          amount: totalAmount,
+          ...(ownerId && { hubspot_owner_id: ownerId }),
+          
+          // Update custom properties with latest quote data
+          monthly_recurring_revenue: monthlyFee.toString(),
+          setup_fee: setupFee.toString(),
+          setup_fee_rounded: Math.round(setupFee).toString(),
+          
+          // Service flags - update to reflect current quote
+          includes_bookkeeping: includesBookkeeping ? "true" : "false",
+          includes_taas: includesTaas ? "true" : "false",
+          service_tier: serviceTier || 'Standard',
+          
+          // Update additional service flags from quote data
+          ...(quoteData?.servicePayroll !== undefined && { includes_payroll: quoteData.servicePayroll ? 'true' : 'false' }),
+          ...(quoteData?.serviceApLite !== undefined && { includes_ap: quoteData.serviceApLite ? 'true' : 'false' }),
+          ...(quoteData?.serviceArLite !== undefined && { includes_ar: quoteData.serviceArLite ? 'true' : 'false' }),
+          ...(quoteData?.serviceAgentOfService !== undefined && { includes_agent_of_service: quoteData.serviceAgentOfService ? 'true' : 'false' }),
+          ...(quoteData?.serviceCfoAdvisory !== undefined && { includes_cfo_advisory: quoteData.serviceCfoAdvisory ? 'true' : 'false' }),
+          
+          // Other properties to update from quote data
+          ...(quoteData?.companyName && { company_name: quoteData.companyName }),
+          ...(quoteData?.annualRevenue && { annual_revenue: quoteData.annualRevenue }),
+          ...(quoteData?.numberOfEmployees && { number_of_employees: quoteData.numberOfEmployees }),
+          ...(quoteData?.accountingBasis && { 
+            accounting_basis: quoteData.accountingBasis === 'Cash' ? 'cash' :
+                             quoteData.accountingBasis === 'Accrual' ? 'accrual' :
+                             quoteData.accountingBasis.toLowerCase()
+          }),
+        },
+      };
+
+      console.log(
+        "Updating deal with body:",
+        JSON.stringify(updateBody, null, 2),
+      );
+
+      const result = await this.makeRequest(`/crm/v3/objects/deals/${dealId}`, {
+        method: "PATCH",
+        body: JSON.stringify(updateBody),
+      });
+
+      console.log("Deal update response:", JSON.stringify(result, null, 2));
+
+      if (!result || !result.id) {
+        console.error(
+          "Deal update failed - no ID returned. Full response:",
+          result,
+        );
+        throw new Error(
+          `Deal update failed: No ID returned from HubSpot. Response: ${JSON.stringify(result)}`,
+        );
+      }
+
+      console.log("Deal updated successfully with ID:", result.id);
+
+      return {
+        id: result.id,
+        properties: {
+          dealname: result.properties?.dealname || `Updated Deal`,
+          dealstage: result.properties?.dealstage || "qualified",
+          amount: result.properties?.amount || totalAmount,
+        },
+      };
+    } catch (error) {
+      console.error("Error updating deal in HubSpot:", error);
+      return null;
+    }
+  }
+
   async createQuote(
     dealId: string,
     companyName: string,

@@ -1321,7 +1321,7 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
           throw new Error(`Quote ${quoteId} not found`);
         }
 
-        // Check if quote already has HubSpot IDs BEFORE starting sync
+        // Check if quote already has HubSpot IDs - should update instead of create
         const hasHubSpotIds = quote.hubspotQuoteId && quote.hubspotDealId;
         console.log(`🔍 Pre-sync Quote HubSpot status:`, {
           hasHubSpotIds,
@@ -1331,17 +1331,9 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         });
 
         if (hasHubSpotIds && action === 'create') {
-          console.log('⚠️ Quote already has HubSpot IDs but action is "create" - no sync needed');
-          res.json({ 
-            success: true,
-            message: "Quote already synchronized to HubSpot",
-            quoteId,
-            action: 'already_synced',
-            method: "direct",
-            hubspotQuoteId: quote.hubspotQuoteId,
-            hubspotDealId: quote.hubspotDealId
-          });
-          return;
+          console.log('🔄 Quote already has HubSpot IDs - switching to update mode');
+          // Change action to update since quote already exists in HubSpot
+          action = 'update';
         }
 
         // Perform direct sync in background
@@ -1385,27 +1377,44 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
               console.error('Company error details:', companyError.message);
             }
 
-            // Create deal in HubSpot
+            let deal;
             const dealIncludesBookkeeping = quote.serviceBookkeeping || quote.includesBookkeeping;
             const dealIncludesTaas = quote.serviceTaas || quote.includesTaas;
             
-            const deal = await hubSpotService.createDeal(
-              contact.id,
-              companyName,
-              parseFloat(quote.monthlyFee),
-              parseFloat(quote.setupFee),
-              ownerId || undefined,
-              dealIncludesBookkeeping,
-              dealIncludesTaas,
-              quote.serviceTier || 'Standard',
-              quote
-            );
+            if (action === 'update') {
+              // Update existing deal in HubSpot
+              console.log(`🔄 Updating existing HubSpot deal: ${quote.hubspotDealId}`);
+              deal = await hubSpotService.updateDeal(
+                quote.hubspotDealId,
+                parseFloat(quote.monthlyFee),
+                parseFloat(quote.setupFee),
+                ownerId || undefined,
+                dealIncludesBookkeeping,
+                dealIncludesTaas,
+                quote.serviceTier || 'Standard',
+                quote
+              );
+              console.log('✅ HubSpot deal updated successfully');
+            } else {
+              // Create new deal in HubSpot
+              console.log('🆕 Creating new HubSpot deal');
+              deal = await hubSpotService.createDeal(
+                contact.id,
+                companyName,
+                parseFloat(quote.monthlyFee),
+                parseFloat(quote.setupFee),
+                ownerId || undefined,
+                dealIncludesBookkeeping,
+                dealIncludesTaas,
+                quote.serviceTier || 'Standard',
+                quote
+              );
+            }
 
-            // Now create the quote in HubSpot linked to the deal
+            // Now create or update the quote in HubSpot linked to the deal
             if (deal) {
               try {
-                console.log('📋 Creating HubSpot quote for deal:', deal.id);
-                console.log('🚨 Direct sync path - using corrected bookkeeping setup fee');
+                let hubspotQuote;
                 
                 // ✅ FIXED: Recalculate individual service fees using the same logic as frontend
                 console.log('🔧 Recalculating individual service fees from quote data (same as frontend)');
@@ -1427,7 +1436,49 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                   qboFee: feeCalculation.bookkeeping.breakdown?.qboFee || 0
                 });
                 
-                const hubspotQuote = await hubSpotService.createQuote(
+                if (action === 'update') {
+                  // Update existing quote in HubSpot
+                  console.log(`🔄 Updating existing HubSpot quote: ${quote.hubspotQuoteId}`);
+                  hubspotQuote = await hubSpotService.updateQuote(
+                    quote.hubspotQuoteId,
+                    parseFloat(quote.monthlyFee),
+                    parseFloat(quote.setupFee),
+                    req.user.email,
+                    contact.properties.firstname || 'Contact',
+                    contact.properties.lastname || '',
+                    dealIncludesBookkeeping,
+                    dealIncludesTaas,
+                    parseFloat(quote.taasMonthlyFee || '0'),
+                    parseFloat(quote.taasPriorYearsFee || '0'),
+                    feeCalculation.bookkeeping.monthlyFee,
+                    feeCalculation.bookkeeping.setupFee,
+                    quote,
+                    quote.serviceTier || 'Standard',
+                    Boolean(quote.servicePayroll || quote.servicePayrollService),
+                    feeCalculation.payrollFee,
+                    Boolean(quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService),
+                    feeCalculation.apFee,
+                    Boolean(quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService),
+                    feeCalculation.arFee,
+                    Boolean(quote.serviceAgentOfService),
+                    feeCalculation.agentOfServiceFee,
+                    Boolean(quote.serviceCfoAdvisory),
+                    feeCalculation.cfoAdvisoryFee,
+                    feeCalculation.cleanupProjectFee,
+                    feeCalculation.priorYearFilingsFee,
+                    Boolean(quote.serviceFpaBuild),
+                    0,
+                    feeCalculation.bookkeeping.monthlyFee,
+                    feeCalculation.taas.monthlyFee,
+                    feeCalculation.serviceTierFee
+                  );
+                  console.log('✅ HubSpot quote updated successfully:', hubspotQuote?.id);
+                } else {
+                  // Create new quote in HubSpot
+                  console.log('📋 Creating HubSpot quote for deal:', deal.id);
+                  console.log('🚨 Direct sync path - using corrected bookkeeping setup fee');
+                  
+                  hubspotQuote = await hubSpotService.createQuote(
                   deal.id,
                   companyName,
                   parseFloat(quote.monthlyFee),
@@ -1463,7 +1514,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                   feeCalculation.taas.monthlyFee,                     // calculatedTaasMonthlyFee
                   feeCalculation.serviceTierFee                       // calculatedServiceTierFee
                 );
-                console.log('✅ HubSpot quote created successfully:', hubspotQuote?.id);
+                  console.log('✅ HubSpot quote created successfully:', hubspotQuote?.id);
+                }
                 
                 // Update the quote in our database with HubSpot IDs
                 if (hubspotQuote?.id) {
