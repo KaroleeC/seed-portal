@@ -3924,11 +3924,11 @@ function HomePage() {
                               // Auto-save the form changes first (editingQuoteId is already set)
                               const formData = form.getValues();
                               try {
-                                const savedQuote = await new Promise<any>((resolve, reject) => {
-                                  createQuoteMutation.mutate(formData, {
-                                    onSuccess: resolve,
-                                    onError: reject
-                                  });
+                                // Update the existing quote instead of creating a new one
+                                console.log('Updating existing quote with HubSpot IDs, quote ID:', quoteId);
+                                const savedQuote = await apiRequest(`/api/quotes/${quoteId}`, {
+                                  method: "PUT",
+                                  body: JSON.stringify(formData)
                                 });
                                 
                                 // Show immediate success - quote is updated!
@@ -3990,14 +3990,14 @@ function HomePage() {
                               updateHubSpotMutation.mutate(quoteId);
                             }
                           } else if (editingQuoteId) {
-                            // Quote exists but no HubSpot IDs - save to database and push to HubSpot
+                            // Quote exists but no HubSpot IDs - update existing quote and push to HubSpot
                             const formData = form.getValues();
                             try {
-                              const savedQuote = await new Promise<any>((resolve, reject) => {
-                                createQuoteMutation.mutate(formData, {
-                                  onSuccess: resolve,
-                                  onError: reject
-                                });
+                              // Update the existing quote instead of creating a new one
+                              console.log('Updating existing quote with ID:', editingQuoteId);
+                              const savedQuote = await apiRequest(`/api/quotes/${editingQuoteId}`, {
+                                method: "PUT",
+                                body: JSON.stringify(formData)
                               });
                               
                               toast({
@@ -4005,7 +4005,11 @@ function HomePage() {
                                 description: "Quote updated in database. Now pushing to HubSpot...",
                               });
                               
-                              // Now push to HubSpot
+                              // Refresh the quotes list to show updated data
+                              queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
+                              refetchQuotes();
+                              
+                              // Now push to HubSpot using the same quote ID
                               pushToHubSpotMutation.mutate(editingQuoteId);
                             } catch (error) {
                               console.error('Failed to save quote:', error);
