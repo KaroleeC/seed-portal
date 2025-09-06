@@ -570,13 +570,21 @@ button:not(.navbar-button):not(.header-button) {
   border-radius: 1rem !important;
 }
 
-/* Reset navbar/header elements to have minimal rounding */
-.navbar button,
-.header button,
+/* Reset navbar/header elements to have NO rounding for clean connected look */
 header button,
-[class*="navbar"] button,
-[class*="header"] input {
-  border-radius: 0.5rem !important;
+header input,
+header [class*="button"],
+.universal-navbar button,
+.universal-navbar input,
+[data-testid*="navbar"] button,
+[data-testid*="navbar"] input {
+  border-radius: 0 !important;
+}
+
+/* Keep the logo area clean */
+header img,
+.seed-logo {
+  border-radius: 0 !important;
 }
 
 /* Clean up - these rules are now handled above with more precision */
