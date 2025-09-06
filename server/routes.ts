@@ -1439,40 +1439,29 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                 if (action === 'update') {
                   // Update existing quote in HubSpot
                   console.log(`🔄 Updating existing HubSpot quote: ${quote.hubspotQuoteId}`);
-                  hubspotQuote = await hubSpotService.updateQuote(
+                  const quoteUpdateSuccess = await hubSpotService.updateQuote(
                     quote.hubspotQuoteId,
+                    companyName,
                     parseFloat(quote.monthlyFee),
                     parseFloat(quote.setupFee),
-                    req.user.email,
-                    contact.properties.firstname || 'Contact',
-                    contact.properties.lastname || '',
                     dealIncludesBookkeeping,
                     dealIncludesTaas,
                     parseFloat(quote.taasMonthlyFee || '0'),
                     parseFloat(quote.taasPriorYearsFee || '0'),
                     feeCalculation.bookkeeping.monthlyFee,
                     feeCalculation.bookkeeping.setupFee,
-                    quote,
-                    quote.serviceTier || 'Standard',
-                    Boolean(quote.servicePayroll || quote.servicePayrollService),
-                    feeCalculation.payrollFee,
-                    Boolean(quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService),
-                    feeCalculation.apFee,
-                    Boolean(quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService),
-                    feeCalculation.arFee,
-                    Boolean(quote.serviceAgentOfService),
-                    feeCalculation.agentOfServiceFee,
-                    Boolean(quote.serviceCfoAdvisory),
-                    feeCalculation.cfoAdvisoryFee,
-                    feeCalculation.cleanupProjectFee,
-                    feeCalculation.priorYearFilingsFee,
-                    Boolean(quote.serviceFpaBuild),
-                    0,
-                    feeCalculation.bookkeeping.monthlyFee,
-                    feeCalculation.taas.monthlyFee,
-                    feeCalculation.serviceTierFee
+                    quote.hubspotDealId,
+                    quote
                   );
-                  console.log('✅ HubSpot quote updated successfully:', hubspotQuote?.id);
+                  
+                  if (quoteUpdateSuccess) {
+                    console.log('✅ HubSpot quote updated successfully');
+                    // For update case, we set hubspotQuote to indicate success
+                    hubspotQuote = { id: quote.hubspotQuoteId };
+                  } else {
+                    console.log('❌ HubSpot quote update failed');
+                    hubspotQuote = null;
+                  }
                 } else {
                   // Create new quote in HubSpot
                   console.log('📋 Creating HubSpot quote for deal:', deal.id);
