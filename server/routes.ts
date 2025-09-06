@@ -2167,8 +2167,12 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
           message: "Quote is no longer active in HubSpot. A new quote will need to be created."
         });
       }
-    } catch (error) {
-      console.error('Error updating HubSpot quote:', error);
+    } catch (error: any) {
+      console.error('❌ ERROR UPDATING HUBSPOT QUOTE:', error);
+      console.error('❌ Error type:', typeof error);
+      console.error('❌ Error message:', error?.message);
+      console.error('❌ Error stack:', error?.stack);
+      console.error('❌ Error name:', error?.name);
       res.status(500).json({ message: "Failed to update quote in HubSpot" });
     }
   });
