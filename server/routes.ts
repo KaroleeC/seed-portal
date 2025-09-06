@@ -1451,21 +1451,43 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                 });
                 
                 if (action === 'update') {
-                  // Update existing quote in HubSpot
+                  // Update existing quote in HubSpot - USE SAME PARAMETERS AS CREATE
                   console.log(`🔄 Updating existing HubSpot quote: ${quote.hubspotQuoteId}`);
                   const quoteUpdateSuccess = await hubSpotService.updateQuote(
                     quote.hubspotQuoteId,
                     companyName,
                     parseFloat(quote.monthlyFee),
                     parseFloat(quote.setupFee),
+                    req.user.email,
+                    contact.properties.firstname || 'Contact',
+                    contact.properties.lastname || '',
                     dealIncludesBookkeeping,
                     dealIncludesTaas,
                     parseFloat(quote.taasMonthlyFee || '0'),
                     parseFloat(quote.taasPriorYearsFee || '0'),
                     feeCalculation.bookkeeping.monthlyFee,
                     feeCalculation.bookkeeping.setupFee,
-                    quote.hubspotDealId,
-                    quote
+                    quote,
+                    quote.serviceTier || 'Standard',
+                    // ✅ SAME AS CREATE: Use RECALCULATED service fees
+                    Boolean(quote.servicePayroll || quote.servicePayrollService),  // includesPayroll
+                    feeCalculation.payrollFee,                          // payrollFee (RECALCULATED)
+                    Boolean(quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService), // includesAP
+                    feeCalculation.apFee,                               // apFee (RECALCULATED)
+                    Boolean(quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService), // includesAR
+                    feeCalculation.arFee,                               // arFee (RECALCULATED)
+                    Boolean(quote.serviceAgentOfService),               // includesAgentOfService
+                    feeCalculation.agentOfServiceFee,                   // agentOfServiceFee (RECALCULATED)
+                    Boolean(quote.serviceCfoAdvisory),                  // includesCfoAdvisory
+                    feeCalculation.cfoAdvisoryFee,                      // cfoAdvisoryFee (RECALCULATED)
+                    feeCalculation.cleanupProjectFee,                   // cleanupProjectFee (RECALCULATED)
+                    feeCalculation.priorYearFilingsFee,                 // priorYearFilingsFee (RECALCULATED)
+                    Boolean(quote.serviceFpaBuild),                     // includesFpaBuild
+                    0,                                                  // fpaServiceFee (not implemented yet)
+                    // Pass the individual RECALCULATED service fees for line items
+                    feeCalculation.bookkeeping.monthlyFee,              // calculatedBookkeepingMonthlyFee
+                    feeCalculation.taas.monthlyFee,                     // calculatedTaasMonthlyFee
+                    feeCalculation.serviceTierFee                       // calculatedServiceTierFee
                   );
                   
                   if (quoteUpdateSuccess) {
