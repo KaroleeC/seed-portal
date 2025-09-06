@@ -211,48 +211,48 @@ export default function ServiceDashboard() {
         </div>
 
         {/* Enhanced Navigation Menu */}
-        <div className="p-6 space-y-8">
+        <div className="p-4 space-y-6">
           <div>
-            <p className="text-white/50 text-xs font-medium mb-6 uppercase tracking-wider letter-spacing-wide">Service Command Center</p>
-            <div className="space-y-2">
+            <p className="text-white/60 text-xs font-semibold mb-3 uppercase tracking-wider">Service Command Center</p>
+            <div className="space-y-1">
               <Button
                 variant="ghost"
-                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'overview' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/90 hover:text-white hover:bg-white/8'}`}
+                className={`w-full justify-start text-white hover:bg-white/10 ${activeModule === 'overview' ? 'bg-orange-500/20 text-orange-300 border-r-2 border-orange-500' : ''}`}
                 onClick={() => setActiveModule('overview')}
               >
-                <Activity className="mr-3 h-5 w-5" />
+                <Activity className="mr-3 h-4 w-4" />
                 Dashboard Overview
               </Button>
               <Button
                 variant="ghost"
-                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'sales-intelligence' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/90 hover:text-white hover:bg-white/8'}`}
+                className={`w-full justify-start text-white hover:bg-white/10 ${activeModule === 'sales-intelligence' ? 'bg-orange-500/20 text-orange-300 border-r-2 border-orange-500' : ''}`}
                 onClick={() => setActiveModule('sales-intelligence')}
               >
-                <TrendingUp className="mr-3 h-5 w-5" />
+                <TrendingUp className="mr-3 h-4 w-4" />
                 Sales Intelligence
               </Button>
               <Button
                 variant="ghost"
-                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'communications' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/90 hover:text-white hover:bg-white/8'}`}
+                className={`w-full justify-start text-white hover:bg-white/10 ${activeModule === 'communications' ? 'bg-orange-500/20 text-orange-300 border-r-2 border-orange-500' : ''}`}
                 onClick={() => setActiveModule('communications')}
               >
-                <MessageSquare className="mr-3 h-5 w-5" />
+                <MessageSquare className="mr-3 h-4 w-4" />
                 Client Communications
               </Button>
               <Button
                 variant="ghost"
-                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'documents' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/90 hover:text-white hover:bg-white/8'}`}
+                className={`w-full justify-start text-white hover:bg-white/10 ${activeModule === 'documents' ? 'bg-orange-500/20 text-orange-300 border-r-2 border-orange-500' : ''}`}
                 onClick={() => setActiveModule('documents')}
               >
-                <Folder className="mr-3 h-5 w-5" />
+                <Folder className="mr-3 h-4 w-4" />
                 Document Center
               </Button>
               <Button
                 variant="ghost"
-                className={`seed-nav-item w-full justify-start transition-all duration-200 ${activeModule === 'ai-tools' ? 'active bg-white/15 text-white border-r-3 border-orange-400 font-semibold' : 'text-white/90 hover:text-white hover:bg-white/8'}`}
+                className={`w-full justify-start text-white hover:bg-white/10 ${activeModule === 'ai-tools' ? 'bg-orange-500/20 text-orange-300 border-r-2 border-orange-500' : ''}`}
                 onClick={() => setActiveModule('ai-tools')}
               >
-                <Bot className="mr-3 h-5 w-5" />
+                <Bot className="mr-3 h-4 w-4" />
                 AI Service Tools
               </Button>
             </div>
@@ -311,11 +311,11 @@ export default function ServiceDashboard() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30 transition-all duration-500 ease-out">
+              <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
                 <Bell className="mr-2 h-4 w-4" />
                 <span className="bg-red-500 text-xs px-1.5 py-0.5 rounded-full ml-1">{serviceMetrics.urgentItems}</span>
               </Button>
-              <Button variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/40 hover:text-white transition-all duration-500 ease-out">
+              <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Sync
               </Button>

@@ -33,14 +33,14 @@ export function UniversalNavbar({
         <img 
           src={dbUser.profilePhoto} 
           alt="Profile" 
-          className="w-8 h-8 rounded-full object-cover border-2 border-white/20 shadow-md"
+          className="w-7 h-7 rounded-full object-cover border border-white/20"
         />
       );
     }
     
     const initial = dbUser?.firstName?.charAt(0)?.toUpperCase() || dbUser?.email?.charAt(0)?.toUpperCase() || '?';
     return (
-      <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white text-xs font-semibold shadow-md border-2 border-white/20">
+      <div className="w-7 h-7 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
         {initial}
       </div>
     );
@@ -112,75 +112,75 @@ export function UniversalNavbar({
   const shouldShowBackButton = showBackButton && canGoBack && !isMainDashboard;
 
   return (
-    <header className="bg-transparent z-50 relative">
-      <div className="max-w-6xl mx-auto px-8">
-        <div className="flex items-center justify-center py-6">
-          <img src={logoPath} alt="Seed Financial" className="seed-logo h-12 transition-all duration-300 hover:scale-105" />
+    <header className="bg-transparent z-50 py-4 relative">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="flex items-center justify-center h-20">
+          <img src={logoPath} alt="Seed Financial" className="h-16" />
         </div>
         
         {/* Smart Back Button - Positioned Absolutely */}
         {shouldShowBackButton && (
-          <div className="absolute top-6 left-8">
+          <div className="absolute top-4 left-6">
             <BackButton
               variant="ghost"
               size="sm"
-              className="seed-button-secondary text-white/90 hover:text-white hover:bg-white/12 backdrop-blur-md border border-white/20 transition-all duration-500 ease-out"
+              className="text-white hover:text-orange-200 hover:bg-white/10 backdrop-blur-sm border border-white/20"
               fallbackPath={fallbackPath}
             />
           </div>
         )}
         
         {/* User Menu - Positioned Absolutely */}
-        <div className="absolute top-6 right-8 flex items-center space-x-3">
-          <Button variant="ghost" size="sm" className="relative p-2 hover:bg-white/12 text-white/90 hover:text-white transition-all duration-500 ease-out backdrop-blur-sm border border-white/10 hover:border-white/20">
+        <div className="absolute top-4 right-6 flex items-center space-x-2">
+          <Button variant="ghost" size="sm" className="relative p-2 hover:bg-white/10 text-white">
             <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 h-2 w-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full shadow-lg pulse"></span>
+            <span className="absolute top-1 right-1 h-1.5 w-1.5 bg-orange-500 rounded-full"></span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="flex items-center gap-2 p-2 hover:bg-white/12 text-white/90 hover:text-white transition-all duration-500 ease-out backdrop-blur-sm border border-white/10 hover:border-white/20">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2 p-2 hover:bg-white/10 text-white">
                 {avatarContent}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 seed-card border-0 shadow-xl">
-              <div className="px-4 py-3 border-b border-gray-100">
-                <p className="font-semibold text-gray-900 text-sm">{userInfo.displayName}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{userInfo.email}</p>
+            <DropdownMenuContent align="end" className="w-48">
+              <div className="px-3 py-2 border-b">
+                <p className="font-medium text-gray-900 text-sm">{userInfo.displayName}</p>
+                <p className="text-xs text-gray-500">{userInfo.email}</p>
                 {userInfo.isImpersonating && (
-                  <div className="mt-2 flex items-center gap-2 px-2 py-1 bg-orange-50 border border-orange-200 rounded-md">
-                    <div className="w-2 h-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full animate-pulse"></div>
-                    <p className="text-xs text-orange-700 font-medium">Admin View Active</p>
+                  <div className="mt-1 flex items-center gap-1">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <p className="text-xs text-orange-600 font-medium">Admin View</p>
                   </div>
                 )}
               </div>
               {userInfo.isImpersonating && (
                 <DropdownMenuItem 
                   onClick={handleStopImpersonation} 
-                  className="text-sm text-orange-700 hover:text-orange-800 hover:bg-orange-50 font-medium seed-nav-item"
+                  className="text-sm text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                   disabled={stopImpersonationMutation.isPending}
                 >
-                  <UserMinus className="mr-3 h-4 w-4" />
+                  <UserMinus className="mr-2 h-3 w-3" />
                   {stopImpersonationMutation.isPending ? 'Stopping...' : 'Stop Impersonation'}
                 </DropdownMenuItem>
               )}
               {userInfo.isImpersonating && <DropdownMenuSeparator />}
-              <DropdownMenuItem onClick={handleGoToProfile} className="text-sm seed-nav-item hover:bg-gray-50">
-                <User className="mr-3 h-4 w-4" />
+              <DropdownMenuItem onClick={handleGoToProfile} className="text-sm">
+                <User className="mr-2 h-3 w-3" />
                 My Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleGoToKbAdmin} className="text-sm seed-nav-item hover:bg-gray-50">
-                <Settings className="mr-3 h-4 w-4" />
+              <DropdownMenuItem onClick={handleGoToKbAdmin} className="text-sm">
+                <Settings className="mr-2 h-3 w-3" />
                 Knowledge Base Admin
               </DropdownMenuItem>
               {(userInfo.email === 'jon@seedfinancial.io' || userInfo.email === 'anthony@seedfinancial.io' || dbUser?.role === 'admin') && (
-                <DropdownMenuItem onClick={handleGoToAdmin} className="text-sm seed-nav-item hover:bg-gray-50">
-                  <Shield className="mr-3 h-4 w-4" />
+                <DropdownMenuItem onClick={handleGoToAdmin} className="text-sm">
+                  <Shield className="mr-2 h-3 w-3" />
                   SEEDOS Dashboard
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator className="my-2" />
-              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 text-sm hover:bg-red-50 hover:text-red-700 transition-colors duration-200">
-                <LogOut className="mr-3 h-4 w-4" />
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 text-sm">
+                <LogOut className="mr-2 h-3 w-3" />
                 Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
