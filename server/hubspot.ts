@@ -2837,6 +2837,28 @@ Generated: ${new Date().toLocaleDateString()}`;
       }
 
       console.log(`✅ Quote ${quoteId} is valid and active`);
+      
+      // ✅ PROPER UPDATE APPROACH: Use the same logic as createQuote
+      // Delete all existing line items and create fresh ones with new configuration
+      console.log(`🗑️ Deleting existing line items for fresh update`);
+      try {
+        const existingLineItems = await this.makeRequest(
+          `/crm/v4/objects/quotes/${quoteId}/associations/line_items`,
+          { method: "GET" }
+        );
+        
+        if (existingLineItems?.results?.length > 0) {
+          for (const association of existingLineItems.results) {
+            await this.makeRequest(
+              `/crm/v3/objects/line_items/${association.toObjectId}`,
+              { method: "DELETE" }
+            );
+          }
+          console.log(`🗑️ Deleted ${existingLineItems.results.length} existing line items`);
+        }
+      } catch (deleteError) {
+        console.log('⚠️ Non-critical: Failed to delete existing line items:', deleteError);
+      }
 
       // Update the quote title with correct service combination
       let serviceType = "Services";
@@ -2873,13 +2895,56 @@ Generated: ${new Date().toLocaleDateString()}`;
       );
       console.log("📋 Payment terms updated:", paymentTerms);
 
+      // ✅ CREATE FRESH LINE ITEMS: Use the same logic as createQuote
+      console.log(`🔧 Creating fresh line items with updated service configuration`);
+      
+      // Build the same service configuration object as createQuote
+      const serviceConfig = {
+        // Basic info
+        companyName,
+        monthlyFee,
+        setupFee,
+        userEmail,
+        firstName,
+        lastName,
+        
+        // Core services
+        serviceBookkeeping: includesBookkeeping,
+        serviceTaas: includesTaas,
+        taasMonthlyFee,
+        taasPriorYearsFee,
+        
+        // Additional services
+        servicePayroll: includesPayroll,
+        payrollFee: payrollFee || 0,
+        serviceApLite: includesAP,
+        apFee: apFee || 0,
+        serviceArLite: includesAR,
+        arFee: arFee || 0,
+        serviceAgentOfService: includesAgentOfService,
+        agentOfServiceFee: agentOfServiceFee || 0,
+        serviceCfoAdvisory: includesCfoAdvisory,
+        cfoAdvisoryFee: cfoAdvisoryFee || 0,
+        serviceFpaBuild: includesFpaBuild,
+        fpaServiceFee: fpaServiceFee || 0,
+        cleanupProjectFee: cleanupProjectFee || 0,
+        priorYearFilingsFee: priorYearFilingsFee || 0,
+        
+        // Service tier and quote data
+        serviceTier: serviceTier || 'Standard',
+        ...quoteData
+      };
+      
+      // Use the existing method that creates all line items properly
+      await this.createInitialServiceLineItems(quoteId, serviceConfig);
+      
+      // Update quote properties
       const updateBody = {
         properties: {
           hs_title: updatedTitle,
-          // Removed invalid properties: hs_payments_enabled, hs_signature_required
-          // These will be set manually in HubSpot after quote update
-          hs_comments: scopeAssumptions, // Update scope assumptions in comments field
-          hs_terms: paymentTerms, // Update payment terms with MSA and service schedule links
+          hs_quote_amount: monthlyFee.toString(),
+          hs_comments: scopeAssumptions,
+          hs_terms: paymentTerms,
         },
       };
 
@@ -2888,319 +2953,192 @@ Generated: ${new Date().toLocaleDateString()}`;
         body: JSON.stringify(updateBody),
       });
 
-      console.log(`Updated quote title to: ${updatedTitle}`);
+      console.log(`✅ Updated quote: ${updatedTitle} with amount $${monthlyFee}`);
+      console.log(`🎉 Successfully updated quote ${quoteId} with fresh line items`);
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating quote:', error);
+      return false;
+    }
+  }
 
-      // Get associated line items for this quote
-      const lineItemsResponse = await this.makeRequest(
-        `/crm/v4/objects/quotes/${quoteId}/associations/line_items`,
-        {
-          method: "GET",
-        },
-      );
+  async createCompany(companyData: {
+    name: string;
+    domain?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    numberOfEmployees?: string;
+    annualRevenue?: string;
+  }): Promise<{ id: string; properties: any }> {
+    try {
+      // Only include properties that have valid values (not empty strings, null, or undefined)
+      const properties: any = {
+        name: companyData.name, // Always required
+      };
 
-      // Collect existing line items for service management
-      const existingLineItems: any[] = [];
-
-      if (
-        lineItemsResponse &&
-        lineItemsResponse.results &&
-        lineItemsResponse.results.length > 0
-      ) {
-        console.log(
-          `Found ${lineItemsResponse.results.length} line items to update`,
-        );
-
-        for (const lineItemAssociation of lineItemsResponse.results) {
-          const lineItemId = lineItemAssociation.toObjectId;
-
-          // Get the line item details to determine if it's monthly or setup
-          const lineItemDetails = await this.makeRequest(
-            `/crm/v3/objects/line_items/${lineItemId}`,
-            {
-              method: "GET",
-            },
-          );
-
-          if (lineItemDetails && lineItemDetails.properties) {
-            // Add to existing line items for service management
-            existingLineItems.push({
-              id: lineItemId,
-              properties: lineItemDetails.properties,
-            });
-
-            const productId = lineItemDetails.properties.hs_product_id;
-            const lineItemName = lineItemDetails.properties.name || "";
-            let newPrice;
-
-            // Determine which price to use based on product ID and custom name
-            if (productId === HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING) {
-              if (lineItemName.includes("TaaS Monthly")) {
-                // TaaS Monthly line item
-                newPrice = taasMonthlyFee || 0;
-                console.log(
-                  `Updating TaaS monthly line item ${lineItemId} to $${newPrice}`,
-                );
-              } else {
-                // Regular bookkeeping monthly line item
-                newPrice =
-                  bookkeepingMonthlyFee !== undefined
-                    ? bookkeepingMonthlyFee
-                    : monthlyFee - (taasMonthlyFee || 0);
-                console.log(
-                  `Updating bookkeeping monthly line item ${lineItemId} to $${newPrice}`,
-                );
-              }
-            } else if (productId === HUBSPOT_PRODUCT_IDS.CLEANUP_PROJECT) {
-              if (lineItemName.includes("TaaS Prior Years")) {
-                // TaaS Prior Years line item
-                newPrice = taasPriorYearsFee || 0;
-                console.log(
-                  `Updating TaaS prior years line item ${lineItemId} to $${newPrice}`,
-                );
-              } else {
-                // Regular bookkeeping setup/cleanup line item
-                newPrice =
-                  bookkeepingSetupFee !== undefined
-                    ? bookkeepingSetupFee
-                    : setupFee - (taasPriorYearsFee || 0);
-                console.log(
-                  `Updating bookkeeping setup line item ${lineItemId} to $${newPrice}`,
-                );
-              }
-            } else {
-              console.log(
-                `Unknown product ID ${productId} for line item ${lineItemId}, skipping`,
-              );
-              continue;
-            }
-
-            // Update the line item price
-            const lineItemUpdateBody = {
-              properties: {
-                price: newPrice.toString(),
-              },
-            };
-
-            await this.makeRequest(`/crm/v3/objects/line_items/${lineItemId}`, {
-              method: "PATCH",
-              body: JSON.stringify(lineItemUpdateBody),
-            });
-
-            console.log(
-              `Successfully updated line item ${lineItemId} price to $${newPrice}`,
-            );
-          }
-        }
+      if (companyData.domain && companyData.domain.trim()) {
+        properties.domain = companyData.domain.trim();
+      }
+      if (companyData.city && companyData.city.trim()) {
+        properties.city = companyData.city.trim();
+      }
+      if (companyData.state && companyData.state.trim()) {
+        properties.state = companyData.state.trim();
+      }
+      if (companyData.country && companyData.country.trim()) {
+        properties.country = companyData.country.trim();
+      }
+      if (companyData.numberOfEmployees && companyData.numberOfEmployees.trim()) {
+        properties.numberofemployees = companyData.numberOfEmployees.trim();
+      }
+      if (companyData.annualRevenue && companyData.annualRevenue.trim()) {
+        properties.annualrevenue = companyData.annualRevenue.trim();
       }
 
-      // Refresh line items list after price updates for accurate duplicate detection
-      const refreshedLineItemsResponse = await this.makeRequest(
-        `/crm/v4/objects/quotes/${quoteId}/associations/line_items`,
-        {
-          method: "GET",
-        },
-      );
+      const response = await this.makeRequest("/crm/v3/objects/companies", {
+        method: "POST",
+        body: JSON.stringify({
+          properties,
+        }),
+      });
 
-      const refreshedLineItems: any[] = [];
-      if (
-        refreshedLineItemsResponse &&
-        refreshedLineItemsResponse.results &&
-        refreshedLineItemsResponse.results.length > 0
-      ) {
-        console.log(
-          `Refreshing ${refreshedLineItemsResponse.results.length} line items for accurate duplicate detection`,
-        );
-        for (const lineItemAssociation of refreshedLineItemsResponse.results) {
-          const lineItemId = lineItemAssociation.toObjectId;
-          const lineItemDetails = await this.makeRequest(
-            `/crm/v3/objects/line_items/${lineItemId}`,
-            {
-              method: "GET",
-            },
-          );
+      return {
+        id: response.id,
+        properties: response.properties,
+      };
+    } catch (error) {
+      console.error("Error creating company:", error);
+      throw error;
+    }
+  }
 
-          console.log(
-            `Raw line item response for ${lineItemId}:`,
-            JSON.stringify(lineItemDetails, null, 2),
-          );
+  async getCompanyById(companyId: string) {
+    try {
+      const response = await this.makeRequest(`/crm/v3/objects/companies/${companyId}`);
+      return response;
+    } catch (error) {
+      console.error("Error fetching company:", error);
+      throw error;
+    }
+  }
 
-          if (lineItemDetails && lineItemDetails.properties) {
-            refreshedLineItems.push({
-              id: lineItemId,
-              properties: lineItemDetails.properties,
-            });
-            console.log(
-              `Refreshed line item: ${lineItemId} - ${lineItemDetails.properties.name || lineItemDetails.properties.hs_line_item_currency_code} - $${lineItemDetails.properties.price || lineItemDetails.properties.amount}`,
-            );
-          }
-        }
-      }
-      console.log(`Total refreshed line items: ${refreshedLineItems.length}`);
-      console.log(
-        "Refreshed line items:",
-        refreshedLineItems.map(
-          (item) => `${item.properties.name} ($${item.properties.price})`,
-        ),
-      );
+  async updateCompany(companyId: string, properties: any) {
+    try {
+      const response = await this.makeRequest(`/crm/v3/objects/companies/${companyId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      });
+      return response;
+    } catch (error) {
+      console.error("Error updating company:", error);
+      throw error;
+    }
+  }
 
-      // ✅ FIXED: If we have individual service fee data in quoteData, recreate line items
-      // This ensures line items match the current service configuration and pricing
-      if (quoteData && (quoteData.bookkeepingMonthlyFee !== undefined || 
-                        quoteData.serviceTierFee !== undefined ||
-                        quoteData.payrollFee !== undefined)) {
-        console.log(`🔧 RECREATING line items - service configuration changed`);
-        
-        // Delete existing line items first
-        try {
-          const existingLineItems = await this.makeRequest(
-            `/crm/v4/objects/quotes/${quoteId}/associations/line_items`,
-            { method: "GET" }
-          );
-          
-          if (existingLineItems?.results?.length > 0) {
-            for (const association of existingLineItems.results) {
-              await this.makeRequest(
-                `/crm/v3/objects/line_items/${association.toObjectId}`,
-                { method: "DELETE" }
-              );
-            }
-            console.log(`🗑️ Deleted ${existingLineItems.results.length} existing line items`);
-          }
-        } catch (deleteError) {
-          console.log('Non-critical: Failed to delete existing line items:', deleteError);
-        }
-        
-        // Create new line items with updated configuration
-        await this.createInitialServiceLineItems(quoteId, quoteData);
-      } else {
-        console.log(`🔵 No individual service fees provided - skipping line item recreation`);
-      }
+  async updateContact(contactId: string, properties: any) {
+    try {
+      const response = await this.makeRequest(`/crm/v3/objects/contacts/${contactId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      });
+      return response;
+    } catch (error) {
+      console.error("Error updating contact:", error);
+      throw error;
+    }
+  }
 
-      // Update the associated deal amount and name
-      let actualDealId = dealId;
-      if (!actualDealId) {
-        // Get deal ID from quote associations if not provided
-        const dealAssociations = await this.makeRequest(
-          `/crm/v4/objects/quotes/${quoteId}/associations/deals`,
+  async associateContactWithCompany(contactId: string, companyId: string) {
+    try {
+      const association = {
+        from: { id: contactId },
+        to: { id: companyId },
+        type: "contact_to_company"
+      };
+
+      const response = await this.makeRequest(`/crm/v4/objects/contacts/${contactId}/associations/companies/${companyId}`, {
+        method: "PUT",
+        body: JSON.stringify(association),
+      });
+      return response;
+    } catch (error) {
+      console.error("Error associating contact with company:", error);
+      throw error;
+    }
+  }
+
+  async getContactAssociatedCompanies(contactId: string) {
+    try {
+      const response = await this.makeRequest(`/crm/v4/objects/contacts/${contactId}/associations/companies`);
+      return response.results || [];
+    } catch (error) {
+      console.error("Error fetching contact's associated companies:", error);
+      return [];
+    }
+  }
+
+  async updateOrCreateCompanyFromQuote(
+    companyName: string,
+    quoteData: any
+  ): Promise<{ id: string; isNewCompany: boolean }> {
+    try {
+      // Search for existing company
+      const searchBody = {
+        filterGroups: [
           {
-            method: "GET",
+            filters: [
+              {
+                propertyName: "name",
+                operator: "EQ",
+                value: companyName,
+              },
+            ],
           },
-        );
-        if (
-          dealAssociations &&
-          dealAssociations.results &&
-          dealAssociations.results.length > 0
-        ) {
-          actualDealId = dealAssociations.results[0].toObjectId;
+        ],
+      };
+
+      const searchResult = await this.makeRequest(
+        "/crm/v3/objects/companies/search",
+        {
+          method: "POST",
+          body: JSON.stringify(searchBody),
         }
-      }
+      );
 
-      if (actualDealId) {
-        // Calculate total amount including all TaaS fees
-        const totalMonthlyAmount = monthlyFee * 12;
-        const totalSetupAmount = setupFee;
-        const totalAmount = totalMonthlyAmount + totalSetupAmount;
+      if (searchResult.results && searchResult.results.length > 0) {
+        // Company exists, update it
+        const existingCompany = searchResult.results[0];
+        const updateProperties: any = {};
 
-        // Update deal name based on services
-        let dealName = `${companyName} - Services`;
-        if (includesBookkeeping && includesTaas) {
-          dealName = `${companyName} - Bookkeeping + TaaS`;
-        } else if (includesTaas) {
-          dealName = `${companyName} - TaaS`;
-        } else {
-          dealName = `${companyName} - Bookkeeping`;
+        // Update with new information from quote
+        if (quoteData.city) updateProperties.city = quoteData.city;
+        if (quoteData.state) updateProperties.state = quoteData.state;
+        if (quoteData.numberOfEmployees) updateProperties.numberofemployees = quoteData.numberOfEmployees.toString();
+        if (quoteData.annualRevenue) updateProperties.annualrevenue = quoteData.annualRevenue.toString();
+        if (quoteData.primaryIndustry) updateProperties.industry = quoteData.primaryIndustry;
+
+        if (Object.keys(updateProperties).length > 0) {
+          await this.updateCompany(existingCompany.id, updateProperties);
         }
 
-        console.log(
-          `Updating deal ${actualDealId} amount to $${totalAmount} (Monthly: $${monthlyFee} x 12 + Setup: $${setupFee})`,
-        );
-        console.log(
-          `TaaS breakdown - Monthly: $${taasMonthlyFee || 0}, Prior Years: $${taasPriorYearsFee || 0}`,
-        );
-
-        // Update the deal amount and name
-        const dealUpdateBody = {
-          properties: {
-            amount: totalAmount.toString(),
-            dealname: dealName,
-            
-            // Updated deal properties using only existing HubSpot fields with correct values
-            
-            // Entity type - map to correct HubSpot values (sole_prop, partnership, s-corp, c-corp, non-profit)
-            ...(quoteData?.entityType && { 
-              entity_type: quoteData.entityType === 'C-Corp' ? 'c-corp' :
-                          quoteData.entityType === 'S-Corp' ? 's-corp' :
-                          quoteData.entityType === 'Sole Proprietor' ? 'sole_prop' :
-                          quoteData.entityType === 'Partnership' ? 'partnership' :
-                          quoteData.entityType === 'Non-Profit' ? 'non-profit' :
-                          'sole_prop' // Default fallback
-            }),
-            
-            // Service tier - map to actual HubSpot values (WITH hyphens as shown in error)
-            ...(quoteData?.serviceTier && { 
-              service_tier: quoteData.serviceTier === 'Automated' ? 'Level 1 - Automated' :
-                           quoteData.serviceTier === 'Guided' ? 'Level 2 - Guided' :
-                           quoteData.serviceTier === 'Concierge' ? 'Level 3 - Concierge' :
-                           'Level 1 - Automated' // Default fallback
-            }),
-            
-            // Core numeric fields that exist in HubSpot
-            ...(quoteData?.numEntities && { number_of_entities: quoteData.numEntities.toString() }),
-            ...(quoteData?.statesFiled && { number_of_state_filings: quoteData.statesFiled.toString() }),
-            ...(quoteData?.numBusinessOwners && { number_of_owners_partners: quoteData.numBusinessOwners.toString() }),
-            ...(quoteData?.cleanupMonths && { initial_clean_up_months: quoteData.cleanupMonths.toString() }),
-            ...(quoteData?.priorYearsUnfiled && { prior_years_unfiled: quoteData.priorYearsUnfiled.toString() }),
-            
-            // Boolean fields that exist in HubSpot (converted to string format)
-            ...(quoteData?.include1040s !== undefined && { include_personal_1040s: quoteData.include1040s ? 'true' : 'false' }),
-            ...(quoteData?.internationalFiling !== undefined && { international_filing: quoteData.internationalFiling ? 'true' : 'false' }),
-            ...(quoteData?.businessLoans !== undefined && { business_loans: quoteData.businessLoans ? 'true' : 'false' }),
-            
-            // Other existing fields (lowercase values)
-            ...(quoteData?.accountingBasis && { 
-              accounting_basis: quoteData.accountingBasis === 'Cash' ? 'cash' :
-                               quoteData.accountingBasis === 'Accrual' ? 'accrual' :
-                               quoteData.accountingBasis.toLowerCase()
-            }),
-            ...(quoteData?.currentBookkeepingSoftware && { current_bookkeeping_software: quoteData.currentBookkeepingSoftware }),
-            ...(quoteData?.primaryBank && { primary_bank: quoteData.primaryBank }),
-          },
-        };
-
-        await this.makeRequest(`/crm/v3/objects/deals/${actualDealId}`, {
-          method: "PATCH",
-          body: JSON.stringify(dealUpdateBody),
+        return { id: existingCompany.id, isNewCompany: false };
+      } else {
+        // Company doesn't exist, create it
+        const newCompany = await this.createCompany({
+          name: companyName,
+          city: quoteData.city,
+          state: quoteData.state,
+          numberOfEmployees: quoteData.numberOfEmployees?.toString(),
+          annualRevenue: quoteData.annualRevenue?.toString(),
         });
 
-        console.log(
-          `Successfully updated deal ${actualDealId} amount to $${totalAmount} and name to "${dealName}"`,
-        );
+        return { id: newCompany.id, isNewCompany: true };
       }
-
-      console.log(`🟢 UPDATE QUOTE SUCCESS - Quote ID: ${quoteId}`);
-      console.log(`🟢 Summary:`);
-      console.log(`   ✅ Quote title updated`);
-      console.log(`   ✅ Line items managed (added/updated/removed as needed)`);
-      console.log(`   ✅ Deal amount and name updated`);
-      console.log(
-        `   ✅ Service configuration: Bookkeeping=${includesBookkeeping}, TaaS=${includesTaas}`,
-      );
-      return true;
-    } catch (error: any) {
-      console.error("Error updating quote in HubSpot:", error);
-
-      // If quote is not found or expired, return false to trigger new quote creation
-      if (
-        error.message?.includes("404") ||
-        error.message?.includes("not found")
-      ) {
-        console.log(
-          `Quote ${quoteId} not found or expired, will need to create new quote`,
-        );
-        return false;
-      }
-
-      return false;
+    } catch (error) {
+      console.error("Error updating or creating company from quote:", error);
+      throw error;
     }
   }
 
