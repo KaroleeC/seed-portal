@@ -334,7 +334,7 @@ export default function ServiceDashboard() {
                     <h2 className="text-3xl font-bold text-white mb-2">Today's Focus</h2>
                     <p className="text-white/70">Your personal task workspace for client service excellence</p>
                   </div>
-                  <Button className="bg-orange-500 hover:bg-orange-600 text-white shadow-lg">
+                  <Button className="bg-slate-700 hover:bg-slate-800 text-white shadow-lg">
                     <Plus className="mr-2 h-4 w-4" />
                     New Task
                   </Button>
@@ -566,7 +566,7 @@ export default function ServiceDashboard() {
                 <h2 className="text-4xl font-bold text-white mb-4">Sales Intelligence Command</h2>
                 <p className="text-white/70 text-lg mb-6">Prepare for incoming complexity before it arrives</p>
                 <div className="flex items-center justify-center gap-4">
-                  <Button className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg">
+                  <Button className="bg-slate-700 hover:bg-slate-800 text-white shadow-lg">
                     <TrendingUp className="mr-2 h-4 w-4" />
                     Live Pipeline
                   </Button>
@@ -581,7 +581,7 @@ export default function ServiceDashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Critical Preparation */}
                 <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-gradient-to-r from-red-500 to-red-600 text-white rounded-t-lg">
+                  <CardHeader className="bg-slate-800 text-white rounded-t-lg">
                     <CardTitle className="flex items-center gap-2">
                       <AlertTriangle className="h-6 w-6" />
                       Critical Prep Needed
@@ -629,7 +629,7 @@ export default function ServiceDashboard() {
 
                 {/* Standard Preparation */}
                 <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-t-lg">
+                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
                     <CardTitle className="flex items-center gap-2">
                       <Clock3 className="h-6 w-6" />
                       Standard Prep Queue
@@ -677,7 +677,7 @@ export default function ServiceDashboard() {
 
                 {/* Intelligence Insights */}
                 <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-t-lg">
+                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
                     <CardTitle className="flex items-center gap-2">
                       <Brain className="h-6 w-6" />
                       AI Insights
@@ -727,7 +727,7 @@ export default function ServiceDashboard() {
 
               {/* Preparation Timeline */}
               <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                <CardHeader className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-t-lg">
+                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-6 w-6" />
                     Service Preparation Timeline
@@ -772,7 +772,7 @@ export default function ServiceDashboard() {
                 <h2 className="text-4xl font-bold text-white mb-4">Client Communication Central</h2>
                 <p className="text-white/70 text-lg mb-6">Real-time client relationship management</p>
                 <div className="flex items-center justify-center gap-4">
-                  <Button className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg">
+                  <Button className="bg-slate-700 hover:bg-slate-800 text-white shadow-lg">
                     <MessageSquare className="mr-2 h-4 w-4" />
                     Active Conversations
                   </Button>
@@ -786,7 +786,7 @@ export default function ServiceDashboard() {
               {/* Communication Status Board */}
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-gradient-to-r from-red-500 to-red-600 text-white rounded-t-lg">
+                  <CardHeader className="bg-slate-800 text-white rounded-t-lg">
                     <CardTitle className="text-center">
                       <AlertTriangle className="h-6 w-6 mx-auto mb-2" />
                       Urgent
@@ -801,7 +801,7 @@ export default function ServiceDashboard() {
                 </Card>
 
                 <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-t-lg">
+                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
                     <CardTitle className="text-center">
                       <Clock className="h-6 w-6 mx-auto mb-2" />
                       Priority
@@ -816,7 +816,7 @@ export default function ServiceDashboard() {
                 </Card>
 
                 <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
+                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
                     <CardTitle className="text-center">
                       <CheckCircle className="h-6 w-6 mx-auto mb-2" />
                       Active
@@ -831,7 +831,7 @@ export default function ServiceDashboard() {
                 </Card>
 
                 <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
+                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
                     <CardTitle className="text-center">
                       <Users className="h-6 w-6 mx-auto mb-2" />
                       Total
@@ -850,7 +850,7 @@ export default function ServiceDashboard() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Active Conversations */}
                 <Card className="lg:col-span-2 bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-t-lg">
+                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
                     <CardTitle className="flex items-center gap-2">
                       <MessageSquare className="h-6 w-6" />
                       Live Conversation Feed
@@ -923,22 +923,22 @@ export default function ServiceDashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6 space-y-4">
-                    <Button className="w-full h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg">
+                    <Button className="w-full h-12 bg-slate-700 hover:bg-slate-800 text-white shadow-lg">
                       <MessageSquare className="mr-2 h-5 w-5" />
                       New Client Message
                     </Button>
                     
-                    <Button className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg">
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
                       <Video className="mr-2 h-5 w-5" />
                       Start Video Call
                     </Button>
                     
-                    <Button className="w-full h-12 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg">
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
                       <Calendar className="mr-2 h-5 w-5" />
                       Schedule Meeting
                     </Button>
                     
-                    <Button className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg">
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
                       <Mail className="mr-2 h-5 w-5" />
                       Send Email Update
                     </Button>
