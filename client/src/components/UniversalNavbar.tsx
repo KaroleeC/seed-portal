@@ -124,7 +124,7 @@ export function UniversalNavbar({
             <BackButton
               variant="ghost"
               size="sm"
-              className="seed-button-secondary text-white/90 hover:text-white hover:bg-white/12 backdrop-blur-md border border-white/20 transition-all duration-300"
+              className="seed-button-secondary text-white/90 hover:text-white hover:bg-white/12 backdrop-blur-md border border-white/20 transition-all duration-500 ease-out rounded-lg"
               fallbackPath={fallbackPath}
             />
           </div>
@@ -132,13 +132,13 @@ export function UniversalNavbar({
         
         {/* User Menu - Positioned Absolutely */}
         <div className="absolute top-6 right-8 flex items-center space-x-3">
-          <Button variant="ghost" size="sm" className="relative p-2 hover:bg-white/12 text-white/90 hover:text-white transition-all duration-300 backdrop-blur-sm border border-white/10 hover:border-white/20">
+          <Button variant="ghost" size="sm" className="relative p-2 hover:bg-white/12 text-white/90 hover:text-white transition-all duration-500 ease-out backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-lg">
             <Bell className="h-4 w-4" />
             <span className="absolute -top-1 -right-1 h-2 w-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full shadow-lg pulse"></span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="flex items-center gap-2 p-2 hover:bg-white/12 text-white/90 hover:text-white transition-all duration-300 backdrop-blur-sm border border-white/10 hover:border-white/20">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2 p-2 hover:bg-white/12 text-white/90 hover:text-white transition-all duration-500 ease-out backdrop-blur-sm border border-white/10 hover:border-white/20 rounded-lg">
                 {avatarContent}
               </Button>
             </DropdownMenuTrigger>

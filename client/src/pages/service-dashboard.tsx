@@ -311,11 +311,11 @@ export default function ServiceDashboard() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+              <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30 transition-all duration-500 ease-out rounded-lg">
                 <Bell className="mr-2 h-4 w-4" />
                 <span className="bg-red-500 text-xs px-1.5 py-0.5 rounded-full ml-1">{serviceMetrics.urgentItems}</span>
               </Button>
-              <Button variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/40 hover:text-white transition-all duration-300">
+              <Button variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/40 hover:text-white transition-all duration-500 ease-out rounded-lg">
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Sync
               </Button>
