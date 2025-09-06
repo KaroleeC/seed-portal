@@ -107,7 +107,7 @@
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
   --ring: var(--seed-orange-500);
-  --radius: var(--radius-smooth);
+  --radius: var(--radius-lg);
 }
 
 .dark {
@@ -135,6 +135,7 @@
 @layer base {
   * {
     @apply border-border;
+    border-radius: var(--radius-lg) !important;
   }
 
   body {
@@ -533,7 +534,12 @@
 }
 
 /* === UNIVERSAL DESIGN CONSISTENCY === */
-/* Force ALL interactive and container elements to have consistent rounded corners */
+/* NUCLEAR OPTION: Force ALL elements to have rounded corners */
+
+/* Apply to literally everything */
+* {
+  border-radius: var(--radius-lg) !important;
+}
 
 /* Buttons and interactive elements */
 button,
