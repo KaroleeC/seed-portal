@@ -3937,23 +3937,23 @@ function HomePage() {
                                   description: `Quote #${quoteId} has been updated. Syncing to HubSpot in background...`,
                                 });
                                 
-                                // Background HubSpot sync with queue system - only if quote has HubSpot IDs
+                                // Direct HubSpot update for immediate sync
                                 setTimeout(async () => {
                                   try {
-                                    await apiRequest("/api/hubspot/queue-sync", {
+                                    await apiRequest("/api/hubspot/update-quote", {
                                       method: "POST",
                                       body: JSON.stringify({ 
                                         quoteId: quoteId,
-                                        action: 'update'
+                                        currentFormData: formData
                                       })
                                     });
                                     
                                     toast({
-                                      title: "🔄 HubSpot Update Queued",
-                                      description: "Quote update sync has been queued. You'll be notified when complete.",
+                                      title: "🎯 HubSpot Updated",
+                                      description: "Quote successfully updated in HubSpot!",
                                     });
                                   } catch (error: any) {
-                                    console.error('Failed to queue HubSpot update:', error);
+                                    console.error('Failed to update HubSpot quote:', error);
                                     // Fallback to direct sync for immediate feedback - only if HubSpot IDs exist
                                     updateHubSpotMutation.mutate(quoteId, {
                                       onSuccess: () => {
