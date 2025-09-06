@@ -2119,47 +2119,40 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       
       console.log(`🔧 Combined setup fee for reference: $${setupFee}`);
 
-      // ✅ NEW: Use the unified syncQuoteToHubSpot method with all individual service fees
-      const serviceConfig = {
-        // Core totals
+      // 🔧 CRITICAL FIX: Use updateQuote method instead of syncQuoteToHubSpot
+      console.log(`📤 Calling HubSpot updateQuote for quote ID ${quote.hubspotQuoteId}`);
+      
+      const success = await hubSpotService.updateQuote(
+        quote.hubspotQuoteId,
+        quote.hubspotDealId || undefined,
+        companyName,
         monthlyFee,
         setupFee,
-        
-        // ⭐ CRITICAL: Add separated bookkeeping setup fee for correct HubSpot line item
-        bookkeepingSetupFee,
-        
-        // Individual service fees (all that we calculate)
-        bookkeepingMonthlyFee,
-        serviceTierFee,
-        cleanupProjectFee,
-        priorYearFilingsFee,
+        quote.userEmail,
+        quote.firstName,
+        quote.lastName,
+        currentServiceBookkeeping,
+        currentServiceTaas,
         taasMonthlyFee,
         taasPriorYearsFee,
+        bookkeepingMonthlyFee,
+        bookkeepingSetupFee,
+        currentFormData?.serviceTier || 'Standard',
+        currentFormData?.servicePayroll === true,
         payrollFee,
+        currentFormData?.serviceApLite === true,
         apFee,
+        currentFormData?.serviceArLite === true,
         arFee,
+        currentFormData?.serviceAgentOfService === true,
         agentOfServiceFee,
+        currentFormData?.serviceCfoAdvisory === true,
         cfoAdvisoryFee,
-        qboFee: parseFloat(currentFormData?.qboFee || "0"),
-        
-        // Service selections
-        serviceBookkeeping: currentServiceBookkeeping,
-        serviceTaas: currentServiceTaas,
-        servicePayroll: currentFormData?.servicePayroll === true,
-        serviceAP: currentFormData?.serviceAP === true,
-        serviceAR: currentFormData?.serviceAR === true,
-        
-        // Additional data for deal updates
-        entityType: currentFormData?.entityType,
-        serviceTier: currentFormData?.serviceTier,
-        industry: currentFormData?.industry
-      };
-
-      const success = await hubSpotService.syncQuoteToHubSpot(
-        quote.hubspotQuoteId,
-        companyName,
-        serviceConfig,
-        quote.hubspotDealId || undefined
+        cleanupProjectFee,
+        priorYearFilingsFee,
+        currentFormData?.serviceFpaBuild === true,
+        parseFloat(currentFormData?.fpaServiceFee || "0"),
+        currentFormData // Pass full form data for additional configuration
       );
 
       if (success) {
