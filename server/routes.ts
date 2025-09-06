@@ -981,6 +981,55 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       
       const quoteData = updateQuoteSchema.parse({ ...sanitizedBody, id });
       const quote = await storage.updateQuote(quoteData);
+      
+      // 🔧 CRITICAL FIX: Update HubSpot when quote is updated
+      console.log(`🔄 Quote ${id} updated in database, now syncing to HubSpot...`);
+      if (quote.hubspotQuoteId && hubSpotService) {
+        try {
+          console.log(`📤 Calling HubSpot updateQuote for quote ID ${quote.hubspotQuoteId}`);
+          await hubSpotService.updateQuote(
+            quote.hubspotQuoteId,
+            quote.hubspotDealId || undefined,
+            quote.companyName,
+            parseFloat(quote.monthlyFee),
+            parseFloat(quote.setupFee),
+            quote.userEmail,
+            quote.firstName,
+            quote.lastName,
+            quote.serviceBookkeeping,
+            quote.serviceTaas,
+            parseFloat(quote.taasMonthlyFee || "0"),
+            parseFloat(quote.taasPriorYearsFee || "0"),
+            parseFloat(quote.bookkeepingMonthlyFee || "0"),
+            parseFloat(quote.bookkeepingSetupFee || "0"),
+            quote.serviceTier,
+            quote.servicePayroll,
+            parseFloat(quote.payrollFee || "0"),
+            quote.serviceApLite,
+            parseFloat(quote.apFee || "0"),
+            quote.serviceArLite,
+            parseFloat(quote.arFee || "0"),
+            quote.serviceAgentOfService,
+            parseFloat(quote.agentOfServiceFee || "0"),
+            quote.serviceCfoAdvisory,
+            parseFloat(quote.cfoAdvisoryFee || "0"),
+            parseFloat(quote.cleanupProjectFee || "0"),
+            parseFloat(quote.priorYearFilingsFee || "0"),
+            quote.serviceFpaBuild,
+            parseFloat(quote.fpaServiceFee || "0"),
+            quote // Pass full quote data for additional service configuration
+          );
+          console.log(`✅ HubSpot quote ${quote.hubspotQuoteId} updated successfully`);
+        } catch (hubspotError) {
+          console.error(`❌ Failed to update HubSpot quote ${quote.hubspotQuoteId}:`, hubspotError);
+          // Don't fail the entire request - quote was updated in database
+        }
+      } else if (!quote.hubspotQuoteId) {
+        console.log(`⚠️ Quote ${id} has no HubSpot quote ID - skipping HubSpot update`);
+      } else {
+        console.log(`⚠️ HubSpot service not available - skipping HubSpot update`);
+      }
+      
       res.json(quote);
     } catch (error) {
       console.error("❌ Quote update error:", error);
