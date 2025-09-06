@@ -713,15 +713,23 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       const includesBookkeeping = req.body.includesBookkeeping !== false; // Default to true
       const includesTaas = req.body.includesTaas === true;
       
-      // Sanitize numeric fields - convert empty strings to null to prevent SQL errors
+      // Sanitize numeric fields - convert empty strings appropriately  
       const sanitizedBody = { ...req.body };
-      const numericFields = [
-        'monthlyFee', 'setupFee', 'taasMonthlyFee', 'taasPriorYearsFee', 'cleanupComplexity',
+      
+      // Fee fields that should be "0" when empty (schema expects strings)
+      const feeFields = ['monthlyFee', 'setupFee', 'taasMonthlyFee', 'taasPriorYearsFee', 'cleanupComplexity'];
+      feeFields.forEach(field => {
+        if (sanitizedBody[field] === '' || sanitizedBody[field] === undefined) {
+          sanitizedBody[field] = "0";
+        }
+      });
+      
+      // Integer fields that should be null when empty
+      const integerFields = [
         'cleanupMonths', 'numEntities', 'customNumEntities', 'statesFiled', 'customStatesFiled',
         'numBusinessOwners', 'customNumBusinessOwners', 'priorYearsUnfiled'
       ];
-      
-      numericFields.forEach(field => {
+      integerFields.forEach(field => {
         if (sanitizedBody[field] === '' || sanitizedBody[field] === undefined) {
           sanitizedBody[field] = null;
         }
@@ -949,15 +957,23 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
         return;
       }
       
-      // Sanitize numeric fields - convert empty strings to null to prevent SQL errors
+      // Sanitize numeric fields - convert empty strings appropriately
       const sanitizedBody = { ...req.body };
-      const numericFields = [
-        'monthlyFee', 'setupFee', 'taasMonthlyFee', 'taasPriorYearsFee', 'cleanupComplexity',
+      
+      // Fee fields that should be "0" when empty (schema expects strings)
+      const feeFields = ['monthlyFee', 'setupFee', 'taasMonthlyFee', 'taasPriorYearsFee', 'cleanupComplexity'];
+      feeFields.forEach(field => {
+        if (sanitizedBody[field] === '' || sanitizedBody[field] === undefined) {
+          sanitizedBody[field] = "0";
+        }
+      });
+      
+      // Integer fields that should be null when empty
+      const integerFields = [
         'cleanupMonths', 'numEntities', 'customNumEntities', 'statesFiled', 'customStatesFiled',
         'numBusinessOwners', 'customNumBusinessOwners', 'priorYearsUnfiled'
       ];
-      
-      numericFields.forEach(field => {
+      integerFields.forEach(field => {
         if (sanitizedBody[field] === '' || sanitizedBody[field] === undefined) {
           sanitizedBody[field] = null;
         }
