@@ -294,7 +294,7 @@ export default function AdminPricingPage() {
   };
 
   return (
-    <PermissionGuard permission={PERMISSIONS.VIEW_ADMIN_DASHBOARD} fallback={<div>Access denied</div>}>
+    <PermissionGuard permission={PERMISSIONS.MANAGE_PRICING} fallback={<div>Access denied</div>}>
       <div className="min-h-screen bg-gray-50">
         <UniversalNavbar />
         

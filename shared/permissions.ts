@@ -33,6 +33,7 @@ export const PERMISSIONS = {
   MANAGE_USERS: 'manage_users',
   MANAGE_INTEGRATIONS: 'manage_integrations',
   VIEW_SYSTEM_HEALTH: 'view_system_health',
+  MANAGE_PRICING: 'manage_pricing',
   
   // Knowledge base
   VIEW_KNOWLEDGE_BASE: 'view_knowledge_base',
@@ -70,6 +71,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.MANAGE_USERS,
     PERMISSIONS.MANAGE_INTEGRATIONS,
     PERMISSIONS.VIEW_SYSTEM_HEALTH,
+    PERMISSIONS.MANAGE_PRICING,
     PERMISSIONS.VIEW_KNOWLEDGE_BASE,
     PERMISSIONS.EDIT_KNOWLEDGE_BASE,
     PERMISSIONS.MANAGE_KB_CONTENT,
