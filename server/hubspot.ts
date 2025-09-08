@@ -3180,7 +3180,6 @@ Generated: ${new Date().toLocaleDateString()}`;
         (quoteData?.priorYearFilingsFee || 0) > 0,
         quoteData?.includesFpaBuild || false,
       );
-      console.log("📋 Payment terms updated:", paymentTerms);
 
       // 5. Update quote properties
       const updateBody = {
@@ -3202,21 +3201,11 @@ Generated: ${new Date().toLocaleDateString()}`;
       // 6. Update associated deal if dealId is provided
       if (dealId && updateSuccess) {
         try {
-          console.log(`🔄 Updating associated deal ${dealId} with new quote values`);
-          
           // Calculate deal amount: annual value
           const dealAmount = monthlyFee * 12 + setupFee;
           
           // Create deal name that matches quote title format
           const dealName = `${companyName} - ${updatedTitle}`;
-          
-          console.log(`📊 Deal update values:`, {
-            dealId,
-            dealName,
-            dealAmount,
-            monthlyFee,
-            setupFee
-          });
           
           // Update deal using existing method
           await this.updateDeal(
@@ -3235,8 +3224,6 @@ Generated: ${new Date().toLocaleDateString()}`;
           console.warn(`⚠️ Failed to update deal ${dealId}, but quote update succeeded:`, dealError);
           // Don't fail the entire operation - quote update succeeded
         }
-      } else if (!dealId) {
-        console.log(`ℹ️ No dealId provided, skipping deal update`);
       }
 
       console.log(`🎉 Successfully updated quote ${quoteId} using smart line item updates`);
