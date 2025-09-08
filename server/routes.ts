@@ -361,6 +361,84 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
     res.json(result);
   });
 
+  // PRODUCTION DEBUG ENDPOINT - Critical for debugging auth issues
+  app.get("/api/production-debug", async (req, res) => {
+    console.log('[ProductionDebug] 🔍 COMPREHENSIVE PRODUCTION DEBUG REQUEST');
+    
+    // Production detection logic
+    const isProduction = process.env.NODE_ENV === 'production' || 
+                        process.env.REPLIT_DEPLOYMENT === '1' ||
+                        (process.env.REPL_ID && !process.env.REPL_SLUG?.includes('workspace'));
+    
+    // Test database connectivity
+    let dbHealth = 'UNKNOWN';
+    try {
+      const testUser = await storage.getUserByEmail('test@test.com'); // Safe test that won't modify data
+      dbHealth = 'CONNECTED';
+    } catch (error) {
+      dbHealth = `ERROR: ${error.message}`;
+    }
+    
+    // Test Redis connectivity if available
+    let redisHealth = 'NOT CONFIGURED';
+    if (process.env.REDIS_URL) {
+      try {
+        const Redis = require('ioredis');
+        const testRedis = new Redis(process.env.REDIS_URL);
+        await testRedis.ping();
+        redisHealth = 'CONNECTED';
+        testRedis.disconnect();
+      } catch (error) {
+        redisHealth = `ERROR: ${error.message}`;
+      }
+    }
+    
+    const debugInfo = {
+      timestamp: new Date().toISOString(),
+      criticalEnvironment: {
+        nodeEnv: process.env.NODE_ENV || 'NOT_SET',
+        replitDeployment: process.env.REPLIT_DEPLOYMENT || 'NOT_SET',
+        replId: process.env.REPL_ID ? 'EXISTS' : 'NOT_SET', 
+        replSlug: process.env.REPL_SLUG || 'NOT_SET',
+        isProduction,
+        port: process.env.PORT || 'NOT_SET'
+      },
+      authentication: {
+        sessionSecret: !!process.env.SESSION_SECRET,
+        sessionSecretLength: process.env.SESSION_SECRET ? process.env.SESSION_SECRET.length : 0,
+        hasCurrentSession: !!req.session,
+        sessionId: req.sessionID || 'NO_SESSION',
+        isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : false,
+        currentUser: req.user?.email || 'NOT_AUTHENTICATED',
+        sessionKeys: req.session ? Object.keys(req.session) : [],
+        passportInSession: !!(req.session as any)?.passport
+      },
+      storage: {
+        databaseUrl: !!process.env.DATABASE_URL,
+        databaseHealth: dbHealth,
+        redisUrl: !!process.env.REDIS_URL,
+        redisHealth,
+        sessionStore: req.sessionStore?.constructor?.name || 'UNKNOWN'
+      },
+      cookieConfig: {
+        secure: isProduction,
+        sameSite: 'lax',
+        httpOnly: true,
+        maxAge: '24h'
+      },
+      requestContext: {
+        origin: req.headers.origin || 'NO_ORIGIN',
+        host: req.headers.host,
+        userAgent: req.headers['user-agent']?.substring(0, 50) + '...',
+        cookies: !!req.headers.cookie,
+        cookieCount: req.headers.cookie ? req.headers.cookie.split(';').length : 0
+      }
+    };
+    
+    console.log('[ProductionDebug] 🔍 Complete debug info:', JSON.stringify(debugInfo, null, 2));
+    res.json(debugInfo);
+  });
+
   // Redis session status endpoint (using shared Redis connections)
   app.get("/api/admin/redis-session-status", async (req, res) => {
     console.log('[RedisStatus] Checking Redis session status...');
