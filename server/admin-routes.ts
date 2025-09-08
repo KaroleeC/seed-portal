@@ -520,6 +520,275 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
     }
   });
 
+  // ===== PRICING CONFIGURATION ENDPOINTS =====
+  
+  // Import pricing services
+  const { pricingConfigService } = await import('./pricing-config');
+  const { 
+    insertPricingBaseSchema, insertPricingIndustryMultiplierSchema, 
+    insertPricingRevenueMultiplierSchema, insertPricingTransactionSurchargeSchema,
+    insertPricingServiceSettingSchema, insertPricingTierSchema 
+  } = await import('@shared/schema');
+
+  // Get all pricing configurations
+  app.get('/api/admin/pricing/config', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const config = await pricingConfigService.loadPricingConfig();
+      res.json(config);
+    } catch (error: any) {
+      console.error('Error loading pricing config:', error);
+      res.status(500).json({ message: 'Failed to load pricing configuration: ' + error.message });
+    }
+  });
+
+  // Get base pricing for all services
+  app.get('/api/admin/pricing/base', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const basePricing = await storage.getAllPricingBase();
+      res.json(basePricing);
+    } catch (error: any) {
+      console.error('Error fetching base pricing:', error);
+      res.status(500).json({ message: 'Failed to fetch base pricing: ' + error.message });
+    }
+  });
+
+  // Update base pricing
+  app.put('/api/admin/pricing/base/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = insertPricingBaseSchema.partial().parse(req.body);
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User ID required' });
+      }
+
+      const updated = await storage.updatePricingBase(parseInt(id), updateData, userId);
+      
+      // Clear cache after update
+      await pricingConfigService.clearCache();
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating base pricing:', error);
+      res.status(500).json({ message: 'Failed to update base pricing: ' + error.message });
+    }
+  });
+
+  // Get industry multipliers
+  app.get('/api/admin/pricing/industry-multipliers', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const multipliers = await storage.getAllIndustryMultipliers();
+      res.json(multipliers);
+    } catch (error: any) {
+      console.error('Error fetching industry multipliers:', error);
+      res.status(500).json({ message: 'Failed to fetch industry multipliers: ' + error.message });
+    }
+  });
+
+  // Update industry multiplier
+  app.put('/api/admin/pricing/industry-multipliers/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = insertPricingIndustryMultiplierSchema.partial().parse(req.body);
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User ID required' });
+      }
+
+      const updated = await storage.updateIndustryMultiplier(parseInt(id), updateData, userId);
+      
+      // Clear cache after update
+      await pricingConfigService.clearCache();
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating industry multiplier:', error);
+      res.status(500).json({ message: 'Failed to update industry multiplier: ' + error.message });
+    }
+  });
+
+  // Get revenue multipliers
+  app.get('/api/admin/pricing/revenue-multipliers', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const multipliers = await storage.getAllRevenueMultipliers();
+      res.json(multipliers);
+    } catch (error: any) {
+      console.error('Error fetching revenue multipliers:', error);
+      res.status(500).json({ message: 'Failed to fetch revenue multipliers: ' + error.message });
+    }
+  });
+
+  // Update revenue multiplier
+  app.put('/api/admin/pricing/revenue-multipliers/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = insertPricingRevenueMultiplierSchema.partial().parse(req.body);
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User ID required' });
+      }
+
+      const updated = await storage.updateRevenueMultiplier(parseInt(id), updateData, userId);
+      
+      // Clear cache after update
+      await pricingConfigService.clearCache();
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating revenue multiplier:', error);
+      res.status(500).json({ message: 'Failed to update revenue multiplier: ' + error.message });
+    }
+  });
+
+  // Get transaction surcharges
+  app.get('/api/admin/pricing/transaction-surcharges', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const surcharges = await storage.getAllTransactionSurcharges();
+      res.json(surcharges);
+    } catch (error: any) {
+      console.error('Error fetching transaction surcharges:', error);
+      res.status(500).json({ message: 'Failed to fetch transaction surcharges: ' + error.message });
+    }
+  });
+
+  // Update transaction surcharge
+  app.put('/api/admin/pricing/transaction-surcharges/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = insertPricingTransactionSurchargeSchema.partial().parse(req.body);
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User ID required' });
+      }
+
+      const updated = await storage.updateTransactionSurcharge(parseInt(id), updateData, userId);
+      
+      // Clear cache after update
+      await pricingConfigService.clearCache();
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating transaction surcharge:', error);
+      res.status(500).json({ message: 'Failed to update transaction surcharge: ' + error.message });
+    }
+  });
+
+  // Get service settings
+  app.get('/api/admin/pricing/service-settings', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { service } = req.query;
+      let settings;
+      
+      if (service && typeof service === 'string') {
+        settings = await storage.getServiceSettingsByService(service);
+      } else {
+        settings = await storage.getAllServiceSettings();
+      }
+      
+      res.json(settings);
+    } catch (error: any) {
+      console.error('Error fetching service settings:', error);
+      res.status(500).json({ message: 'Failed to fetch service settings: ' + error.message });
+    }
+  });
+
+  // Update service setting
+  app.put('/api/admin/pricing/service-settings/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = insertPricingServiceSettingSchema.partial().parse(req.body);
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User ID required' });
+      }
+
+      const updated = await storage.updateServiceSetting(parseInt(id), updateData, userId);
+      
+      // Clear cache after update
+      await pricingConfigService.clearCache();
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating service setting:', error);
+      res.status(500).json({ message: 'Failed to update service setting: ' + error.message });
+    }
+  });
+
+  // Get pricing tiers
+  app.get('/api/admin/pricing/tiers', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { service } = req.query;
+      let tiers;
+      
+      if (service && typeof service === 'string') {
+        tiers = await storage.getPricingTiersByService(service);
+      } else {
+        tiers = await storage.getAllPricingTiers();
+      }
+      
+      res.json(tiers);
+    } catch (error: any) {
+      console.error('Error fetching pricing tiers:', error);
+      res.status(500).json({ message: 'Failed to fetch pricing tiers: ' + error.message });
+    }
+  });
+
+  // Update pricing tier
+  app.put('/api/admin/pricing/tiers/:id', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updateData = insertPricingTierSchema.partial().parse(req.body);
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User ID required' });
+      }
+
+      const updated = await storage.updatePricingTier(parseInt(id), updateData, userId);
+      
+      // Clear cache after update
+      await pricingConfigService.clearCache();
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating pricing tier:', error);
+      res.status(500).json({ message: 'Failed to update pricing tier: ' + error.message });
+    }
+  });
+
+  // Get pricing history
+  app.get('/api/admin/pricing/history', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { table, recordId } = req.query;
+      
+      const history = await storage.getPricingHistory(
+        table as string | undefined,
+        recordId ? parseInt(recordId as string) : undefined
+      );
+      
+      res.json(history);
+    } catch (error: any) {
+      console.error('Error fetching pricing history:', error);
+      res.status(500).json({ message: 'Failed to fetch pricing history: ' + error.message });
+    }
+  });
+
+  // Clear pricing cache (useful for testing or forced refresh)
+  app.post('/api/admin/pricing/clear-cache', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      await pricingConfigService.clearCache();
+      res.json({ message: 'Pricing cache cleared successfully' });
+    } catch (error: any) {
+      console.error('Error clearing pricing cache:', error);
+      res.status(500).json({ message: 'Failed to clear pricing cache: ' + error.message });
+    }
+  });
+
 
 }
 
