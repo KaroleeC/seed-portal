@@ -451,7 +451,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
     let redisHealth = 'NOT CONFIGURED';
     if (process.env.REDIS_URL) {
       try {
-        const Redis = require('ioredis');
+        // Use import instead of require for bundled production
+        const Redis = (await import('ioredis')).default;
         const testRedis = new Redis(process.env.REDIS_URL);
         await testRedis.ping();
         redisHealth = 'CONNECTED';

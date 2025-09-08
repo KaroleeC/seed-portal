@@ -1,7 +1,28 @@
 import session from "express-session";
-import Redis from "ioredis";
 import RedisStore from "connect-redis";
 import MemoryStore from "memorystore";
+
+// Dynamic Redis import for production compatibility
+async function createRedisClient(redisUrl: string) {
+  try {
+    // Use dynamic import to handle bundling issues
+    const { default: Redis } = await import('ioredis');
+    return new Redis(redisUrl, {
+      keyPrefix: '',
+      retryDelayOnFailover: 100,
+      maxRetriesPerRequest: 3,
+      lazyConnect: false,
+      connectTimeout: 15000,
+      commandTimeout: 5000,
+      keepAlive: true,
+      family: 4,
+      enableReadyCheck: true,
+    });
+  } catch (error) {
+    console.error('[SessionConfig] ❌ Failed to import or create Redis client:', error);
+    throw error;
+  }
+}
 
 // Enhanced Redis session configuration with better error handling
 export async function createSessionConfig(): Promise<session.SessionOptions & { storeType: string }> {
@@ -15,17 +36,7 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
     try {
       console.log('[SessionConfig] Attempting Redis connection with REDIS_URL:', process.env.REDIS_URL ? 'SET' : 'NOT SET');
       
-      const redisClient = new Redis(process.env.REDIS_URL, {
-        keyPrefix: '',
-        retryDelayOnFailover: 100,
-        maxRetriesPerRequest: 3,
-        lazyConnect: false, // Connect immediately for better error detection
-        connectTimeout: 15000,
-        commandTimeout: 5000,
-        keepAlive: true,
-        family: 4,
-        enableReadyCheck: true,
-      });
+      const redisClient = await createRedisClient(process.env.REDIS_URL);
         
           // Wait for Redis to be fully ready
           console.log('[SessionConfig] Waiting for Redis to be ready...');
