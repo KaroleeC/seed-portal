@@ -2754,6 +2754,124 @@ Generated: ${new Date().toLocaleDateString()}`;
     }
   }
 
+  // Helper method to fetch existing line items with their product IDs and prices
+  private async fetchExistingLineItems(quoteId: string): Promise<Array<{
+    id: string;
+    productId: string;
+    price: number;
+    quantity: number;
+    name: string;
+  }>> {
+    try {
+      console.log(`🔍 Fetching existing line items for quote ${quoteId}`);
+      
+      // Get line item associations
+      const associations = await this.makeRequest(
+        `/crm/v4/objects/quotes/${quoteId}/associations/line_items`,
+        { method: "GET" }
+      );
+      
+      if (!associations?.results?.length) {
+        console.log(`ℹ️ No existing line items found for quote ${quoteId}`);
+        return [];
+      }
+      
+      // Fetch detailed information for each line item
+      const lineItems = await Promise.all(
+        associations.results.map(async (association: any) => {
+          try {
+            const lineItem = await this.makeRequest(
+              `/crm/v3/objects/line_items/${association.toObjectId}?properties=name,price,quantity,hs_product_id,hs_sku`
+            );
+            
+            return {
+              id: lineItem.id,
+              productId: lineItem.properties?.hs_product_id || '',
+              price: parseFloat(lineItem.properties?.price || '0'),
+              quantity: parseFloat(lineItem.properties?.quantity || '1'),
+              name: lineItem.properties?.name || 'Unknown Service'
+            };
+          } catch (error) {
+            console.error(`⚠️ Failed to fetch line item ${association.toObjectId}:`, error);
+            return null;
+          }
+        })
+      );
+      
+      const validLineItems = lineItems.filter(item => item !== null);
+      console.log(`✅ Found ${validLineItems.length} existing line items`);
+      
+      return validLineItems;
+    } catch (error) {
+      console.error('❌ Error fetching existing line items:', error);
+      return [];
+    }
+  }
+
+  // Helper method to analyze what line item changes are needed
+  private analyzeLineItemChanges(
+    existingItems: Array<{id: string; productId: string; price: number; quantity: number; name: string}>,
+    requiredServices: Array<{price: number; productId: string}>
+  ): {
+    toUpdate: Array<{id: string; productId: string; oldPrice: number; newPrice: number}>;
+    toDelete: Array<{id: string; productId: string; name: string}>;
+    toAdd: Array<{price: number; productId: string}>;
+  } {
+    const toUpdate: Array<{id: string; productId: string; oldPrice: number; newPrice: number}> = [];
+    const toDelete: Array<{id: string; productId: string; name: string}> = [];
+    const toAdd: Array<{price: number; productId: string}> = [];
+    
+    console.log('🔍 Analyzing line item changes...');
+    console.log(`   Existing items: ${existingItems.length}`);
+    console.log(`   Required services: ${requiredServices.length}`);
+    
+    // Create maps for efficient lookups
+    const existingByProductId = new Map(
+      existingItems.map(item => [item.productId, item])
+    );
+    const requiredByProductId = new Map(
+      requiredServices.map(service => [service.productId, service])
+    );
+    
+    // Find items to update or delete
+    for (const existingItem of existingItems) {
+      const requiredService = requiredByProductId.get(existingItem.productId);
+      
+      if (!requiredService) {
+        // Service no longer needed - mark for deletion
+        toDelete.push({
+          id: existingItem.id,
+          productId: existingItem.productId,
+          name: existingItem.name
+        });
+        console.log(`   🗑️ Will delete: ${existingItem.name} (${existingItem.productId})`);
+      } else if (Math.abs(existingItem.price - requiredService.price) > 0.01) {
+        // Price changed - mark for update
+        toUpdate.push({
+          id: existingItem.id,
+          productId: existingItem.productId,
+          oldPrice: existingItem.price,
+          newPrice: requiredService.price
+        });
+        console.log(`   💰 Will update: ${existingItem.name} from $${existingItem.price} to $${requiredService.price}`);
+      } else {
+        console.log(`   ✅ No change needed: ${existingItem.name} ($${existingItem.price})`);
+      }
+    }
+    
+    // Find new services to add
+    for (const requiredService of requiredServices) {
+      if (!existingByProductId.has(requiredService.productId)) {
+        toAdd.push(requiredService);
+        console.log(`   ➕ Will add: Product ${requiredService.productId} at $${requiredService.price}`);
+      }
+    }
+    
+    console.log(`📊 Changes summary: ${toUpdate.length} updates, ${toDelete.length} deletions, ${toAdd.length} additions`);
+    
+    return { toUpdate, toDelete, toAdd };
+  }
+
   async updateQuote(
     quoteId: string,
     companyName: string,
