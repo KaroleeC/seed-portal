@@ -19,6 +19,10 @@ redisDebug('Server initialization starting...');
 
 const app = express();
 
+// CRITICAL: Trust proxy for production deployments
+// This ensures Express correctly interprets X-Forwarded headers
+app.set('trust proxy', true);
+
 // Initialize Sentry before other middleware
 const sentryInitialized = initializeSentry(app);
 
@@ -92,64 +96,13 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Enhanced debugging for CORS
-  if (req.originalUrl.startsWith('/api/')) {
-    console.log('🌐 [CORS Debug] Processing request:', {
-      url: req.originalUrl,
-      method: req.method,
-      origin: origin || 'NO_ORIGIN',
-      host: req.headers.host,
-      userAgent: req.headers['user-agent']?.substring(0, 30),
-      referer: req.headers.referer,
-      secFetchSite: req.headers['sec-fetch-site'],
-      secFetchMode: req.headers['sec-fetch-mode']
-    });
-  }
-  
-  // Robust production detection using multiple signals
-  const isProduction = process.env.NODE_ENV === 'production' || 
-                      process.env.REPLIT_DEPLOYMENT === '1' ||
-                      (process.env.REPL_ID && !process.env.REPL_SLUG?.includes('workspace'));
-  
-  // Enhanced production CORS for Replit deployments
-  if (isProduction) {
-    // More permissive CORS for Replit deployments and production domains
-    const allowedOrigins = [
-      'https://os.seedfinancial.io',
-      'https://osseedfinancial.io',
-      req.headers.host ? `https://${req.headers.host}` : undefined,
-      // Add potential Replit deployment domains
-      process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',') : []
-    ].flat().filter(Boolean);
-    
-    // Check if origin is from a trusted domain
-    const isTrustedReplit = origin && (
-      origin.includes('.repl.co') || 
-      origin.includes('.replit.dev') || 
-      origin.includes('seedfinancial.io') ||
-      origin.includes(req.headers.host || '')
-    );
-    
-    if (origin && (allowedOrigins.includes(origin) || isTrustedReplit)) {
-      res.header('Access-Control-Allow-Origin', origin);
-      console.log(`[CORS] ✅ Allowed origin: ${origin}`);
-    } else if (!origin) {
-      // Same-origin requests (no origin header) - common for Replit deployments
-      res.header('Access-Control-Allow-Origin', '*');
-      console.log(`[CORS] ✅ Same-origin allowed (no origin header)`);
-    } else {
-      // For production, be more permissive with HTTPS origins to avoid auth issues
-      if (origin.startsWith('https://')) {
-        res.header('Access-Control-Allow-Origin', origin);
-        console.log(`[CORS] ✅ Allowed HTTPS origin for auth: ${origin}`);
-      } else {
-        res.header('Access-Control-Allow-Origin', '*');
-        console.warn(`[CORS] ⚠️ Non-HTTPS origin, using wildcard: ${origin}`);
-      }
-    }
+  // FIXED: Simplified CORS for production authentication
+  // Always return the requesting origin if present, otherwise use wildcard
+  // This ensures cookies work properly across domains
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
   } else {
-    // Development: allow all origins
-    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Origin', '*');
   }
   
   res.header('Access-Control-Allow-Credentials', 'true');

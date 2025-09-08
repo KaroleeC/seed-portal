@@ -247,22 +247,27 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
     isProduction
   });
 
-  // Production-aware cookie configuration
+  // FIXED: Production cookie configuration for cross-domain auth
   const cookieConfig = {
     secure: isProduction, // Use secure cookies in production (HTTPS)
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    domain: undefined, // Let browser determine domain automatically - important for Replit
+    domain: undefined, // Let browser determine domain automatically
     path: '/', // Explicitly set path to root
-    sameSite: 'lax' as const, // Most browser-compatible setting for auth
+    sameSite: isProduction ? 'none' as const : 'lax' as const, // 'none' for cross-domain in production
   };
 
   console.log('[SessionConfig] 🍪 PRODUCTION-AWARE COOKIE CONFIG');
   
-  // Use 'lax' sameSite for ALL environments - most browser compatible
-  // Set secure based on production environment for proper HTTPS handling
-  cookieConfig.sameSite = 'lax';
-  cookieConfig.secure = isProduction;
+  // CRITICAL FIX: Use 'none' for production to allow cross-domain cookies
+  // This is required when the API and frontend are on different domains
+  if (isProduction) {
+    cookieConfig.sameSite = 'none'; // Required for cross-domain cookies
+    cookieConfig.secure = true; // Required when sameSite is 'none'
+  } else {
+    cookieConfig.sameSite = 'lax';
+    cookieConfig.secure = false;
+  }
   
   console.log('[SessionConfig] Cookie configuration:', {
     secure: cookieConfig.secure,
