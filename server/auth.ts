@@ -74,13 +74,36 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
     new LocalStrategy(
       { usernameField: 'email' }, // Use email as username field
       async (email, password, done) => {
+        console.log('[Passport LocalStrategy] 🔐 ===== AUTHENTICATION ATTEMPT =====');
+        console.log('[Passport LocalStrategy] 🔐 Credentials:', {
+          email: email,
+          hasPassword: !!password,
+          passwordLength: password?.length,
+          environment: {
+            nodeEnv: process.env.NODE_ENV,
+            replitDeployment: process.env.REPLIT_DEPLOYMENT,
+            isProduction: process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1'
+          }
+        });
+        
         try {
+          console.log('[Passport LocalStrategy] 🔍 Looking up user by email...');
           let user = await storage.getUserByEmail(email);
+          console.log('[Passport LocalStrategy] 🔍 User lookup result:', {
+            userFound: !!user,
+            userId: user?.id,
+            userEmail: user?.email,
+            userRole: user?.role,
+            hasPassword: !!user?.password,
+            passwordType: user?.password ? (user.password.startsWith('$2') ? 'bcrypt' : 'scrypt') : 'none'
+          });
           
           // If user doesn't exist, create them automatically for verified @seedfinancial.io emails
           if (!user) {
-                  // Validate email domain
+            console.log('[Passport LocalStrategy] ❌ User not found, checking domain...');
+            // Validate email domain
             if (!email.endsWith('@seedfinancial.io')) {
+              console.log('[Passport LocalStrategy] ❌ Invalid domain - not @seedfinancial.io');
               return done(null, false);
             }
 
@@ -160,10 +183,33 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
           }
           
           // Check password
-          if (!user.password || !(await comparePasswords(password, user.password))) {
+          console.log('[Passport LocalStrategy] 🔐 Checking password...');
+          if (!user.password) {
+            console.log('[Passport LocalStrategy] ❌ User has no password stored!');
             return done(null, false);
           }
           
+          console.log('[Passport LocalStrategy] 🔐 Comparing passwords...');
+          let passwordMatches = false;
+          try {
+            passwordMatches = await comparePasswords(password, user.password);
+            console.log('[Passport LocalStrategy] 🔐 Password comparison result:', {
+              matches: passwordMatches,
+              storedPasswordType: user.password.startsWith('$2') ? 'bcrypt' : 'scrypt',
+              suppliedPasswordLength: password.length
+            });
+          } catch (compareError) {
+            console.error('[Passport LocalStrategy] ❌ Password comparison error:', compareError);
+            return done(null, false);
+          }
+          
+          if (!passwordMatches) {
+            console.log('[Passport LocalStrategy] ❌ Password does not match!');
+            return done(null, false);
+          }
+          
+          console.log('[Passport LocalStrategy] ✅ Authentication successful for:', user.email);
+          console.log('[Passport LocalStrategy] 🔐 ===== AUTHENTICATION COMPLETE =====');
           return done(null, user);
         } catch (error) {
           console.error('Authentication error:', error);
