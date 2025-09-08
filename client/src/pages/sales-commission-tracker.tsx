@@ -155,57 +155,53 @@ export function SalesCommissionTracker() {
   });
 
   // Fetch real commission data from API
-  const { data: liveCommissions = [], isLoading: commissionsLoading } = useQuery({
+  const { data: liveCommissions = [], isLoading: commissionsLoading, error: commissionsError } = useQuery({
     queryKey: ['/api/commissions'],
-    queryFn: async () => {
-      console.log('🔄 Fetching commissions for user:', user?.email);
-      const response = await fetch('/api/commissions?v=' + Date.now(), {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      if (!response.ok) {
-        console.error('Commissions API error:', response.status, response.statusText);
-        throw new Error('Failed to fetch commissions');
+    enabled: !!user,
+    retry: (failureCount, error: any) => {
+      // Don't retry on authentication errors
+      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
+        return false;
       }
-      const data = await response.json();
-      console.log('📥 Raw commissions API response:', data);
-      return data;
+      return failureCount < 2;
+    },
+    staleTime: 30000, // Cache for 30 seconds
+    onError: (error: any) => {
+      console.error('Commission data fetch error:', error);
+      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
+        toast({
+          title: "Authentication Error",
+          description: "Please refresh the page and try logging in again.",
+          variant: "destructive",
+        });
+      }
     }
   });
 
-  const { data: liveDeals = [], isLoading: dealsLoading } = useQuery({
+  const { data: liveDeals = [], isLoading: dealsLoading, error: dealsError } = useQuery({
     queryKey: ['/api/deals'],
-    queryFn: async () => {
-      const response = await fetch('/api/deals');
-      if (!response.ok) throw new Error('Failed to fetch deals');
-      return response.json();
-    }
+    enabled: !!user,
+    retry: (failureCount, error: any) => {
+      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    staleTime: 30000
   });
 
   // Fetch pipeline projections (same data as admin commission tracker)
-  const { data: pipelineDeals = [], isLoading: pipelineLoading } = useQuery({
+  const { data: pipelineDeals = [], isLoading: pipelineLoading, error: pipelineError } = useQuery({
     queryKey: ['/api/pipeline-projections'],
-    queryFn: async () => {
-      const response = await fetch('/api/pipeline-projections?v=' + Date.now(), {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      if (!response.ok) throw new Error('Failed to fetch pipeline projections');
-      return await response.json();
-    },
     enabled: !!user,
-    refetchInterval: false, // Disabled aggressive auto-refetch to prevent infinite re-renders
-    staleTime: 30000 // Cache for 30 seconds
+    retry: (failureCount, error: any) => {
+      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    refetchInterval: false,
+    staleTime: 30000
   });
 
   // Dialog states
@@ -430,6 +426,52 @@ export function SalesCommissionTracker() {
       setSubmittingAdjustment(false);
     }
   }, [selectedCommission, adjustmentAmount, adjustmentReason, toast, queryClient]); // Dependencies for async function
+
+  // Check for authentication errors
+  const hasAuthError = commissionsError?.message?.includes('401') || 
+                      commissionsError?.message?.includes('Authentication') ||
+                      dealsError?.message?.includes('401') ||
+                      dealsError?.message?.includes('Authentication') ||
+                      pipelineError?.message?.includes('401') ||
+                      pipelineError?.message?.includes('Authentication');
+
+  // Show authentication error fallback
+  if (hasAuthError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
+        <UniversalNavbar />
+        
+        <div className="container mx-auto px-4 py-8">
+          <Card className="bg-white/95 backdrop-blur border-0 shadow-xl max-w-2xl mx-auto">
+            <CardContent className="p-8 text-center">
+              <div className="flex items-center justify-center mb-4">
+                <AlertCircle className="h-12 w-12 text-red-500" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Authentication Required</h2>
+              <p className="text-gray-600 mb-6">
+                There was an issue loading your commission data. This usually happens when your session has expired.
+              </p>
+              <div className="space-y-3">
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  className="w-full bg-[#253e31] hover:bg-[#1a2e24] text-white"
+                >
+                  Refresh Page
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.href = '/auth'} 
+                  className="w-full"
+                >
+                  Go to Login
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
