@@ -3056,27 +3056,95 @@ Generated: ${new Date().toLocaleDateString()}`;
 
       console.log(`✅ Quote ${quoteId} is valid and active`);
       
-      // ✅ PROPER UPDATE APPROACH: Use the same logic as createQuote
-      // Delete all existing line items and create fresh ones with new configuration
-      console.log(`🗑️ Deleting existing line items for fresh update`);
-      try {
-        const existingLineItems = await this.makeRequest(
-          `/crm/v4/objects/quotes/${quoteId}/associations/line_items`,
-          { method: "GET" }
-        );
-        
-        if (existingLineItems?.results?.length > 0) {
-          for (const association of existingLineItems.results) {
-            await this.makeRequest(
-              `/crm/v3/objects/line_items/${association.toObjectId}`,
-              { method: "DELETE" }
-            );
-          }
-          console.log(`🗑️ Deleted ${existingLineItems.results.length} existing line items`);
-        }
-      } catch (deleteError) {
-        console.log('⚠️ Non-critical: Failed to delete existing line items:', deleteError);
+      // ✅ SMART UPDATE APPROACH: Only update what's actually changed
+      console.log(`🧠 Using smart line item update system`);
+      
+      // 1. Fetch existing line items
+      const existingItems = await this.fetchExistingLineItems(quoteId);
+      
+      // 2. Build required services array based on current service configuration
+      const requiredServices: Array<{price: number; productId: string}> = [];
+      
+      // Monthly Bookkeeping Service
+      if (includesBookkeeping && bookkeepingMonthlyFee && bookkeepingMonthlyFee > 0) {
+        requiredServices.push({price: bookkeepingMonthlyFee, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING});
       }
+      
+      // Monthly Bookkeeping Setup Fee
+      if (includesBookkeeping && bookkeepingSetupFee && bookkeepingSetupFee > 0) {
+        requiredServices.push({price: bookkeepingSetupFee, productId: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING_SETUP});
+      }
+      
+      // Tax as a Service
+      if (includesTaas && taasMonthlyFee && taasMonthlyFee > 0) {
+        requiredServices.push({price: taasMonthlyFee, productId: HUBSPOT_PRODUCT_IDS.TAAS});
+      }
+      
+      // Prior Year Filings
+      if (taasPriorYearsFee && taasPriorYearsFee > 0) {
+        requiredServices.push({price: taasPriorYearsFee, productId: HUBSPOT_PRODUCT_IDS.PRIOR_YEAR_FILINGS});
+      }
+      
+      // Cleanup Project
+      if (cleanupProjectFee && cleanupProjectFee > 0) {
+        requiredServices.push({price: cleanupProjectFee, productId: HUBSPOT_PRODUCT_IDS.CLEANUP_PROJECT});
+      }
+      
+      // Payroll Service
+      if (includesPayroll && payrollFee && payrollFee > 0) {
+        requiredServices.push({price: payrollFee, productId: HUBSPOT_PRODUCT_IDS.PAYROLL_SERVICE});
+      }
+      
+      // Accounts Payable Service
+      if (includesAP && apFee && apFee > 0) {
+        const apProductId = quoteData?.apServiceTier === 'advanced' ? 
+          HUBSPOT_PRODUCT_IDS.AP_ADVANCED_SERVICE : HUBSPOT_PRODUCT_IDS.AP_LITE_SERVICE;
+        requiredServices.push({price: apFee, productId: apProductId});
+      }
+      
+      // Accounts Receivable Service  
+      if (includesAR && arFee && arFee > 0) {
+        const arProductId = quoteData?.arServiceTier === 'advanced' ? 
+          HUBSPOT_PRODUCT_IDS.AR_ADVANCED_SERVICE : HUBSPOT_PRODUCT_IDS.AR_LITE_SERVICE;
+        requiredServices.push({price: arFee, productId: arProductId});
+      }
+      
+      // Agent of Service
+      if (includesAgentOfService && agentOfServiceFee && agentOfServiceFee > 0) {
+        requiredServices.push({price: agentOfServiceFee, productId: HUBSPOT_PRODUCT_IDS.AGENT_OF_SERVICE});
+      }
+      
+      // CFO Advisory
+      if (includesCfoAdvisory && cfoAdvisoryFee && cfoAdvisoryFee > 0) {
+        requiredServices.push({price: cfoAdvisoryFee, productId: HUBSPOT_PRODUCT_IDS.CFO_ADVISORY});
+      }
+      
+      // FP&A Build
+      if (includesFpaBuild && fpaServiceFee && fpaServiceFee > 0) {
+        requiredServices.push({price: fpaServiceFee, productId: HUBSPOT_PRODUCT_IDS.FPA_BUILD});
+      }
+      
+      // Service Tier (Concierge/Guided)
+      const serviceTierFee = calculatedServiceTierFee || 0;
+      if (serviceTier === 'Concierge' && serviceTierFee > 0) {
+        requiredServices.push({price: serviceTierFee, productId: HUBSPOT_PRODUCT_IDS.CONCIERGE_SERVICE_TIER});
+      } else if (serviceTier === 'Guided' && serviceTierFee > 0) {
+        requiredServices.push({price: serviceTierFee, productId: HUBSPOT_PRODUCT_IDS.GUIDED_SERVICE_TIER});
+      }
+      
+      // QBO Subscription
+      if (quoteData?.qboSubscription) {
+        const qboPrice = quoteData?.qboFee || 60;
+        requiredServices.push({price: qboPrice, productId: HUBSPOT_PRODUCT_IDS.MANAGED_QBO_SUBSCRIPTION});
+      }
+      
+      console.log(`📊 Required services: ${requiredServices.length} items`);
+      
+      // 3. Analyze what changes are needed
+      const changes = this.analyzeLineItemChanges(existingItems, requiredServices);
+      
+      // 4. Execute only the necessary changes
+      const updateSuccess = await this.executeLineItemChanges(quoteId, changes);
 
       // Update the quote title with correct service combination
       let serviceType = "Services";
@@ -3113,50 +3181,7 @@ Generated: ${new Date().toLocaleDateString()}`;
       );
       console.log("📋 Payment terms updated:", paymentTerms);
 
-      // ✅ CREATE FRESH LINE ITEMS: Use the same logic as createQuote
-      console.log(`🔧 Creating fresh line items with updated service configuration`);
-      
-      // Build the same service configuration object as createQuote
-      const serviceConfig = {
-        // Basic info
-        companyName,
-        monthlyFee,
-        setupFee,
-        userEmail,
-        firstName,
-        lastName,
-        
-        // Core services
-        serviceBookkeeping: includesBookkeeping,
-        serviceTaas: includesTaas,
-        taasMonthlyFee,
-        taasPriorYearsFee,
-        
-        // Additional services
-        servicePayroll: includesPayroll,
-        payrollFee: payrollFee || 0,
-        serviceApLite: includesAP,
-        apFee: apFee || 0,
-        serviceArLite: includesAR,
-        arFee: arFee || 0,
-        serviceAgentOfService: includesAgentOfService,
-        agentOfServiceFee: agentOfServiceFee || 0,
-        serviceCfoAdvisory: includesCfoAdvisory,
-        cfoAdvisoryFee: cfoAdvisoryFee || 0,
-        serviceFpaBuild: includesFpaBuild,
-        fpaServiceFee: fpaServiceFee || 0,
-        cleanupProjectFee: cleanupProjectFee || 0,
-        priorYearFilingsFee: priorYearFilingsFee || 0,
-        
-        // Service tier and quote data
-        serviceTier: serviceTier || 'Standard',
-        ...quoteData
-      };
-      
-      // Use the existing method that creates all line items properly
-      await this.createInitialServiceLineItems(quoteId, serviceConfig);
-      
-      // Update quote properties
+      // 5. Update quote properties
       const updateBody = {
         properties: {
           hs_title: updatedTitle,
@@ -3172,9 +3197,9 @@ Generated: ${new Date().toLocaleDateString()}`;
       });
 
       console.log(`✅ Updated quote: ${updatedTitle} with amount $${monthlyFee}`);
-      console.log(`🎉 Successfully updated quote ${quoteId} with fresh line items`);
+      console.log(`🎉 Successfully updated quote ${quoteId} using smart line item updates`);
       
-      return true;
+      return updateSuccess;
     } catch (error) {
       console.error('Error updating quote:', error);
       return false;
