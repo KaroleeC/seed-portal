@@ -29,6 +29,7 @@ import RequestAccess from "@/pages/request-access";
 import CDNMonitoring from "@/pages/CDNMonitoring";
 import CDNTest from "@/pages/CDNTest";
 import StripeDashboard from "@/pages/stripe-dashboard";
+import AdminPricingPage from "@/pages/admin-pricing";
 
 
 function Router() {
@@ -52,6 +53,7 @@ function Router() {
         <ProtectedRoute path="/knowledge-base" component={KnowledgeBase} />
         <ProtectedRoute path="/kb-admin" component={KbAdmin} />
         <ProtectedRoute path="/user-management" component={UserManagement} />
+        <ProtectedRoute path="/admin/pricing" component={AdminPricingPage} />
         <ProtectedRoute path="/cdn-monitoring" component={CDNMonitoring} />
         <ProtectedRoute path="/stripe-dashboard" component={StripeDashboard} />
         <ProtectedRoute path="/cdn-test" component={CDNTest} />
