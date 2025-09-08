@@ -489,6 +489,150 @@ export type InsertCommission = z.infer<typeof insertCommissionSchema>;
 export type Commission = typeof commissions.$inferSelect;
 export type InsertCommissionAdjustment = z.infer<typeof insertCommissionAdjustmentSchema>;
 export type CommissionAdjustment = typeof commissionAdjustments.$inferSelect;
+
+// Pricing Configuration Tables
+// Base pricing settings for each service
+export const pricingBase = pgTable("pricing_base", {
+  id: serial("id").primaryKey(),
+  service: text("service").notNull(), // 'bookkeeping', 'taas', 'payroll', 'ap', 'ar', 'agent_of_service'
+  baseFee: decimal("base_fee", { precision: 10, scale: 2 }).notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Industry multipliers for different business types
+export const pricingIndustryMultipliers = pgTable("pricing_industry_multipliers", {
+  id: serial("id").primaryKey(),
+  industry: text("industry").notNull().unique(),
+  monthlyMultiplier: decimal("monthly_multiplier", { precision: 5, scale: 3 }).notNull(),
+  cleanupMultiplier: decimal("cleanup_multiplier", { precision: 5, scale: 3 }).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Revenue range multipliers
+export const pricingRevenueMultipliers = pgTable("pricing_revenue_multipliers", {
+  id: serial("id").primaryKey(),
+  revenueRange: text("revenue_range").notNull().unique(), // '<$10K', '10K-25K', etc.
+  multiplier: decimal("multiplier", { precision: 5, scale: 3 }).notNull(),
+  minRevenue: integer("min_revenue"), // For display purposes
+  maxRevenue: integer("max_revenue"), // For display purposes
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Transaction volume surcharges
+export const pricingTransactionSurcharges = pgTable("pricing_transaction_surcharges", {
+  id: serial("id").primaryKey(),
+  transactionRange: text("transaction_range").notNull().unique(), // '<100', '100-300', etc.
+  surcharge: decimal("surcharge", { precision: 10, scale: 2 }).notNull(),
+  minTransactions: integer("min_transactions"), // For display purposes
+  maxTransactions: integer("max_transactions"), // For display purposes
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Service-specific pricing settings
+export const pricingServiceSettings = pgTable("pricing_service_settings", {
+  id: serial("id").primaryKey(),
+  service: text("service").notNull(), // 'bookkeeping', 'taas', 'payroll', 'ap', 'ar'
+  settingKey: text("setting_key").notNull(), // 'qbo_subscription_fee', 'entity_upcharge_per_unit', etc.
+  settingValue: decimal("setting_value", { precision: 10, scale: 2 }).notNull(),
+  settingType: text("setting_type").notNull(), // 'fee', 'multiplier', 'threshold'
+  description: text("description"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Tier-based pricing (for AP/AR Lite vs Advanced)
+export const pricingTiers = pgTable("pricing_tiers", {
+  id: serial("id").primaryKey(),
+  service: text("service").notNull(), // 'ap', 'ar'
+  tier: text("tier").notNull(), // 'lite', 'advanced'
+  volumeBand: text("volume_band").notNull(), // '0-25', '26-100', etc.
+  baseFee: decimal("base_fee", { precision: 10, scale: 2 }).notNull(),
+  tierMultiplier: decimal("tier_multiplier", { precision: 5, scale: 3 }).default("1.0").notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Pricing configuration change history for audit trail
+export const pricingHistory = pgTable("pricing_history", {
+  id: serial("id").primaryKey(),
+  tableAffected: text("table_affected").notNull(), // Which pricing table was changed
+  recordId: integer("record_id").notNull(), // ID of the changed record
+  fieldChanged: text("field_changed").notNull(), // Which field was modified
+  oldValue: text("old_value"), // Previous value (stored as text for flexibility)
+  newValue: text("new_value").notNull(), // New value
+  changedBy: integer("changed_by").notNull().references(() => users.id),
+  changeReason: text("change_reason"), // Optional reason for the change
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insert schemas for pricing tables
+export const insertPricingBaseSchema = createInsertSchema(pricingBase).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPricingIndustryMultiplierSchema = createInsertSchema(pricingIndustryMultipliers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPricingRevenueMultiplierSchema = createInsertSchema(pricingRevenueMultipliers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPricingTransactionSurchargeSchema = createInsertSchema(pricingTransactionSurcharges).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPricingServiceSettingSchema = createInsertSchema(pricingServiceSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPricingTierSchema = createInsertSchema(pricingTiers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPricingHistorySchema = createInsertSchema(pricingHistory).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Type exports for pricing tables
+export type PricingBase = typeof pricingBase.$inferSelect;
+export type InsertPricingBase = z.infer<typeof insertPricingBaseSchema>;
+export type PricingIndustryMultiplier = typeof pricingIndustryMultipliers.$inferSelect;
+export type InsertPricingIndustryMultiplier = z.infer<typeof insertPricingIndustryMultiplierSchema>;
+export type PricingRevenueMultiplier = typeof pricingRevenueMultipliers.$inferSelect;
+export type InsertPricingRevenueMultiplier = z.infer<typeof insertPricingRevenueMultiplierSchema>;
+export type PricingTransactionSurcharge = typeof pricingTransactionSurcharges.$inferSelect;
+export type InsertPricingTransactionSurcharge = z.infer<typeof insertPricingTransactionSurchargeSchema>;
+export type PricingServiceSetting = typeof pricingServiceSettings.$inferSelect;
+export type InsertPricingServiceSetting = z.infer<typeof insertPricingServiceSettingSchema>;
+export type PricingTier = typeof pricingTiers.$inferSelect;
+export type InsertPricingTier = z.infer<typeof insertPricingTierSchema>;
+export type PricingHistory = typeof pricingHistory.$inferSelect;
+export type InsertPricingHistory = z.infer<typeof insertPricingHistorySchema>;
 export type InsertMonthlyBonus = z.infer<typeof insertMonthlyBonusSchema>;
 export type MonthlyBonus = typeof monthlyBonuses.$inferSelect;
 export type InsertMilestoneBonus = z.infer<typeof insertMilestoneBonusSchema>;
