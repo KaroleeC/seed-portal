@@ -1,12 +1,18 @@
 import { 
   users, quotes, approvalCodes, kbCategories, kbArticles, kbBookmarks, kbSearchHistory, workspaceUsers,
   salesReps, deals, commissions, commissionAdjustments, monthlyBonuses, milestoneBonuses,
+  pricingBase, pricingIndustryMultipliers, pricingRevenueMultipliers, pricingTransactionSurcharges,
+  pricingServiceSettings, pricingTiers, pricingHistory,
   type User, type InsertUser, type Quote, type InsertQuote, type ApprovalCode, type InsertApprovalCode, 
   type KbCategory, type InsertKbCategory, type KbArticle, type InsertKbArticle, type KbBookmark, type InsertKbBookmark,
   type KbSearchHistory, type InsertKbSearchHistory, type WorkspaceUser, type InsertWorkspaceUser, 
   type SalesRep, type InsertSalesRep, type Deal, type InsertDeal, type Commission, type InsertCommission,
   type CommissionAdjustment, type InsertCommissionAdjustment,
   type MonthlyBonus, type InsertMonthlyBonus, type MilestoneBonus, type InsertMilestoneBonus,
+  type PricingBase, type InsertPricingBase, type PricingIndustryMultiplier, type InsertPricingIndustryMultiplier,
+  type PricingRevenueMultiplier, type InsertPricingRevenueMultiplier, type PricingTransactionSurcharge, type InsertPricingTransactionSurcharge,
+  type PricingServiceSetting, type InsertPricingServiceSetting, type PricingTier, type InsertPricingTier,
+  type PricingHistory, type InsertPricingHistory,
   updateQuoteSchema, type UpdateProfile 
 } from "@shared/schema";
 import { db } from "./db";
@@ -126,6 +132,42 @@ export interface IStorage {
   getMilestoneBonusesBySalesRep(salesRepId: number): Promise<MilestoneBonus[]>;
   createMilestoneBonus(bonus: InsertMilestoneBonus): Promise<MilestoneBonus>;
   updateMilestoneBonus(id: number, bonus: Partial<InsertMilestoneBonus>): Promise<MilestoneBonus>;
+
+  // Pricing Configuration Methods
+  // Base pricing
+  getAllPricingBase(): Promise<PricingBase[]>;
+  getPricingBaseByService(service: string): Promise<PricingBase | undefined>;
+  updatePricingBase(id: number, base: Partial<InsertPricingBase>, changedBy: number): Promise<PricingBase>;
+  
+  // Industry multipliers
+  getAllIndustryMultipliers(): Promise<PricingIndustryMultiplier[]>;
+  getIndustryMultiplier(industry: string): Promise<PricingIndustryMultiplier | undefined>;
+  updateIndustryMultiplier(id: number, multiplier: Partial<InsertPricingIndustryMultiplier>, changedBy: number): Promise<PricingIndustryMultiplier>;
+  
+  // Revenue multipliers
+  getAllRevenueMultipliers(): Promise<PricingRevenueMultiplier[]>;
+  getRevenueMultiplier(revenueRange: string): Promise<PricingRevenueMultiplier | undefined>;
+  updateRevenueMultiplier(id: number, multiplier: Partial<InsertPricingRevenueMultiplier>, changedBy: number): Promise<PricingRevenueMultiplier>;
+  
+  // Transaction surcharges
+  getAllTransactionSurcharges(): Promise<PricingTransactionSurcharge[]>;
+  getTransactionSurcharge(transactionRange: string): Promise<PricingTransactionSurcharge | undefined>;
+  updateTransactionSurcharge(id: number, surcharge: Partial<InsertPricingTransactionSurcharge>, changedBy: number): Promise<PricingTransactionSurcharge>;
+  
+  // Service settings
+  getAllServiceSettings(): Promise<PricingServiceSetting[]>;
+  getServiceSettingsByService(service: string): Promise<PricingServiceSetting[]>;
+  getServiceSetting(service: string, settingKey: string): Promise<PricingServiceSetting | undefined>;
+  updateServiceSetting(id: number, setting: Partial<InsertPricingServiceSetting>, changedBy: number): Promise<PricingServiceSetting>;
+  
+  // Pricing tiers
+  getAllPricingTiers(): Promise<PricingTier[]>;
+  getPricingTiersByService(service: string): Promise<PricingTier[]>;
+  getPricingTier(service: string, tier: string, volumeBand: string): Promise<PricingTier | undefined>;
+  updatePricingTier(id: number, tier: Partial<InsertPricingTier>, changedBy: number): Promise<PricingTier>;
+  
+  // Pricing history
+  getPricingHistory(tableAffected?: string, recordId?: number): Promise<PricingHistory[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1282,6 +1324,335 @@ export class DatabaseStorage implements IStorage {
       
       return updatedBonus;
     }, 'updateMilestoneBonus');
+  }
+
+  // Pricing Configuration Methods Implementation
+  async getAllPricingBase(): Promise<PricingBase[]> {
+    return await safeDbQuery(async () => {
+      return await db.select().from(pricingBase).where(eq(pricingBase.isActive, true));
+    }, 'getAllPricingBase');
+  }
+
+  async getPricingBaseByService(service: string): Promise<PricingBase | undefined> {
+    return await safeDbQuery(async () => {
+      const [result] = await db.select().from(pricingBase)
+        .where(and(eq(pricingBase.service, service), eq(pricingBase.isActive, true)));
+      return result || undefined;
+    }, 'getPricingBaseByService');
+  }
+
+  async updatePricingBase(id: number, updateData: Partial<InsertPricingBase>, changedBy: number): Promise<PricingBase> {
+    return await safeDbQuery(async () => {
+      const [oldRecord] = await db.select().from(pricingBase).where(eq(pricingBase.id, id));
+      
+      const [updatedRecord] = await db.update(pricingBase)
+        .set({ ...updateData, updatedAt: new Date() })
+        .where(eq(pricingBase.id, id))
+        .returning();
+      
+      if (!updatedRecord) {
+        throw new Error('Failed to update pricing base');
+      }
+
+      // Record history for each changed field
+      for (const [field, newValue] of Object.entries(updateData)) {
+        if (field !== 'updatedAt' && oldRecord) {
+          const oldValue = oldRecord[field as keyof PricingBase];
+          if (oldValue !== newValue) {
+            await db.insert(pricingHistory).values({
+              tableAffected: 'pricing_base',
+              recordId: id,
+              fieldChanged: field,
+              oldValue: oldValue?.toString() || null,
+              newValue: newValue?.toString() || '',
+              changedBy,
+            });
+          }
+        }
+      }
+      
+      return updatedRecord;
+    }, 'updatePricingBase');
+  }
+
+  async getAllIndustryMultipliers(): Promise<PricingIndustryMultiplier[]> {
+    return await safeDbQuery(async () => {
+      return await db.select().from(pricingIndustryMultipliers).where(eq(pricingIndustryMultipliers.isActive, true));
+    }, 'getAllIndustryMultipliers');
+  }
+
+  async getIndustryMultiplier(industry: string): Promise<PricingIndustryMultiplier | undefined> {
+    return await safeDbQuery(async () => {
+      const [result] = await db.select().from(pricingIndustryMultipliers)
+        .where(and(eq(pricingIndustryMultipliers.industry, industry), eq(pricingIndustryMultipliers.isActive, true)));
+      return result || undefined;
+    }, 'getIndustryMultiplier');
+  }
+
+  async updateIndustryMultiplier(id: number, updateData: Partial<InsertPricingIndustryMultiplier>, changedBy: number): Promise<PricingIndustryMultiplier> {
+    return await safeDbQuery(async () => {
+      const [oldRecord] = await db.select().from(pricingIndustryMultipliers).where(eq(pricingIndustryMultipliers.id, id));
+      
+      const [updatedRecord] = await db.update(pricingIndustryMultipliers)
+        .set({ ...updateData, updatedAt: new Date() })
+        .where(eq(pricingIndustryMultipliers.id, id))
+        .returning();
+      
+      if (!updatedRecord) {
+        throw new Error('Failed to update industry multiplier');
+      }
+
+      // Record history
+      for (const [field, newValue] of Object.entries(updateData)) {
+        if (field !== 'updatedAt' && oldRecord) {
+          const oldValue = oldRecord[field as keyof PricingIndustryMultiplier];
+          if (oldValue !== newValue) {
+            await db.insert(pricingHistory).values({
+              tableAffected: 'pricing_industry_multipliers',
+              recordId: id,
+              fieldChanged: field,
+              oldValue: oldValue?.toString() || null,
+              newValue: newValue?.toString() || '',
+              changedBy,
+            });
+          }
+        }
+      }
+      
+      return updatedRecord;
+    }, 'updateIndustryMultiplier');
+  }
+
+  async getAllRevenueMultipliers(): Promise<PricingRevenueMultiplier[]> {
+    return await safeDbQuery(async () => {
+      return await db.select().from(pricingRevenueMultipliers).where(eq(pricingRevenueMultipliers.isActive, true));
+    }, 'getAllRevenueMultipliers');
+  }
+
+  async getRevenueMultiplier(revenueRange: string): Promise<PricingRevenueMultiplier | undefined> {
+    return await safeDbQuery(async () => {
+      const [result] = await db.select().from(pricingRevenueMultipliers)
+        .where(and(eq(pricingRevenueMultipliers.revenueRange, revenueRange), eq(pricingRevenueMultipliers.isActive, true)));
+      return result || undefined;
+    }, 'getRevenueMultiplier');
+  }
+
+  async updateRevenueMultiplier(id: number, updateData: Partial<InsertPricingRevenueMultiplier>, changedBy: number): Promise<PricingRevenueMultiplier> {
+    return await safeDbQuery(async () => {
+      const [oldRecord] = await db.select().from(pricingRevenueMultipliers).where(eq(pricingRevenueMultipliers.id, id));
+      
+      const [updatedRecord] = await db.update(pricingRevenueMultipliers)
+        .set({ ...updateData, updatedAt: new Date() })
+        .where(eq(pricingRevenueMultipliers.id, id))
+        .returning();
+      
+      if (!updatedRecord) {
+        throw new Error('Failed to update revenue multiplier');
+      }
+
+      // Record history
+      for (const [field, newValue] of Object.entries(updateData)) {
+        if (field !== 'updatedAt' && oldRecord) {
+          const oldValue = oldRecord[field as keyof PricingRevenueMultiplier];
+          if (oldValue !== newValue) {
+            await db.insert(pricingHistory).values({
+              tableAffected: 'pricing_revenue_multipliers',
+              recordId: id,
+              fieldChanged: field,
+              oldValue: oldValue?.toString() || null,
+              newValue: newValue?.toString() || '',
+              changedBy,
+            });
+          }
+        }
+      }
+      
+      return updatedRecord;
+    }, 'updateRevenueMultiplier');
+  }
+
+  async getAllTransactionSurcharges(): Promise<PricingTransactionSurcharge[]> {
+    return await safeDbQuery(async () => {
+      return await db.select().from(pricingTransactionSurcharges).where(eq(pricingTransactionSurcharges.isActive, true));
+    }, 'getAllTransactionSurcharges');
+  }
+
+  async getTransactionSurcharge(transactionRange: string): Promise<PricingTransactionSurcharge | undefined> {
+    return await safeDbQuery(async () => {
+      const [result] = await db.select().from(pricingTransactionSurcharges)
+        .where(and(eq(pricingTransactionSurcharges.transactionRange, transactionRange), eq(pricingTransactionSurcharges.isActive, true)));
+      return result || undefined;
+    }, 'getTransactionSurcharge');
+  }
+
+  async updateTransactionSurcharge(id: number, updateData: Partial<InsertPricingTransactionSurcharge>, changedBy: number): Promise<PricingTransactionSurcharge> {
+    return await safeDbQuery(async () => {
+      const [oldRecord] = await db.select().from(pricingTransactionSurcharges).where(eq(pricingTransactionSurcharges.id, id));
+      
+      const [updatedRecord] = await db.update(pricingTransactionSurcharges)
+        .set({ ...updateData, updatedAt: new Date() })
+        .where(eq(pricingTransactionSurcharges.id, id))
+        .returning();
+      
+      if (!updatedRecord) {
+        throw new Error('Failed to update transaction surcharge');
+      }
+
+      // Record history
+      for (const [field, newValue] of Object.entries(updateData)) {
+        if (field !== 'updatedAt' && oldRecord) {
+          const oldValue = oldRecord[field as keyof PricingTransactionSurcharge];
+          if (oldValue !== newValue) {
+            await db.insert(pricingHistory).values({
+              tableAffected: 'pricing_transaction_surcharges',
+              recordId: id,
+              fieldChanged: field,
+              oldValue: oldValue?.toString() || null,
+              newValue: newValue?.toString() || '',
+              changedBy,
+            });
+          }
+        }
+      }
+      
+      return updatedRecord;
+    }, 'updateTransactionSurcharge');
+  }
+
+  async getAllServiceSettings(): Promise<PricingServiceSetting[]> {
+    return await safeDbQuery(async () => {
+      return await db.select().from(pricingServiceSettings).where(eq(pricingServiceSettings.isActive, true));
+    }, 'getAllServiceSettings');
+  }
+
+  async getServiceSettingsByService(service: string): Promise<PricingServiceSetting[]> {
+    return await safeDbQuery(async () => {
+      return await db.select().from(pricingServiceSettings)
+        .where(and(eq(pricingServiceSettings.service, service), eq(pricingServiceSettings.isActive, true)));
+    }, 'getServiceSettingsByService');
+  }
+
+  async getServiceSetting(service: string, settingKey: string): Promise<PricingServiceSetting | undefined> {
+    return await safeDbQuery(async () => {
+      const [result] = await db.select().from(pricingServiceSettings)
+        .where(and(
+          eq(pricingServiceSettings.service, service),
+          eq(pricingServiceSettings.settingKey, settingKey),
+          eq(pricingServiceSettings.isActive, true)
+        ));
+      return result || undefined;
+    }, 'getServiceSetting');
+  }
+
+  async updateServiceSetting(id: number, updateData: Partial<InsertPricingServiceSetting>, changedBy: number): Promise<PricingServiceSetting> {
+    return await safeDbQuery(async () => {
+      const [oldRecord] = await db.select().from(pricingServiceSettings).where(eq(pricingServiceSettings.id, id));
+      
+      const [updatedRecord] = await db.update(pricingServiceSettings)
+        .set({ ...updateData, updatedAt: new Date() })
+        .where(eq(pricingServiceSettings.id, id))
+        .returning();
+      
+      if (!updatedRecord) {
+        throw new Error('Failed to update service setting');
+      }
+
+      // Record history
+      for (const [field, newValue] of Object.entries(updateData)) {
+        if (field !== 'updatedAt' && oldRecord) {
+          const oldValue = oldRecord[field as keyof PricingServiceSetting];
+          if (oldValue !== newValue) {
+            await db.insert(pricingHistory).values({
+              tableAffected: 'pricing_service_settings',
+              recordId: id,
+              fieldChanged: field,
+              oldValue: oldValue?.toString() || null,
+              newValue: newValue?.toString() || '',
+              changedBy,
+            });
+          }
+        }
+      }
+      
+      return updatedRecord;
+    }, 'updateServiceSetting');
+  }
+
+  async getAllPricingTiers(): Promise<PricingTier[]> {
+    return await safeDbQuery(async () => {
+      return await db.select().from(pricingTiers).where(eq(pricingTiers.isActive, true));
+    }, 'getAllPricingTiers');
+  }
+
+  async getPricingTiersByService(service: string): Promise<PricingTier[]> {
+    return await safeDbQuery(async () => {
+      return await db.select().from(pricingTiers)
+        .where(and(eq(pricingTiers.service, service), eq(pricingTiers.isActive, true)));
+    }, 'getPricingTiersByService');
+  }
+
+  async getPricingTier(service: string, tier: string, volumeBand: string): Promise<PricingTier | undefined> {
+    return await safeDbQuery(async () => {
+      const [result] = await db.select().from(pricingTiers)
+        .where(and(
+          eq(pricingTiers.service, service),
+          eq(pricingTiers.tier, tier),
+          eq(pricingTiers.volumeBand, volumeBand),
+          eq(pricingTiers.isActive, true)
+        ));
+      return result || undefined;
+    }, 'getPricingTier');
+  }
+
+  async updatePricingTier(id: number, updateData: Partial<InsertPricingTier>, changedBy: number): Promise<PricingTier> {
+    return await safeDbQuery(async () => {
+      const [oldRecord] = await db.select().from(pricingTiers).where(eq(pricingTiers.id, id));
+      
+      const [updatedRecord] = await db.update(pricingTiers)
+        .set({ ...updateData, updatedAt: new Date() })
+        .where(eq(pricingTiers.id, id))
+        .returning();
+      
+      if (!updatedRecord) {
+        throw new Error('Failed to update pricing tier');
+      }
+
+      // Record history
+      for (const [field, newValue] of Object.entries(updateData)) {
+        if (field !== 'updatedAt' && oldRecord) {
+          const oldValue = oldRecord[field as keyof PricingTier];
+          if (oldValue !== newValue) {
+            await db.insert(pricingHistory).values({
+              tableAffected: 'pricing_tiers',
+              recordId: id,
+              fieldChanged: field,
+              oldValue: oldValue?.toString() || null,
+              newValue: newValue?.toString() || '',
+              changedBy,
+            });
+          }
+        }
+      }
+      
+      return updatedRecord;
+    }, 'updatePricingTier');
+  }
+
+  async getPricingHistory(tableAffected?: string, recordId?: number): Promise<PricingHistory[]> {
+    return await safeDbQuery(async () => {
+      let query = db.select().from(pricingHistory);
+      
+      if (tableAffected && recordId) {
+        query = query.where(and(
+          eq(pricingHistory.tableAffected, tableAffected),
+          eq(pricingHistory.recordId, recordId)
+        ));
+      } else if (tableAffected) {
+        query = query.where(eq(pricingHistory.tableAffected, tableAffected));
+      }
+      
+      return await query.orderBy(desc(pricingHistory.createdAt));
+    }, 'getPricingHistory');
   }
 }
 
