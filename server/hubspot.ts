@@ -2953,6 +2953,7 @@ Generated: ${new Date().toLocaleDateString()}`;
 
   async updateQuote(
     quoteId: string,
+    dealId: string | undefined,
     companyName: string,
     monthlyFee: number,
     setupFee: number,

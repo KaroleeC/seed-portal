@@ -1504,6 +1504,7 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
                   console.log(`🔄 Updating existing HubSpot quote: ${quote.hubspotQuoteId}`);
                   const quoteUpdateSuccess = await hubSpotService.updateQuote(
                     quote.hubspotQuoteId,
+                    deal.id || undefined,
                     companyName,
                     parseFloat(quote.monthlyFee),
                     parseFloat(quote.setupFee),
@@ -2125,6 +2126,7 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
       
       const success = await hubSpotService.updateQuote(
         quote.hubspotQuoteId,        // quoteId: string
+        quote.hubspotDealId || undefined,  // dealId: string | undefined
         companyName,                 // companyName: string
         monthlyFee,                  // monthlyFee: number
         setupFee,                    // setupFee: number
