@@ -115,26 +115,63 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
   
 
   
-  // Login endpoint - FIXED to use proper passport authentication
+  // ENHANCED Login endpoint with comprehensive production debugging
   app.post("/api/login", (req, res, next) => {
+    console.log('[Login] 🔑 ===== COMPREHENSIVE LOGIN DEBUG START =====');
+    console.log('[Login] 🔑 Request details:', {
+      body: { email: req.body?.email, hasPassword: !!req.body?.password },
+      headers: {
+        origin: req.headers.origin,
+        host: req.headers.host,
+        userAgent: req.headers['user-agent']?.substring(0, 50) + '...',
+        cookies: !!req.headers.cookie,
+        cookieCount: req.headers.cookie ? req.headers.cookie.split(';').length : 0
+      },
+      session: {
+        sessionId: req.sessionID,
+        hasSession: !!req.session,
+        sessionKeys: req.session ? Object.keys(req.session) : []
+      },
+      environment: {
+        nodeEnv: process.env.NODE_ENV,
+        replitDeployment: process.env.REPLIT_DEPLOYMENT,
+        isProduction: process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1'
+      },
+      database: {
+        hasDbUrl: !!process.env.DATABASE_URL,
+        hasRedisUrl: !!process.env.REDIS_URL,
+        hasSessionSecret: !!process.env.SESSION_SECRET
+      }
+    });
 
     // Use passport.authenticate() instead of manual authentication
     passport.authenticate('local', (err, user, info) => {
       console.log('[Login] 🔑 Passport authentication callback:', {
         hasError: !!err,
+        errorMessage: err?.message,
         hasUser: !!user,
         userEmail: user?.email,
+        userId: user?.id,
+        userRole: user?.role,
         info: info,
         timestamp: new Date().toISOString()
       });
       
       if (err) {
-        console.error('[Login] ❌ Passport authentication error:', err);
+        console.error('[Login] ❌ Passport authentication error details:', {
+          message: err.message,
+          stack: err.stack?.split('\n').slice(0, 3),
+          name: err.name
+        });
         return res.status(500).json({ message: "Authentication error" });
       }
       
       if (!user) {
-        console.log('[Login] ❌ Authentication failed - no user returned');
+        console.log('[Login] ❌ Authentication failed - no user returned:', {
+          providedEmail: req.body?.email,
+          hasPassword: !!req.body?.password,
+          info: info
+        });
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
@@ -200,11 +237,42 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
     });
   });
 
-  // Get user endpoint for frontend
+  // ENHANCED Get user endpoint with production debugging
   app.get("/api/user", (req, res) => {
+    console.log('[GetUser] 👤 ===== USER ENDPOINT DEBUG START =====');
+    console.log('[GetUser] 👤 Request context:', {
+      sessionId: req.sessionID,
+      hasSession: !!req.session,
+      sessionKeys: req.session ? Object.keys(req.session) : [],
+      isAuthenticated: req.isAuthenticated ? req.isAuthenticated() : 'NO_METHOD',
+      hasReqUser: !!req.user,
+      reqUserEmail: req.user?.email,
+      sessionPassport: (req.session as any)?.passport,
+      manualSessionUser: !!(req.session as any)?.user,
+      headers: {
+        origin: req.headers.origin || 'NO_ORIGIN',
+        host: req.headers.host,
+        cookies: !!req.headers.cookie,
+        userAgent: req.headers['user-agent']?.substring(0, 30) + '...'
+      },
+      environment: {
+        nodeEnv: process.env.NODE_ENV,
+        replitDeployment: process.env.REPLIT_DEPLOYMENT,
+        isProduction: process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1'
+      }
+    });
     
     // Check both passport and manual session
     const user = req.user || (req.session as any)?.user;
+    console.log('[GetUser] 👤 User resolution:', {
+      hasUser: !!user,
+      userEmail: user?.email,
+      userId: user?.id,
+      userRole: user?.role,
+      fromReqUser: !!req.user,
+      fromManualSession: !!(req.session as any)?.user
+    });
+    
     if (user) {
       const { password: _, ...userWithoutPassword } = user;
       // Add impersonation status from session
