@@ -1,0 +1,176 @@
+Time
+Deployment
+Source
+Log
+2025-09-08 14:19:10.06
+7ecdfd98
+User
+[SessionStore] 🔍 SET operation: {
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+cookieCount: 1,
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 1',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+contentType: 'application/json'
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+}
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+🛡️ API Route Protection - Ensuring Express handles: /api/user
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+🔐 /api/user endpoint called
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+🔐 Session ID: iVXWr0qkapyVy2QKgO8Ulb8KqtsiuN8p
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+🔐 Session exists: true
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+🔐 Session store type: RedisStore
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+🔐 Session data keys: [ 'cookie' ]
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+🔐 Authenticated: false
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+🔐 User: None
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+🔐 Session passport: None
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+❌ User not authenticated, returning 401
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+📤 [Response Debug] Headers being sent: {
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+url: '/api/user',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+statusCode: 401,
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+headers: [Object: null prototype] {
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'content-security-policy': "default-src 'self';script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tiny.cloud https://accounts.google.com https://apis.google.com https://gstatic.com https://ssl.gstatic.com;style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tiny.cloud;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: https: blob:;connect-src 'self' https://api.openai.com https://api.hubapi.com https://api.airtable.com https://api.open-meteo.com https://nominatim.openstreetmap.org https://accounts.google.com https://www.googleapis.com https://gstatic.com https://ssl.gstatic.com;frame-src 'self' https://cdn.tiny.cloud https://accounts.google.com https://gstatic.com https://ssl.gstatic.com;child-src 'self' https://accounts.google.com;form-action 'self' https://accounts.google.com;base-uri 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests",
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'cross-origin-opener-policy': 'same-origin',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'cross-origin-resource-policy': 'same-origin',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'origin-agent-cluster': '?1',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'referrer-policy': 'no-referrer',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'strict-transport-security': 'max-age=31536000; includeSubDomains',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'x-content-type-options': 'nosniff',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'x-dns-prefetch-control': 'off',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'x-download-options': 'noopen',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'x-frame-options': 'SAMEORIGIN',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'x-permitted-cross-domain-policies': 'none',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'x-xss-protection': '0',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'access-control-allow-origin': '*',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'access-control-allow-credentials': 'true',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'access-control-allow-methods': 'GET,POST,PUT,DELETE,OPTIONS,PATCH',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'access-control-allow-headers': 'Origin,X-Requested-With,Content-Type,Accept,Authorization,x-csrf-token',
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+'content-type': 'text/plain; charset=utf-8'
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+},
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+hasCookieHeader: false,
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+cookieHeaders: undefined
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+}
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+{"level":40,"levelName":"warn","time":"2025-09-08T21:19:59.458Z","env":"production","pid":37,"req":{"id":14,"method":"GET","url":"/api/user","query":{},"params":{},"headers":{"host":"os.seedfinancial.io","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36","accept":"application/json","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","cache-control":"max-age=0","content-type":"application/json","cookie":"[REDACTED]","dnt":"1","if-none-match":"W/\"5e9-s1CjZ+ll7fLb1ZEYLHU+xrwxC24\"","priority":"u=1, i","sec-ch-ua":"\"Chromium\";v=\"139\", \"Not;A=Brand\";v=\"99\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","server-timing":"depproxy;dur=1757366399412, pid1req;dur=1757366399421","traceparent":"00-d0570e71f984a9b51a9e0d4d60e9202a-c22ce1bd9a1cc00f-00","via":"1.1 google","x-cloud-trace-context":"d0570e71f984a9b51a9e0d4d60e9202a/13991806346783932431","x-forwarded-for":"38.82.200.67, 34.111.179.208, 35.191.121.32,34.136.244.224","x-forwarded-host":"os.seedfinancial.io","x-forwarded-proto":"https","x-replit-user-bio":"","x-replit-user-id":"","x-replit-user-name":"","x-replit-user-profile-image":"","x-replit-user-roles":"","x-replit-user-teams":"","x-replit-user-url":""},"remoteAddress":"127.0.0.1","remotePort":40328},"res":{"statusCode":401,"headers":{"content-security-policy":"default-src 'self';script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tiny.cloud https://accounts.google.com https://apis.google.com https://gstatic.com https://ssl.gstatic.com;style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tiny.cloud;font-src 'self' https://fonts.gstatic.com;img-src 'self' data: https: blob:;connect-src 'self' https://api.openai.com https://api.hubapi.com https://api.airtable.com https://api.open-meteo.com https://nominatim.openstreetmap.org https://accounts.google.com https://www.googleapis.com https://gstatic.com https://ssl.gstatic.com;frame-src 'self' https://cdn.tiny.cloud https://accounts.google.com https://gstatic.com https://ssl.gstatic.com;child-src 'self' https://accounts.google.com;form-action 'self' https://accounts.google.com;base-uri 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests","cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"same-origin","origin-agent-cluster":"?1","referrer-policy":"no-referrer","strict-transport-security":"max-age=31536000; includeSubDomains","x-content-type-options":"nosniff","x-dns-prefetch-control":"off","x-download-options":"noopen","x-frame-options":"SAMEORIGIN","x-permitted-cross-domain-policies":"none","x-xss-protection":"0","access-control-allow-origin":"*","access-control-allow-credentials":"true","access-control-allow-methods":"GET,POST,PUT,DELETE,OPTIONS,PATCH","access-control-allow-headers":"Origin,X-Requested-With,Content-Type,Accept,Authorization,x-csrf-token","content-type":"text/plain; charset=utf-8","content-length":"12","etag":"W/\"c-dAuDFQrdjS3hezqxDTNgW7AOlYk\""}},"responseTime":34,"message":"GET /api/user completed with 401"}
+2025-09-08 14:19:59.45
+7ecdfd98
+User
+9:19:59 PM [express] GET /api/user 401 in 34ms
+2025-09-08 14:20:28.51
+7ecdfd98
+User
+Database connection removed from pool

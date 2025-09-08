@@ -90,11 +90,15 @@ export async function apiRequest(
       timestamp: new Date().toISOString()
     });
 
-    const response = await fetch(url, requestOptions);
+    // CRITICAL: Add full URL for production debugging
+    const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
+    console.log('[ApiRequest] 🎯 ACTUAL REQUEST URL:', fullUrl);
+    
+    const response = await fetch(fullUrl, requestOptions);
     
     // Log response details for debugging
     console.log('[ApiRequest] 📥 Response details:', {
-      url,
+      url: fullUrl,
       status: response.status,
       statusText: response.statusText,
       headers: Object.fromEntries(response.headers.entries()),
