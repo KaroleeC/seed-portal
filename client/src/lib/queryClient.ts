@@ -75,36 +75,8 @@ export async function apiRequest(
       requestOptions.body = typeof data === 'string' ? data : JSON.stringify(data);
     }
 
-    // CRITICAL: Log frontend request details for debugging
-    console.log('[ApiRequest] 🚀 Frontend request details:', {
-      url,
-      method,
-      hasCredentials: requestOptions.credentials === 'include',
-      headers: requestOptions.headers,
-      cookiesAvailable: document.cookie ? 'YES' : 'HttpOnly-Hidden',
-      cookieSnippet: document.cookie.substring(0, 100) || 'HttpOnly cookies invisible to JS',
-      location: window.location.href,
-      origin: window.location.origin,
-      protocol: window.location.protocol,
-      userAgent: navigator.userAgent.substring(0, 50),
-      timestamp: new Date().toISOString()
-    });
 
-    // CRITICAL: Add full URL for production debugging
-    const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
-    console.log('[ApiRequest] 🎯 ACTUAL REQUEST URL:', fullUrl);
-    
-    const response = await fetch(fullUrl, requestOptions);
-    
-    // Log response details for debugging
-    console.log('[ApiRequest] 📥 Response details:', {
-      url: fullUrl,
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries()),
-      cookiesSet: response.headers.get('set-cookie'),
-      timestamp: new Date().toISOString()
-    });
+    const response = await fetch(url, requestOptions);
     
     await throwIfResNotOk(response);
     return await response.json();

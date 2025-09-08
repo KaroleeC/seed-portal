@@ -115,11 +115,9 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
   
 
   
-  // ENHANCED Login endpoint with comprehensive production debugging
+  // Login endpoint
   app.post("/api/login", (req, res, next) => {
-    console.log('🚨🚨🚨 LOGIN REQUEST RECEIVED IN PRODUCTION 🚨🚨🚨');
-    console.log('[Login] 🔑 ===== COMPREHENSIVE LOGIN DEBUG START =====');
-    console.log('[Login] 🔑 Request details:', {
+    console.log('[Login] Request details:', {
       body: { email: req.body?.email, hasPassword: !!req.body?.password },
       headers: {
         origin: req.headers.origin,
