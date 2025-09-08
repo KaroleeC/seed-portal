@@ -236,6 +236,7 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
   // Enhanced production detection for Replit deployments
   const isProduction = process.env.NODE_ENV === 'production' || 
                       process.env.REPLIT_DEPLOYMENT === '1' ||
+                      process.env.REPL_SLUG === 'seedportal' || // Explicit check for your deployment
                       (process.env.REPL_ID && process.env.REPL_SLUG && !process.env.REPL_SLUG.includes('workspace'));
   
   console.log('[SessionConfig] Production detection:', {
