@@ -237,9 +237,9 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
     isProduction
   });
 
-  // Browser-compatible cookie configuration for all environments
+  // Production-aware cookie configuration
   const cookieConfig = {
-    secure: false, // Always false for better browser compatibility
+    secure: isProduction, // Use secure cookies in production (HTTPS)
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     domain: undefined, // Let browser determine domain automatically
@@ -247,14 +247,18 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
     sameSite: 'lax' as const, // Most browser-compatible setting
   };
 
-  console.log('[SessionConfig] 🍪 UNIVERSAL BROWSER-COMPATIBLE COOKIE CONFIG');
+  console.log('[SessionConfig] 🍪 PRODUCTION-AWARE COOKIE CONFIG');
   
   // Use 'lax' sameSite for ALL environments - most browser compatible
-  // This works for both same-origin and most cross-origin scenarios
+  // Set secure based on production environment for proper HTTPS handling
   cookieConfig.sameSite = 'lax';
-  cookieConfig.secure = false; // Never use secure for maximum compatibility
+  cookieConfig.secure = isProduction;
   
-  console.log('[SessionConfig] Using lax sameSite for maximum browser compatibility');
+  console.log('[SessionConfig] Cookie configuration:', {
+    secure: cookieConfig.secure,
+    sameSite: cookieConfig.sameSite,
+    isProduction
+  });
 
   const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'dev-only-seed-financial-secret',
