@@ -295,7 +295,7 @@ export default function AdminPricingPage() {
 
   return (
     <PermissionGuard permissions={PERMISSIONS.MANAGE_PRICING} fallback={<div>Access denied</div>}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
         <UniversalNavbar />
         
         <main className="flex-1 p-6">
