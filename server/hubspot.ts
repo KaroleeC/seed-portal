@@ -3061,7 +3061,9 @@ Generated: ${new Date().toLocaleDateString()}`;
       console.log(`🧠 Using smart line item update system`);
       
       // 1. Fetch existing line items
+      console.log(`🔧 Fetching existing line items for quote ${quoteId}`);
       const existingItems = await this.fetchExistingLineItems(quoteId);
+      console.log(`🔧 Found ${existingItems.length} existing line items`);
       
       // 2. Build required services array based on current service configuration
       const requiredServices: Array<{price: number; productId: string}> = [];
@@ -3140,12 +3142,36 @@ Generated: ${new Date().toLocaleDateString()}`;
       }
       
       console.log(`📊 Required services: ${requiredServices.length} items`);
+      requiredServices.forEach((service, i) => {
+        console.log(`  ${i+1}. Product ${service.productId}: $${service.price}`);
+      });
       
       // 3. Analyze what changes are needed
+      console.log(`🔧 Analyzing what changes are needed`);
       const changes = this.analyzeLineItemChanges(existingItems, requiredServices);
+      console.log(`🔧 Analysis complete:`, {
+        toUpdate: changes.toUpdate.length,
+        toDelete: changes.toDelete.length,
+        toAdd: changes.toAdd.length
+      });
       
       // 4. Execute only the necessary changes
-      const updateSuccess = await this.executeLineItemChanges(quoteId, changes);
+      try {
+        console.log(`🔧 About to execute line item changes:`, {
+          toUpdate: changes.toUpdate.length,
+          toDelete: changes.toDelete.length, 
+          toAdd: changes.toAdd.length
+        });
+        const updateSuccess = await this.executeLineItemChanges(quoteId, changes);
+        console.log(`🔧 Line item changes result: ${updateSuccess}`);
+        if (!updateSuccess) {
+          console.error(`❌ executeLineItemChanges returned false!`);
+          return false;
+        }
+      } catch (lineItemError) {
+        console.error(`❌ executeLineItemChanges threw error:`, lineItemError);
+        return false;
+      }
 
       // Update the quote title with correct service combination
       let serviceType = "Services";
