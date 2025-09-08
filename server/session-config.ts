@@ -241,9 +241,9 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
     secure: isProduction, // Use secure cookies in production (HTTPS)
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    domain: undefined, // Let browser determine domain automatically
+    domain: undefined, // Let browser determine domain automatically - important for Replit
     path: '/', // Explicitly set path to root
-    sameSite: 'lax' as const, // Most browser-compatible setting
+    sameSite: 'lax' as const, // Most browser-compatible setting for auth
   };
 
   console.log('[SessionConfig] 🍪 PRODUCTION-AWARE COOKIE CONFIG');

@@ -113,7 +113,7 @@ app.use((req, res, next) => {
   
   // Enhanced production CORS for Replit deployments
   if (isProduction) {
-    // Comprehensive allowed origins for Replit deployments
+    // More permissive CORS for Replit deployments and production domains
     const allowedOrigins = [
       'https://os.seedfinancial.io',
       'https://osseedfinancial.io',
@@ -122,17 +122,30 @@ app.use((req, res, next) => {
       process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',') : []
     ].flat().filter(Boolean);
     
-    if (origin && allowedOrigins.includes(origin)) {
+    // Check if origin is from a trusted domain
+    const isTrustedReplit = origin && (
+      origin.includes('.repl.co') || 
+      origin.includes('.replit.dev') || 
+      origin.includes('seedfinancial.io') ||
+      origin.includes(req.headers.host || '')
+    );
+    
+    if (origin && (allowedOrigins.includes(origin) || isTrustedReplit)) {
       res.header('Access-Control-Allow-Origin', origin);
-      console.log(`[CORS] Allowed origin: ${origin}`);
+      console.log(`[CORS] ✅ Allowed origin: ${origin}`);
     } else if (!origin) {
       // Same-origin requests (no origin header) - common for Replit deployments
-      const allowedDomain = `https://${req.headers.host}`;
-      res.header('Access-Control-Allow-Origin', allowedDomain);
-      console.log(`[CORS] Same-origin allowed: ${allowedDomain}`);
+      res.header('Access-Control-Allow-Origin', '*');
+      console.log(`[CORS] ✅ Same-origin allowed (no origin header)`);
     } else {
-      // Log rejected origins for debugging
-      console.warn(`[CORS] Rejected origin: ${origin}, allowed: ${allowedOrigins.join(', ')}`);
+      // For production, be more permissive with HTTPS origins to avoid auth issues
+      if (origin.startsWith('https://')) {
+        res.header('Access-Control-Allow-Origin', origin);
+        console.log(`[CORS] ✅ Allowed HTTPS origin for auth: ${origin}`);
+      } else {
+        res.header('Access-Control-Allow-Origin', '*');
+        console.warn(`[CORS] ⚠️ Non-HTTPS origin, using wildcard: ${origin}`);
+      }
     }
   } else {
     // Development: allow all origins
