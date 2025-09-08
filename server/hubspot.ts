@@ -2872,6 +2872,85 @@ Generated: ${new Date().toLocaleDateString()}`;
     return { toUpdate, toDelete, toAdd };
   }
 
+  // Helper method to execute smart line item updates
+  private async executeLineItemChanges(
+    quoteId: string,
+    changes: {
+      toUpdate: Array<{id: string; productId: string; oldPrice: number; newPrice: number}>;
+      toDelete: Array<{id: string; productId: string; name: string}>;
+      toAdd: Array<{price: number; productId: string}>;
+    }
+  ): Promise<boolean> {
+    try {
+      console.log(`🔧 Executing line item changes for quote ${quoteId}`);
+      
+      // 1. Update existing line items with new prices
+      for (const update of changes.toUpdate) {
+        try {
+          console.log(`💰 Updating line item ${update.id}: $${update.oldPrice} → $${update.newPrice}`);
+          
+          await this.makeRequest(`/crm/v3/objects/line_items/${update.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({
+              properties: {
+                price: update.newPrice.toString()
+              }
+            })
+          });
+          
+          console.log(`✅ Successfully updated line item ${update.id}`);
+        } catch (updateError) {
+          console.error(`❌ Failed to update line item ${update.id}:`, updateError);
+          // Continue with other updates even if one fails
+        }
+      }
+      
+      // 2. Delete line items that are no longer needed
+      for (const deletion of changes.toDelete) {
+        try {
+          console.log(`🗑️ Deleting line item: ${deletion.name} (${deletion.id})`);
+          
+          await this.makeRequest(`/crm/v3/objects/line_items/${deletion.id}`, {
+            method: "DELETE"
+          });
+          
+          console.log(`✅ Successfully deleted line item ${deletion.id}`);
+        } catch (deleteError) {
+          console.error(`❌ Failed to delete line item ${deletion.id}:`, deleteError);
+          // Continue with other deletions even if one fails
+        }
+      }
+      
+      // 3. Add new line items for new services
+      for (const addition of changes.toAdd) {
+        try {
+          console.log(`➕ Adding new line item: Product ${addition.productId} at $${addition.price}`);
+          
+          // Use the existing associateProductWithQuote method for consistency
+          await this.associateProductWithQuote(
+            quoteId,
+            addition.productId,
+            addition.price,
+            1, // quantity
+            null // custom name
+          );
+          
+          console.log(`✅ Successfully added line item for product ${addition.productId}`);
+        } catch (addError) {
+          console.error(`❌ Failed to add line item for product ${addition.productId}:`, addError);
+          // Continue with other additions even if one fails
+        }
+      }
+      
+      console.log(`✅ Completed line item changes: ${changes.toUpdate.length} updated, ${changes.toDelete.length} deleted, ${changes.toAdd.length} added`);
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Error executing line item changes:', error);
+      return false;
+    }
+  }
+
   async updateQuote(
     quoteId: string,
     companyName: string,
