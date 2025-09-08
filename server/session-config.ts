@@ -25,7 +25,6 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
         keepAlive: true,
         family: 4,
         enableReadyCheck: true,
-        maxRetriesPerRequest: 3,
       });
         
           // Wait for Redis to be fully ready

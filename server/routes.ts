@@ -1330,7 +1330,8 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
   // Queue HubSpot quote sync (new reliable background system)
   app.post("/api/hubspot/queue-sync", requireAuth, async (req, res) => {
     try {
-      const { quoteId, action = 'create' } = req.body;
+      const { quoteId, action: initialAction = 'create' } = req.body;
+      let action = initialAction;
       
       if (!quoteId) {
         res.status(400).json({ message: "Quote ID is required" });
