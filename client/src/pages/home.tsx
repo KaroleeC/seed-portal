@@ -3003,23 +3003,21 @@ function HomePage() {
                                           <span className="font-medium">${breakdown?.baseFee?.toLocaleString()}</span>
                                         </div>
                                         
-                                        {breakdown?.revenueUpcharge > 0 && (
+                                        {breakdown?.transactionUpcharge > 0 && (
                                           <div className="flex justify-between">
-                                            <span className="text-gray-600">Revenue upcharge ({form.watch('monthlyRevenueRange')}):</span>
-                                            <span className="font-medium">+${breakdown?.revenueUpcharge?.toLocaleString()}</span>
-                                          </div>
-                                        )}
-                                        
-                                        {breakdown?.transactionSurcharge > 0 && (
-                                          <div className="flex justify-between">
-                                            <span className="text-gray-600">Transaction surcharge ({form.watch('monthlyTransactions')}):</span>
-                                            <span className="font-medium">+${breakdown?.transactionSurcharge?.toLocaleString()}</span>
+                                            <span className="text-gray-600">Transaction upcharge ({form.watch('monthlyTransactions')}):</span>
+                                            <span className="font-medium">+${breakdown?.transactionUpcharge?.toLocaleString()}</span>
                                           </div>
                                         )}
                                         
                                         <div className="flex justify-between font-medium">
                                           <span className="text-gray-700">Before multipliers total:</span>
                                           <span className="text-gray-800">${breakdown?.beforeMultipliers?.toLocaleString()}</span>
+                                        </div>
+                                        
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">Revenue multiplier ({breakdown?.revenueMultiplier}x):</span>
+                                          <span className="font-medium">Applied</span>
                                         </div>
                                         
                                         <div className="flex justify-between">
@@ -3033,19 +3031,19 @@ function HomePage() {
                                         </div>
                                       </div>
                                       
-                                      {/* QBO Subscription */}
-                                      {hasQBO && (
-                                        <div className="flex justify-between">
-                                          <span className="text-gray-600">QBO Subscription:</span>
-                                          <span className="font-medium text-blue-600">+$60</span>
-                                        </div>
-                                      )}
-                                      
-                                      {/* Monthly Total */}
+                                      {/* Monthly Total (core fee, discountable) */}
                                       <div className="border-t pt-2 flex justify-between font-semibold">
                                         <span className="text-gray-800">Monthly Total:</span>
                                         <span className="text-green-700">${feeCalculation.bookkeeping.monthlyFee.toLocaleString()}</span>
                                       </div>
+                                      
+                                      {/* QBO Subscription (separate line item, not discounted) */}
+                                      {(feeCalculation as any).qboFee > 0 && (
+                                        <div className="flex justify-between">
+                                          <span className="text-gray-600">QBO Subscription:</span>
+                                          <span className="font-medium text-blue-600">+${(feeCalculation as any).qboFee.toLocaleString()}</span>
+                                        </div>
+                                      )}
                                       
                                       {/* Setup Fee Breakdown */}
                                       {feeCalculation.bookkeeping.setupFee > 0 && (

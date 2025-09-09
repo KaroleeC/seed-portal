@@ -56,6 +56,7 @@ export interface CombinedFeeResult {
   arBreakdown?: any;
   agentOfServiceFee: number;
   agentOfServiceBreakdown?: any;
+  qboFee: number; // QBO subscription as separate line item
 }
 
 // Constants
@@ -118,26 +119,25 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
   // Base fee
   const baseFee = PRICING_CONSTANTS.baseMonthlyFee;
   
-  // Direct upcharges
-  const revenueMultiplier = PRICING_CONSTANTS.revenueMultipliers[data.monthlyRevenueRange as keyof typeof PRICING_CONSTANTS.revenueMultipliers] || 1.0;
-  const revenueUpcharge = Math.round(baseFee * (revenueMultiplier - 1)); // Additional amount from revenue multiplier
-  const transactionSurcharge = PRICING_CONSTANTS.txSurcharge[data.monthlyTransactions as keyof typeof PRICING_CONSTANTS.txSurcharge] || 0;
+  // Upcharges (flat amounts added)
+  const transactionUpcharge = PRICING_CONSTANTS.txSurcharge[data.monthlyTransactions as keyof typeof PRICING_CONSTANTS.txSurcharge] || 0;
   
-  // Before multiplier total
-  const beforeMultipliers = baseFee + revenueUpcharge + transactionSurcharge;
+  // Before multipliers total
+  const beforeMultipliers = baseFee + transactionUpcharge;
   
   // Multipliers
+  const revenueMultiplier = PRICING_CONSTANTS.revenueMultipliers[data.monthlyRevenueRange as keyof typeof PRICING_CONSTANTS.revenueMultipliers] || 1.0;
   const industryData = PRICING_CONSTANTS.industryMultipliers[data.industry as keyof typeof PRICING_CONSTANTS.industryMultipliers] || { monthly: 1, cleanup: 1 };
   const industryMultiplier = industryData.monthly;
   
-  // After multipliers total
-  const afterMultipliers = Math.round(beforeMultipliers * industryMultiplier);
+  // After multipliers total (this is the core monthly fee that gets discounted)
+  const afterMultipliers = Math.round(beforeMultipliers * revenueMultiplier * industryMultiplier);
   
-  // Add QBO subscription if selected (this goes after multipliers)
+  // Monthly fee (excludes QBO - QBO is separate line item)
+  const monthlyFee = afterMultipliers;
+  
+  // QBO subscription (separate line item, not part of discountable monthly fee)
   const qboFee = data.qboSubscription ? 60 : 0;
-  
-  // Final monthly total
-  const monthlyFee = afterMultipliers + qboFee;
   
   // Calculate setup fee: After multipliers total × current month × 0.25
   const currentMonth = new Date().getMonth() + 1; // Get current month (1-12)
@@ -148,25 +148,24 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
     // Base Fee
     baseFee,
     
-    // Direct Upcharges
-    revenueMultiplier,
-    revenueUpcharge,
-    transactionSurcharge,
+    // Upcharges (flat amounts)
+    transactionUpcharge,
     
-    // Before Multiplier Total
+    // Before Multipliers Total
     beforeMultipliers,
     
     // Multipliers
+    revenueMultiplier,
     industryMultiplier,
     
-    // After Multipliers Total
+    // After Multipliers Total (core monthly fee)
     afterMultipliers,
     
-    // Additional fees (not discounts, but additional services)
-    qboFee,
+    // Monthly Total (same as afterMultipliers, but kept for clarity)
+    monthlyTotal: monthlyFee,
     
-    // Final Monthly Total
-    finalMonthlyTotal: monthlyFee,
+    // Separate line items (not part of discountable monthly fee)
+    qboFee,
     
     // Setup fee calculation details
     currentMonth,
@@ -565,7 +564,10 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   let bookkeepingFees = includesMonthlyBookkeeping ? calculateBookkeepingFees(data) : { monthlyFee: 0, setupFee: 0 };
   const taasFees = includesTaas ? calculateTaaSFees(data) : { monthlyFee: 0, setupFee: 0 };
 
-  // Apply 50% discount to monthly bookkeeping when TaaS is added
+  // Extract QBO as separate line item (not part of discountable monthly fee)
+  const qboFee = includesMonthlyBookkeeping && data.qboSubscription ? 60 : 0;
+
+  // Apply 50% discount to monthly bookkeeping when TaaS is added (excludes QBO)
   if (includesMonthlyBookkeeping && includesTaas) {
     const discountedMonthlyFee = roundToNearest25(bookkeepingFees.monthlyFee * 0.50);
     bookkeepingFees = {
@@ -577,7 +579,9 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
         discountApplied: true,
         discountPercentage: 50,
         monthlyFeeBeforeDiscount: bookkeepingFees.monthlyFee,
-        monthlyFeeAfterDiscount: discountedMonthlyFee
+        monthlyFeeAfterDiscount: discountedMonthlyFee,
+        // QBO remains separate and undiscounted
+        qboFee
       }
     };
   }
@@ -623,8 +627,8 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   const agentOfServiceResult = includesAgentOfService ? calculateAgentOfServiceFees(data) : { agentOfServiceFee: 0, breakdown: undefined };
   const { agentOfServiceFee, breakdown: agentOfServiceBreakdown } = agentOfServiceResult;
 
-  // Combined totals - AP/AR Advanced multipliers are already applied to individual fees, not to entire quote
-  let combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee + arFee;
+  // Combined totals - QBO is now added as separate line item
+  let combinedMonthlyFee = bookkeepingFees.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee + arFee + qboFee;
   let combinedSetupFee = bookkeepingFees.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee + agentOfServiceFee;
 
   return {
@@ -651,6 +655,7 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     arFee,
     arBreakdown,
     agentOfServiceFee,
-    agentOfServiceBreakdown
+    agentOfServiceBreakdown,
+    qboFee
   };
 }
