@@ -38,7 +38,6 @@ export const quotes = pgTable("quotes", {
   include1040s: boolean("include_1040s"),
   priorYearsUnfiled: integer("prior_years_unfiled"),
   priorYearFilings: integer("prior_year_filings").array(),
-  alreadyOnSeedBookkeeping: boolean("already_on_seed_bookkeeping"),
   qboSubscription: boolean("qbo_subscription").default(false),
   serviceTier: text("service_tier").default("Automated"), // Automated, Guided, Concierge
   // Bookkeeping-specific information fields (do not impact pricing)

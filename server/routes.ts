@@ -1936,7 +1936,6 @@ export async function registerRoutes(app: Express, sessionRedis?: Redis | null):
           cleanupComplexity: quote.cleanupComplexity || "0",
           internationalFiling: quote.internationalFiling ?? false,
           include1040s: quote.include1040s ?? false,
-          alreadyOnSeedBookkeeping: quote.alreadyOnSeedBookkeeping ?? false,
           cleanupOverride: quote.cleanupOverride ?? false,
           entityType: quote.entityType || "LLC",
           bookkeepingQuality: quote.bookkeepingQuality || "Clean (Seed)"

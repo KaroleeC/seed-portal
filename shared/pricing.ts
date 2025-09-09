@@ -23,7 +23,6 @@ export interface PricingData {
   customNumBusinessOwners?: number | null;
   include1040s?: boolean;
   priorYearsUnfiled?: number;
-  alreadyOnSeedBookkeeping?: boolean;
   qboSubscription?: boolean | null;
   entityType?: string;
   bookkeepingQuality?: string;

@@ -18,7 +18,6 @@ export function usePricingCalculation(data: PricingData): CombinedFeeResult {
     data.numBusinessOwners,
     data.include1040s,
     data.priorYearsUnfiled,
-    data.alreadyOnSeedBookkeeping,
     data.entityType,
     data.bookkeepingQuality,
   ]);

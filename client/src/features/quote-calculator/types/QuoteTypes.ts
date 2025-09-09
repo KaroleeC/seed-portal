@@ -55,7 +55,6 @@ export interface QuoteFormData {
   customNumBusinessOwners?: number;
   include1040s?: boolean;
   priorYearsUnfiled?: number;
-  alreadyOnSeedBookkeeping?: boolean;
 
   // Service Tier
   serviceTier?: 'Automated' | 'Guided' | 'Concierge';

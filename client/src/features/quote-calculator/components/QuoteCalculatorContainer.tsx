@@ -89,7 +89,6 @@ export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> =
       // Additional defaults
       cleanupMonths: 0,
       qboSubscription: false,
-      alreadyOnSeedBookkeeping: false,
     }
   });
 

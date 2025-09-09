@@ -170,7 +170,6 @@ const formSchema = insertQuoteSchema.omit({
   include1040s: z.boolean().optional(),
   priorYearsUnfiled: z.number().min(0, "Cannot be negative").max(5, "Maximum 5 years").optional(),
   priorYearFilings: z.array(z.number()).optional(),
-  alreadyOnSeedBookkeeping: z.boolean().optional(),
   qboSubscription: z.boolean().optional(),
 }).superRefine((data, ctx) => {
   // Enforce minimum initial cleanup months for bookkeeping quotes
@@ -410,7 +409,6 @@ function HomePage() {
       numBusinessOwners: 1,
       include1040s: false,
       priorYearsUnfiled: 0,
-      alreadyOnSeedBookkeeping: false,
       qboSubscription: false,
       serviceTier: "Standard",
       // Agent of Service defaults
@@ -1181,7 +1179,6 @@ function HomePage() {
       include1040s: quote.include1040s ?? false,
       priorYearsUnfiled: quote.priorYearsUnfiled ? Number(quote.priorYearsUnfiled) : 0,
       priorYearFilings: quote.priorYearFilings || [],
-      alreadyOnSeedBookkeeping: quote.alreadyOnSeedBookkeeping ?? false,
       qboSubscription: quote.qboSubscription ?? false,
       // Cleanup periods
       cleanupPeriods: quote.cleanupPeriods || [],
@@ -1297,7 +1294,6 @@ function HomePage() {
       bookkeepingQuality: "Clean (Seed)",
       include1040s: false,
       priorYearsUnfiled: 0,
-      alreadyOnSeedBookkeeping: false,
       serviceTier: "Standard",
       // Reset Agent of Service fields
       serviceAgentOfService: false,
