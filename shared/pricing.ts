@@ -536,11 +536,11 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
   let bookkeepingFees = includesMonthlyBookkeeping ? calculateBookkeepingFees(data) : { monthlyFee: 0, setupFee: 0 };
   const taasFees = includesTaas ? calculateTaaSFees(data) : { monthlyFee: 0, setupFee: 0 };
 
-  // Apply Seed Bookkeeping Package discount (50% off bookkeeping when both monthly services are selected)
-  if (includesMonthlyBookkeeping && includesTaas && data.alreadyOnSeedBookkeeping) {
+  // Apply 50% discount to monthly bookkeeping when TaaS is added
+  if (includesMonthlyBookkeeping && includesTaas) {
     bookkeepingFees = {
       monthlyFee: roundToNearest25(bookkeepingFees.monthlyFee * 0.50),
-      setupFee: bookkeepingFees.setupFee // Setup fee is not discounted
+      setupFee: bookkeepingFees.setupFee // Setup fee uses original (non-discounted) amount
     };
   }
 
