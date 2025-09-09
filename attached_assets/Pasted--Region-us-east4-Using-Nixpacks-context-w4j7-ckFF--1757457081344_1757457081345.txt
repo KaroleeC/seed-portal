@@ -1,0 +1,88 @@
+ 
+[Region: us-east4]
+==============
+Using Nixpacks
+==============
+
+context: w4j7-ckFF
+╔═════════════════════ Nixpacks v1.38.0 ═════════════════════╗
+║ setup      │ nodejs_20                                     ║
+║────────────────────────────────────────────────────────────║
+║ caddy      │ pkgs: caddy                                   ║
+║            │ cmds: caddy fmt --overwrite /assets/Caddyfile ║
+║────────────────────────────────────────────────────────────║
+║ install    │ npm ci                                        ║
+║────────────────────────────────────────────────────────────║
+║ build      │ npm run build                                 ║
+║────────────────────────────────────────────────────────────║
+║ start      │ npm start                                     ║
+╚════════════════════════════════════════════════════════════╝
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+39ms
+
+internal
+load .dockerignore
+0ms
+
+internal
+load build context
+0ms
+
+stage-0
+WORKDIR /app/ cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix
+893ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d
+41s
+36 store paths deleted, 243.63 MiB freed
+
+stage-0
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+156ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+50s
+29 store paths deleted, 247.99 MiB freed
+
+stage-0
+COPY .nixpacks/assets /assets/
+122ms
+
+stage-0
+COPY . /app/.
+3s
+
+stage-0
+RUN  caddy fmt --overwrite /assets/Caddyfile
+394ms
+
+stage-0
+COPY . /app/.
+2s
+
+stage-0
+RUN npm ci
+243ms
+/nix/store/j7dx1n6m5axf9r2bvly580x2ixx546wq-nodejs-20.18.1/bin/node: -max-old-space-size=4096 is not allowed in NODE_OPTIONS
+Dockerfile:26
+-------------------
+24 |     ENV NIXPACKS_PATH=/app/node_modules/.bin:$NIXPACKS_PATH
+25 |     COPY . /app/.
+26 | >>> RUN --mount=type=cache,id=s/03fefff8-cf3b-4d0a-89a3-debd64144d7c-/root/npm,target=/root/.npm npm ci
+27 |
+28 |     # build phase
+-------------------
+ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c npm ci" did not complete successfully: exit code: 9
+Error: Docker build failed
