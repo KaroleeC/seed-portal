@@ -1,0 +1,100 @@
+2025-09-09T21:54:50.227867342Z [inf]  
+2025-09-09T21:55:11.541256079Z [inf]  [35m[Region: us-east4][0m
+2025-09-09T21:55:11.546315011Z [inf]  [35m==============
+2025-09-09T21:55:11.546351021Z [inf]  Using Nixpacks
+2025-09-09T21:55:11.546355062Z [inf]  ==============
+2025-09-09T21:55:11.546358949Z [inf]  [0m
+2025-09-09T21:55:11.546466116Z [inf]  context: 4873-OjV9
+2025-09-09T21:55:11.693597105Z [inf]  ╔═════════════════════ Nixpacks v1.38.0 ═════════════════════╗
+2025-09-09T21:55:11.693630003Z [inf]  ║ setup      │ nodejs-20_x, npm-10_x                         ║
+2025-09-09T21:55:11.693634970Z [inf]  ║────────────────────────────────────────────────────────────║
+2025-09-09T21:55:11.693638933Z [inf]  ║ caddy      │ pkgs: caddy                                   ║
+2025-09-09T21:55:11.693644321Z [inf]  ║            │ cmds: caddy fmt --overwrite /assets/Caddyfile ║
+2025-09-09T21:55:11.693648063Z [inf]  ║────────────────────────────────────────────────────────────║
+2025-09-09T21:55:11.693651704Z [inf]  ║ install    │ npm ci                                        ║
+2025-09-09T21:55:11.693658327Z [inf]  ║────────────────────────────────────────────────────────────║
+2025-09-09T21:55:11.693662110Z [inf]  ║ build      │ npm run build                                 ║
+2025-09-09T21:55:11.693665788Z [inf]  ║────────────────────────────────────────────────────────────║
+2025-09-09T21:55:11.693669483Z [inf]  ║ start      │ npm start                                     ║
+2025-09-09T21:55:11.693675750Z [inf]  ╚════════════════════════════════════════════════════════════╝
+2025-09-09T21:55:14.199314402Z [inf]  [internal] load build definition from Dockerfile
+2025-09-09T21:55:14.199366919Z [inf]  [internal] load build definition from Dockerfile
+2025-09-09T21:55:14.199415674Z [inf]  [internal] load build definition from Dockerfile
+2025-09-09T21:55:14.209600897Z [inf]  [internal] load build definition from Dockerfile
+2025-09-09T21:55:14.211851474Z [inf]  [internal] load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+2025-09-09T21:55:14.295773078Z [inf]  [internal] load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+2025-09-09T21:55:14.296149613Z [inf]  [internal] load .dockerignore
+2025-09-09T21:55:14.296186895Z [inf]  [internal] load .dockerignore
+2025-09-09T21:55:14.296202600Z [inf]  [internal] load .dockerignore
+2025-09-09T21:55:14.307523639Z [inf]  [internal] load .dockerignore
+2025-09-09T21:55:14.314262028Z [inf]  [stage-0 11/15] RUN --mount=type=cache,id=s/03fefff8-cf3b-4d0a-89a3-debd64144d7c-/root/npm,target=/root/.npm npm ci
+2025-09-09T21:55:14.314296641Z [inf]  [stage-0 10/15] COPY . /app/.
+2025-09-09T21:55:14.314307032Z [inf]  [stage-0  9/15] RUN  caddy fmt --overwrite /assets/Caddyfile
+2025-09-09T21:55:14.314313672Z [inf]  [stage-0  1/15] FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+2025-09-09T21:55:14.314321697Z [inf]  [stage-0  3/15] COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix
+2025-09-09T21:55:14.314332857Z [inf]  [stage-0 13/15] RUN --mount=type=cache,id=s/03fefff8-cf3b-4d0a-89a3-debd64144d7c-node_modules/cache,target=/app/node_modules/.cache npm run build
+2025-09-09T21:55:14.314339957Z [inf]  [stage-0 15/15] COPY . /app
+2025-09-09T21:55:14.314346830Z [inf]  [stage-0  4/15] RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d
+2025-09-09T21:55:14.314352757Z [inf]  [stage-0  7/15] COPY .nixpacks/assets /assets/
+2025-09-09T21:55:14.314385879Z [inf]  [internal] load build context
+2025-09-09T21:55:14.314392800Z [inf]  [stage-0  2/15] WORKDIR /app/
+2025-09-09T21:55:14.314398483Z [inf]  [stage-0 12/15] COPY . /app/.
+2025-09-09T21:55:14.314404608Z [inf]  [stage-0 14/15] RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile
+2025-09-09T21:55:14.314412852Z [inf]  [stage-0  6/15] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+2025-09-09T21:55:14.314422314Z [inf]  [stage-0  5/15] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+2025-09-09T21:55:14.314428471Z [inf]  [stage-0  8/15] COPY . /app/.
+2025-09-09T21:55:14.314442178Z [inf]  [internal] load build context
+2025-09-09T21:55:14.314454902Z [inf]  [internal] load build context
+2025-09-09T21:55:14.316403922Z [inf]  [stage-0  1/15] FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+2025-09-09T21:55:14.322570377Z [inf]  [stage-0  1/15] FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+2025-09-09T21:55:20.885162051Z [inf]  [internal] load build context
+2025-09-09T21:55:20.896899356Z [inf]  [stage-0  2/15] WORKDIR /app/
+2025-09-09T21:55:20.896963909Z [inf]  [stage-0  3/15] COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix
+2025-09-09T21:55:20.896984176Z [inf]  [stage-0  4/15] RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d
+2025-09-09T21:55:20.897006449Z [inf]  [stage-0  5/15] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+2025-09-09T21:55:20.952220633Z [inf]  [stage-0  5/15] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+2025-09-09T21:55:20.956397743Z [inf]  [stage-0  6/15] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+2025-09-09T21:55:21.128472505Z [inf]  unpacking 'https://github.com/NixOS/nixpkgs/archive/ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.tar.gz' into the Git cache...
+
+2025-09-09T21:55:47.792729574Z [inf]  unpacking 'https://github.com/railwayapp/nix-npm-overlay/archive/main.tar.gz' into the Git cache...
+
+2025-09-09T21:55:48.078091552Z [inf]  installing 'ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env'
+
+2025-09-09T21:55:48.552235567Z [inf]  error:
+       … while calling the 'derivationStrict' builtin
+         at <nix/derivation-internal.nix>:37:12:
+           36|
+           37|   strict = derivationStrict drvAttrs;
+             |            ^
+           38|
+
+       … while evaluating derivation 'ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env'
+         whose name attribute is located at /nix/store/lwi59jcfwk2lnrakmm1y5vw85hj3n1bi-source/pkgs/stdenv/generic/make-derivation.nix:375:7
+
+       … while evaluating attribute 'passAsFile' of derivation 'ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env'
+         at /nix/store/lwi59jcfwk2lnrakmm1y5vw85hj3n1bi-source/pkgs/build-support/trivial-builders/default.nix:60:9:
+           59|         inherit buildCommand name;
+           60|         passAsFile = [ "buildCommand" ]
+             |         ^
+           61|           ++ (derivationArgs.passAsFile or [ ]);
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: undefined variable 'nodejs-20_x'
+       at /app/.nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix:19:9:
+           18|         '')
+           19|         nodejs-20_x npm-10_x
+             |         ^
+           20|       ];
+
+2025-09-09T21:55:48.962347821Z [err]  [stage-0  6/15] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+2025-09-09T21:55:48.978967295Z [err]  Dockerfile:10
+2025-09-09T21:55:48.979019666Z [err]  -------------------
+2025-09-09T21:55:48.979025393Z [err]  8 |     RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d
+2025-09-09T21:55:48.979031624Z [err]  9 |     COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+2025-09-09T21:55:48.979037703Z [err]  10 | >>> RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+2025-09-09T21:55:48.979042627Z [err]  11 |
+2025-09-09T21:55:48.979048613Z [err]  12 |     COPY .nixpacks/assets /assets/
+2025-09-09T21:55:48.979069477Z [err]  -------------------
+2025-09-09T21:55:48.979074805Z [err]  ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d" did not complete successfully: exit code: 1
+2025-09-09T21:55:48.984621274Z [err]  Error: Docker build failed
