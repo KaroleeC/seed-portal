@@ -115,42 +115,62 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
     return { monthlyFee: 0, setupFee: 0 };
   }
 
+  // Base fee
+  const baseFee = PRICING_CONSTANTS.baseMonthlyFee;
+  
+  // Direct upcharges
   const revenueMultiplier = PRICING_CONSTANTS.revenueMultipliers[data.monthlyRevenueRange as keyof typeof PRICING_CONSTANTS.revenueMultipliers] || 1.0;
-  const txFee = PRICING_CONSTANTS.txSurcharge[data.monthlyTransactions as keyof typeof PRICING_CONSTANTS.txSurcharge] || 0;
+  const revenueUpcharge = Math.round(baseFee * (revenueMultiplier - 1)); // Additional amount from revenue multiplier
+  const transactionSurcharge = PRICING_CONSTANTS.txSurcharge[data.monthlyTransactions as keyof typeof PRICING_CONSTANTS.txSurcharge] || 0;
+  
+  // Before multiplier total
+  const beforeMultipliers = baseFee + revenueUpcharge + transactionSurcharge;
+  
+  // Multipliers
   const industryData = PRICING_CONSTANTS.industryMultipliers[data.industry as keyof typeof PRICING_CONSTANTS.industryMultipliers] || { monthly: 1, cleanup: 1 };
+  const industryMultiplier = industryData.monthly;
   
-  // Intermediate calculations for breakdown
-  const baseMonthlyFee = PRICING_CONSTANTS.baseMonthlyFee;
-  const afterRevenue = Math.round(baseMonthlyFee * revenueMultiplier);
-  const afterTransactions = afterRevenue + txFee;
-  const cleanupBeforeIndustry = Math.round(afterTransactions * industryData.monthly);
+  // After multipliers total
+  const afterMultipliers = Math.round(beforeMultipliers * industryMultiplier);
   
-  // Dynamic calculation: base fee * revenue multiplier + transaction surcharge, then apply industry multiplier
-  const monthlyFeeBeforeQBO = cleanupBeforeIndustry;
+  // Add QBO subscription if selected (this goes after multipliers)
+  const qboFee = data.qboSubscription ? 60 : 0;
   
-  // Add QBO Subscription fee if selected
-  let monthlyFee = monthlyFeeBeforeQBO;
-  if (data.qboSubscription) {
-    monthlyFee += 60;
-  }
+  // Final monthly total
+  const monthlyFee = afterMultipliers + qboFee;
   
-  // Calculate setup fee using new formula: monthly fee before discount * current month * 0.25
+  // Calculate setup fee: After multipliers total × current month × 0.25
   const currentMonth = new Date().getMonth() + 1; // Get current month (1-12)
-  const setupFee = Math.round(monthlyFeeBeforeQBO * currentMonth * 0.25);
+  const setupFee = Math.round(afterMultipliers * currentMonth * 0.25);
   
-  // Create breakdown object for UI display
+  // Create standardized breakdown object for UI display
   const breakdown = {
-    baseMonthlyFee,
+    // Base Fee
+    baseFee,
+    
+    // Direct Upcharges
     revenueMultiplier,
-    afterRevenue,
-    txFee,
-    afterTransactions,
-    industryMultiplier: industryData.monthly,
-    cleanupBeforeIndustry,
-    monthlyFeeBeforeQBO,
-    qboFee: data.qboSubscription ? 60 : 0,
+    revenueUpcharge,
+    transactionSurcharge,
+    
+    // Before Multiplier Total
+    beforeMultipliers,
+    
+    // Multipliers
+    industryMultiplier,
+    
+    // After Multipliers Total
+    afterMultipliers,
+    
+    // Additional fees (not discounts, but additional services)
+    qboFee,
+    
+    // Final Monthly Total
+    finalMonthlyTotal: monthlyFee,
+    
+    // Setup fee calculation details
     currentMonth,
-    setupFeeBeforeDiscount: setupFee
+    setupFeeCalculation: `${afterMultipliers} × ${currentMonth} × 0.25`
   };
   
   return { monthlyFee, setupFee, breakdown };
@@ -237,21 +257,31 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
   // Setup fee: prior years unfiled * $2100 per year
   const setupFee = (data.priorYearsUnfiled || 0) * 2100;
 
-  // Create breakdown object for UI display
+  // Create standardized breakdown object for UI display
   const breakdown = {
-    base,
+    // Base Fee
+    baseFee: base,
+    
+    // Direct Upcharges
     entityUpcharge,
     stateUpcharge,
     intlUpcharge,
     ownerUpcharge,
     bookUpcharge,
     personal1040,
+    
+    // Before Multiplier Total
     beforeMultipliers,
-    industryMult,
-    afterIndustryMult: Math.round(afterIndustryMult),
-    revenueMult,
+    
+    // Multipliers
+    industryMultiplier: industryMult,
+    revenueMultiplier: revenueMult,
+    
+    // After Multipliers Total
     afterMultipliers: Math.round(rawFee),
-    monthlyFee
+    
+    // Final Monthly Total
+    finalMonthlyTotal: monthlyFee
   };
 
   return { monthlyFee, setupFee, breakdown };

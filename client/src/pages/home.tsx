@@ -2999,35 +2999,37 @@ function HomePage() {
                                       {/* Base Calculation */}
                                       <div className="space-y-1 pb-2 border-b border-green-200">
                                         <div className="flex justify-between">
-                                          <span className="text-gray-600">Base monthly fee:</span>
-                                          <span className="font-medium">$150</span>
+                                          <span className="text-gray-600">Base fee:</span>
+                                          <span className="font-medium">${breakdown?.baseFee?.toLocaleString()}</span>
                                         </div>
                                         
-                                        <div className="flex justify-between">
-                                          <span className="text-gray-600">Revenue multiplier ({form.watch('monthlyRevenueRange')}):</span>
-                                          <span className="font-medium">{breakdown?.revenueMultiplier}x</span>
-                                        </div>
-                                        
-                                        <div className="flex justify-between">
-                                          <span className="text-gray-600">After revenue adjustment:</span>
-                                          <span className="font-medium">${breakdown?.afterRevenue.toLocaleString()}</span>
-                                        </div>
-                                        
-                                        {breakdown?.txFee > 0 && (
+                                        {breakdown?.revenueUpcharge > 0 && (
                                           <div className="flex justify-between">
-                                            <span className="text-gray-600">Transaction surcharge ({form.watch('monthlyTransactions')}):</span>
-                                            <span className="font-medium">+${breakdown.txFee.toLocaleString()}</span>
+                                            <span className="text-gray-600">Revenue upcharge ({form.watch('monthlyRevenueRange')}):</span>
+                                            <span className="font-medium">+${breakdown?.revenueUpcharge?.toLocaleString()}</span>
                                           </div>
                                         )}
                                         
+                                        {breakdown?.transactionSurcharge > 0 && (
+                                          <div className="flex justify-between">
+                                            <span className="text-gray-600">Transaction surcharge ({form.watch('monthlyTransactions')}):</span>
+                                            <span className="font-medium">+${breakdown?.transactionSurcharge?.toLocaleString()}</span>
+                                          </div>
+                                        )}
+                                        
+                                        <div className="flex justify-between font-medium">
+                                          <span className="text-gray-700">Before multipliers total:</span>
+                                          <span className="text-gray-800">${breakdown?.beforeMultipliers?.toLocaleString()}</span>
+                                        </div>
+                                        
                                         <div className="flex justify-between">
-                                          <span className="text-gray-600">Industry multiplier ({form.watch('industry')}):</span>
-                                          <span className="font-medium">{breakdown?.industryMultiplier}x</span>
+                                          <span className="text-gray-600">Industry multiplier ({breakdown?.industryMultiplier}x):</span>
+                                          <span className="font-medium">Applied</span>
                                         </div>
                                         
                                         <div className="flex justify-between font-medium">
-                                          <span className="text-gray-700">Base calculation total:</span>
-                                          <span className="text-gray-800">${breakdown?.cleanupBeforeIndustry.toLocaleString()}</span>
+                                          <span className="text-gray-700">After multipliers total:</span>
+                                          <span className="text-gray-800">${breakdown?.afterMultipliers?.toLocaleString()}</span>
                                         </div>
                                       </div>
                                       
@@ -3052,7 +3054,7 @@ function HomePage() {
                                             <div className="flex justify-between text-sm">
                                               <span className="text-gray-600">Setup fee calculation:</span>
                                               <span className="font-medium text-gray-700">
-                                                ${breakdown?.cleanupBeforeIndustry} × {currentMonth} × 0.25
+                                                {breakdown?.setupFeeCalculation || `${breakdown?.afterMultipliers} × ${currentMonth} × 0.25`}
                                               </span>
                                             </div>
                                             <div className="flex justify-between font-semibold">
