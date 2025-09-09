@@ -537,9 +537,18 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
 
   // Apply 50% discount to monthly bookkeeping when TaaS is added
   if (includesMonthlyBookkeeping && includesTaas) {
+    const discountedMonthlyFee = roundToNearest25(bookkeepingFees.monthlyFee * 0.50);
     bookkeepingFees = {
-      monthlyFee: roundToNearest25(bookkeepingFees.monthlyFee * 0.50),
-      setupFee: bookkeepingFees.setupFee // Setup fee uses original (non-discounted) amount
+      monthlyFee: discountedMonthlyFee,
+      setupFee: bookkeepingFees.setupFee, // Setup fee uses original (non-discounted) amount
+      breakdown: {
+        ...bookkeepingFees.breakdown,
+        // Add discount information to breakdown
+        discountApplied: true,
+        discountPercentage: 50,
+        monthlyFeeBeforeDiscount: bookkeepingFees.monthlyFee,
+        monthlyFeeAfterDiscount: discountedMonthlyFee
+      }
     };
   }
 
