@@ -3031,6 +3031,14 @@ function HomePage() {
                                         </div>
                                       </div>
                                       
+                                      {/* Discount Application */}
+                                      {hasDiscount && (
+                                        <div className="flex justify-between text-green-600 font-medium">
+                                          <span>Seed Bookkeeping Package (50% off):</span>
+                                          <span>Applied</span>
+                                        </div>
+                                      )}
+                                      
                                       {/* Monthly Total (core fee, discountable) */}
                                       <div className="border-t pt-2 flex justify-between font-semibold">
                                         <span className="text-gray-800">Monthly Total:</span>
@@ -3063,15 +3071,6 @@ function HomePage() {
                                         </div>
                                       )}
                                       
-                                      {/* Discount Application */}
-                                      {hasDiscount && (
-                                        <div className="mt-3 pt-3 border-t border-green-200">
-                                          <div className="flex justify-between text-green-600 font-medium">
-                                            <span>Seed Bookkeeping Package (50% off):</span>
-                                            <span>Applied</span>
-                                          </div>
-                                        </div>
-                                      )}
                                     </div>
                                   </div>
                                 );
