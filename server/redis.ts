@@ -58,8 +58,9 @@ async function createRedisConnections(): Promise<RedisConfig | null> {
     const queueOptions = {
       enableReadyCheck: true,
       maxRetriesPerRequest: null, // Required for BullMQ
-      connectTimeout: 10000,
-      lazyConnect: true,
+      connectTimeout: 30000, // Match session Redis timeout
+      commandTimeout: 20000, // Add command timeout
+      lazyConnect: false, // Connect immediately like others
       keepAlive: true,
       family: 4, // Force IPv4
       retryStrategy: baseOptions.retryStrategy,

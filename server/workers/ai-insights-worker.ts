@@ -16,6 +16,12 @@ async function initializeWorkerRedis(): Promise<void> {
     workerRedis = new Redis(process.env.REDIS_URL, {
       maxRetriesPerRequest: null, // Required for BullMQ
       retryDelayOnFailover: 100,
+      lazyConnect: false,
+      connectTimeout: 15000, // Match session Redis timeout
+      commandTimeout: 5000,
+      keepAlive: true,
+      family: 4,
+      enableReadyCheck: true,
     });
     
     await workerRedis.ping();
