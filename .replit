@@ -4,7 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["jq", "docker-compose", "docker-client", "docker", "nano", "google-cloud-sdk-gce"]
+packages = ["jq", "docker-compose", "docker-client", "docker", "nano", "google-cloud-sdk-gce", "git-filter-repo"]
 
 [deployment]
 deploymentTarget = "autoscale"

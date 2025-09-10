@@ -1,7 +1,0 @@
-Improve quote accuracy by removing unwanted service items more reliably
-
-Refactor HubSpot line item deletion logic to use product IDs and amount to prevent ghost items.
-
-Replit-Commit-Author: Agent
-Replit-Commit-Session-Id: dabfd4e8-69ea-44be-a76f-f2884ec47bc1
-Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/0eaa0906-91da-425d-a7fb-ee8d092a93fb/dabfd4e8-69ea-44be-a76f-f2884ec47bc1/9pdeVtQ
