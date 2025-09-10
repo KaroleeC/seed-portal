@@ -1,0 +1,44 @@
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:26) {
+  errno: -3007,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'redis.railway.internal'
+}
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND redis.railway.internal
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:26)
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND redis.railway.internal
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:26)
+[SessionConfig] ❌ Redis error during connection: Error: getaddrinfo ENOTFOUND redis.railway.internal
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:26) {
+  errno: -3007,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'redis.railway.internal'
+}
+[SessionConfig] ❌ Redis error during connection: Error: getaddrinfo ENOTFOUND redis.railway.internal
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:26) {
+  errno: -3007,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'redis.railway.internal'
+}
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND redis.railway.internal
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:26)
+[SessionConfig] ❌ Redis error during connection: Error: getaddrinfo ENOTFOUND redis.railway.internal
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:26) {
+  errno: -3007,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'redis.railway.internal'
+}
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND redis.railway.internal
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:26)
+[SessionConfig] ❌ Redis error during connection: Error: getaddrinfo ENOTFOUND redis.railway.internal
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:26) {
+  errno: -3007,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'redis.railway.internal'
+}
+[ioredis] Unhandled error event: Error: getaddrinfo ENOTFOUND redis.railway.internal
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:26)
