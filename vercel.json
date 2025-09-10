@@ -1,7 +1,6 @@
 {
   "version": 2,
   "name": "seed-portal-frontend",
-  "regions": ["iad1", "sfo1"],
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "framework": "vite",
