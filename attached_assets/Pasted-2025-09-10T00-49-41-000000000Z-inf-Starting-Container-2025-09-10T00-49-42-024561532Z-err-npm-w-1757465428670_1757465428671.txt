@@ -1,0 +1,84 @@
+2025-09-10T00:49:41.000000000Z [inf]  Starting Container
+2025-09-10T00:49:42.024561532Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-09-10T00:49:42.024565468Z [inf]  
+2025-09-10T00:49:42.024569556Z [inf]  > rest-express@1.0.0 start
+2025-09-10T00:49:42.024573368Z [inf]  > NODE_ENV=production node dist/index.js
+2025-09-10T00:49:42.024576801Z [inf]  
+2025-09-10T00:49:43.403997933Z [inf]  [Redis] Module loading...
+2025-09-10T00:49:43.404004381Z [inf]  [Storage] Initializing storage...
+2025-09-10T00:49:43.404009466Z [inf]  [Storage] REDIS_URL: Set
+2025-09-10T00:49:43.404013876Z [inf]  Using in-memory session storage (development only)
+2025-09-10T00:49:43.404018401Z [inf]  [Storage] Checking for Redis availability...
+2025-09-10T00:49:43.404022800Z [inf]  [Redis] About to create connections...
+2025-09-10T00:49:43.404027171Z [inf]  [createRedisConnections] Starting...
+2025-09-10T00:49:43.404031984Z [inf]  [createRedisConnections] REDIS_URL: Found
+2025-09-10T00:49:43.404036334Z [inf]  [createRedisConnections] Creating Redis clients...
+2025-09-10T00:49:43.408310611Z [inf]  [createRedisConnections] Waiting for Redis connections to be ready...
+2025-09-10T00:49:43.420790209Z [inf]  [Box] Box client not initialized - Box features will be disabled
+2025-09-10T00:49:43.420796340Z [err]  Airtable configuration missing - data enhancement will use AI only
+2025-09-10T00:49:43.428078239Z [inf]  [Server] ===== SERVER STARTUP BEGIN =====
+2025-09-10T00:49:43.428083674Z [inf]  [Server] Applying session middleware...
+2025-09-10T00:49:43.428088964Z [inf]  [Server] Initializing session configuration with enhanced Redis handling...
+2025-09-10T00:49:43.428110836Z [inf]  [SessionConfig] Creating session configuration...
+2025-09-10T00:49:43.428116245Z [inf]  [SessionConfig] Attempting Redis connection with REDIS_URL: SET
+2025-09-10T00:49:43.428122084Z [inf]  [SessionConfig] Waiting for Redis to be ready...
+2025-09-10T00:49:43.437959014Z [inf]  Sentry DSN not provided, error tracking disabled
+2025-09-10T00:49:43.512605770Z [inf]  [SessionConfig] ✅ Redis ready event received
+2025-09-10T00:49:43.512609801Z [inf]  [SessionConfig] ✅ Redis ping result: PONG
+2025-09-10T00:49:43.512613799Z [inf]  [SessionConfig] ✅ Redis session store created successfully
+2025-09-10T00:49:43.512617670Z [inf]  [SessionConfig] Store constructor name: RedisStore
+2025-09-10T00:49:43.512621455Z [inf]  [SessionConfig] Store type check: true
+2025-09-10T00:49:43.512625726Z [inf]  [SessionStore] 🔍 SET operation: { sid: 'test-sessi...', sessionKeys: [ 'test' ], hasPassport: false }
+2025-09-10T00:49:43.512629404Z [inf]  [SessionStore] 🔍 SET result: { sid: 'test-sessi...', error: undefined, success: true }
+2025-09-10T00:49:43.512633259Z [inf]  [SessionConfig] ✅ Redis store test successful
+2025-09-10T00:49:43.512637020Z [inf]  [SessionStore] 🔍 DESTROY operation: { sid: 'test-sessi...' }
+2025-09-10T00:49:43.512640923Z [inf]  [SessionConfig] Final session store type: RedisStore
+2025-09-10T00:49:43.512644808Z [inf]  [SessionConfig] Production detection: {
+2025-09-10T00:49:43.512648321Z [inf]    NODE_ENV: 'production',
+2025-09-10T00:49:43.512652202Z [inf]    REPLIT_DEPLOYMENT: 'NOT SET',
+2025-09-10T00:49:43.512656677Z [inf]    REPL_ID: 'NOT SET',
+2025-09-10T00:49:43.512660724Z [inf]    REPL_SLUG: 'NOT SET',
+2025-09-10T00:49:43.512664497Z [inf]    PORT: '5000',
+2025-09-10T00:49:43.512668511Z [inf]    isProduction: true
+2025-09-10T00:49:43.512672082Z [inf]  }
+2025-09-10T00:49:43.512675918Z [inf]  [SessionConfig] 🍪 PRODUCTION-AWARE COOKIE CONFIG
+2025-09-10T00:49:43.512679997Z [inf]  [SessionConfig] Cookie configuration: { secure: true, sameSite: 'none', isProduction: true }
+2025-09-10T00:49:43.512683866Z [inf]  [SessionConfig] Session configuration completed: {
+2025-09-10T00:49:43.512687481Z [inf]    storeType: 'RedisStore',
+2025-09-10T00:49:43.512691269Z [inf]    isProduction: true,
+2025-09-10T00:49:43.512695146Z [inf]    cookieSecure: true,
+2025-09-10T00:49:43.513477229Z [inf]    cookieSameSite: 'none',
+2025-09-10T00:49:43.513482124Z [inf]    sessionName: 'oseed.sid'
+2025-09-10T00:49:43.513485935Z [inf]  }
+2025-09-10T00:49:43.513490471Z [inf]  [Server] ✅ Session middleware applied successfully
+2025-09-10T00:49:43.513494909Z [inf]  [Server] Session store type: RedisStore
+2025-09-10T00:49:43.513498672Z [inf]  [Server] Production mode: ENABLED
+2025-09-10T00:49:43.513502567Z [inf]  [Server] 🔄 About to call registerRoutes...
+2025-09-10T00:49:43.516941674Z [inf]  🔍 CHECKPOINT A: About to register /api/test/db-quote
+2025-09-10T00:49:43.516951145Z [inf]  🔍 REACHED QUOTE ROUTE REGISTRATION SECTION - Line 768
+2025-09-10T00:49:43.516957936Z [inf]  🔍 About to register POST /api/quotes route...
+2025-09-10T00:49:43.516964329Z [inf]  📋 REGISTERING QUOTE ROUTE: /api/quotes POST
+2025-09-10T00:49:43.520259589Z [inf]  🔧 Initializing Google Admin API...
+2025-09-10T00:49:43.520266228Z [inf]  🔑 Attempting service account authentication...
+2025-09-10T00:49:43.520270500Z [inf]  📋 Parsing service account JSON...
+2025-09-10T00:49:43.520274586Z [inf]  ✅ Service account parsed successfully
+2025-09-10T00:49:43.520278539Z [inf]  📧 Client email: seed-admin-api@seedportal.iam.gserviceaccount.com
+2025-09-10T00:49:43.520282897Z [inf]  🏢 Project ID: seedportal
+2025-09-10T00:49:43.520287033Z [inf]  Testing service account credentials...
+2025-09-10T00:49:43.529027889Z [inf]  [SessionStore] 🔍 DESTROY result: { sid: 'test-sessi...', error: undefined, success: true }
+2025-09-10T00:49:43.611764245Z [inf]  ✅ Google Admin API initialized with service account (domain-wide delegation)
+2025-09-10T00:49:44.541957537Z [inf]  Google Admin API configured successfully
+2025-09-10T00:49:44.541963690Z [inf]  Box configuration missing: BOX_CLIENT_ID, BOX_CLIENT_SECRET, BOX_KEY_ID, BOX_PRIVATE_KEY, BOX_ENTERPRISE_ID - Storage service will be disabled
+2025-09-10T00:49:44.541969717Z [inf]  [Server] ✅ Routes registered successfully
+2025-09-10T00:49:44.745989635Z [inf]  Database connection established
+2025-09-10T00:49:44.750003406Z [inf]  12:49:44 AM [express] serving on port 5000
+2025-09-10T00:49:44.750013141Z [inf]  [Server] 🚀 HTTP server started successfully
+2025-09-10T00:49:44.750020602Z [inf]  [Server] Starting background service initialization...
+2025-09-10T00:49:44.750028244Z [inf]  [Server] Initializing Redis connections...
+2025-09-10T00:49:46.519138723Z [inf]  🚀 Starting initial HubSpot commission sync...
+2025-09-10T00:49:46.527072413Z [inf]  📊 Found 3 existing sales reps. Skipping initial sync.
+2025-09-10T00:49:52.771397935Z [err]  [Server] Redis connection failed, continuing without Redis features: Error: Redis connection timeout
+2025-09-10T00:49:52.771401964Z [err]      at Timeout._onTimeout (file:///app/dist/index.js:18863:62)
+2025-09-10T00:49:52.771406373Z [err]      at listOnTimeout (node:internal/timers:581:17)
+2025-09-10T00:49:52.771413488Z [err]      at process.processTimers (node:internal/timers:519:7)
+2025-09-10T00:49:52.771417519Z [inf]  [Server] ✅ All background services initialized successfully
