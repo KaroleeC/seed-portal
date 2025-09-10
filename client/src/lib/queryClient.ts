@@ -1,5 +1,24 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Get the base API URL from environment variables
+// Falls back to empty string for relative URLs in development
+const getBaseApiUrl = (): string => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (apiUrl) {
+    // Remove trailing slash to avoid double slashes
+    return apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+  }
+  return ''; // Use relative URLs for development
+};
+
+// Helper function to construct full API URLs
+const getApiUrl = (path: string): string => {
+  const baseUrl = getBaseApiUrl();
+  // Ensure path starts with / for proper concatenation
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${normalizedPath}`;
+};
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     // Clone the response so we can read it without consuming the original
@@ -34,18 +53,18 @@ export async function apiRequest(
   // Check if called with new signature: apiRequest(method, url, data)
   if (typeof optionsOrUrl === 'string' && dataOrUndefined !== undefined) {
     method = urlOrMethod;
-    url = optionsOrUrl;
+    url = getApiUrl(optionsOrUrl);
     data = dataOrUndefined;
   }
   // Check if called with new signature: apiRequest(method, url)
   else if (typeof optionsOrUrl === 'string' && dataOrUndefined === undefined) {
     method = urlOrMethod;
-    url = optionsOrUrl;
+    url = getApiUrl(optionsOrUrl);
     data = undefined;
   }
   // Old signature: apiRequest(url, options)
   else {
-    url = urlOrMethod;
+    url = getApiUrl(urlOrMethod);
     const options = optionsOrUrl || {};
     method = options.method || 'GET';
     // Handle both raw data objects and pre-stringified JSON bodies
@@ -131,7 +150,7 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const url = queryKey.join("/") as string;
+    const url = getApiUrl(queryKey.join("/") as string);
     
     // CRITICAL: Log query function request details
     console.log('[QueryFn] 🔍 Query request details:', {

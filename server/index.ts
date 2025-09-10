@@ -92,20 +92,57 @@ app.use((req, res, next) => {
   next();
 });
 
-// Enable CORS for production deployments with credentials
+// Enable CORS for production deployments with credentials - VERCEL COMPATIBLE
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // FIXED: Simplified CORS for production authentication
-  // Always return the requesting origin if present, otherwise use wildcard
-  // This ensures cookies work properly across domains
-  if (origin) {
+  // Define allowed origins for different environments
+  const allowedOrigins = [
+    // Development origins
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5000',
+    
+    // Replit development
+    /^https:\/\/[a-f0-9-]+\.replit\.dev$/,
+    
+    // Vercel deployment patterns
+    /^https:\/\/.*\.vercel\.app$/,
+    /^https:\/\/seed-portal.*\.vercel\.app$/,
+    /^https:\/\/seedfinancial.*\.vercel\.app$/,
+    
+    // Production custom domains (add your actual domains here)
+    'https://portal.seedfinancial.io',
+    'https://app.seedfinancial.io',
+  ];
+  
+  // Check if origin is allowed
+  const isAllowedOrigin = origin && allowedOrigins.some(allowed => {
+    if (typeof allowed === 'string') {
+      return allowed === origin;
+    } else if (allowed instanceof RegExp) {
+      return allowed.test(origin);
+    }
+    return false;
+  });
+  
+  // Set CORS headers based on origin validation
+  if (isAllowedOrigin) {
     res.header('Access-Control-Allow-Origin', origin);
-  } else {
+    res.header('Access-Control-Allow-Credentials', 'true');
+  } else if (!origin) {
+    // For requests without origin header (e.g., Postman, server-to-server)
+    // Use wildcard but without credentials for security
     res.header('Access-Control-Allow-Origin', '*');
+    // Note: Don't set credentials: true with wildcard origin
+  } else {
+    // Log unauthorized origin attempts for security monitoring
+    console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+    // Don't set CORS headers - let the browser block the request
   }
   
-  res.header('Access-Control-Allow-Credentials', 'true');
+  // Always set these headers
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
   res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization,x-csrf-token');
   
