@@ -85,3 +85,6 @@ Thumbs.db
 *.temp
 .tmp/
 .temp/
+
+# Attached assets (may contain secrets)
+attached_assets/
