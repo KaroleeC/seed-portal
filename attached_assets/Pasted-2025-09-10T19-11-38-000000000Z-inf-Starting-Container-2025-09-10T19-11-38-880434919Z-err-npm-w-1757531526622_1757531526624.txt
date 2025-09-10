@@ -1,0 +1,514 @@
+2025-09-10T19:11:38.000000000Z [inf]  Starting Container
+2025-09-10T19:11:38.880434919Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-09-10T19:11:38.880439798Z [inf]  
+2025-09-10T19:11:38.880445354Z [inf]  > rest-express@1.0.0 start
+2025-09-10T19:11:38.880453410Z [inf]  > NODE_ENV=production node dist/index.js
+2025-09-10T19:11:38.880457470Z [inf]  
+2025-09-10T19:11:40.777340794Z [inf]  [Redis] Module loading...
+2025-09-10T19:11:40.777347191Z [inf]  [Storage] Initializing storage...
+2025-09-10T19:11:40.777351915Z [inf]  [Storage] REDIS_URL: Set
+2025-09-10T19:11:40.777356942Z [inf]  Using in-memory session storage (development only)
+2025-09-10T19:11:40.777361270Z [inf]  [Storage] Checking for Redis availability...
+2025-09-10T19:11:40.777365486Z [inf]  [Redis] About to create connections...
+2025-09-10T19:11:40.777369671Z [inf]  [createRedisConnections] Starting...
+2025-09-10T19:11:40.777373577Z [inf]  [createRedisConnections] REDIS_URL: Found
+2025-09-10T19:11:40.777377666Z [inf]  [createRedisConnections] Creating Redis clients...
+2025-09-10T19:11:40.777381858Z [inf]  [createRedisConnections] Waiting for Redis connections to be ready...
+2025-09-10T19:11:40.788701448Z [inf]  [Box] Box client not initialized - Box features will be disabled
+2025-09-10T19:11:40.788710472Z [err]  Airtable configuration missing - data enhancement will use AI only
+2025-09-10T19:11:40.791272040Z [inf]  [Server] ===== SERVER STARTUP BEGIN =====
+2025-09-10T19:11:40.791278035Z [inf]  [Server] Applying session middleware...
+2025-09-10T19:11:40.791282527Z [inf]  [Server] Initializing session configuration with enhanced Redis handling...
+2025-09-10T19:11:40.791286939Z [inf]  [SessionConfig] Creating session configuration...
+2025-09-10T19:11:40.791290875Z [inf]  [SessionConfig] Attempting Redis connection with REDIS_URL: SET
+2025-09-10T19:11:40.791296229Z [inf]  [SessionConfig] Waiting for Redis to be ready...
+2025-09-10T19:11:40.809766027Z [inf]  Sentry DSN not provided, error tracking disabled
+2025-09-10T19:11:40.897641433Z [inf]  [createRedisConnections] All Redis connections ready
+2025-09-10T19:11:40.897647409Z [inf]  [createRedisConnections] All Redis clients created
+2025-09-10T19:11:40.897654827Z [inf]  [Redis] Connections created: Success
+2025-09-10T19:11:40.897661908Z [inf]  [Storage] Redis module imported: {
+2025-09-10T19:11:40.897667599Z [inf]    sessionRedis: Commander {
+2025-09-10T19:11:40.897672839Z [inf]      options: {
+2025-09-10T19:11:40.897678170Z [inf]        username: 'default',
+2025-09-10T19:11:40.897684169Z [inf]        password: 'drzRPcLrWeLemZVqjhTQbRmOwrBSsoel',
+2025-09-10T19:11:40.897689386Z [inf]        host: 'shuttle.proxy.rlwy.net',
+2025-09-10T19:11:40.897695177Z [inf]        port: 11963,
+2025-09-10T19:11:40.897700709Z [inf]        enableReadyCheck: true,
+2025-09-10T19:11:40.897706538Z [inf]        maxRetriesPerRequest: 3,
+2025-09-10T19:11:40.897713637Z [inf]        connectTimeout: 30000,
+2025-09-10T19:11:40.897719576Z [inf]        commandTimeout: 20000,
+2025-09-10T19:11:40.897725024Z [inf]        lazyConnect: false,
+2025-09-10T19:11:40.897731449Z [inf]        keepAlive: true,
+2025-09-10T19:11:40.897737031Z [inf]        family: 4,
+2025-09-10T19:11:40.897743370Z [inf]        retryStrategy: [Function: retryStrategy],
+2025-09-10T19:11:40.897747904Z [inf]        reconnectOnError: [Function: reconnectOnError],
+2025-09-10T19:11:40.897755807Z [inf]        keyPrefix: '',
+2025-09-10T19:11:40.897761634Z [inf]        disconnectTimeout: 2000,
+2025-09-10T19:11:40.897767750Z [inf]        noDelay: true,
+2025-09-10T19:11:40.897773365Z [inf]        connectionName: null,
+2025-09-10T19:11:40.897778666Z [inf]        sentinels: null,
+2025-09-10T19:11:40.898124677Z [inf]      connectionEpoch: 1,
+2025-09-10T19:11:40.898134726Z [inf]      retryAttempts: 0,
+2025-09-10T19:11:40.898138755Z [inf]      connector: StandaloneConnector {
+2025-09-10T19:11:40.898142122Z [inf]      manuallyClosing: false,
+2025-09-10T19:11:40.898148305Z [inf]      _autoPipelines: Map(0) {},
+2025-09-10T19:11:40.898148553Z [inf]        connecting: true,
+2025-09-10T19:11:40.898155175Z [inf]        disconnectTimeout: 2000,
+2025-09-10T19:11:40.898155393Z [inf]      _runningAutoPipelines: Set(0) {},
+2025-09-10T19:11:40.898160930Z [inf]        options: [Object],
+2025-09-10T19:11:40.898162184Z [inf]      _events: [Object: null prototype] {
+2025-09-10T19:11:40.898166540Z [inf]        stream: [Socket]
+2025-09-10T19:11:40.898168504Z [inf]        error: [Array],
+2025-09-10T19:11:40.898174071Z [inf]        [Symbol(kSetKeepAliveInitialDelay)]: 0,
+2025-09-10T19:11:40.898176129Z [inf]      },
+2025-09-10T19:11:40.898176289Z [inf]        connect: [Function (anonymous)]
+2025-09-10T19:11:40.898185407Z [inf]      },
+2025-09-10T19:11:40.898185498Z [inf]        [Symbol(kBytesRead)]: 0,
+2025-09-10T19:11:40.898194149Z [inf]      offlineQueue: Denque {
+2025-09-10T19:11:40.898195751Z [inf]      _eventsCount: 2,
+2025-09-10T19:11:40.898196047Z [inf]        [Symbol(kBytesWritten)]: 0
+2025-09-10T19:11:40.898202420Z [inf]      _maxListeners: undefined,
+2025-09-10T19:11:40.898202717Z [inf]        _capacity: undefined,
+2025-09-10T19:11:40.898209393Z [inf]      commandQueue: Denque {
+2025-09-10T19:11:40.898210835Z [inf]        _head: 0,
+2025-09-10T19:11:40.898215485Z [inf]        _capacity: undefined,
+2025-09-10T19:11:40.898215596Z [inf]      condition: { select: 0, auth: [Array], subscriber: false },
+2025-09-10T19:11:40.898220545Z [inf]        _tail: 0,
+2025-09-10T19:11:40.898222015Z [inf]        _head: 2,
+2025-09-10T19:11:40.898222577Z [inf]      stream: Socket {
+2025-09-10T19:11:40.898229023Z [inf]        connecting: false,
+2025-09-10T19:11:40.898229267Z [inf]        _capacityMask: 3,
+2025-09-10T19:11:40.898230462Z [inf]        _tail: 2,
+2025-09-10T19:11:40.898237454Z [inf]        _hadError: false,
+2025-09-10T19:11:40.898238090Z [inf]        _list: [Array]
+2025-09-10T19:11:40.898239654Z [inf]        _capacityMask: 3,
+2025-09-10T19:11:40.898245868Z [inf]        _parent: null,
+2025-09-10T19:11:40.898248539Z [inf]      },
+2025-09-10T19:11:40.898248692Z [inf]        _list: [Array]
+2025-09-10T19:11:40.898253989Z [inf]        _host: 'shuttle.proxy.rlwy.net',
+2025-09-10T19:11:40.898256624Z [inf]        name: null,
+2025-09-10T19:11:40.898257872Z [inf]      },
+2025-09-10T19:11:40.898264424Z [inf]          _timerArgs: undefined,
+2025-09-10T19:11:40.898265482Z [inf]          _idleNext: null,
+2025-09-10T19:11:40.898272013Z [inf]          _repeat: null,
+2025-09-10T19:11:40.898276486Z [inf]        role: 'master',
+2025-09-10T19:11:40.898281148Z [inf]          _idleStart: 1957,
+2025-09-10T19:11:40.898281570Z [inf]        _eventsCount: 5,
+2025-09-10T19:11:40.898283184Z [inf]          _destroyed: true,
+2025-09-10T19:11:40.898291868Z [inf]        sentinelRetryStrategy: [Function: sentinelRetryStrategy],
+2025-09-10T19:11:40.898293604Z [inf]          _onTimeout: null,
+2025-09-10T19:11:40.898294586Z [inf]        [Symbol(kBufferGen)]: null,
+2025-09-10T19:11:40.898294989Z [inf]        _sockname: null,
+2025-09-10T19:11:40.898307960Z [inf]        sentinelReconnectStrategy: [Function: sentinelReconnectStrategy],
+2025-09-10T19:11:40.898309689Z [inf]        [Symbol(timeout)]: Timeout {
+2025-09-10T19:11:40.898309784Z [inf]        _pendingData: null,
+2025-09-10T19:11:40.898310115Z [inf]        _server: null,
+2025-09-10T19:11:40.898311015Z [inf]        [Symbol(shapeMode)]: true,
+2025-09-10T19:11:40.898319469Z [inf]        _pendingEncoding: '',
+2025-09-10T19:11:40.898322371Z [inf]          _idleTimeout: -1,
+2025-09-10T19:11:40.898323655Z [inf]        [Symbol(kCapture)]: false,
+2025-09-10T19:11:40.898327198Z [inf]        server: null,
+2025-09-10T19:11:40.898328821Z [inf]        timeout: 0,
+2025-09-10T19:11:40.898333968Z [inf]        [Symbol(kSetNoDelay)]: true,
+2025-09-10T19:11:40.898335733Z [inf]          [Symbol(refed)]: false,
+2025-09-10T19:11:40.898340268Z [inf]        natMap: null,
+2025-09-10T19:11:40.898341960Z [inf]        [Symbol(async_id_symbol)]: 2639,
+2025-09-10T19:11:40.898342185Z [inf]        _closeAfterHandlingError: false,
+2025-09-10T19:11:40.898345052Z [inf]        port: 11963,
+2025-09-10T19:11:40.898345271Z [inf]        [Symbol(kSetKeepAlive)]: false,
+2025-09-10T19:11:40.898350619Z [inf]          _idlePrev: null,
+2025-09-10T19:11:40.898353524Z [inf]          [Symbol(kHasPrimitive)]: false,
+2025-09-10T19:11:40.898353551Z [inf]        [Symbol(kHandle)]: [TCP],
+2025-09-10T19:11:40.898353553Z [inf]        _events: [Object],
+2025-09-10T19:11:40.898357366Z [inf]        enableTLSForSentinelMode: false,
+2025-09-10T19:11:40.898359431Z [inf]        enableReadyCheck: true,
+2025-09-10T19:11:40.898362448Z [inf]        sentinelRetryStrategy: [Function: sentinelRetryStrategy],
+2025-09-10T19:11:40.898366064Z [inf]        _readableState: [ReadableState],
+2025-09-10T19:11:40.898367996Z [inf]        [Symbol(lastWriteQueueSize)]: 0,
+2025-09-10T19:11:40.898370923Z [inf]        updateSentinels: true,
+2025-09-10T19:11:40.898371267Z [inf]          [Symbol(asyncId)]: 2647,
+2025-09-10T19:11:40.898371767Z [inf]      },
+2025-09-10T19:11:40.898374024Z [inf]    cacheRedis: Commander {
+2025-09-10T19:11:40.898375153Z [inf]        password: 'drzRPcLrWeLemZVqjhTQbRmOwrBSsoel',
+2025-09-10T19:11:40.898376555Z [inf]        noDelay: true,
+2025-09-10T19:11:40.898377403Z [inf]        reconnectOnError: [Function: reconnectOnError],
+2025-09-10T19:11:40.898378678Z [inf]        _writableState: [WritableState],
+2025-09-10T19:11:40.898385965Z [inf]          [Symbol(triggerId)]: 0
+2025-09-10T19:11:40.898387044Z [inf]        failoverDetector: false,
+2025-09-10T19:11:40.898388957Z [inf]        connectionName: null,
+2025-09-10T19:11:40.898389010Z [inf]      [Symbol(shapeMode)]: false,
+2025-09-10T19:11:40.898389068Z [inf]        allowHalfOpen: false,
+2025-09-10T19:11:40.898389355Z [inf]        host: 'shuttle.proxy.rlwy.net',
+2025-09-10T19:11:40.898390386Z [inf]        keyPrefix: 'cache:',
+2025-09-10T19:11:40.898390461Z [inf]      options: {
+2025-09-10T19:11:40.898398575Z [inf]        lazyConnect: false,
+2025-09-10T19:11:40.898398577Z [inf]        },
+2025-09-10T19:11:40.898401857Z [inf]      [Symbol(kCapture)]: false
+2025-09-10T19:11:40.898403141Z [inf]        db: 0,
+2025-09-10T19:11:40.898403271Z [inf]        disconnectTimeout: 2000,
+2025-09-10T19:11:40.898403313Z [inf]        _maxListeners: undefined,
+2025-09-10T19:11:40.898403358Z [inf]        sentinels: null,
+2025-09-10T19:11:40.898404950Z [inf]        username: 'default',
+2025-09-10T19:11:40.898410924Z [inf]        keepAlive: true,
+2025-09-10T19:11:40.898411947Z [inf]        [Symbol(kBuffer)]: null,
+2025-09-10T19:11:40.898417713Z [inf]    },
+2025-09-10T19:11:40.898418984Z [inf]        name: null,
+2025-09-10T19:11:40.898419179Z [inf]        enableOfflineQueue: true,
+2025-09-10T19:11:40.898423906Z [inf]        family: 4,
+2025-09-10T19:11:40.898425999Z [inf]        [Symbol(kBufferCb)]: null,
+2025-09-10T19:11:40.898428488Z [inf]        role: 'master',
+2025-09-10T19:11:40.898436220Z [inf]        autoResubscribe: true,
+2025-09-10T19:11:40.898439954Z [inf]        retryStrategy: [Function: retryStrategy],
+2025-09-10T19:11:40.898444647Z [inf]        maxRetriesPerRequest: 3,
+2025-09-10T19:11:40.898447121Z [inf]        autoResendUnfulfilledCommands: true,
+2025-09-10T19:11:40.898452956Z [inf]        readOnly: false,
+2025-09-10T19:11:40.898458288Z [inf]        stringNumbers: false,
+2025-09-10T19:11:40.898463218Z [inf]        maxLoadingRetryTime: 10000,
+2025-09-10T19:11:40.898468129Z [inf]        enableAutoPipelining: false,
+2025-09-10T19:11:40.898473995Z [inf]        autoPipeliningIgnoredCommands: [],
+2025-09-10T19:11:40.898475952Z [inf]        connectTimeout: 30000,
+2025-09-10T19:11:40.898480036Z [inf]        sentinelMaxConnections: 10
+2025-09-10T19:11:40.898485994Z [inf]      },
+2025-09-10T19:11:40.898488756Z [inf]        commandTimeout: 20000,
+2025-09-10T19:11:40.898491773Z [inf]      scriptsSet: {},
+2025-09-10T19:11:40.898498338Z [inf]      addedBuiltinSet: Set(0) {},
+2025-09-10T19:11:40.898503457Z [inf]      status: 'ready',
+2025-09-10T19:11:40.898508752Z [inf]      isCluster: false,
+2025-09-10T19:11:40.898513634Z [inf]      reconnectTimeout: null,
+2025-09-10T19:11:40.899982197Z [inf]        sentinelReconnectStrategy: [Function: sentinelReconnectStrategy],
+2025-09-10T19:11:40.899987757Z [inf]        natMap: null,
+2025-09-10T19:11:40.899992738Z [inf]        enableTLSForSentinelMode: false,
+2025-09-10T19:11:40.899998526Z [inf]        updateSentinels: true,
+2025-09-10T19:11:40.900003177Z [inf]        failoverDetector: false,
+2025-09-10T19:11:40.900007978Z [inf]        db: 0,
+2025-09-10T19:11:40.900012236Z [inf]        enableOfflineQueue: true,
+2025-09-10T19:11:40.900016963Z [inf]        autoResubscribe: true,
+2025-09-10T19:11:40.900022022Z [inf]        autoResendUnfulfilledCommands: true,
+2025-09-10T19:11:40.900042486Z [inf]        readOnly: false,
+2025-09-10T19:11:40.900048783Z [inf]        stringNumbers: false,
+2025-09-10T19:11:40.900053584Z [inf]        maxLoadingRetryTime: 10000,
+2025-09-10T19:11:40.900057850Z [inf]        enableAutoPipelining: false,
+2025-09-10T19:11:40.900061962Z [inf]        autoPipeliningIgnoredCommands: [],
+2025-09-10T19:11:40.900066260Z [inf]        sentinelMaxConnections: 10
+2025-09-10T19:11:40.900070350Z [inf]      },
+2025-09-10T19:11:40.900075092Z [inf]      scriptsSet: {},
+2025-09-10T19:11:40.900079624Z [inf]      addedBuiltinSet: Set(0) {},
+2025-09-10T19:11:40.900083616Z [inf]      status: 'ready',
+2025-09-10T19:11:40.900101346Z [inf]      isCluster: false,
+2025-09-10T19:11:40.900106948Z [inf]      reconnectTimeout: null,
+2025-09-10T19:11:40.900112764Z [inf]      connectionEpoch: 1,
+2025-09-10T19:11:40.900118581Z [inf]      retryAttempts: 0,
+2025-09-10T19:11:40.900124828Z [inf]      manuallyClosing: false,
+2025-09-10T19:11:40.900133176Z [inf]      _autoPipelines: Map(0) {},
+2025-09-10T19:11:40.900135418Z [inf]      setAsync: [Function: bound ],
+2025-09-10T19:11:40.900142656Z [inf]      _runningAutoPipelines: Set(0) {},
+2025-09-10T19:11:40.900149706Z [inf]      _events: [Object: null prototype] {
+2025-09-10T19:11:40.900151450Z [inf]      delAsync: [Function: bound ],
+2025-09-10T19:11:40.900156911Z [inf]        error: [Array],
+2025-09-10T19:11:40.900158957Z [inf]      [Symbol(kCapture)]: false
+2025-09-10T19:11:40.900164845Z [inf]      existsAsync: [Function: bound ],
+2025-09-10T19:11:40.900165644Z [inf]        connect: [Function (anonymous)]
+2025-09-10T19:11:40.900170654Z [inf]    },
+2025-09-10T19:11:40.900174716Z [inf]      },
+2025-09-10T19:11:40.900176915Z [inf]        retryStrategy: [Function: retryStrategy],
+2025-09-10T19:11:40.900179648Z [inf]      [Symbol(shapeMode)]: false,
+2025-09-10T19:11:40.900183043Z [inf]    queueRedis: Commander {
+2025-09-10T19:11:40.900185045Z [inf]      _eventsCount: 2,
+2025-09-10T19:11:40.900188912Z [inf]        role: 'master',
+2025-09-10T19:11:40.900193641Z [inf]        reconnectOnError: [Function: reconnectOnError],
+2025-09-10T19:11:40.900195489Z [inf]      _maxListeners: undefined,
+2025-09-10T19:11:40.900199799Z [inf]      options: {
+2025-09-10T19:11:40.900203268Z [inf]        failoverDetector: false,
+2025-09-10T19:11:40.900203295Z [inf]        sentinelRetryStrategy: [Function: sentinelRetryStrategy],
+2025-09-10T19:11:40.900203646Z [inf]        keyPrefix: '',
+2025-09-10T19:11:40.900206140Z [inf]      commandQueue: Denque {
+2025-09-10T19:11:40.900212931Z [inf]        sentinelReconnectStrategy: [Function: sentinelReconnectStrategy],
+2025-09-10T19:11:40.900214093Z [inf]        db: 0,
+2025-09-10T19:11:40.900214975Z [inf]        _capacity: undefined,
+2025-09-10T19:11:40.900216000Z [inf]        disconnectTimeout: 2000,
+2025-09-10T19:11:40.900218752Z [inf]        username: 'default',
+2025-09-10T19:11:40.900227628Z [inf]        natMap: null,
+2025-09-10T19:11:40.900228156Z [inf]        autoResendUnfulfilledCommands: true,
+2025-09-10T19:11:40.900231521Z [inf]        _head: 2,
+2025-09-10T19:11:40.900232467Z [inf]        enableOfflineQueue: true,
+2025-09-10T19:11:40.900233630Z [inf]        password: 'drzRPcLrWeLemZVqjhTQbRmOwrBSsoel',
+2025-09-10T19:11:40.900234506Z [inf]        noDelay: true,
+2025-09-10T19:11:40.900237579Z [inf]        enableTLSForSentinelMode: false,
+2025-09-10T19:11:40.900242580Z [inf]        _tail: 2,
+2025-09-10T19:11:40.900242717Z [inf]        readOnly: false,
+2025-09-10T19:11:40.900245506Z [inf]        autoResubscribe: true,
+2025-09-10T19:11:40.900250870Z [inf]        host: 'shuttle.proxy.rlwy.net',
+2025-09-10T19:11:40.900251313Z [inf]        connectionName: null,
+2025-09-10T19:11:40.900251428Z [inf]        updateSentinels: true,
+2025-09-10T19:11:40.900255509Z [inf]        _capacityMask: 3,
+2025-09-10T19:11:40.900256419Z [inf]        stringNumbers: false,
+2025-09-10T19:11:40.900262991Z [inf]        sentinels: null,
+2025-09-10T19:11:40.900263169Z [inf]      addedBuiltinSet: Set(0) {},
+2025-09-10T19:11:40.900267966Z [inf]        port: 11963,
+2025-09-10T19:11:40.900268618Z [inf]        _list: [Array]
+2025-09-10T19:11:40.900271597Z [inf]        maxLoadingRetryTime: 10000,
+2025-09-10T19:11:40.900273600Z [inf]      commandQueue: Denque {
+2025-09-10T19:11:40.900278584Z [inf]      status: 'ready',
+2025-09-10T19:11:40.900280222Z [inf]        name: null,
+2025-09-10T19:11:40.900280668Z [inf]      },
+2025-09-10T19:11:40.900281089Z [inf]        enableReadyCheck: true,
+2025-09-10T19:11:40.900285983Z [inf]        enableAutoPipelining: false,
+2025-09-10T19:11:40.900287787Z [inf]        _capacity: undefined,
+2025-09-10T19:11:40.900291864Z [inf]        _capacityMask: 3,
+2025-09-10T19:11:40.900292952Z [inf]      offlineQueue: Denque {
+2025-09-10T19:11:40.900294603Z [inf]      isCluster: false,
+2025-09-10T19:11:40.900297979Z [inf]        error: [Array],
+2025-09-10T19:11:40.900299422Z [inf]        autoPipeliningIgnoredCommands: [],
+2025-09-10T19:11:40.900299903Z [inf]        maxRetriesPerRequest: null,
+2025-09-10T19:11:40.900302267Z [inf]        _list: [Array]
+2025-09-10T19:11:40.900304415Z [inf]        _head: 2,
+2025-09-10T19:11:40.900306666Z [inf]        _capacity: undefined,
+2025-09-10T19:11:40.900307045Z [inf]        _list: [Array]
+2025-09-10T19:11:40.900308578Z [inf]      reconnectTimeout: null,
+2025-09-10T19:11:40.900314996Z [inf]        sentinelMaxConnections: 10
+2025-09-10T19:11:40.900317348Z [inf]        connectTimeout: 30000,
+2025-09-10T19:11:40.900317785Z [inf]      },
+2025-09-10T19:11:40.900319631Z [inf]        connect: [Function (anonymous)]
+2025-09-10T19:11:40.900320087Z [inf]        _tail: 2,
+2025-09-10T19:11:40.900320204Z [inf]        _head: 0,
+2025-09-10T19:11:40.900323030Z [inf]      },
+2025-09-10T19:11:40.900325367Z [inf]      connectionEpoch: 1,
+2025-09-10T19:11:40.900325901Z [inf]        _server: null,
+2025-09-10T19:11:40.900328757Z [inf]      },
+2025-09-10T19:11:40.900331733Z [inf]      connector: StandaloneConnector {
+2025-09-10T19:11:40.900331970Z [inf]        _tail: 0,
+2025-09-10T19:11:40.900335885Z [inf]        commandTimeout: 20000,
+2025-09-10T19:11:40.900338932Z [inf]      offlineQueue: Denque {
+2025-09-10T19:11:40.900339532Z [inf]        _closeAfterHandlingError: false,
+2025-09-10T19:11:40.900340278Z [inf]      },
+2025-09-10T19:11:40.900340334Z [inf]      retryAttempts: 0,
+2025-09-10T19:11:40.900341099Z [inf]      },
+2025-09-10T19:11:40.900343522Z [inf]        timeout: 0,
+2025-09-10T19:11:40.900344607Z [inf]      scriptsSet: {},
+2025-09-10T19:11:40.900346416Z [inf]        connecting: true,
+2025-09-10T19:11:40.900346472Z [inf]        _capacityMask: 3,
+2025-09-10T19:11:40.900354701Z [inf]        _capacity: undefined,
+2025-09-10T19:11:40.900357190Z [inf]      condition: { select: 0, auth: [Array], subscriber: false },
+2025-09-10T19:11:40.900358251Z [inf]        _list: [Array]
+2025-09-10T19:11:40.900359036Z [inf]        _events: [Object],
+2025-09-10T19:11:40.900359662Z [inf]        [Symbol(async_id_symbol)]: 2643,
+2025-09-10T19:11:40.900359915Z [inf]        lazyConnect: false,
+2025-09-10T19:11:40.900361157Z [inf]      _eventsCount: 2,
+2025-09-10T19:11:40.900361601Z [inf]        disconnectTimeout: 2000,
+2025-09-10T19:11:40.900363527Z [inf]      manuallyClosing: false,
+2025-09-10T19:11:40.900365779Z [inf]        _eventsCount: 5,
+2025-09-10T19:11:40.900369848Z [inf]      },
+2025-09-10T19:11:40.900370195Z [inf]        _head: 0,
+2025-09-10T19:11:40.900372779Z [inf]      stream: Socket {
+2025-09-10T19:11:40.900374956Z [inf]        keepAlive: true,
+2025-09-10T19:11:40.900375998Z [inf]        options: [Object],
+2025-09-10T19:11:40.900377225Z [inf]        _readableState: [ReadableState],
+2025-09-10T19:11:40.900382531Z [inf]      _maxListeners: undefined,
+2025-09-10T19:11:40.900383179Z [inf]      connector: StandaloneConnector {
+2025-09-10T19:11:40.900384050Z [inf]        _sockname: null,
+2025-09-10T19:11:40.900384538Z [inf]        _tail: 0,
+2025-09-10T19:11:40.900385908Z [inf]      _autoPipelines: Map(0) {},
+2025-09-10T19:11:40.900389655Z [inf]        connecting: false,
+2025-09-10T19:11:40.900389882Z [inf]        _writableState: [WritableState],
+2025-09-10T19:11:40.900391315Z [inf]        stream: [Socket]
+2025-09-10T19:11:40.900394158Z [inf]        family: 4,
+2025-09-10T19:11:40.900395705Z [inf]        connecting: true,
+2025-09-10T19:11:40.900397917Z [inf]        _capacityMask: 3,
+2025-09-10T19:11:40.900399559Z [inf]        _pendingData: null,
+2025-09-10T19:11:40.900399877Z [inf]      _runningAutoPipelines: Set(0) {},
+2025-09-10T19:11:40.900400019Z [inf]        allowHalfOpen: false,
+2025-09-10T19:11:40.900403216Z [inf]        _hadError: false,
+2025-09-10T19:11:40.900406128Z [inf]        disconnectTimeout: 2000,
+2025-09-10T19:11:40.900409146Z [inf]        _pendingEncoding: '',
+2025-09-10T19:11:40.900410468Z [inf]        _maxListeners: undefined,
+2025-09-10T19:11:40.900412736Z [inf]      _events: [Object: null prototype] {
+2025-09-10T19:11:40.900413797Z [inf]        _parent: null,
+2025-09-10T19:11:40.900415914Z [inf]        options: [Object],
+2025-09-10T19:11:40.900418744Z [inf]        server: null,
+2025-09-10T19:11:40.900422278Z [inf]        stream: [Socket]
+2025-09-10T19:11:40.900424261Z [inf]        _host: 'shuttle.proxy.rlwy.net',
+2025-09-10T19:11:40.900427081Z [inf]      },
+2025-09-10T19:11:40.900431487Z [inf]      condition: { select: 0, auth: [Array], subscriber: false },
+2025-09-10T19:11:40.900436325Z [inf]      stream: Socket {
+2025-09-10T19:11:40.900440301Z [inf]        connecting: false,
+2025-09-10T19:11:40.900444376Z [inf]        _hadError: false,
+2025-09-10T19:11:40.900448162Z [inf]        _parent: null,
+2025-09-10T19:11:40.900452173Z [inf]        _host: 'shuttle.proxy.rlwy.net',
+2025-09-10T19:11:40.900456438Z [inf]        _closeAfterHandlingError: false,
+2025-09-10T19:11:40.900460705Z [inf]        _events: [Object],
+2025-09-10T19:11:40.900465675Z [inf]        _readableState: [ReadableState],
+2025-09-10T19:11:40.900469472Z [inf]        _writableState: [WritableState],
+2025-09-10T19:11:40.900473707Z [inf]        allowHalfOpen: false,
+2025-09-10T19:11:40.900478111Z [inf]        _maxListeners: undefined,
+2025-09-10T19:11:40.900482194Z [inf]        _eventsCount: 5,
+2025-09-10T19:11:40.900486139Z [inf]        _sockname: null,
+2025-09-10T19:11:40.900490418Z [inf]        _pendingData: null,
+2025-09-10T19:11:40.900494768Z [inf]        _pendingEncoding: '',
+2025-09-10T19:11:40.900498712Z [inf]        server: null,
+2025-09-10T19:11:40.900503798Z [inf]        _server: null,
+2025-09-10T19:11:40.900507579Z [inf]        timeout: 0,
+2025-09-10T19:11:40.900511508Z [inf]        [Symbol(async_id_symbol)]: 2641,
+2025-09-10T19:11:40.900517199Z [inf]        [Symbol(kHandle)]: [TCP],
+2025-09-10T19:11:40.900521279Z [inf]        [Symbol(lastWriteQueueSize)]: 0,
+2025-09-10T19:11:40.900524937Z [inf]        [Symbol(timeout)]: Timeout {
+2025-09-10T19:11:40.900528677Z [inf]          _idleTimeout: -1,
+2025-09-10T19:11:40.900532488Z [inf]          _idlePrev: null,
+2025-09-10T19:11:40.900536181Z [inf]          _idleNext: null,
+2025-09-10T19:11:40.900540994Z [inf]          _idleStart: 1958,
+2025-09-10T19:11:40.900544615Z [inf]          _onTimeout: null,
+2025-09-10T19:11:40.900548318Z [inf]          _timerArgs: undefined,
+2025-09-10T19:11:40.900552701Z [inf]          _repeat: null,
+2025-09-10T19:11:40.900556600Z [inf]          _destroyed: true,
+2025-09-10T19:11:40.900560636Z [inf]          [Symbol(refed)]: false,
+2025-09-10T19:11:40.900564299Z [inf]          [Symbol(kHasPrimitive)]: false,
+2025-09-10T19:11:40.900568089Z [inf]          [Symbol(asyncId)]: 2648,
+2025-09-10T19:11:40.900572757Z [inf]          [Symbol(triggerId)]: 0
+2025-09-10T19:11:40.900576439Z [inf]        },
+2025-09-10T19:11:40.900580733Z [inf]        [Symbol(kBuffer)]: null,
+2025-09-10T19:11:40.900585889Z [inf]        [Symbol(kBufferCb)]: null,
+2025-09-10T19:11:40.900589856Z [inf]        [Symbol(kBufferGen)]: null,
+2025-09-10T19:11:40.900593718Z [inf]        [Symbol(shapeMode)]: true,
+2025-09-10T19:11:40.900597774Z [inf]        [Symbol(kCapture)]: false,
+2025-09-10T19:11:40.900601755Z [inf]        [Symbol(kSetNoDelay)]: true,
+2025-09-10T19:11:40.900607952Z [inf]        [Symbol(kSetKeepAlive)]: false,
+2025-09-10T19:11:40.900612070Z [inf]        [Symbol(kHandle)]: [TCP],
+2025-09-10T19:11:40.900616659Z [inf]        [Symbol(kSetKeepAliveInitialDelay)]: 0,
+2025-09-10T19:11:40.900622131Z [inf]        [Symbol(kBytesRead)]: 0,
+2025-09-10T19:11:40.900627593Z [inf]        [Symbol(lastWriteQueueSize)]: 0,
+2025-09-10T19:11:40.900631541Z [inf]        [Symbol(kBytesWritten)]: 0
+2025-09-10T19:11:40.900639147Z [inf]      },
+2025-09-10T19:11:40.900640955Z [inf]        [Symbol(timeout)]: Timeout {
+2025-09-10T19:11:40.900645752Z [inf]      getAsync: [Function: bound ],
+2025-09-10T19:11:40.900651786Z [inf]          _idleTimeout: -1,
+2025-09-10T19:11:40.900658623Z [inf]          _idlePrev: null,
+2025-09-10T19:11:40.900665059Z [inf]          _idleNext: null,
+2025-09-10T19:11:40.900671496Z [inf]          _idleStart: 1958,
+2025-09-10T19:11:40.900679059Z [inf]          _onTimeout: null,
+2025-09-10T19:11:40.900685398Z [inf]          _timerArgs: undefined,
+2025-09-10T19:11:40.900828458Z [inf]          _repeat: null,
+2025-09-10T19:11:40.900842056Z [inf]          _destroyed: true,
+2025-09-10T19:11:40.900851011Z [inf]          [Symbol(refed)]: false,
+2025-09-10T19:11:40.900861150Z [inf]          [Symbol(kHasPrimitive)]: false,
+2025-09-10T19:11:40.900869773Z [inf]          [Symbol(asyncId)]: 2649,
+2025-09-10T19:11:40.900877824Z [inf]          [Symbol(triggerId)]: 0
+2025-09-10T19:11:40.900885268Z [inf]        },
+2025-09-10T19:11:40.900892156Z [inf]        [Symbol(kBuffer)]: null,
+2025-09-10T19:11:40.900898986Z [inf]        [Symbol(kBufferCb)]: null,
+2025-09-10T19:11:40.900907560Z [inf]        [Symbol(kBufferGen)]: null,
+2025-09-10T19:11:40.900915101Z [inf]        [Symbol(shapeMode)]: true,
+2025-09-10T19:11:40.900923975Z [inf]        [Symbol(kCapture)]: false,
+2025-09-10T19:11:40.900931967Z [inf]        [Symbol(kSetNoDelay)]: true,
+2025-09-10T19:11:40.900938400Z [inf]        [Symbol(kSetKeepAlive)]: false,
+2025-09-10T19:11:40.900945136Z [inf]        [Symbol(kSetKeepAliveInitialDelay)]: 0,
+2025-09-10T19:11:40.900951422Z [inf]        [Symbol(kBytesRead)]: 0,
+2025-09-10T19:11:40.900958324Z [inf]        [Symbol(kBytesWritten)]: 0
+2025-09-10T19:11:40.900964581Z [inf]      },
+2025-09-10T19:11:40.902116885Z [inf]      [Symbol(shapeMode)]: false,
+2025-09-10T19:11:40.902123533Z [inf]      [Symbol(kCapture)]: false
+2025-09-10T19:11:40.902128327Z [inf]    }
+2025-09-10T19:11:40.902159877Z [inf]  }
+2025-09-10T19:11:40.902164683Z [inf]  [Storage] Redis sessionRedis available: Yes
+2025-09-10T19:11:40.902169260Z [inf]  [Storage] Using Redis session client from redis module
+2025-09-10T19:11:40.902173833Z [err]  [Storage] Failed to initialize Redis session store: Error: Dynamic require of "connect-redis" is not supported
+2025-09-10T19:11:40.902178350Z [err]      at file:///app/dist/index.js:7:9
+2025-09-10T19:11:40.902183156Z [err]      at DatabaseStorage.init (file:///app/dist/index.js:1329:35)
+2025-09-10T19:11:40.902187618Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-09-10T19:11:40.902191851Z [inf]  [Jobs] Initializing workspace sync job system...
+2025-09-10T19:11:40.902196299Z [err]  [Jobs] Failed to initialize job system: TypeError: redis2.duplicate is not a function
+2025-09-10T19:11:40.902200575Z [err]      at initializeJobSystem (file:///app/dist/index.js:11983:29)
+2025-09-10T19:11:40.902205187Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-09-10T19:11:40.902209466Z [inf]  [SessionConfig] ✅ Redis ready event received
+2025-09-10T19:11:40.902213437Z [inf]  [SessionConfig] ✅ Redis ping result: PONG
+2025-09-10T19:11:40.902217325Z [inf]  [SessionConfig] ✅ Redis session store created successfully
+2025-09-10T19:11:40.902221993Z [inf]  [SessionConfig] Store constructor name: RedisStore
+2025-09-10T19:11:40.902226566Z [inf]  [SessionConfig] Store type check: true
+2025-09-10T19:11:40.902230764Z [inf]  [SessionStore] 🔍 SET operation: { sid: 'test-sessi...', sessionKeys: [ 'test' ], hasPassport: false }
+2025-09-10T19:11:40.902234752Z [inf]  [SessionStore] 🔍 SET result: { sid: 'test-sessi...', error: undefined, success: true }
+2025-09-10T19:11:40.902238727Z [inf]  [SessionConfig] ✅ Redis store test successful
+2025-09-10T19:11:40.902242764Z [inf]  [SessionStore] 🔍 DESTROY operation: { sid: 'test-sessi...' }
+2025-09-10T19:11:40.902246769Z [inf]  [SessionConfig] Final session store type: RedisStore
+2025-09-10T19:11:40.902251522Z [inf]  [SessionConfig] Production detection: {
+2025-09-10T19:11:40.902256067Z [inf]    NODE_ENV: 'production',
+2025-09-10T19:11:40.902260122Z [inf]    REPLIT_DEPLOYMENT: 'NOT SET',
+2025-09-10T19:11:40.902264268Z [inf]    REPL_ID: 'NOT SET',
+2025-09-10T19:11:40.902270365Z [inf]    REPL_SLUG: 'NOT SET',
+2025-09-10T19:11:40.902275221Z [inf]    PORT: '5000',
+2025-09-10T19:11:40.902280139Z [inf]    isProduction: true
+2025-09-10T19:11:40.902284840Z [inf]  }
+2025-09-10T19:11:40.902289324Z [inf]  [SessionConfig] 🍪 PRODUCTION-AWARE COOKIE CONFIG
+2025-09-10T19:11:40.902294222Z [inf]  [SessionConfig] Cookie configuration: { secure: true, sameSite: 'none', isProduction: true }
+2025-09-10T19:11:40.902298521Z [inf]  [SessionConfig] Session configuration completed: {
+2025-09-10T19:11:40.902302813Z [inf]    storeType: 'RedisStore',
+2025-09-10T19:11:40.902307142Z [inf]    isProduction: true,
+2025-09-10T19:11:40.902311236Z [inf]    cookieSecure: true,
+2025-09-10T19:11:40.902315755Z [inf]    cookieSameSite: 'none',
+2025-09-10T19:11:40.902320755Z [inf]    sessionName: 'oseed.sid'
+2025-09-10T19:11:40.902325690Z [inf]  }
+2025-09-10T19:11:40.902330873Z [inf]  [Server] ✅ Session middleware applied successfully
+2025-09-10T19:11:40.902335003Z [inf]  [Server] Session store type: RedisStore
+2025-09-10T19:11:40.902340009Z [inf]  [Server] Production mode: ENABLED
+2025-09-10T19:11:40.902345115Z [inf]  [Server] 🔄 About to call registerRoutes...
+2025-09-10T19:11:40.902350585Z [inf]  🔍 CHECKPOINT A: About to register /api/test/db-quote
+2025-09-10T19:11:40.902355584Z [inf]  🔍 REACHED QUOTE ROUTE REGISTRATION SECTION - Line 768
+2025-09-10T19:11:40.902360082Z [inf]  🔍 About to register POST /api/quotes route...
+2025-09-10T19:11:40.902365297Z [inf]  📋 REGISTERING QUOTE ROUTE: /api/quotes POST
+2025-09-10T19:11:40.902370100Z [inf]  🔧 Initializing Google Admin API...
+2025-09-10T19:11:40.902374763Z [inf]  🔑 Attempting service account authentication...
+2025-09-10T19:11:40.902379045Z [inf]  📋 Parsing service account JSON...
+2025-09-10T19:11:40.902383750Z [inf]  ✅ Service account parsed successfully
+2025-09-10T19:11:40.902388701Z [inf]  📧 Client email: seed-admin-api@seedportal.iam.gserviceaccount.com
+2025-09-10T19:11:40.902393487Z [inf]  🏢 Project ID: seedportal
+2025-09-10T19:11:40.902398712Z [inf]  Testing service account credentials...
+2025-09-10T19:11:40.902403549Z [inf]  [SessionStore] 🔍 DESTROY result: { sid: 'test-sessi...', error: undefined, success: true }
+2025-09-10T19:11:40.955938830Z [inf]  ✅ Google Admin API initialized with service account (domain-wide delegation)
+2025-09-10T19:11:41.894188384Z [inf]  Google Admin API configured successfully
+2025-09-10T19:11:41.894197301Z [inf]  Box configuration missing: BOX_CLIENT_ID, BOX_CLIENT_SECRET, BOX_KEY_ID, BOX_PRIVATE_KEY, BOX_ENTERPRISE_ID - Storage service will be disabled
+2025-09-10T19:11:41.894204526Z [inf]  [Server] ✅ Routes registered successfully
+2025-09-10T19:11:42.099461305Z [inf]  Database connection established
+2025-09-10T19:11:42.122719734Z [inf]  7:11:42 PM [express] serving on port 5000
+2025-09-10T19:11:42.122724806Z [inf]  [Server] 🚀 HTTP server started successfully
+2025-09-10T19:11:42.122730116Z [inf]  [Server] Starting background service initialization...
+2025-09-10T19:11:42.122736238Z [inf]  [Server] Initializing Redis connections...
+2025-09-10T19:11:42.122740884Z [inf]  [Server] Redis connections established
+2025-09-10T19:11:42.122745307Z [inf]  [Server] Initializing BullMQ queue system...
+2025-09-10T19:11:42.203439912Z [inf]  [Queue] ✅ Redis connection established for queues
+2025-09-10T19:11:42.203445724Z [inf]  [Queue] ✅ BullMQ queues initialized
+2025-09-10T19:11:42.203450187Z [inf]  [Server] Queue initialized, starting workers...
+2025-09-10T19:11:42.257390752Z [inf]  [Worker] ✅ Redis connection established for worker
+2025-09-10T19:11:42.257394915Z [inf]  [Worker] 🚀 AI Insights worker started successfully
+2025-09-10T19:11:42.257399187Z [inf]  [Server] Initializing HubSpot background jobs...
+2025-09-10T19:11:42.261011214Z [inf]  [Server] Initializing HubSpot quote sync queue...
+2025-09-10T19:11:42.261021132Z [inf]  Initializing HubSpot quote sync queue...
+2025-09-10T19:11:42.265156366Z [inf]  ✅ HubSpot quote sync queue initialized successfully
+2025-09-10T19:11:42.265163456Z [inf]  ✅ HubSpot background job queue initialized
+2025-09-10T19:11:42.265169538Z [inf]  ✅ HubSpot sync worker started successfully
+2025-09-10T19:11:42.301075142Z [inf]  ✅ Recurring HubSpot sync jobs scheduled
+2025-09-10T19:11:42.301083974Z [inf]  [Server] HubSpot background jobs initialized successfully
+2025-09-10T19:11:42.301092248Z [inf]  [Server] Initializing cache pre-warming...
+2025-09-10T19:11:42.301098462Z [inf]  ✅ Cache pre-warming queue initialized
+2025-09-10T19:11:42.301104272Z [inf]  ✅ Worker Redis connection established for cache pre-warming
+2025-09-10T19:11:42.304470004Z [inf]  ✅ Cache pre-warming worker initialized
+2025-09-10T19:11:42.307513451Z [inf]  ✅ Scheduled nightly cache pre-warming
+2025-09-10T19:11:42.307520110Z [inf]  [Server] Initializing CDN and asset optimization...
+2025-09-10T19:11:42.307525986Z [inf]  [CDN] Initializing CDN service...
+2025-09-10T19:11:42.307530012Z [inf]  [CDN] Assets directory not found, skipping manifest build
+2025-09-10T19:11:42.307535757Z [inf]  [CDN] Asset manifest built with 0 assets
+2025-09-10T19:11:42.307539868Z [inf]  [CDN] Setting up CDN middleware...
+2025-09-10T19:11:42.307544897Z [inf]  [CDN] CDN middleware configured successfully
+2025-09-10T19:11:42.307548917Z [inf]  [Server] CDN and asset optimization initialized successfully
+2025-09-10T19:11:42.307552566Z [inf]  [Server] BullMQ workers and cache pre-warming started successfully
+2025-09-10T19:11:42.307556547Z [inf]  [Server] ✅ All background services initialized successfully
+2025-09-10T19:11:43.901389588Z [inf]  🚀 Starting initial HubSpot commission sync...
+2025-09-10T19:11:43.901405713Z [inf]  📊 Found 3 existing sales reps. Skipping initial sync.
+2025-09-10T19:11:47.340970366Z [err]  [Worker] Worker error: Error: Command timed out
+2025-09-10T19:11:47.340978073Z [err]      at Timeout._onTimeout (/app/node_modules/ioredis/built/Command.js:192:33)
+2025-09-10T19:11:47.340983413Z [err]      at listOnTimeout (node:internal/timers:581:17)
+2025-09-10T19:11:47.340991613Z [err]      at process.processTimers (node:internal/timers:519:7)
+2025-09-10T19:11:52.441878988Z [err]  [Worker] Worker error: Error: Command timed out
+2025-09-10T19:11:52.441884825Z [err]      at Timeout._onTimeout (/app/node_modules/ioredis/built/Command.js:192:33)
+2025-09-10T19:11:52.441888982Z [err]      at listOnTimeout (node:internal/timers:581:17)
+2025-09-10T19:11:52.441893541Z [err]      at process.processTimers (node:internal/timers:519:7)
+2025-09-10T19:11:57.546081418Z [err]  [Worker] Worker error: Error: Command timed out
+2025-09-10T19:11:57.546087776Z [err]      at Timeout._onTimeout (/app/node_modules/ioredis/built/Command.js:192:33)
+2025-09-10T19:11:57.546092391Z [err]      at listOnTimeout (node:internal/timers:581:17)
+2025-09-10T19:11:57.546096519Z [err]      at process.processTimers (node:internal/timers:519:7)
