@@ -175,36 +175,37 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
         return; // Skip other Redis-dependent services
       }
 
-      // Initialize BullMQ queue and start workers
-      console.log('[Server] Initializing BullMQ queue system...');
-      const { initializeQueue } = await import('./queue');
-      await initializeQueue();
-      console.log('[Server] Queue initialized, starting workers...');
+      // DISABLED: BullMQ queue system (causing Redis timeout issues)
+      // console.log('[Server] Initializing BullMQ queue system...');
+      // const { initializeQueue } = await import('./queue');
+      // await initializeQueue();
+      // console.log('[Server] Queue initialized, starting workers...');
 
-      const { startAIInsightsWorker } = await import('./workers/ai-insights-worker');
-      const worker = await startAIInsightsWorker();
+      // DISABLED: AI Insights Worker (causing Redis timeout issues)
+      // const { startAIInsightsWorker } = await import('./workers/ai-insights-worker');
+      // const worker = await startAIInsightsWorker();
 
-      // Initialize HubSpot background jobs
-      console.log('[Server] Initializing HubSpot background jobs...');
-      const { initializeHubSpotQueue: initializeHubSpotQueueOld, scheduleRecurringSync } = await import('./hubspot-background-jobs.js');
-      const { startHubSpotSyncWorker } = await import('./workers/hubspot-sync-worker.js');
-      
-      // Initialize new HubSpot quote sync queue
-      console.log('[Server] Initializing HubSpot quote sync queue...');
-      const { initializeHubSpotQueue } = await import('./jobs/hubspot-queue-manager.js');
-      await initializeHubSpotQueue();
-      await initializeHubSpotQueueOld();
-      const hubspotWorker = await startHubSpotSyncWorker();
-      await scheduleRecurringSync();
-      console.log('[Server] HubSpot background jobs initialized successfully');
+      // DISABLED: HubSpot background jobs (causing Redis timeout issues)
+      // console.log('[Server] Initializing HubSpot background jobs...');
+      // const { initializeHubSpotQueue: initializeHubSpotQueueOld, scheduleRecurringSync } = await import('./hubspot-background-jobs.js');
+      // const { startHubSpotSyncWorker } = await import('./workers/hubspot-sync-worker.js');
+      // 
+      // // Initialize new HubSpot quote sync queue
+      // console.log('[Server] Initializing HubSpot quote sync queue...');
+      // const { initializeHubSpotQueue } = await import('./jobs/hubspot-queue-manager.js');
+      // await initializeHubSpotQueue();
+      // await initializeHubSpotQueueOld();
+      // const hubspotWorker = await startHubSpotSyncWorker();
+      // await scheduleRecurringSync();
+      // console.log('[Server] HubSpot background jobs initialized successfully');
 
-      // Initialize cache pre-warming
-      console.log('[Server] Initializing cache pre-warming...');
-      const { initializePreWarmQueue, scheduleNightlyPreWarm } = await import('./cache-prewarming.js');
-      const { initializePreWarmWorker } = await import('./workers/cache-prewarming-worker.js');
-      await initializePreWarmQueue();
-      await initializePreWarmWorker();
-      await scheduleNightlyPreWarm();
+      // DISABLED: Cache pre-warming (causing Redis timeout issues)
+      // console.log('[Server] Initializing cache pre-warming...');
+      // const { initializePreWarmQueue, scheduleNightlyPreWarm } = await import('./cache-prewarming.js');
+      // const { initializePreWarmWorker } = await import('./workers/cache-prewarming-worker.js');
+      // await initializePreWarmQueue();
+      // await initializePreWarmWorker();
+      // await scheduleNightlyPreWarm();
 
       // Initialize CDN and asset optimization
       console.log('[Server] Initializing CDN and asset optimization...');
