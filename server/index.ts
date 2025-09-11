@@ -113,6 +113,7 @@ app.use((req, res, next) => {
     /^https:\/\/seedfinancial.*\.vercel\.app$/,
     
     // Production custom domains (add your actual domains here)
+    'https://seed-os-seven.vercel.app',
     'https://portal.seedfinancial.io',
     'https://app.seedfinancial.io',
   ];
