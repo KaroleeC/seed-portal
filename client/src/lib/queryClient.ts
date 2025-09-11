@@ -5,14 +5,6 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 const getBaseApiUrl = (): string => {
   const apiUrl = import.meta.env.VITE_API_URL;
   
-  // DEBUG: Log what we actually have
-  console.log('🔍 [API URL DEBUG]', {
-    VITE_API_URL: apiUrl,
-    type: typeof apiUrl,
-    hasValue: !!apiUrl,
-    allEnvVars: import.meta.env
-  });
-  
   if (apiUrl) {
     // Remove trailing slash to avoid double slashes
     return apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
