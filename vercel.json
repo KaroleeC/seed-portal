@@ -16,6 +16,7 @@
   "build": {
     "env": {
       "NODE_ENV": "production",
+      "REPL_ID": "",
       "VITE_API_URL": "$VITE_API_URL",
       "VITE_GOOGLE_CLIENT_ID": "$VITE_GOOGLE_CLIENT_ID",
       "VITE_HUBSPOT_CLIENT_ID": "$VITE_HUBSPOT_CLIENT_ID",
