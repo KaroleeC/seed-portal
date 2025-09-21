@@ -8,8 +8,34 @@ import { logger } from './logger';
 import { boxService } from './box-integration';
 import { msaGenerator } from './msa-generator';
 import { requireAuth } from './auth';
+import { sendOk, sendError } from './utils/responses';
+import { doesHubSpotQuoteExist } from './hubspot';
 
 const router = express.Router();
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  try { return JSON.stringify(err); } catch { return String(err); }
+}
+
+// Helper to verify HubSpot quote existence for an array of quotes with hubspotQuoteId
+async function verifyHubSpotQuotes(
+  items: Array<{ id: number; hubspotQuoteId?: string | null }>
+): Promise<Array<{ id: number; hubspotQuoteId: string | null; existsInHubSpot: boolean }>> {
+  return await Promise.all(
+    items.map(async ({ id, hubspotQuoteId }) => {
+      let existsInHubSpot = false;
+      if (hubspotQuoteId) {
+        try {
+          existsInHubSpot = await doesHubSpotQuoteExist(String(hubspotQuoteId));
+        } catch {
+          existsInHubSpot = false;
+        }
+      }
+      return { id, hubspotQuoteId: hubspotQuoteId || null, existsInHubSpot };
+    })
+  );
+}
 
 /**
  * Generate MSA and create Box folder for quote
@@ -20,7 +46,7 @@ router.post('/quotes/:id/generate-documents', requireAuth, async (req, res) => {
     const quote = await storage.getQuote(quoteId);
 
     if (!quote) {
-      return res.status(404).json({ error: 'Quote not found' });
+      return sendError(res, 'NOT_FOUND', 'Quote not found', 404);
     }
 
     logger.info('[Quote] Generating documents for quote', { quoteId, client: quote.companyName });
@@ -55,8 +81,8 @@ router.post('/quotes/:id/generate-documents', requireAuth, async (req, res) => {
       selectedServices,
       contactEmail: quote.contactEmail,
       industry: quote.industry || '',
-      monthlyFee: quote.monthlyFee,
-      setupFee: quote.setupFee
+      monthlyFee: Number(quote.monthlyFee) || 0,
+      setupFee: Number(quote.setupFee) || 0
     };
 
     const msaBuffer = await msaGenerator.generateMSA(msaData);
@@ -76,20 +102,30 @@ router.post('/quotes/:id/generate-documents', requireAuth, async (req, res) => {
     );
 
     // Update quote with Box information
-    await storage.updateQuote(quoteId, {
+    await storage.updateQuote({
+      id: quoteId,
       boxFolderId: boxResult.folderId,
       boxFolderUrl: boxResult.webUrl,
       msaFileId: msaUploadResult.fileId,
       msaFileUrl: msaUploadResult.webUrl
-    });
+    } as any);
 
-    res.json({
-      success: true,
-      boxFolder: boxResult,
-      msaDocument: msaUploadResult,
-      sowDocuments: sowResults,
-      documentsGenerated: selectedServices.length + 1 // MSA + SOWs
-    });
+    return sendOk(
+      res,
+      {
+        boxFolder: boxResult,
+        msaDocument: msaUploadResult,
+        sowDocuments: sowResults,
+        documentsGenerated: selectedServices.length + 1
+      },
+      undefined,
+      {
+        boxFolder: boxResult,
+        msaDocument: msaUploadResult,
+        sowDocuments: sowResults,
+        documentsGenerated: selectedServices.length + 1
+      }
+    );
 
     logger.info('[Quote] Documents generated successfully', {
       quoteId,
@@ -98,11 +134,8 @@ router.post('/quotes/:id/generate-documents', requireAuth, async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('[Quote] Error generating documents', error);
-    res.status(500).json({
-      error: 'Failed to generate documents',
-      message: error.message
-    });
+    logger.error('[Quote] Error generating documents', { error: getErrorMessage(error) });
+    return sendError(res, 'GENERATE_DOCS_FAILED', 'Failed to generate documents', 500, { error: 'Failed to generate documents', message: getErrorMessage(error) });
   }
 });
 
@@ -115,7 +148,7 @@ router.post('/quotes/:id/sync-hubspot', requireAuth, async (req, res) => {
     const quote = await storage.getQuote(quoteId);
 
     if (!quote) {
-      return res.status(404).json({ error: 'Quote not found' });
+      return sendError(res, 'NOT_FOUND', 'Quote not found', 404);
     }
 
     // Prepare enhanced data for HubSpot sync
@@ -144,25 +177,28 @@ router.post('/quotes/:id/sync-hubspot', requireAuth, async (req, res) => {
       monthly_fee: quote.monthlyFee,
       setup_fee: quote.setupFee,
       // Box integration
-      box_folder_url: quote.boxFolderUrl,
-      msa_document_url: quote.msaFileUrl
+      box_folder_url: (quote as any).boxFolderUrl,
+      msa_document_url: (quote as any).msaFileUrl
     };
 
     // Import HubSpot service
     const { hubSpotService } = await import('./hubspot');
     
     if (!hubSpotService) {
-      return res.status(500).json({ error: 'HubSpot service not available' });
+      return sendError(res, 'HUBSPOT_NOT_CONFIGURED', 'HubSpot service not available', 500);
     }
 
     // First, verify the contact exists in HubSpot
     const contactVerification = await hubSpotService.verifyContactByEmail(quote.contactEmail);
     
     if (!contactVerification.verified || !contactVerification.contact) {
-      return res.status(404).json({ 
-        error: 'Contact not found in HubSpot',
-        message: 'Cannot sync quote data - contact must exist in HubSpot first'
-      });
+      return sendError(
+        res,
+        'NOT_FOUND',
+        'Contact not found in HubSpot',
+        404,
+        { error: 'Contact not found in HubSpot', message: 'Cannot sync quote data - contact must exist in HubSpot first' }
+      );
     }
 
     const contactId = contactVerification.contact.id;
@@ -174,7 +210,7 @@ router.post('/quotes/:id/sync-hubspot', requireAuth, async (req, res) => {
     // Basic contact fields - 2-way sync
     if (quote.contactFirstName) contactProperties.firstname = quote.contactFirstName;
     if (quote.contactLastName) contactProperties.lastname = quote.contactLastName;
-    if (quote.contactPhone) contactProperties.phone = quote.contactPhone;
+    if ((quote as any).contactPhone) contactProperties.phone = (quote as any).contactPhone;
     
     // Business fields for contacts
     if (quote.industry) contactProperties.industry = quote.industry;
@@ -224,7 +260,7 @@ router.post('/quotes/:id/sync-hubspot', requireAuth, async (req, res) => {
         syncResults.company = true;
         logger.info('[Quote] Company sync completed', { companyName: quote.companyName });
       } catch (error) {
-        logger.error('[Quote] Company sync failed', { error: error.message });
+        logger.error('[Quote] Company sync failed', { error: getErrorMessage(error) });
         syncResults.company = false;
       }
     }
@@ -235,23 +271,32 @@ router.post('/quotes/:id/sync-hubspot', requireAuth, async (req, res) => {
       syncResults 
     });
 
-    res.json({
-      success: true,
-      message: 'Quote synced to HubSpot with enhanced data',
-      syncedFields: Object.keys(hubspotData),
-      syncResults: {
-        contact: syncResults.contact,
-        company: syncResults.company,
-        contactPropertiesUpdated: Object.keys(contactProperties).length
+    return sendOk(
+      res,
+      {
+        message: 'Quote synced to HubSpot with enhanced data',
+        syncedFields: Object.keys(hubspotData),
+        syncResults: {
+          contact: syncResults.contact,
+          company: syncResults.company,
+          contactPropertiesUpdated: Object.keys(contactProperties).length
+        }
+      },
+      undefined,
+      {
+        message: 'Quote synced to HubSpot with enhanced data',
+        syncedFields: Object.keys(hubspotData),
+        syncResults: {
+          contact: syncResults.contact,
+          company: syncResults.company,
+          contactPropertiesUpdated: Object.keys(contactProperties).length
+        }
       }
-    });
+    );
 
   } catch (error) {
-    logger.error('[Quote] Error syncing to HubSpot', error);
-    res.status(500).json({
-      error: 'Failed to sync to HubSpot',
-      message: error.message
-    });
+    logger.error('[Quote] Error syncing to HubSpot', { error: getErrorMessage(error) });
+    return sendError(res, 'SYNC_HUBSPOT_FAILED', 'Failed to sync to HubSpot', 500, { error: 'Failed to sync to HubSpot', message: getErrorMessage(error) });
   }
 });
 
@@ -263,7 +308,7 @@ router.get('/address/autocomplete', requireAuth, async (req, res) => {
     const { query } = req.query;
 
     if (!query || typeof query !== 'string') {
-      return res.status(400).json({ error: 'Query parameter is required' });
+      return sendError(res, 'INVALID_REQUEST', 'Query parameter is required', 400);
     }
 
     // Use Nominatim API for address autocomplete (as already used in the project)
@@ -298,12 +343,50 @@ router.get('/address/autocomplete', requireAuth, async (req, res) => {
       }
     }));
 
-    res.json({ predictions: suggestions });
+    return sendOk(res, { predictions: suggestions }, undefined, { predictions: suggestions });
 
   } catch (error) {
-    logger.error('[Address] Error fetching autocomplete suggestions', error);
-    res.status(500).json({ error: 'Failed to fetch address suggestions' });
+    logger.error('[Address] Error fetching autocomplete suggestions', { error: getErrorMessage(error) });
+    return sendError(res, 'ADDRESS_AUTOCOMPLETE_FAILED', 'Failed to fetch address suggestions', 500, { error: 'Failed to fetch address suggestions' });
   }
 });
+
+/**
+ * Check for existing quotes for an email and verify HubSpot quote existence
+ */
+router.post('/quotes/check-existing', requireAuth, async (req, res) => {
+  try {
+    const { email } = (req.body || {}) as { email?: string };
+    if (!email || typeof email !== 'string') {
+      return sendError(res, 'INVALID_REQUEST', 'Email is required', 400);
+    }
+
+    const allQuotes = await storage.getQuotesByEmail(email);
+    // Filter to quotes owned by the current user to preserve existing behavior
+    const userId = (req as any).user?.id;
+    const quotes = userId ? allQuotes.filter(q => (q as any).ownerId === userId) : allQuotes;
+
+    const input = quotes.map((q: any) => ({ id: q.id, hubspotQuoteId: q.hubspotQuoteId || null }));
+    const verified = await verifyHubSpotQuotes(input);
+
+    const payload = {
+      hasExistingQuotes: quotes.length > 0,
+      quotes,
+      verified,
+    };
+
+    return sendOk(res, payload, undefined, { hasExistingQuotes: payload.hasExistingQuotes, quotes });
+  } catch (error) {
+    logger.error('[Quote] Error checking existing quotes', { error: getErrorMessage(error) });
+    return sendError(res, 'CHECK_EXISTING_QUOTES_FAILED', 'Failed to check existing quotes', 500);
+  }
+});
+
+/**
+ * Verify HubSpot quote existence for a list of quote IDs
+ * Body: { quoteIds: number[] }
+ * Response: { results: Array<{ id: number; hubspotQuoteId?: string | null; existsInHubSpot: boolean }> }
+ */
+// Removed redundant POST /quotes/verify-hubspot. Use /quotes/check-existing instead.
 
 export default router;

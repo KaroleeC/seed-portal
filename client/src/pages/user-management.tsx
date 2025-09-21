@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -79,28 +79,14 @@ export default function UserManagement() {
   const { data: usersData, isLoading, refetch } = useQuery({
     queryKey: ['/api/admin/users'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/users', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!response.ok) throw new Error('Failed to fetch users');
-      return response.json();
+      return await apiRequest<{ users: User[] }>('GET', '/api/admin/users');
     },
   });
 
   // Create user mutation
   const createUserMutation = useMutation({
     mutationFn: async (userData: CreateUserForm) => {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData)
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create user');
-      }
-      return response.json();
+      return await apiRequest<any>('POST', '/api/admin/users', userData);
     },
     onSuccess: (data) => {
       toast({ 
@@ -124,13 +110,7 @@ export default function UserManagement() {
   // Update user role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: number; role: string }) => {
-      const response = await fetch(`/api/admin/users/${userId}/role`, { 
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role })
-      });
-      if (!response.ok) throw new Error('Failed to update user role');
-      return response.json();
+      return await apiRequest<any>('PATCH', `/api/admin/users/${userId}/role`, { role });
     },
     onSuccess: () => {
       toast({ title: "Success", description: "User role updated successfully" });
@@ -148,13 +128,7 @@ export default function UserManagement() {
   // Update user default dashboard mutation
   const updateDashboardMutation = useMutation({
     mutationFn: async ({ userId, defaultDashboard }: { userId: number; defaultDashboard: string }) => {
-      const response = await fetch(`/api/admin/users/${userId}/dashboard`, { 
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ defaultDashboard })
-      });
-      if (!response.ok) throw new Error('Failed to update default dashboard');
-      return response.json();
+      return await apiRequest<any>('PATCH', `/api/admin/users/${userId}/dashboard`, { defaultDashboard });
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Default dashboard updated successfully" });
@@ -172,15 +146,7 @@ export default function UserManagement() {
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: number) => {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to delete user');
-      }
-      return response.json();
+      return await apiRequest<any>('DELETE', `/api/admin/users/${userId}`);
     },
     onSuccess: (data) => {
       toast({ 
@@ -203,15 +169,7 @@ export default function UserManagement() {
   // Reset password mutation
   const resetPasswordMutation = useMutation({
     mutationFn: async (userId: number) => {
-      const response = await fetch(`/api/admin/users/${userId}/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to reset password');
-      }
-      return response.json();
+      return await apiRequest<any>('POST', `/api/admin/users/${userId}/reset-password`, {});
     },
     onSuccess: (data) => {
       toast({ 
@@ -244,15 +202,7 @@ export default function UserManagement() {
 
   const impersonateMutation = useMutation({
     mutationFn: async (userId: number) => {
-      const response = await fetch(`/api/admin/impersonate/${userId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to impersonate user');
-      }
-      return response.json();
+      return await apiRequest<any>('POST', `/api/admin/impersonate/${userId}`, {});
     },
     onSuccess: (data) => {
       toast({

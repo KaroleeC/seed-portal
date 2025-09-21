@@ -62,12 +62,13 @@ export async function safeDbQuery<T>(
  * Check if database connection is healthy
  */
 export async function isDbHealthy(): Promise<boolean> {
+  if (!pool) return false;
   try {
     const client = await pool.connect();
     await client.query('SELECT 1');
     client.release();
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Database health check failed:', error);
     return false;
   }
@@ -80,6 +81,7 @@ export async function withTransaction<T>(
   operation: (client: any) => Promise<T>,
   operationName: string = 'transaction'
 ): Promise<T> {
+  if (!pool) throw new Error('Database not initialized');
   const client = await pool.connect();
   
   try {
@@ -87,7 +89,7 @@ export async function withTransaction<T>(
     const result = await operation(client);
     await client.query('COMMIT');
     return result;
-  } catch (error) {
+  } catch (error: any) {
     await client.query('ROLLBACK');
     console.error(`Transaction '${operationName}' failed:`, error);
     throw error;

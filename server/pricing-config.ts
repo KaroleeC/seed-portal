@@ -73,9 +73,10 @@ class PricingConfigService {
     if (cached) return cached;
 
     // Try Redis cache
-    const redis = await getRedisAsync();
-    if (redis) {
-      const redisData = await redis.get(cacheKey);
+    const redisConnections = await getRedisAsync();
+    const cacheRedis = redisConnections?.cacheRedis;
+    if (cacheRedis) {
+      const redisData = await cacheRedis.get(cacheKey);
       if (redisData) {
         cached = JSON.parse(redisData);
         this.cache.set(cacheKey, cached);
@@ -93,8 +94,8 @@ class PricingConfigService {
 
     // Cache the result
     this.cache.set(cacheKey, result);
-    if (redis) {
-      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
+    if (cacheRedis) {
+      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
     }
 
     return result;
@@ -107,9 +108,10 @@ class PricingConfigService {
     let cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const redis = await getRedisAsync();
-    if (redis) {
-      const redisData = await redis.get(cacheKey);
+    const redisConnections = await getRedisAsync();
+    const cacheRedis = redisConnections?.cacheRedis;
+    if (cacheRedis) {
+      const redisData = await cacheRedis.get(cacheKey);
       if (redisData) {
         cached = JSON.parse(redisData);
         this.cache.set(cacheKey, cached);
@@ -125,8 +127,8 @@ class PricingConfigService {
     });
 
     this.cache.set(cacheKey, result);
-    if (redis) {
-      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
+    if (cacheRedis) {
+      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
     }
 
     return result;
@@ -139,9 +141,10 @@ class PricingConfigService {
     let cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const redis = await getRedisAsync();
-    if (redis) {
-      const redisData = await redis.get(cacheKey);
+    const redisConnections = await getRedisAsync();
+    const cacheRedis = redisConnections?.cacheRedis;
+    if (cacheRedis) {
+      const redisData = await cacheRedis.get(cacheKey);
       if (redisData) {
         cached = JSON.parse(redisData);
         this.cache.set(cacheKey, cached);
@@ -157,8 +160,8 @@ class PricingConfigService {
     });
 
     this.cache.set(cacheKey, result);
-    if (redis) {
-      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
+    if (cacheRedis) {
+      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
     }
 
     return result;
@@ -171,9 +174,10 @@ class PricingConfigService {
     let cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const redis = await getRedisAsync();
-    if (redis) {
-      const redisData = await redis.get(cacheKey);
+    const redisConnections = await getRedisAsync();
+    const cacheRedis = redisConnections?.cacheRedis;
+    if (cacheRedis) {
+      const redisData = await cacheRedis.get(cacheKey);
       if (redisData) {
         cached = JSON.parse(redisData);
         this.cache.set(cacheKey, cached);
@@ -192,8 +196,8 @@ class PricingConfigService {
     });
 
     this.cache.set(cacheKey, result);
-    if (redis) {
-      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
+    if (cacheRedis) {
+      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
     }
 
     return result;
@@ -206,9 +210,10 @@ class PricingConfigService {
     let cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const redis = await getRedisAsync();
-    if (redis) {
-      const redisData = await redis.get(cacheKey);
+    const redisConnections = await getRedisAsync();
+    const cacheRedis = redisConnections?.cacheRedis;
+    if (cacheRedis) {
+      const redisData = await cacheRedis.get(cacheKey);
       if (redisData) {
         cached = JSON.parse(redisData);
         this.cache.set(cacheKey, cached);
@@ -227,8 +232,8 @@ class PricingConfigService {
     });
 
     this.cache.set(cacheKey, result);
-    if (redis) {
-      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
+    if (cacheRedis) {
+      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
     }
 
     return result;
@@ -241,9 +246,10 @@ class PricingConfigService {
     let cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const redis = await getRedisAsync();
-    if (redis) {
-      const redisData = await redis.get(cacheKey);
+    const redisConnections = await getRedisAsync();
+    const cacheRedis = redisConnections?.cacheRedis;
+    if (cacheRedis) {
+      const redisData = await cacheRedis.get(cacheKey);
       if (redisData) {
         cached = JSON.parse(redisData);
         this.cache.set(cacheKey, cached);
@@ -268,8 +274,8 @@ class PricingConfigService {
     });
 
     this.cache.set(cacheKey, result);
-    if (redis) {
-      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
+    if (cacheRedis) {
+      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
     }
 
     return result;
@@ -279,11 +285,12 @@ class PricingConfigService {
   async clearCache(): Promise<void> {
     this.cache.clear();
     
-    const redis = await getRedisAsync();
-    if (redis) {
+    const redisConnections = await getRedisAsync();
+    const cacheRedis = redisConnections?.cacheRedis;
+    if (cacheRedis) {
       const keys = Object.values(CACHE_KEYS);
       if (keys.length > 0) {
-        await redis.del(...keys);
+        await cacheRedis.del(...keys);
       }
     }
   }

@@ -86,21 +86,18 @@ export async function preWarmHighPriorityContacts(): Promise<void> {
       return;
     }
 
-    // Get top 50 contacts by recent activity
-    const topContacts = await hubSpotService.getContacts({
-      limit: 50,
-      properties: ['email', 'company', 'lastmodifieddate', 'lifecyclestage'],
-      sorts: [{ propertyName: 'lastmodifieddate', direction: 'DESCENDING' }]
-    });
+    // Get top contacts by recent activity using searchContacts and take first 50
+    const contacts = await hubSpotService.searchContacts('', undefined);
+    const topContacts = (contacts || []).slice(0, 50);
 
-    if (!topContacts?.results) {
+    if (!topContacts.length) {
       preWarmLogger.warn('No contacts found for pre-warming');
       return;
     }
 
     let preWarmedCount = 0;
     
-    for (const contact of topContacts.results) {
+    for (const contact of topContacts) {
       try {
         const contactId = contact.id;
         
@@ -154,7 +151,7 @@ export async function preWarmHighPriorityContacts(): Promise<void> {
       }
     }
 
-    preWarmLogger.info({ preWarmedCount, totalContacts: topContacts.results.length }, 
+    preWarmLogger.info({ preWarmedCount, totalContacts: topContacts.length }, 
       '✅ Cache pre-warming completed');
     
   } catch (error) {
@@ -176,11 +173,10 @@ export async function preWarmDashboardMetrics(): Promise<void> {
       return;
     }
 
-    // Pre-warm key dashboard metrics
+    // Pre-warm key dashboard data by touching available endpoints
     await Promise.all([
-      hubSpotService.getPipelineValue(),
-      hubSpotService.getActiveDeals(),
-      hubSpotService.getMonthlyRevenue()
+      hubSpotService.getPipelines(),
+      hubSpotService.getDeals({ limit: 50, properties: ['dealname','dealstage','amount'], associations: ['companies'] })
     ]);
 
     preWarmLogger.info('✅ Dashboard metrics pre-warmed');

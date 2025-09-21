@@ -637,6 +637,28 @@ export type MonthlyBonus = typeof monthlyBonuses.$inferSelect;
 export type InsertMilestoneBonus = z.infer<typeof insertMilestoneBonusSchema>;
 export type MilestoneBonus = typeof milestoneBonuses.$inferSelect;
 
+// Calculator Manager: per-service SOW templates and agreement links
+export const calculatorServiceContent = pgTable("calculator_service_content", {
+  id: serial("id").primaryKey(),
+  service: text("service").notNull().unique(), // 'bookkeeping', 'taas', 'payroll', 'ap', 'ar', 'agent_of_service', 'cfo_advisory'
+  sowTitle: text("sow_title"), // Optional display title
+  sowTemplate: text("sow_template"), // Markdown template with tokens
+  agreementLink: text("agreement_link"), // URL to service agreement or schedule
+  includedFieldsJson: text("included_fields_json"), // JSON string of flags/fields to include
+  updatedBy: integer("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCalculatorServiceContentSchema = createInsertSchema(calculatorServiceContent).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertCalculatorServiceContent = z.infer<typeof insertCalculatorServiceContentSchema>;
+export type CalculatorServiceContent = typeof calculatorServiceContent.$inferSelect;
+
 // Approval codes for cleanup overrides
 export const approvalCodes = pgTable("approval_codes", {
   id: serial("id").primaryKey(),

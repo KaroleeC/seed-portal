@@ -124,13 +124,14 @@ export function requestLogger() {
   return pinoHttp({
     logger,
     autoLogging: {
-      ignore(req) {
+      ignore(req: any): boolean {
+        const url = req?.url || '';
         // Skip logging for health checks and static assets
-        return req.url === '/api/health' || 
-               req.url?.startsWith('/assets/') ||
-               req.url?.startsWith('/@vite/') ||
-               req.url?.endsWith('.js') ||
-               req.url?.endsWith('.css');
+        return !!(url === '/api/health' || 
+               url.startsWith('/assets/') ||
+               url.startsWith('/@vite/') ||
+               url.endsWith('.js') ||
+               url.endsWith('.css'));
       },
     },
     customLogLevel(req, res, err) {
@@ -144,8 +145,9 @@ export function requestLogger() {
     customSuccessMessage(req, res) {
       return `${req.method} ${req.url} completed with ${res.statusCode}`;
     },
-    customErrorMessage(error, res) {
-      return `Request failed with ${res.statusCode}: ${error.message}`;
+    customErrorMessage(req, res, err: any) {
+      const msg = err?.message || 'Unknown error';
+      return `Request failed with ${res.statusCode}: ${msg}`;
     },
   });
 }

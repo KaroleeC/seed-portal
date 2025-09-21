@@ -44,172 +44,20 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
       throw new Error(`User ${userId} not found`);
     }
 
-    // Update job progress
-    await job.updateProgress(25);
-
-    // Dynamically import HubSpot service to avoid circular dependencies
-    const { hubSpotService } = await import('../hubspot');
-    
-    if (!hubSpotService) {
-      throw new Error('HubSpot service not available');
-    }
-
     await job.updateProgress(50);
 
-    let result: HubSpotQuoteSyncResult;
-
-    if (action === 'create') {
-      // Verify contact exists in HubSpot
-      const contactResult = await hubSpotService.verifyContactByEmail(quote.contactEmail);
-      if (!contactResult.verified || !contactResult.contact) {
-        throw new Error(`Contact ${quote.contactEmail} not found in HubSpot`);
-      }
-
-      const contact = contactResult.contact;
-      const companyName = contact.properties.company || 'Unknown Company';
-
-      // Get HubSpot owner ID
-      const ownerId = await hubSpotService.getOwnerByEmail(user.email);
-
-      await job.updateProgress(70);
-
-      // Update company address from quote data first
-      try {
-        hubspotLogger.info({ quoteId }, '🏢 Syncing company address from quote data');
-        await hubSpotService.updateOrCreateCompanyFromQuote(quote, contact);
-        hubspotLogger.info({ quoteId }, '✅ Company address sync completed');
-      } catch (companyError) {
-        hubspotLogger.warn({ quoteId, error: companyError }, '⚠️ Company address sync failed');
-      }
-
-      await job.updateProgress(75);
-
-      // Create deal in HubSpot
-      const dealIncludesBookkeeping = quote.serviceBookkeeping || quote.includesBookkeeping;
-      const dealIncludesTaas = quote.serviceTaas || quote.includesTaas;
-      
-      const deal = await hubSpotService.createDeal(
-        contact.id,
-        companyName,
-        parseFloat(quote.monthlyFee),
-        parseFloat(quote.setupFee),
-        ownerId || undefined,
-        dealIncludesBookkeeping,
-        dealIncludesTaas,
-        quote.serviceTier || 'Standard',
-        quote
-      );
-
-      if (!deal) {
-        throw new Error('Failed to create deal in HubSpot');
-      }
-
-      await job.updateProgress(85);
-
-      // Now create the quote in HubSpot linked to the deal
-      let hubspotQuote = null;
-      try {
-        hubspotLogger.info({ quoteId, dealId: deal.id }, '📋 Creating HubSpot quote');
-        // Calculate individual service fees from quote data
-        const { calculateCombinedFees } = await import('../../shared/pricing.js');
-        const feeCalculation = calculateCombinedFees(quote as any);
-        
-        hubspotLogger.info({ quoteId, calculatedFees: {
-          bookkeepingMonthlyFee: feeCalculation.bookkeeping.monthlyFee,
-          bookkeepingSetupFee: feeCalculation.bookkeeping.setupFee,
-          combinedSetupFee: parseFloat(quote.setupFee),
-          payrollFee: feeCalculation.payrollFee,
-          agentOfServiceFee: feeCalculation.agentOfServiceFee,
-          apFee: feeCalculation.apFee,
-          arFee: feeCalculation.arFee,
-          cfoAdvisoryFee: feeCalculation.cfoAdvisoryFee,
-          cleanupProjectFee: feeCalculation.cleanupProjectFee,
-          priorYearFilingsFee: feeCalculation.priorYearFilingsFee
-        }}, '🔧 Calculated individual service fees');
-        
-        hubspotQuote = await hubSpotService.createQuote(
-          deal.id,
-          companyName,
-          parseFloat(quote.monthlyFee),
-          parseFloat(quote.setupFee),
-          user.email,
-          contact.properties.firstname || 'Contact',
-          contact.properties.lastname || '',
-          dealIncludesBookkeeping,
-          dealIncludesTaas,
-          parseFloat(quote.taasMonthlyFee || '0'),
-          parseFloat(quote.taasPriorYearsFee || '0'),
-          feeCalculation.bookkeeping.monthlyFee,
-          feeCalculation.bookkeeping.setupFee, // ✅ FIXED: Use separated bookkeeping setup fee!
-          quote,
-          quote.serviceTier || 'Standard',
-          // Add all the missing service parameters with CALCULATED fees
-          Boolean(quote.servicePayroll || quote.servicePayrollService),  // includesPayroll
-          feeCalculation.payrollFee,                          // payrollFee (calculated)
-          Boolean(quote.serviceApLite || quote.serviceApAdvanced || quote.serviceApArService), // includesAP
-          feeCalculation.apFee,                               // apFee (calculated)
-          Boolean(quote.serviceArLite || quote.serviceArAdvanced || quote.serviceArService), // includesAR
-          feeCalculation.arFee,                               // arFee (calculated)
-          Boolean(quote.serviceAgentOfService),               // includesAgentOfService
-          feeCalculation.agentOfServiceFee,                   // agentOfServiceFee (calculated)
-          Boolean(quote.serviceCfoAdvisory),                  // includesCfoAdvisory
-          feeCalculation.cfoAdvisoryFee,                      // cfoAdvisoryFee (calculated)
-          feeCalculation.cleanupProjectFee,                   // cleanupProjectFee (calculated)
-          feeCalculation.priorYearFilingsFee,                 // priorYearFilingsFee (calculated)
-          Boolean(quote.serviceFpaBuild),                     // includesFpaBuild
-          parseFloat(quote.fpaServiceFee || '0')              // fpaServiceFee (TODO: calculate)
-        );
-        hubspotLogger.info({ quoteId, hubspotQuoteId: hubspotQuote?.id }, '✅ HubSpot quote created successfully');
-      } catch (quoteError) {
-        hubspotLogger.error({ quoteId, dealId: deal.id, error: quoteError }, '❌ Quote creation failed');
-        // Don't throw - deal was created successfully
-      }
-
-      // Update the quote in our database with HubSpot IDs
-      try {
-        const { storage } = await import('../storage.js');
-        await storage.updateQuote({
-          id: quoteId,
-          hubspotContactId: contact.id,
-          hubspotDealId: deal.id,
-          hubspotQuoteId: hubspotQuote?.id,
-          hubspotContactVerified: true,
-          companyName
-        });
-        hubspotLogger.info({ quoteId, dealId: deal.id, hubspotQuoteId: hubspotQuote?.id }, '✅ Quote updated with HubSpot IDs');
-      } catch (updateError) {
-        hubspotLogger.error({ quoteId, error: updateError }, '❌ Failed to update quote with HubSpot IDs');
-      }
-
-      result = {
-        success: true,
-        quoteId,
-        dealId: deal.id,
-        hubspotQuoteId: hubspotQuote?.id
-      };
-
-      hubspotLogger.info({ 
-        quoteId, 
-        dealId: deal.id,
-        hubspotQuoteId: deal.hubspotQuoteId 
-      }, '✅ Successfully created HubSpot deal and quote');
-
-    } else {
-      // Update existing quote in HubSpot
-      await job.updateProgress(75);
-      
-      // Implementation for updating existing quotes
-      // This would call hubSpotService.updateQuote or similar
-      result = {
-        success: true,
-        quoteId
-      };
-
-      hubspotLogger.info({ quoteId }, '✅ Successfully updated HubSpot quote');
-    }
+    // Use unified sync function for both create/update
+    const { syncQuoteToHubSpot } = await import('../services/hubspot/sync.js');
+    const unified = await syncQuoteToHubSpot(quoteId, action as any, user.email);
 
     await job.updateProgress(100);
-    return result;
+
+    return {
+      success: unified.success,
+      quoteId,
+      dealId: unified.hubspotDealId || undefined,
+      hubspotQuoteId: unified.hubspotQuoteId || undefined,
+    };
 
   } catch (error: any) {
     const errorMessage = error.message || 'Unknown error occurred';

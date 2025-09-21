@@ -3,16 +3,14 @@ import { logger } from './logger';
 
 const slackLogger = logger.child({ module: 'slack' });
 
-// Use Slack Bot Token
-if (!process.env.SLACK_BOT_TOKEN) {
-  throw new Error("SLACK_BOT_TOKEN environment variable must be set");
+const hasSlackCreds = Boolean(process.env.SLACK_BOT_TOKEN && process.env.SLACK_PA_CHANNEL_ID);
+let slack: WebClient | null = null;
+if (hasSlackCreds) {
+  slack = new WebClient(process.env.SLACK_BOT_TOKEN);
+} else {
+  // Do not throw in development or when running locally without Doppler
+  console.warn('[Slack] Credentials not configured - Slack integration disabled');
 }
-
-if (!process.env.SLACK_PA_CHANNEL_ID) {
-  throw new Error("SLACK_PA_CHANNEL_ID environment variable must be set");
-}
-
-const slack = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 /**
  * Sends a structured message to a Slack channel using the Slack Web API
@@ -27,17 +25,19 @@ export async function sendSlackMessage(
     attachments?: any[];
   }
 ): Promise<string | undefined> {
+  if (!hasSlackCreds || !slack) {
+    slackLogger.warn({ message }, 'Slack disabled - skipping sendSlackMessage');
+    return undefined;
+  }
   try {
-    const channel = message.channel || process.env.SLACK_PA_CHANNEL_ID;
-    
-    // Send the message
+    const channel = message.channel || process.env.SLACK_PA_CHANNEL_ID!;
     const response = await slack.chat.postMessage({
       channel,
       text: message.text,
-      blocks: message.blocks,
-      attachments: message.attachments
+      // Cast to any to avoid strict type mismatch across Slack SDK versions
+      blocks: message.blocks as any,
+      attachments: message.attachments as any
     });
-
     slackLogger.info({ channel, ts: response.ts }, 'Slack message sent');
     return response.ts;
   } catch (error) {

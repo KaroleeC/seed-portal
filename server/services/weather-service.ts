@@ -51,10 +51,10 @@ export class WeatherService {
     
     try {
       // Check cache first
-      const cached = await cache.get(cacheKey);
+      const cached = await cache.get<WeatherData>(cacheKey);
       if (cached) {
         logger.debug('Weather cache hit', { location });
-        return JSON.parse(cached);
+        return cached;
       }
 
       logger.debug('Weather API call', { location, latitude, longitude });

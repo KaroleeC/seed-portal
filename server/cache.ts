@@ -26,6 +26,20 @@ export class CacheService {
     const redis = getRedis();
     return redis?.cacheRedis;
   }
+
+  /**
+   * List keys matching a pattern (advanced use only)
+   */
+  async keys(pattern: string): Promise<string[]> {
+    const cacheRedis = this.getCacheRedis();
+    if (!cacheRedis) return [];
+    try {
+      return await cacheRedis.keys(pattern);
+    } catch (error) {
+      cacheLogger.error({ error, pattern }, 'Cache keys error');
+      return [];
+    }
+  }
   private defaultTTL = 300; // 5 minutes default
   
   // Cache metrics tracking
@@ -238,6 +252,12 @@ export const CacheTTL = {
   USER_PROFILE: 600, // 10 minutes
   WEATHER_DATA: 1800, // 30 minutes
   GEOCODING: 86400, // 24 hours
+  
+  // Generic TTLs for convenience
+  TEN_MINUTES: 600,
+  FIFTEEN_MINUTES: 900,
+  ONE_HOUR: 3600,
+  ONE_DAY: 86400,
 };
 
 // Cache key prefixes

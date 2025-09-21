@@ -3,7 +3,12 @@ import { hubSpotService } from "./hubspot";
 import { airtableService } from "./airtable";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const aiDisabled = (process.env.DISABLE_AI === '1' || (process.env.DISABLE_AI || '').toLowerCase() === 'true');
+const openai: OpenAI | any = (!aiDisabled && process.env.OPENAI_API_KEY)
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : {
+      chat: { completions: { create: async () => { throw new Error('AI disabled or OPENAI_API_KEY missing'); } } },
+    };
 
 interface ProspectProfile {
   email: string;
@@ -32,7 +37,9 @@ export class ClientIntelligenceEngine {
   private enhancementLocks: Set<string> = new Set(); // Track ongoing enhancements
 
   constructor() {
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    this.openai = (!aiDisabled && process.env.OPENAI_API_KEY)
+      ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+      : null as any;
   }
   
   // Generate prospect scoring based on HubSpot data

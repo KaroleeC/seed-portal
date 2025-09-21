@@ -5,7 +5,7 @@ export function usePricingCalculation(data: PricingData): CombinedFeeResult {
   return useMemo(() => {
     return calculateCombinedFees(data);
   }, [
-    data.revenueBand,
+    data.monthlyRevenueRange,
     data.monthlyTransactions,
     data.industry,
     data.cleanupMonths,

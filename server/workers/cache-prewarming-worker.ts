@@ -16,10 +16,12 @@ async function initializeWorkerRedis(): Promise<void> {
   }
 
   try {
-    workerRedis = new Redis(process.env.REDIS_URL, {
-      maxRetriesPerRequest: null,
-      retryDelayOnFailover: 100,
-    });
+    workerRedis = new Redis(process.env.REDIS_URL as string, {
+      maxRetriesPerRequest: null as any,
+      enableReadyCheck: true,
+      lazyConnect: false,
+      connectTimeout: 15000,
+    } as any);
     
     await workerRedis.ping();
     workerLogger.info('✅ Worker Redis connection established for cache pre-warming');

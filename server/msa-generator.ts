@@ -59,9 +59,9 @@ export class MSAGenerator {
       });
 
       return buffer;
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[MSA] Error generating MSA document', error);
-      throw new Error(`Failed to generate MSA: ${error.message}`);
+      throw new Error(`Failed to generate MSA: ${(error as any)?.message}`);
     }
   }
 

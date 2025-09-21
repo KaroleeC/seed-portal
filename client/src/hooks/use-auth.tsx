@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.removeQueries({
         predicate: (query) => {
           const key = query.queryKey[0] as string;
-          return key && (
+          return !!key && (
             key.startsWith('/api/user') ||
             key.startsWith('/api/commissions') ||
             key.startsWith('/api/sales') ||

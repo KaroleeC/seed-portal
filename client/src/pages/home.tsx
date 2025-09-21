@@ -1,15 +1,20 @@
 // Updated to fix mutation undefined error
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { Copy, Save, Check, Search, ArrowUpDown, Edit, AlertCircle, Archive, CheckCircle, XCircle, Loader2, Upload, User, LogOut, Calculator, FileText, DollarSign, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, HelpCircle, Bell, Settings, Lock, Unlock, Building, Users, CreditCard, Receipt } from "lucide-react";
 import { insertQuoteSchema, type Quote } from "@shared/schema";
-import { calculateCombinedFees } from "@shared/pricing";
+import { calculateCombinedFees, calculateQuotePricing } from "@shared/pricing";
+import type { PricingConfig as SimplePricingConfig } from "@shared/pricing";
+import { usePricingConfig } from "@/hooks/usePricingConfig";
+import { useCalculatorContent } from "@/hooks/useCalculatorContent";
 import { mapQuoteToFormServices, getServiceKeys, getAllServices } from "@shared/services";
 
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { fetchQuotes, createQuote as createQuoteApi, updateQuote as updateQuoteApi, archiveQuote as archiveQuoteApi, checkExistingQuotes } from "@/services/quotes";
+import { verifyContact as verifyHubspotContact, searchContacts as searchHubspotContactsApi } from "@/services/hubspot";
 
 // Import the error handling function
 
@@ -39,75 +44,20 @@ import PayrollSection from "@/components/quote-form/PayrollSection";
 import APSection from "@/components/quote-form/APSection";
 import ARSection from "@/components/quote-form/ARSection";
 import AgentOfServiceSection from "@/components/quote-form/AgentOfServiceSection";
+import { useQuotes } from "@/hooks/use-quotes";
+import { validateRequiredFields as validateRequiredFieldsHelper } from "@/features/quote-calculator/logic/validation";
+import { getApprovalButtonDisabledReason as getApprovalButtonDisabledReasonHelper, isApprovalButtonDisabled as isApprovalButtonDisabledHelper } from "@/features/quote-calculator/logic/approval";
+import { mapFormToQuotePayload } from "@/features/quote-calculator/logic/mapping";
 
 // Get current month number (1-12)
 const currentMonth = new Date().getMonth() + 1;
 
-// Helper function to validate required fields based on engaged services
-const validateRequiredFields = (formValues: any): { isValid: boolean; missingFields: string[] } => {
-  const missingFields: string[] = [];
-  
-  // Always required fields (for any quote)
-  if (!formValues.contactFirstName) missingFields.push("First Name");
-  if (!formValues.contactLastName) missingFields.push("Last Name");
-  if (!formValues.industry) missingFields.push("Industry");
-  if (!formValues.monthlyRevenueRange) missingFields.push("Monthly Revenue Range");
-  if (!formValues.entityType) missingFields.push("Entity Type");
-  
-  // Company address - all fields required
-  if (!formValues.clientStreetAddress || !formValues.clientCity || !formValues.clientState || !formValues.clientZipCode) {
-    missingFields.push("Company Address (all fields)");
-  }
-  
-  // Only validate service-specific fields if that service is actually engaged
-  if (formValues.serviceBookkeeping) {
-    if (!formValues.monthlyTransactions) missingFields.push("Monthly Transactions");
-    if (!formValues.cleanupComplexity) missingFields.push("Initial Cleanup Complexity");
-    if (!formValues.accountingBasis) missingFields.push("Accounting Basis");
-  }
-  
-  if (formValues.serviceTaas) {
-    if (!formValues.bookkeepingQuality) missingFields.push("Bookkeeping Quality");
-  }
-  
-  return {
-    isValid: missingFields.length === 0,
-    missingFields
-  };
-};
+// Helper function now delegated to centralized validation logic
+const validateRequiredFields = validateRequiredFieldsHelper;
 
-// Helper functions for approval logic
-const getApprovalButtonDisabledReason = (formValues: any, isRequestingApproval: boolean, hasRequestedApproval: boolean): string | null => {
-  if (isRequestingApproval) return null;
-  if (!formValues.contactEmail) return "Contact email is required";
-  if (!formValues.overrideReason) return "Please select a reason for override";
-  
-  const overrideReason = formValues.overrideReason;
-  const cleanupMonths = formValues.cleanupMonths || 0;
-  const customSetupFee = formValues.customSetupFee?.trim();
-  const customOverrideReason = formValues.customOverrideReason?.trim();
-  
-  if (overrideReason === "Other") {
-    if (!customOverrideReason) return "Please explain the reason for override";
-    // For "Other", button is enabled if custom setup fee is entered OR cleanup months are decreased
-    const hasCustomSetupFee = customSetupFee && customSetupFee !== "";
-    const hasDecreasedMonths = cleanupMonths < currentMonth;
-    if (!hasCustomSetupFee && !hasDecreasedMonths) {
-      return "Enter a custom setup fee OR reduce cleanup months below the minimum";
-    }
-  } else if (overrideReason === "Brand New Business" || overrideReason === "Books Confirmed Current") {
-    // For these reasons, button is only enabled if cleanup months are decreased
-    if (cleanupMonths >= currentMonth) {
-      return "Reduce cleanup months below the minimum to request approval";
-    }
-  }
-  
-  return null;
-};
-
-const isApprovalButtonDisabled = (formValues: any, isRequestingApproval: boolean, hasRequestedApproval: boolean): boolean => {
-  return getApprovalButtonDisabledReason(formValues, isRequestingApproval, hasRequestedApproval) !== null;
-};
+// Approval helpers delegated to centralized logic
+const getApprovalButtonDisabledReason = getApprovalButtonDisabledReasonHelper;
+const isApprovalButtonDisabled = isApprovalButtonDisabledHelper;
 
 // Create form schema without the calculated fields
 const formSchema = insertQuoteSchema.omit({
@@ -171,6 +121,8 @@ const formSchema = insertQuoteSchema.omit({
   priorYearsUnfiled: z.number().min(0, "Cannot be negative").max(5, "Maximum 5 years").optional(),
   priorYearFilings: z.array(z.number()).optional(),
   qboSubscription: z.boolean().optional(),
+  serviceTier: z.string().optional(),
+  approvalCode: z.string().optional(),
 }).superRefine((data, ctx) => {
   // Enforce minimum initial cleanup months for bookkeeping quotes
   if (data.quoteType === 'bookkeeping' && data.cleanupMonths < currentMonth) {
@@ -329,6 +281,8 @@ function HomePage() {
   const [resetConfirmDialog, setResetConfirmDialog] = useState(false);
   const [discardChangesDialog, setDiscardChangesDialog] = useState(false);
   const [pendingQuoteToLoad, setPendingQuoteToLoad] = useState<Quote | null>(null);
+  const [unlockConfirmDialog, setUnlockConfirmDialog] = useState(false);
+  const [fieldsLocked, setFieldsLocked] = useState(false);
   
   // Debounce state for HubSpot verification
   const [verificationTimeoutId, setVerificationTimeoutId] = useState<NodeJS.Timeout | null>(null);
@@ -344,6 +298,9 @@ function HomePage() {
   
   // Live search for email input
   const [showLiveResults, setShowLiveResults] = useState(false);
+  // Hoisted UI state for render sections to comply with hooks rules
+  const [showAllBanks, setShowAllBanks] = useState(false);
+  const [isAddingAdditionalBanks, setIsAddingAdditionalBanks] = useState(false);
   const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
   const [isLiveSearching, setIsLiveSearching] = useState(false);
   
@@ -360,6 +317,39 @@ function HomePage() {
   const [isApExpanded, setIsApExpanded] = useState(true);
   const [isArExpanded, setIsArExpanded] = useState(true);
   const [isAgentOfServiceExpanded, setIsAgentOfServiceExpanded] = useState(true);
+
+  // Load pricing config and calculator content (SOW/agreement)
+  const { data: pricingConfig } = usePricingConfig();
+  useCalculatorContent(); // prefetch for later use in compose/send flows
+
+  // Map DB-backed pricing config to shared simple config accepted by calculateQuotePricing
+  const mappedPricingConfig = useMemo<SimplePricingConfig | undefined>(() => {
+    const cfg: any = pricingConfig as any;
+    if (!cfg) return undefined;
+    const baseMonthlyFee = cfg?.baseFees?.bookkeeping ?? 150;
+    const qboMonthly = cfg?.serviceSettings?.bookkeeping?.qbo_subscription_fee ?? 60;
+    return {
+      services: {
+        bookkeeping: { enabled: true },
+        taas: { enabled: true },
+        payroll: { enabled: true },
+        ap: { enabled: true },
+        ar: { enabled: true },
+        agentOfService: { enabled: true },
+        cfoAdvisory: { enabled: true },
+        qbo: { enabled: true },
+      },
+      fees: {
+        baseMonthlyFee,
+        qboMonthly,
+        priorYearFilingPerYear: 1500,
+        cleanupPerMonth: 100,
+        serviceTierFees: { Automated: 0, Guided: 79, Concierge: 249 },
+      },
+      discounts: { bookkeepingWithTaasPct: 0.5 },
+      rounding: { monthlyStep: 25 },
+    } satisfies SimplePricingConfig;
+  }, [pricingConfig]);
   
   // Form navigation state
   const [currentFormView, setCurrentFormView] = useState<'bookkeeping' | 'taas' | 'placeholder'>('placeholder');
@@ -415,90 +405,32 @@ function HomePage() {
       serviceAgentOfService: false,
       agentOfServiceAdditionalStates: 0,
       agentOfServiceComplexCase: false,
+      approvalCode: "",
     },
   });
 
-  // Query to fetch all quotes
-  const { data: allQuotes = [], refetch: refetchQuotes } = useQuery<Quote[]>({
-    queryKey: ["/api/quotes", { search: searchTerm, sortField, sortOrder }],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (searchTerm) params.append('search', searchTerm);
-      if (sortField) params.append('sortField', sortField);
-      if (sortOrder) params.append('sortOrder', sortOrder);
-      
-      const response = await fetch(`/api/quotes?${params.toString()}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch quotes');
-      }
-      
-      const data = await response.json();
-      return data || [];
-    },
-    retry: false, // Don't retry on auth failures
-  });
+  // Query to fetch all quotes (centralized hook)
+  const { data: allQuotes = [], refetch: refetchQuotes } = useQuotes({ search: searchTerm, sortField, sortOrder });
 
   const createQuoteMutation = useMutation({
     mutationFn: async (data: FormData) => {
       console.log('Submitting quote data:', data);
       
       try {
-        // Use combined calculation system
-        const feeCalculation = calculateCombinedFees(data);
+        // Use combined calculation system with optional Admin-configured pricing
+        const feeCalculation = mappedPricingConfig ? calculateQuotePricing(data as any, mappedPricingConfig) : calculateCombinedFees(data as any);
 
-        const quoteData = {
-          ...data,
-          monthlyFee: feeCalculation.combined.monthlyFee.toString(),
-          setupFee: feeCalculation.combined.setupFee.toString(),
-          taasMonthlyFee: feeCalculation.taas.monthlyFee.toString(),
-          taasPriorYearsFee: feeCalculation.taas.setupFee.toString(),
-          // Approval logic simplified for duplicate quotes only
-          // Ensure all client details are stored for future ClickUp integration
-          companyName: data.companyName || '',
-          contactFirstName: data.contactFirstName || '',
-          contactLastName: data.contactLastName || '',
-          industry: data.industry || '',
-          monthlyRevenueRange: data.monthlyRevenueRange || '',
-          entityType: data.entityType || '',
-          clientStreetAddress: data.clientStreetAddress || '',
-          clientCity: data.clientCity || '',
-          clientState: data.clientState || '',
-          clientZipCode: data.clientZipCode || '',
-          // Lock status for form state preservation
-          companyNameLocked: data.companyNameLocked || false,
-          contactFirstNameLocked: data.contactFirstNameLocked || false,
-          contactLastNameLocked: data.contactLastNameLocked || false,
-          industryLocked: data.industryLocked || false,
-          companyAddressLocked: data.companyAddressLocked || false,
-          // Service selections for ClickUp project creation
-          serviceBookkeeping: data.serviceBookkeeping || false,
-          serviceTaas: data.serviceTaas || false,
-          servicePayroll: data.servicePayroll || false,
-          serviceApArLite: data.serviceApArLite || false,
-          serviceFpaLite: data.serviceFpaLite || false,
-        };
+        const quoteData = mapFormToQuotePayload(data, feeCalculation);
         
         console.log('Final quote data:', quoteData);
         
         let result;
         if (editingQuoteId) {
           console.log('💡 Updating existing quote with ID:', editingQuoteId);
-          result = await apiRequest(`/api/quotes/${editingQuoteId}`, {
-            method: "PUT",
-            body: JSON.stringify(quoteData)
-          });
+          result = await updateQuoteApi(editingQuoteId, quoteData);
         } else {
           console.log('💡 Creating new quote');
-          result = await apiRequest("/api/quotes", {
-            method: "POST",
-            body: JSON.stringify(quoteData)
-          });
+          result = await createQuoteApi(quoteData);
         }
         
         console.log('💡 Quote API success response:', result);
@@ -538,10 +470,7 @@ function HomePage() {
   // Archive quote mutation
   const archiveQuoteMutation = useMutation({
     mutationFn: async (quoteId: number) => {
-      return await apiRequest(`/api/quotes/${quoteId}/archive`, {
-        method: "PATCH",
-        body: JSON.stringify({})
-      });
+      return await archiveQuoteApi(quoteId);
     },
     onSuccess: () => {
       toast({
@@ -603,14 +532,8 @@ function HomePage() {
     try {
       // Check for existing quotes and verify HubSpot contact in parallel
       const [hubspotResult, existingQuotesResult] = await Promise.all([
-        apiRequest('/api/hubspot/verify-contact', {
-          method: 'POST',
-          body: JSON.stringify({ email })
-        }),
-        apiRequest('/api/quotes/check-existing', {
-          method: 'POST',
-          body: JSON.stringify({ email })
-        })
+        verifyHubspotContact(email),
+        checkExistingQuotes(email)
       ]);
       
       // Handle HubSpot verification
@@ -630,12 +553,21 @@ function HomePage() {
         setHubspotContact(null);
       }
       
-      // Handle existing quotes
+      // Handle existing quotes with HubSpot existence verification
       if (existingQuotesResult.hasExistingQuotes) {
-        setExistingQuotesForEmail(existingQuotesResult.quotes);
-        setShowExistingQuotesNotification(true);
-        // Automatically filter the saved quotes table to show only this email's quotes
-        setSearchTerm(email);
+        const verifiedItems = existingQuotesResult?.data?.verified || [];
+        if (Array.isArray(verifiedItems) && verifiedItems.length > 0) {
+          const editableIds = new Set(verifiedItems.filter((v: any) => v?.existsInHubSpot).map((v: any) => v.id));
+          const filteredQuotes = (existingQuotesResult.quotes || []).filter((q: any) => editableIds.has(q.id));
+          setExistingQuotesForEmail(filteredQuotes);
+          setShowExistingQuotesNotification(filteredQuotes.length > 0);
+          if (filteredQuotes.length > 0) setSearchTerm(email);
+        } else {
+          // Fallback to legacy behavior if verified array not present
+          setExistingQuotesForEmail(existingQuotesResult.quotes || []);
+          setShowExistingQuotesNotification((existingQuotesResult.quotes || []).length > 0);
+          if ((existingQuotesResult.quotes || []).length > 0) setSearchTerm(email);
+        }
       } else {
         setExistingQuotesForEmail([]);
         setShowExistingQuotesNotification(false);
@@ -680,21 +612,8 @@ function HomePage() {
     setIsLiveSearching(true);
     setShowLiveResults(true);
     try {
-      const response = await fetch('/api/hubspot/search-contacts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ searchTerm }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setLiveSearchResults(data.contacts || []);
-      } else {
-        setLiveSearchResults([]);
-      }
+      const data = await searchHubspotContactsApi(searchTerm);
+      setLiveSearchResults(data.contacts || []);
     } catch (error) {
       console.error('Error in live search:', error);
       setLiveSearchResults([]);
@@ -712,21 +631,8 @@ function HomePage() {
 
     setIsContactSearching(true);
     try {
-      const response = await fetch('/api/hubspot/search-contacts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ searchTerm }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setHubspotContacts(data.contacts || []);
-      } else {
-        setHubspotContacts([]);
-      }
+      const data = await searchHubspotContactsApi(searchTerm);
+      setHubspotContacts(data.contacts || []);
     } catch (error) {
       console.error('Error searching HubSpot contacts:', error);
       setHubspotContacts([]);
@@ -754,26 +660,22 @@ function HomePage() {
     // Search for existing quotes for this contact
     try {
       console.log('Searching for existing quotes for:', contact.properties.email);
-      const response = await fetch(`/api/quotes?search=${encodeURIComponent(contact.properties.email)}`, {
-        credentials: 'include',
-      });
-      
-      console.log('Quotes search response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Existing quotes found:', data);
-        setExistingQuotesForEmail(data || []);
-        
-        // Always show existing quotes modal (even if empty) with "Create New Quote" option
-        console.log('Showing existing quotes modal');
-        setShowExistingQuotesModal(true);
+      // Use BFF to check existing quotes AND verify HubSpot quote existence
+      const existing = await checkExistingQuotes(contact.properties.email);
+      const verifiedItems = existing?.data?.verified || [];
+      let filtered: any[] = [];
+      if (Array.isArray(verifiedItems) && verifiedItems.length > 0) {
+        const editableIds = new Set(verifiedItems.filter((v: any) => v?.existsInHubSpot).map((v: any) => v.id));
+        filtered = (existing.quotes || []).filter((q: any) => editableIds.has(q.id));
       } else {
-        console.log('Quotes search failed, showing modal without existing quotes');
-        setExistingQuotesForEmail([]);
-        // Still show the modal even if the API failed
-        setShowExistingQuotesModal(true);
+        // Fallback to legacy behavior if verified array not present
+        filtered = existing.quotes || [];
       }
+      console.log('Existing editable quotes found:', filtered);
+      setExistingQuotesForEmail(filtered);
+      // Always show existing quotes modal (even if empty) with "Create New Quote" option
+      console.log('Showing existing quotes modal');
+      setShowExistingQuotesModal(true);
     } catch (error) {
       console.error('Error fetching existing quotes:', error);
       setExistingQuotesForEmail([]);
@@ -996,7 +898,7 @@ function HomePage() {
   const watchedValues = form.watch();
   
   // Calculate fees using combined system
-  const feeCalculation = calculateCombinedFees(watchedValues);
+  const feeCalculation = mappedPricingConfig ? calculateQuotePricing(watchedValues as any, mappedPricingConfig) : calculateCombinedFees(watchedValues as any);
   const monthlyFee = feeCalculation.combined.monthlyFee;
   const setupFee = feeCalculation.combined.setupFee;
   
@@ -1031,28 +933,32 @@ function HomePage() {
   const actualFormView = getFormViewToShow();
 
   const canNavigateLeft = () => {
+    if (actualFormView === 'placeholder') return false;
     const activeServices = getActiveServices();
-    const currentIndex = activeServices.indexOf(actualFormView);
+    const currentIndex = activeServices.indexOf(actualFormView as 'bookkeeping' | 'taas');
     return currentIndex > 0;
   };
   
   const canNavigateRight = () => {
+    if (actualFormView === 'placeholder') return false;
     const activeServices = getActiveServices();
-    const currentIndex = activeServices.indexOf(actualFormView);
+    const currentIndex = activeServices.indexOf(actualFormView as 'bookkeeping' | 'taas');
     return currentIndex < activeServices.length - 1;
   };
   
   const navigateLeft = () => {
+    if (actualFormView === 'placeholder') return;
     const activeServices = getActiveServices();
-    const currentIndex = activeServices.indexOf(actualFormView);
+    const currentIndex = activeServices.indexOf(actualFormView as 'bookkeeping' | 'taas');
     if (currentIndex > 0) {
       setCurrentFormView(activeServices[currentIndex - 1]);
     }
   };
   
   const navigateRight = () => {
+    if (actualFormView === 'placeholder') return;
     const activeServices = getActiveServices();
-    const currentIndex = activeServices.indexOf(actualFormView);
+    const currentIndex = activeServices.indexOf(actualFormView as 'bookkeeping' | 'taas');
     if (currentIndex < activeServices.length - 1) {
       setCurrentFormView(activeServices[currentIndex + 1]);
     }
@@ -1249,7 +1155,6 @@ function HomePage() {
     setEditingQuoteId(null);
     form.reset({
       contactEmail: "",
-      revenueBand: "",
       monthlyTransactions: "",
       industry: "",
       cleanupMonths: currentMonth,
@@ -1307,7 +1212,7 @@ function HomePage() {
     setLastVerifiedEmail('');
     setIsApproved(false);
     setHasRequestedApproval(false);
-    setCustomSetupFee("");
+    form.setValue('customSetupFee', "");
     
     // Reset existing quotes state
     setExistingQuotesForEmail([]);
@@ -1364,14 +1269,18 @@ function HomePage() {
         if (result.success) {
           setHasRequestedApproval(true);
           setIsApprovalDialogOpen(true);
+          setShowExistingQuotesModal(false);
           toast({
             title: "Approval Requested",
             description: "Request sent to admins. Check Slack for approval code.",
           });
+        } else {
+          throw new Error(result.message || "Failed to send approval request");
         }
+      
       } else {
         // This is a cleanup override approval request (existing logic)
-        const fees = calculateCombinedFees(formData);
+        const fees = calculateCombinedFees(formData as any);
         
         // Include custom setup fee if "Other" reason is selected
         const setupFee = formData.overrideReason === "Other" && formData.customSetupFee 
@@ -1392,7 +1301,7 @@ function HomePage() {
             overrideReason: formData.overrideReason || "",
             customOverrideReason: formData.customOverrideReason || "",
             customSetupFee: formData.customSetupFee || "",
-            monthlyFee: fees.totalMonthlyFee,
+            monthlyFee: (fees as any)?.combined?.monthlyFee ?? 0,
             setupFee: setupFee,
             originalCleanupMonths: currentMonth // Include original minimum
           }
@@ -1550,8 +1459,7 @@ function HomePage() {
       <div className="max-w-4xl mx-auto">
         <UniversalNavbar 
           showBackButton={true} 
-          backButtonText="Back to Portal" 
-          backButtonPath="/" 
+          fallbackPath="/" 
         />
 
         {/* Email Trigger Section - Standalone starter */}
@@ -2137,8 +2045,6 @@ function HomePage() {
                 serviceApArService: form.watch('serviceApArService') || false, // Current AP tracking
                 serviceArService: form.watch('serviceArService') || false, // AR service
                 serviceAgentOfService: form.watch('serviceAgentOfService') || false, // Agent of Service
-                agentOfServiceAdditionalStates: form.watch('agentOfServiceAdditionalStates') || 0,
-                agentOfServiceComplexCase: form.watch('agentOfServiceComplexCase') || false,
                 serviceApLite: form.watch('serviceApLite') || false,
                 serviceArLite: form.watch('serviceArLite') || false,
                 serviceApAdvanced: form.watch('serviceApAdvanced') || false,
@@ -2171,7 +2077,7 @@ function HomePage() {
                 }
                 if (!updatedServices.serviceCleanupProjects) {
                   form.setValue('cleanupMonths', 0);
-                  form.setValue('cleanupComplexity', undefined);
+                  form.setValue('cleanupComplexity', "");
                   // Cleanup override removed
                 }
                 
@@ -2190,23 +2096,25 @@ function HomePage() {
                 const selectedServiceKeys = Object.entries(updatedServices).filter(([_, value]) => value).map(([key]) => key);
                 if (selectedServiceKeys.length > 0) {
                   // Map new service field names to legacy form view names
-                  const serviceMap: Record<string, string> = {
+                  const serviceMap: Record<string, 'bookkeeping' | 'taas' | 'other'> = {
                     serviceMonthlyBookkeeping: 'bookkeeping',
-                    serviceCleanupProjects: 'bookkeeping',
                     serviceTaasMonthly: 'taas',
+                    serviceCleanupProjects: 'bookkeeping',
                     servicePriorYearFilings: 'taas',
-                    serviceCfoAdvisory: 'cfoadvisory',
-                    servicePayrollService: 'payroll',
-                    serviceApLite: 'aparlite',
-                    serviceArLite: 'aparlite',
-                    serviceApAdvanced: 'aparlite',
-                    serviceArAdvanced: 'aparlite',
-                    serviceFpaBuild: 'fpalite',
-                    serviceFpaSupport: 'fpalite'
+                    serviceCfoAdvisory: 'other',
+                    servicePayrollService: 'other',
+                    serviceApLite: 'other',
+                    serviceArLite: 'other',
+                    serviceApAdvanced: 'other',
+                    serviceArAdvanced: 'other',
+                    serviceFpaBuild: 'other',
+                    serviceFpaSupport: 'other'
                   };
                   const firstSelectedView = serviceMap[selectedServiceKeys[0]];
-                  if (firstSelectedView) {
+                  if (firstSelectedView === 'bookkeeping' || firstSelectedView === 'taas') {
                     setCurrentFormView(firstSelectedView);
+                  } else {
+                    setCurrentFormView('placeholder');
                   }
                 } else {
                   setCurrentFormView('placeholder');
@@ -2302,7 +2210,8 @@ function HomePage() {
                                     <FormLabel className="text-sm font-medium text-gray-700">Specify Other Software</FormLabel>
                                     <FormControl>
                                       <input
-                                        {...otherField}
+                                        {...(otherField as any)}
+                                        value={otherField.value ?? ''}
                                         type="text"
                                         className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                                         placeholder="Enter software name..."
@@ -2345,7 +2254,6 @@ function HomePage() {
                         control={form.control}
                         name="primaryBank"
                         render={({ field }) => {
-                          const [showAllBanks, setShowAllBanks] = useState(false);
                           const topBanks = ['Chase', 'Bank of America', 'Wells Fargo', 'Citibank', 'US Bank'];
                           const allBanks = [
                             'Chase', 'Bank of America', 'Wells Fargo', 'Citibank', 'US Bank',
@@ -2407,7 +2315,8 @@ function HomePage() {
                                           <FormLabel className="text-sm font-medium text-gray-700">Specify Other Bank</FormLabel>
                                           <FormControl>
                                             <input
-                                              {...otherField}
+                                              {...(otherField as any)}
+                                              value={otherField.value ?? ''}
                                               type="text"
                                               className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                                               placeholder="Enter bank name..."
@@ -2431,7 +2340,6 @@ function HomePage() {
                         control={form.control}
                         name="additionalBanks"
                         render={({ field }) => {
-                          const [isAdding, setIsAdding] = useState(false);
                           const currentBanks = field.value || [];
                           
                           const allBanks = [
@@ -2444,7 +2352,7 @@ function HomePage() {
                           const addBank = (bank: string) => {
                             const updated = [...currentBanks, bank];
                             field.onChange(updated);
-                            setIsAdding(false);
+                            setIsAddingAdditionalBanks(false);
                           };
                           
                           const updateBankAtIndex = (index: number, value: string) => {
@@ -2483,13 +2391,14 @@ function HomePage() {
                                       {bank === 'Other' && (
                                         <FormField
                                           control={form.control}
-                                          name={`otherAdditionalBank${index}`}
+                                          name={`otherAdditionalBank${index}` as any}
                                           render={({ field: otherField }) => (
                                             <div className="ml-6">
                                               <FormLabel className="text-sm font-medium text-gray-700">Specify Other Bank/Provider</FormLabel>
                                               <FormControl>
                                                 <input
-                                                  {...otherField}
+                                                  {...(otherField as any)}
+                                                  value={otherField.value ?? ''}
                                                   type="text"
                                                   className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                                                   placeholder="Enter bank or credit card provider name..."
@@ -2506,10 +2415,10 @@ function HomePage() {
                               )}
                               
                               <div className="mt-6">
-                                {!isAdding ? (
+                                {!isAddingAdditionalBanks ? (
                                   <button
                                     type="button"
-                                    onClick={() => setIsAdding(true)}
+                                    onClick={() => setIsAddingAdditionalBanks(true)}
                                     className="px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-800 font-medium"
                                   >
                                   + Add Another Bank or Credit Card Provider
@@ -2530,7 +2439,7 @@ function HomePage() {
                                   </div>
                                   <button
                                     type="button"
-                                    onClick={() => setIsAdding(false)}
+                                    onClick={() => setIsAddingAdditionalBanks(false)}
                                     className="text-gray-500 hover:text-gray-700"
                                   >
                                     Cancel
@@ -2592,10 +2501,11 @@ function HomePage() {
                                         <FormLabel className="text-sm font-medium text-gray-700">Specify Other Merchant Provider</FormLabel>
                                         <FormControl>
                                           <input
-                                            {...otherField}
+                                            {...(otherField as any)}
+                                            value={(otherField.value ?? '') as string}
                                             type="text"
                                             className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
-                                            placeholder="Enter merchant provider name..."
+                                            placeholder="Enter provider name..."
                                           />
                                         </FormControl>
                                         <FormMessage />

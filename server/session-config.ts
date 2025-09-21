@@ -2,6 +2,15 @@ import session from "express-session";
 import RedisStore from "connect-redis";
 import MemoryStore from "memorystore";
 
+declare global {
+  // Expose session store metadata globally for diagnostics
+  // These are set at runtime in createSessionConfig()
+  // eslint-disable-next-line no-var
+  var sessionStoreType: string | undefined;
+  // eslint-disable-next-line no-var
+  var sessionStore: session.Store | undefined;
+}
+
 // Dynamic Redis import for production compatibility
 async function createRedisClient(redisUrl: string) {
   try {
@@ -9,14 +18,14 @@ async function createRedisClient(redisUrl: string) {
     const { default: Redis } = await import('ioredis');
     return new Redis(redisUrl, {
       keyPrefix: '',
-      retryDelayOnFailover: 100,
+      enableReadyCheck: true,
       maxRetriesPerRequest: 3,
       lazyConnect: false,
       connectTimeout: 15000,
-      commandTimeout: 5000,
-      keepAlive: true,
+      keepAlive: 30000,
       family: 4,
-      enableReadyCheck: true,
+      retryStrategy: (times: number) => Math.min(times * 200, 3000),
+      reconnectOnError: (err: Error) => err.message.includes('READONLY'),
     });
   } catch (error) {
     console.error('[SessionConfig] ❌ Failed to import or create Redis client:', error);
@@ -63,13 +72,13 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
           console.log('[SessionConfig] ✅ Redis ping result:', pingResult);
           
           // Create Redis store with explicit error handling and debugging
+          const derivedPrefix = process.env.REDIS_KEY_PREFIX ?? (process.env.NODE_ENV === 'development' ? 'oseed:dev:' : '');
           sessionStore = new RedisStore({
             client: redisClient,
-            prefix: 'sess:',
+            prefix: `${derivedPrefix}sess:`,
             ttl: 24 * 60 * 60, // 24 hours
             disableTouch: false,
             disableTTL: false,
-            logErrors: true // Enable Redis store error logging
           });
 
           // Add session store operation debugging
@@ -77,9 +86,9 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
           const originalSet = sessionStore.set.bind(sessionStore);
           const originalDestroy = sessionStore.destroy.bind(sessionStore);
 
-          sessionStore.get = function(sid, callback) {
+          sessionStore.get = function(sid: string, callback: (err: any, session?: session.SessionData | null) => void) {
             console.log('[SessionStore] 🔍 GET operation:', { sid: sid?.substring(0, 10) + '...' });
-            return originalGet(sid, (err, session) => {
+            return originalGet(sid, (err: any, session: session.SessionData | null) => {
               console.log('[SessionStore] 🔍 GET result:', { 
                 sid: sid?.substring(0, 10) + '...', 
                 hasSession: !!session, 
@@ -90,13 +99,13 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
             });
           };
 
-          sessionStore.set = function(sid, session, callback) {
+          sessionStore.set = function(sid: string, sess: session.SessionData, callback?: (err?: any) => void) {
             console.log('[SessionStore] 🔍 SET operation:', { 
               sid: sid?.substring(0, 10) + '...', 
-              sessionKeys: Object.keys(session || {}),
-              hasPassport: !!(session as any)?.passport
+              sessionKeys: Object.keys(sess || {}),
+              hasPassport: !!(sess as any)?.passport
             });
-            return originalSet(sid, session, (err) => {
+            return originalSet(sid, sess, (err: any) => {
               console.log('[SessionStore] 🔍 SET result:', { 
                 sid: sid?.substring(0, 10) + '...', 
                 error: err?.message,
@@ -106,9 +115,9 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
             });
           };
 
-          sessionStore.destroy = function(sid, callback) {
+          sessionStore.destroy = function(sid: string, callback?: (err?: any) => void) {
             console.log('[SessionStore] 🔍 DESTROY operation:', { sid: sid?.substring(0, 10) + '...' });
-            return originalDestroy(sid, (err) => {
+            return originalDestroy(sid, (err: any) => {
               console.log('[SessionStore] 🔍 DESTROY result:', { 
                 sid: sid?.substring(0, 10) + '...', 
                 error: err?.message,
@@ -146,7 +155,7 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
             // Continue with Redis store even if test fails
           }
           
-    } catch (error) {
+    } catch (error: any) {
       console.error('[SessionConfig] ❌ Redis connection/setup failed:', {
         message: error.message,
         code: error.code,
@@ -176,9 +185,9 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
     const originalMemSet = sessionStore.set.bind(sessionStore);
     const originalMemDestroy = sessionStore.destroy.bind(sessionStore);
 
-    sessionStore.get = function(sid, callback) {
+    sessionStore.get = function(sid: string, callback: (err: any, session?: session.SessionData | null) => void) {
       console.log('[MemoryStore] 🔍 GET operation:', { sid: sid?.substring(0, 10) + '...' });
-      return originalMemGet(sid, (err, session) => {
+      return originalMemGet(sid, (err: any, session: session.SessionData | null) => {
         console.log('[MemoryStore] 🔍 GET result:', { 
           sid: sid?.substring(0, 10) + '...', 
           hasSession: !!session, 
@@ -190,14 +199,14 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
       });
     };
 
-    sessionStore.set = function(sid, session, callback) {
+    sessionStore.set = function(sid: string, sess: session.SessionData, callback?: (err?: any) => void) {
       console.log('[MemoryStore] 🔍 SET operation:', { 
         sid: sid?.substring(0, 10) + '...', 
-        sessionKeys: Object.keys(session || {}),
-        hasPassport: !!(session as any)?.passport,
-        passportUser: (session as any)?.passport?.user
+        sessionKeys: Object.keys(sess || {}),
+        hasPassport: !!(sess as any)?.passport,
+        passportUser: (sess as any)?.passport?.user
       });
-      return originalMemSet(sid, session, (err) => {
+      return originalMemSet(sid, sess, (err: any) => {
         console.log('[MemoryStore] 🔍 SET result:', { 
           sid: sid?.substring(0, 10) + '...', 
           error: err?.message,
@@ -207,9 +216,9 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
       });
     };
 
-    sessionStore.destroy = function(sid, callback) {
+    sessionStore.destroy = function(sid: string, callback?: (err?: any) => void) {
       console.log('[MemoryStore] 🔍 DESTROY operation:', { sid: sid?.substring(0, 10) + '...' });
-      return originalMemDestroy(sid, (err) => {
+      return originalMemDestroy(sid, (err: any) => {
         console.log('[MemoryStore] 🔍 DESTROY result:', { 
           sid: sid?.substring(0, 10) + '...', 
           error: err?.message,
@@ -230,8 +239,8 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
   console.log('[SessionConfig] Final session store type:', storeType);
   
   // Store the type globally for access by health checks
-  global.sessionStoreType = storeType;
-  global.sessionStore = sessionStore;
+  (global as any).sessionStoreType = storeType;
+  (global as any).sessionStore = sessionStore;
   
   // Enhanced production detection for Replit deployments
   const isProduction = process.env.NODE_ENV === 'production' || 
@@ -248,34 +257,23 @@ export async function createSessionConfig(): Promise<session.SessionOptions & { 
     isProduction
   });
 
-  // FIXED: Production cookie configuration for cross-domain auth
-  const cookieConfig = {
-    secure: isProduction, // Use secure cookies in production (HTTPS)
+  // FIXED: Production-aware cookie configuration (secure 'auto' in non-prod, true in prod)
+  const secureSetting: boolean | 'auto' = isProduction ? true : 'auto';
+  const cookieConfig: session.CookieOptions = {
+    secure: secureSetting,
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    domain: undefined, // Let browser determine domain automatically
-    path: '/', // Explicitly set path to root
-    sameSite: isProduction ? 'none' as const : 'lax' as const, // 'none' for cross-domain in production
+    domain: undefined,
+    path: '/',
+    sameSite: isProduction ? 'none' : 'lax',
   };
 
-  console.log('[SessionConfig] 🍪 PRODUCTION-AWARE COOKIE CONFIG');
-  
-  // CRITICAL FIX: Use 'none' for production to allow cross-domain cookies
-  // This is required when the API and frontend are on different domains
-  if (isProduction) {
-    cookieConfig.sameSite = 'none'; // Required for cross-domain cookies
-    cookieConfig.secure = true; // Required when sameSite is 'none'
-  } else {
-    cookieConfig.sameSite = 'lax';
-    cookieConfig.secure = false;
-  }
-  
   console.log('[SessionConfig] Cookie configuration:', {
     secure: cookieConfig.secure,
     sameSite: cookieConfig.sameSite,
     isProduction
   });
-
+  
   const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'dev-only-seed-financial-secret',
     resave: false,

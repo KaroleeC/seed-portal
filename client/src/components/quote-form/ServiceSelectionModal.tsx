@@ -15,6 +15,7 @@ interface ServiceSelectionModalProps {
     serviceCfoAdvisory: boolean;
     servicePayrollService: boolean;
     serviceApArService: boolean; // Current AP/AR service flag
+    serviceArService: boolean; // AR service flag
     serviceApLite: boolean;
     serviceArLite: boolean;
     serviceApAdvanced: boolean;
@@ -92,7 +93,7 @@ export function ServiceSelectionModal({
     // Check if trying to disable a core service when Payroll, AP, or AR services are selected
     const coreServiceKeys = ['serviceTaasMonthly', 'serviceMonthlyBookkeeping', 'servicePriorYearFilings', 'serviceCleanupProjects', 'serviceCfoAdvisory'];
     if (coreServiceKeys.includes(serviceKey) && tempServices[serviceKey]) {
-      const hasPayrollOrApOrAr = tempServices.servicePayrollService || tempServices.serviceApArService || tempServices.serviceArService;
+      const hasPayrollOrApOrAr = tempServices.servicePayrollService || tempServices.serviceApArService || (tempServices as any).serviceArService;
       if (hasPayrollOrApOrAr) {
         const otherCoreServicesSelected = coreServiceKeys.filter(key => key !== serviceKey && tempServices[key as keyof typeof tempServices]).length;
         
@@ -314,7 +315,7 @@ export function ServiceSelectionModal({
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {category.services.map((service) => {
-                    const isSelected = tempServices[service.key];
+                    const isSelected = (tempServices as any)[service.key];
                     return (
                       <Card 
                         key={service.key}
@@ -323,7 +324,7 @@ export function ServiceSelectionModal({
                             ? 'border-[#e24c00] bg-gradient-to-br from-orange-50 to-orange-100 shadow-lg transform scale-[1.02]' 
                             : 'border-gray-200 hover:border-[#e24c00] hover:bg-gray-50 hover:shadow-md'
                         }`}
-                        onClick={() => handleServiceToggle(service.key)}
+                        onClick={() => handleServiceToggle(service.key as any)}
                         data-testid={`card-${service.key}`}
                       >
                         <CardContent className="p-5">

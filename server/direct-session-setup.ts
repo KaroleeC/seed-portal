@@ -18,16 +18,17 @@ export async function setupDirectSessions(app: Express): Promise<void> {
       await redisClient.ping();
       console.log('[DirectSession] ✅ Redis ping successful');
       
+      const derivedPrefix = process.env.REDIS_KEY_PREFIX ?? (process.env.NODE_ENV === 'development' ? 'oseed:dev:' : '');
       sessionStore = new RedisStore({
         client: redisClient,
-        prefix: 'sess:',
+        prefix: `${derivedPrefix}sess:`,
         ttl: 24 * 60 * 60, // 24 hours
       });
       storeType = 'RedisStore';
       console.log('[DirectSession] ✅ Redis session store created:', sessionStore.constructor.name);
       
-    } catch (error) {
-      console.warn('[DirectSession] ❌ Redis failed, using MemoryStore:', error.message);
+    } catch (error: any) {
+      console.warn('[DirectSession] ❌ Redis failed, using MemoryStore:', (error as any)?.message);
       const MemoryStoreClass = MemoryStore(session);
       sessionStore = new MemoryStoreClass({ checkPeriod: 86400000 });
       storeType = 'MemoryStore';

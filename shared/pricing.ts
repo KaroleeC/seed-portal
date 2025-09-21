@@ -59,6 +59,86 @@ export interface CombinedFeeResult {
   qboFee: number; // QBO subscription as separate line item
 }
 
+// Strongly-typed input used by the Quote Calculator (extends PricingData
+// with all service toggles and detailed fields consumed by calculators)
+export type QuotePricingInput = PricingData & {
+  // Monthly service toggles
+  serviceMonthlyBookkeeping?: boolean;
+  serviceTaasMonthly?: boolean;
+  serviceCleanupProjects?: boolean;
+  servicePriorYearFilings?: boolean;
+  serviceCfoAdvisory?: boolean;
+  servicePayrollService?: boolean;
+  serviceApArService?: boolean;
+  serviceArService?: boolean;
+  serviceAgentOfService?: boolean;
+
+  // Service details
+  priorYearFilings?: string[];
+  cleanupPeriods?: string[];
+
+  // CFO Advisory
+  cfoAdvisoryType?: 'pay_as_you_go' | 'prepaid_bundle' | 'bundled';
+  cfoAdvisoryBundleHours?: number;
+
+  // Payroll
+  payrollEmployeeCount?: number;
+  payrollStateCount?: number;
+
+  // AP
+  apServiceTier?: 'lite' | 'advanced';
+  apVendorBillsBand?: '0-25' | '26-100' | '101-250' | '251+';
+  apVendorCount?: number;
+  customApVendorCount?: number;
+
+  // AR
+  arServiceTier?: 'lite' | 'advanced';
+  arCustomerInvoicesBand?: '0-25' | '26-100' | '101-250' | '251+';
+  arCustomerCount?: number;
+  customArCustomerCount?: number;
+
+  // Agent of Service
+  agentOfServiceAdditionalStates?: number;
+  agentOfServiceComplexCase?: boolean;
+
+  // Tier + subscriptions
+  serviceTier?: 'Automated' | 'Guided' | 'Concierge';
+  qboSubscription?: boolean;
+};
+
+// Optional pricing configuration (future: admin-configurable via DB/BFF)
+// For now this is defined for forward-compatibility; callers may omit it.
+export interface PricingConfig {
+  version?: string;
+  services?: Partial<{
+    bookkeeping: { enabled: boolean };
+    taas: { enabled: boolean };
+    payroll: { enabled: boolean };
+    ap: { enabled: boolean };
+    ar: { enabled: boolean };
+    agentOfService: { enabled: boolean };
+    cfoAdvisory: { enabled: boolean };
+    qbo: { enabled: boolean };
+  }>;
+  fees?: Partial<{
+    baseMonthlyFee: number;
+    qboMonthly: number;
+    priorYearFilingPerYear: number;
+    cleanupPerMonth: number;
+    serviceTierFees: {
+      Automated: number;
+      Guided: number;
+      Concierge: number;
+    };
+  }>;
+  discounts?: Partial<{
+    bookkeepingWithTaasPct: number; // e.g. 0.5
+  }>;
+  rounding?: Partial<{
+    monthlyStep: number; // e.g. 25
+  }>;
+}
+
 // Constants
 export const PRICING_CONSTANTS = {
   baseMonthlyFee: 150,
@@ -109,6 +189,12 @@ export const PRICING_CONSTANTS = {
 
 export function roundToNearest25(num: number): number {
   return Math.ceil(num / 25) * 25;
+}
+
+// Configurable rounding helper (defaults to 25 if invalid step provided)
+function roundToStep(num: number, step?: number): number {
+  const s = typeof step === 'number' && step > 0 ? step : 25;
+  return Math.ceil(num / s) * s;
 }
 
 export function calculateBookkeepingFees(data: PricingData): FeeResult {
@@ -657,4 +743,241 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
     agentOfServiceBreakdown,
     qboFee
   };
+}
+
+// Wrapper that accepts the richer quote input and an optional config.
+// Currently delegates to calculateCombinedFees; config reserved for future use.
+export function calculateQuotePricing(input: QuotePricingInput, _config?: PricingConfig): CombinedFeeResult {
+  if (_config) {
+    return calculateCombinedFeesWithConfig(input, _config);
+  }
+  return calculateCombinedFees(input);
+}
+
+// Config-aware combined calculator. Does not alter default calculateCombinedFees signature
+// so existing server code paths remain unchanged. The UI can pass an optional config via
+// calculateQuotePricing/calculatePricingDisplay to honor admin-configured values.
+function calculateCombinedFeesWithConfig(data: PricingData, config: PricingConfig): CombinedFeeResult {
+  // Service enablement flags (default true)
+  const svcEnabled = {
+    bookkeeping: config.services?.bookkeeping?.enabled !== false,
+    taas: config.services?.taas?.enabled !== false,
+    payroll: config.services?.payroll?.enabled !== false,
+    ap: config.services?.ap?.enabled !== false,
+    ar: config.services?.ar?.enabled !== false,
+    agentOfService: config.services?.agentOfService?.enabled !== false,
+    cfoAdvisory: config.services?.cfoAdvisory?.enabled !== false,
+    qbo: config.services?.qbo?.enabled !== false,
+  };
+
+  // Fees and options
+  const baseMonthlyFee = config.fees?.baseMonthlyFee ?? PRICING_CONSTANTS.baseMonthlyFee;
+  const qboMonthly = config.fees?.qboMonthly ?? 60;
+  const priorYearFilingPerYear = config.fees?.priorYearFilingPerYear ?? 1500;
+  const cleanupPerMonth = config.fees?.cleanupPerMonth ?? 100;
+  const tierFees = config.fees?.serviceTierFees ?? { Automated: 0, Guided: 79, Concierge: 249 };
+  const discountPct = config.discounts?.bookkeepingWithTaasPct ?? 0.5;
+  const step = config.rounding?.monthlyStep ?? 25;
+
+  // Determine which services are included per input, then apply enablement gates
+  const includesMonthlyBookkeeping = Boolean((data as any).serviceBookkeeping || (data as any).includesBookkeeping || (data as any).serviceMonthlyBookkeeping);
+  const includesBookkeepingCleanupOnly = Boolean((data as any).serviceCleanupProjects && !includesMonthlyBookkeeping);
+  const rawIncludesBookkeeping = includesMonthlyBookkeeping || includesBookkeepingCleanupOnly;
+  const includesBookkeeping = rawIncludesBookkeeping && svcEnabled.bookkeeping;
+
+  const rawIncludesTaas = Boolean((data as any).serviceTaas || (data as any).includesTaas === true || (data as any).serviceTaasMonthly || (data as any).servicePriorYearFilings);
+  const includesTaas = rawIncludesTaas && svcEnabled.taas;
+
+  const rawIncludesPayroll = Boolean((data as any).servicePayrollService);
+  const includesPayroll = rawIncludesPayroll && svcEnabled.payroll;
+
+  const rawIncludesAP = Boolean((data as any).serviceApArService);
+  const includesAP = rawIncludesAP && svcEnabled.ap;
+
+  const rawIncludesAR = Boolean((data as any).serviceArService);
+  const includesAR = rawIncludesAR && svcEnabled.ar;
+
+  const rawIncludesAgent = Boolean((data as any).serviceAgentOfService);
+  const includesAgentOfService = rawIncludesAgent && svcEnabled.agentOfService;
+
+  const includesCfoAdvisory = Boolean((data as any).serviceCfoAdvisory) && svcEnabled.cfoAdvisory;
+
+  // Bookkeeping monthly and setup (pre-discount). Use config base fee; multipliers remain from constants
+  let bookkeepingFees: FeeResult = { monthlyFee: 0, setupFee: 0 };
+  if (includesMonthlyBookkeeping && svcEnabled.bookkeeping) {
+    if (!data.monthlyRevenueRange || !data.monthlyTransactions || !data.industry) {
+      bookkeepingFees = { monthlyFee: 0, setupFee: 0 };
+    } else {
+      const transactionUpcharge = PRICING_CONSTANTS.txSurcharge[(data.monthlyTransactions as keyof typeof PRICING_CONSTANTS.txSurcharge)] || 0;
+      const beforeMultipliers = baseMonthlyFee + transactionUpcharge;
+      const revenueMultiplier = PRICING_CONSTANTS.revenueMultipliers[(data.monthlyRevenueRange as keyof typeof PRICING_CONSTANTS.revenueMultipliers)] || 1.0;
+      const industryData = PRICING_CONSTANTS.industryMultipliers[(data.industry as keyof typeof PRICING_CONSTANTS.industryMultipliers)] || { monthly: 1, cleanup: 1 };
+      const industryMultiplier = industryData.monthly;
+      const afterMultipliers = Math.round(beforeMultipliers * revenueMultiplier * industryMultiplier);
+      const monthlyFee = afterMultipliers;
+      const currentMonth = new Date().getMonth() + 1;
+      const setupFee = Math.round(afterMultipliers * currentMonth * 0.25);
+      bookkeepingFees = {
+        monthlyFee,
+        setupFee,
+        breakdown: {
+          baseFee: baseMonthlyFee,
+          transactionUpcharge,
+          beforeMultipliers,
+          revenueMultiplier,
+          industryMultiplier,
+          afterMultipliers,
+          monthlyTotal: monthlyFee,
+          qboFee: ((data as any).qboSubscription && svcEnabled.qbo) ? qboMonthly : 0,
+          currentMonth,
+          setupFeeCalculation: `${afterMultipliers} × ${currentMonth} × 0.25`,
+        }
+      };
+    }
+  }
+
+  // TaaS monthly and setup (configurable rounding)
+  const taasFees: FeeResult = includesTaas && svcEnabled.taas ? ((): FeeResult => {
+    if (!data.monthlyRevenueRange || !data.industry || !(data as any).numEntities || !(data as any).statesFiled || (data as any).internationalFiling === undefined || !(data as any).numBusinessOwners || (data as any).include1040s === undefined) {
+      return { monthlyFee: 0, setupFee: 0 };
+    }
+    const base = 150;
+    const effectiveNumEntities = (data as any).customNumEntities || (data as any).numEntities;
+    const effectiveStatesFiled = (data as any).customStatesFiled || (data as any).statesFiled;
+    const effectiveNumBusinessOwners = (data as any).customNumBusinessOwners || (data as any).numBusinessOwners;
+    let entityUpcharge = 0; if (effectiveNumEntities > 5) entityUpcharge = (effectiveNumEntities - 5) * 75;
+    let stateUpcharge = 0; if (effectiveStatesFiled > 1) stateUpcharge = Math.min(effectiveStatesFiled - 1, 49) * 50;
+    const intlUpcharge = (data as any).internationalFiling ? 200 : 0;
+    let ownerUpcharge = 0; if (effectiveNumBusinessOwners > 5) ownerUpcharge = (effectiveNumBusinessOwners - 5) * 25;
+    const bookUpcharge = (data as any).bookkeepingQuality === 'Messy' ? 25 : 0;
+    const personal1040 = (data as any).include1040s ? effectiveNumBusinessOwners * 25 : 0;
+    const industryData = PRICING_CONSTANTS.industryMultipliers[(data.industry as keyof typeof PRICING_CONSTANTS.industryMultipliers)] || { monthly: 1.0, cleanup: 1.0 };
+    const industryMult = industryData.monthly;
+    const avgMonthlyRevenue = data.monthlyRevenueRange === '<$10K' ? 5000 :
+                             data.monthlyRevenueRange === '10K-25K' ? 17500 :
+                             data.monthlyRevenueRange === '25K-75K' ? 50000 :
+                             data.monthlyRevenueRange === '75K-250K' ? 162500 :
+                             data.monthlyRevenueRange === '250K-1M' ? 625000 :
+                             data.monthlyRevenueRange === '1M+' ? 1000000 : 5000;
+    const revenueMult = avgMonthlyRevenue <= 10000 ? 1.0 :
+                       avgMonthlyRevenue <= 25000 ? 1.2 :
+                       avgMonthlyRevenue <= 75000 ? 1.4 :
+                       avgMonthlyRevenue <= 250000 ? 1.6 :
+                       avgMonthlyRevenue <= 1000000 ? 1.8 : 2.0;
+    const beforeMultipliers = base + entityUpcharge + stateUpcharge + intlUpcharge + ownerUpcharge + bookUpcharge + personal1040;
+    const afterIndustryMult = beforeMultipliers * industryMult;
+    const rawFee = afterIndustryMult * revenueMult;
+    const monthlyFee = roundToStep(rawFee, step);
+    const setupFee = ((data as any).priorYearsUnfiled || 0) * 2100;
+    return { monthlyFee, setupFee };
+  })() : { monthlyFee: 0, setupFee: 0 };
+
+  // QBO line item (separate)
+  const qboFee = (includesMonthlyBookkeeping && (data as any).qboSubscription && svcEnabled.qbo) ? qboMonthly : 0;
+
+  // Apply discount to bookkeeping if TaaS also included
+  let finalBookkeeping = bookkeepingFees;
+  if (includesMonthlyBookkeeping && includesTaas && finalBookkeeping.monthlyFee > 0) {
+    const before = finalBookkeeping.monthlyFee;
+    const after = roundToStep(before * discountPct, step);
+    finalBookkeeping = {
+      monthlyFee: after,
+      setupFee: finalBookkeeping.setupFee,
+      breakdown: {
+        ...(finalBookkeeping.breakdown || {}),
+        discountApplied: true,
+        discountPercentage: Math.round(discountPct * 100),
+        monthlyFeeBeforeDiscount: before,
+        monthlyFeeAfterDiscount: after,
+        qboFee,
+      },
+    };
+  }
+
+  // Service tier fee via config
+  let serviceTierFee = 0;
+  if ((data as any).serviceTier === 'Guided') serviceTierFee = tierFees.Guided ?? 79;
+  else if ((data as any).serviceTier === 'Concierge') serviceTierFee = tierFees.Concierge ?? 249;
+  else serviceTierFee = tierFees.Automated ?? 0;
+
+  // Additional project fees
+  const cleanupPeriods = (data as any).cleanupPeriods || [];
+  const cleanupProjectFee = cleanupPeriods.length * cleanupPerMonth;
+
+  const priorYearFilings = (data as any).priorYearFilings || [];
+  const priorYearFilingsFee = priorYearFilings.length * priorYearFilingPerYear;
+
+  // CFO Advisory
+  const cfoResult = includesCfoAdvisory ? calculateCfoAdvisoryFees(data) : { cfoAdvisoryFee: 0, hubspotProductId: null };
+  const { cfoAdvisoryFee, hubspotProductId } = cfoResult;
+
+  // Payroll, AP, AR, Agent services (respect enablement toggles)
+  const payrollResult = includesPayroll ? calculatePayrollFees(data) : { payrollFee: 0, breakdown: undefined };
+  const { payrollFee, breakdown: payrollBreakdown } = payrollResult;
+
+  const apResult = includesAP ? calculateAPFees(data) : { apFee: 0, breakdown: undefined };
+  const { apFee, breakdown: apBreakdown } = apResult;
+
+  const arResult = includesAR ? calculateARFees(data) : { arFee: 0, breakdown: undefined };
+  const { arFee, breakdown: arBreakdown } = arResult;
+
+  const agentResult = includesAgentOfService ? calculateAgentOfServiceFees(data) : { agentOfServiceFee: 0, breakdown: undefined };
+  const { agentOfServiceFee, breakdown: agentOfServiceBreakdown } = agentResult;
+
+  // Totals
+  const combinedMonthlyFee = finalBookkeeping.monthlyFee + taasFees.monthlyFee + serviceTierFee + payrollFee + apFee + arFee + qboFee;
+  const combinedSetupFee = finalBookkeeping.setupFee + taasFees.setupFee + cleanupProjectFee + priorYearFilingsFee + cfoAdvisoryFee + agentOfServiceFee;
+
+  return {
+    bookkeeping: finalBookkeeping,
+    taas: taasFees,
+    combined: { monthlyFee: combinedMonthlyFee, setupFee: combinedSetupFee },
+    includesBookkeeping,
+    includesTaas,
+    includesAP,
+    includesAR,
+    includesAgentOfService,
+    serviceTierFee,
+    cleanupProjectFee,
+    priorYearFilingsFee,
+    cfoAdvisoryFee,
+    cfoAdvisoryHubspotProductId: hubspotProductId,
+    payrollFee,
+    payrollBreakdown,
+    apFee,
+    apBreakdown,
+    arFee,
+    arBreakdown,
+    agentOfServiceFee,
+    agentOfServiceBreakdown,
+    qboFee,
+  };
+}
+
+// Adapter for current UI expectations: injects top-level totals and optional
+// derived values like monthly package discount (if discount breakdown is present).
+export function toUiPricing(result: CombinedFeeResult): CombinedFeeResult & {
+  totalMonthlyFee: number;
+  totalSetupFee: number;
+  packageDiscountMonthly?: number;
+} {
+  let packageDiscountMonthly: number | undefined;
+  const before = (result.bookkeeping as any)?.breakdown?.monthlyFeeBeforeDiscount;
+  const after = (result.bookkeeping as any)?.breakdown?.monthlyFeeAfterDiscount;
+  if (typeof before === 'number' && typeof after === 'number' && before >= after) {
+    packageDiscountMonthly = before - after;
+  }
+
+  return {
+    ...result,
+    totalMonthlyFee: result.combined.monthlyFee,
+    totalSetupFee: result.combined.setupFee,
+    packageDiscountMonthly,
+  };
+}
+
+// Convenience single call for UI components
+export function calculatePricingDisplay(input: QuotePricingInput, config?: PricingConfig) {
+  const result = calculateQuotePricing(input, config);
+  return toUiPricing(result);
 }

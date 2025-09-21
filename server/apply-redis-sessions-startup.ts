@@ -25,9 +25,10 @@ export async function applyRedisSessionsAtStartup(app: Express): Promise<void> {
     console.log('[RedisStartup] ✅ Redis ping successful');
     
     // Create RedisStore
+    const derivedPrefix = process.env.REDIS_KEY_PREFIX ?? (process.env.NODE_ENV === 'development' ? 'oseed:dev:' : '');
     const redisStore = new RedisStore({
       client: redisClient,
-      prefix: 'sess:',
+      prefix: `${derivedPrefix}sess:`,
       ttl: 24 * 60 * 60, // 24 hours
     });
     

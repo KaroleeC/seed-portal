@@ -21,7 +21,9 @@ import { ArrowLeft, Plus, Edit2, Trash2, BookOpen, Users, Search, Bookmark, Wand
 import { apiRequest } from "@/lib/queryClient";
 import { AIArticleGenerator } from "@/components/AIArticleGenerator";
 import { RichTextEditor } from "@/components/RichTextEditor";
-import logoPath from "@assets/Seed Financial Logo (1)_1753043325029.png";
+import logoLight from "@assets/Seed Financial Logo - Light Mode.png";
+import logoDark from "@assets/Seed Financial Logo - Dark Mode.png";
+import { useTheme } from "@/theme";
 
 // Types
 interface KbCategory {
@@ -81,16 +83,14 @@ export default function KbAdmin() {
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
   const [showAdvancedDelete, setShowAdvancedDelete] = useState(false);
 
+  const { resolvedTheme } = useTheme();
+  const logoSrc = resolvedTheme === "dark" ? logoDark : logoLight;
+
   // Fetch categories - only when authenticated
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["/api/kb/categories"],
     queryFn: async () => {
-      const response = await fetch('/api/kb/categories', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!response.ok) throw new Error('Failed to fetch categories');
-      return response.json();
+      return await apiRequest<KbCategory[]>("GET", '/api/kb/categories');
     },
     enabled: !!user,
   });
@@ -100,12 +100,7 @@ export default function KbAdmin() {
     queryKey: ["/api/kb/articles", selectedCategory],
     queryFn: async () => {
       const params = selectedCategory ? `?categoryId=${selectedCategory}` : '';
-      const response = await fetch(`/api/kb/articles${params}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!response.ok) throw new Error('Failed to fetch articles');
-      return response.json();
+      return await apiRequest<KbArticle[]>("GET", `/api/kb/articles${params}`);
     },
     enabled: !!user,
   });
@@ -133,13 +128,7 @@ export default function KbAdmin() {
         ...data,
         tags: data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
       };
-      const response = await fetch("/api/kb/articles", { 
-        method: "POST", 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload) 
-      });
-      if (!response.ok) throw new Error('Failed to create article');
-      return response.json();
+      return await apiRequest<KbArticle>("POST", "/api/kb/articles", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kb/articles"] });
@@ -166,13 +155,7 @@ export default function KbAdmin() {
         ...data,
         tags: data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : undefined,
       };
-      const response = await fetch(`/api/kb/articles/${id}`, { 
-        method: "PATCH", 
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload) 
-      });
-      if (!response.ok) throw new Error('Failed to update article');
-      return response.json();
+      return await apiRequest<KbArticle>("PATCH", `/api/kb/articles/${id}`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kb/articles"] });
@@ -196,9 +179,7 @@ export default function KbAdmin() {
   // Delete article mutation (permanent deletion)
   const deleteArticleMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/kb/articles/${id}`, { method: "DELETE" });
-      if (!response.ok) throw new Error('Failed to delete article');
-      return response.json();
+      return await apiRequest<{ success: boolean }>("DELETE", `/api/kb/articles/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kb/articles"] });
@@ -221,9 +202,7 @@ export default function KbAdmin() {
   // Archive article mutation
   const archiveArticleMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetch(`/api/kb/articles/${id}/archive`, { method: "PATCH" });
-      if (!response.ok) throw new Error('Failed to archive article');
-      return response.json();
+      return await apiRequest<{ success: boolean }>("PATCH", `/api/kb/articles/${id}/archive`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kb/articles"] });
@@ -247,13 +226,7 @@ export default function KbAdmin() {
   const togglePublishMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
       const newStatus = status === 'published' ? 'draft' : 'published';
-      const response = await fetch(`/api/kb/articles/${id}`, { 
-        method: "PATCH", 
-        body: JSON.stringify({ status: newStatus }),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      if (!response.ok) throw new Error('Failed to toggle publish status');
-      return response.json();
+      return await apiRequest<KbArticle>("PATCH", `/api/kb/articles/${id}`, { status: newStatus });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/kb/articles"] });
@@ -443,7 +416,7 @@ export default function KbAdmin() {
           
           <div className="flex justify-center">
             <img 
-              src={logoPath} 
+              src={logoSrc} 
               alt="Seed Financial Logo" 
               className="h-16"
             />

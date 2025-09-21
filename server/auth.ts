@@ -6,7 +6,8 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
-import { HubSpotService } from "./hubspot";
+import type { HubSpotService } from "./hubspot";
+import { hubSpotService as hsSingleton } from "./hubspot";
 import type Redis from "ioredis";
 import RedisStore from "connect-redis";
 import MemoryStore from "memorystore";
@@ -45,12 +46,10 @@ async function comparePasswords(supplied: string, stored: string) {
 
 export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
   // Auth setup simplified with centralized session handling
-  // Initialize HubSpot service for user verification
-  let hubSpotService: HubSpotService | null = null;
-  try {
-    hubSpotService = new HubSpotService();
-  } catch (error) {
-    console.warn('HubSpot service not available for user verification:', error);
+  // Initialize HubSpot service for user verification (use singleton)
+  let hubSpotService: HubSpotService | null = hsSingleton;
+  if (!hubSpotService) {
+    console.warn('HubSpot service not available for user verification: missing HUBSPOT_ACCESS_TOKEN');
   }
 
   // Require SESSION_SECRET in production
@@ -135,14 +134,15 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
             }
             
             try {
+              // IMPORTANT: pass plain password; storage.createUser will bcrypt-hash it
               user = await storage.createUser({
                 email,
-                password: await hashPassword('SeedAdmin1!'), // Default password
+                password: 'SeedAdmin1!', // Default password for initial bootstrap in dev
                 firstName: '',
                 lastName: '',
                 hubspotUserId: null,
                 role,
-              });
+              } as any);
               console.log(`Successfully created user with ID: ${user.id}`);
             } catch (createError: any) {
               // Handle race condition - if another request created the user first
@@ -211,7 +211,7 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
           console.log('[Passport LocalStrategy] ✅ Authentication successful for:', user.email);
           console.log('[Passport LocalStrategy] 🔐 ===== AUTHENTICATION COMPLETE =====');
           return done(null, user);
-        } catch (error) {
+        } catch (error: any) {
           console.error('Authentication error:', error);
           return done(error);
         }
@@ -255,7 +255,7 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
         });
         done(null, null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('🔄 [PASSPORT] ❌ Deserialization error:', {
         error: error.message,
         userId: id,
@@ -296,13 +296,14 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
       }
 
       // Create user with HubSpot data
+      // IMPORTANT: pass plain password; storage.createUser will bcrypt-hash it
       const user = await storage.createUser({
         email,
-        password: await hashPassword(password || 'SeedAdmin1!'), // Use provided password or default
+        password: (password || 'SeedAdmin1!'), // Use provided password or default
         firstName: hubspotVerification.userData?.firstName || '',
         lastName: hubspotVerification.userData?.lastName || '',
         hubspotUserId: hubspotVerification.userData?.hubspotUserId || null,
-      });
+      } as any);
 
       req.login(user, (err) => {
         if (err) return next(err);
@@ -313,9 +314,9 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
           lastName: user.lastName
         });
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
-      res.status(500).json({ message: "Registration failed" });
+      res.status(500).json({ message: "Registration failed", error: error.message });
     }
   });
 
@@ -366,9 +367,10 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
             role = 'admin';
           }
           
+          // IMPORTANT: pass plain password; storage.createUser will bcrypt-hash it
           user = await storage.createUser({
             email: userInfo.email,
-            password: await hashPassword('oauth-google-' + Date.now()),
+            password: 'oauth-google-' + Date.now(),
             firstName: userInfo.given_name || '',
             lastName: userInfo.family_name || '',
             profilePhoto: userInfo.picture || null,
@@ -376,7 +378,7 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
             authProvider: 'google',
             role,
             hubspotUserId: null,
-          });
+          } as any);
           console.log('✅ User created with ID:', user.id);
         } else {
           console.log('👤 Existing user found:', user.email);
@@ -421,7 +423,7 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
           });
         });
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Google credential login error:', error);
         res.status(500).json({ message: "Authentication failed", error: error.message });
       }
@@ -472,7 +474,7 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
     console.log('🔐 Session data keys:', Object.keys(req.session || {}));
     console.log('🔐 Authenticated:', req.isAuthenticated ? req.isAuthenticated() : 'Unknown');
     console.log('🔐 User:', req.user ? req.user.email : 'None');
-    console.log('🔐 Session passport:', req.session?.passport || 'None');
+    console.log('🔐 Session passport:', (req.session as any)?.passport || 'None');
     
     if (!req.isAuthenticated()) {
       console.log('❌ User not authenticated, returning 401');
@@ -498,8 +500,8 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
       lastWeatherUpdate: req.user.lastWeatherUpdate,
       lastHubspotSync: req.user.lastHubspotSync,
       defaultDashboard: req.user.defaultDashboard,
-      isImpersonating: req.session.isImpersonating || false,
-      originalUser: req.session.originalUser || null
+      isImpersonating: (req.session as any).isImpersonating || false,
+      originalUser: (req.session as any).originalUser || null
     });
   });
 

@@ -7,6 +7,7 @@
 import { Router } from 'express';
 import { checkServicesHealth } from '../services';
 import { logger } from '../logger';
+import { getErrorMessage } from '../utils/errors.js';
 
 const router = Router();
 
@@ -23,8 +24,7 @@ router.get('/health', async (req, res) => {
         logger.error('Service unhealthy', {
           service: serviceName,
           status: serviceHealth.status,
-          message: serviceHealth.message,
-          responseTime: serviceHealth.responseTime
+          message: serviceHealth.message
         });
       }
     });
@@ -35,7 +35,7 @@ router.get('/health', async (req, res) => {
       services: healthResult.services
     });
   } catch (error: any) {
-    logger.error('Health check failed', { error: error.message });
+    logger.error('Health check failed', { error: getErrorMessage(error) });
     res.status(500).json({
       status: 'error',
       message: 'Health check failed',
@@ -67,7 +67,7 @@ router.get('/health/:service', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    logger.error('Service health check failed', { service, error: error.message });
+    logger.error('Service health check failed', { service, error: getErrorMessage(error) });
     res.status(500).json({
       status: 'error',
       message: 'Service health check failed',

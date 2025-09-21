@@ -98,10 +98,7 @@ class AssetOptimizationService {
   }
 
   getStats(): CompressionStats {
-    return {
-      ...this.stats,
-      averageCompressionRatio: this.stats.compressionRatio
-    };
+    return { ...this.stats };
   }
 
   resetStats() {

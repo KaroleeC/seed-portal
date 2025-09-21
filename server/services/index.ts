@@ -31,7 +31,9 @@ export async function checkServicesHealth(): Promise<{
     geocoding: await geocodingService.healthCheck(),
   };
 
-  const healthy = Object.values(services).every(service => service.status === 'healthy');
+  // Overall healthy if no service is strictly 'unhealthy'.
+  // 'degraded' is acceptable (e.g., disabled in dev).
+  const healthy = Object.values(services).every(service => service.status !== 'unhealthy');
 
   return { healthy, services };
 }

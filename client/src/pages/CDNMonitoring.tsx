@@ -61,26 +61,30 @@ export default function CDNMonitoring() {
   const [testResults, setTestResults] = useState<any>(null);
 
   // Fetch CDN health
-  const { data: cdnHealth, isLoading: healthLoading } = useQuery({
+  const { data: cdnHealth, isLoading: healthLoading } = useQuery<CDNHealthData>({
     queryKey: ['/api/cdn/health'],
+    queryFn: async (): Promise<CDNHealthData> => apiRequest('/api/cdn/health'),
     refetchInterval: 30000 // Refresh every 30 seconds
   });
 
   // Fetch compression stats
-  const { data: compressionStats, isLoading: compressionLoading } = useQuery({
+  const { data: compressionStats, isLoading: compressionLoading } = useQuery<CompressionStats>({
     queryKey: ['/api/cdn/compression-stats'],
+    queryFn: async (): Promise<CompressionStats> => apiRequest('/api/cdn/compression-stats'),
     refetchInterval: 10000 // Refresh every 10 seconds
   });
 
   // Fetch CDN performance
-  const { data: cdnPerformance, isLoading: performanceLoading } = useQuery({
+  const { data: cdnPerformance, isLoading: performanceLoading } = useQuery<CDNPerformance>({
     queryKey: ['/api/cdn/performance'],
+    queryFn: async (): Promise<CDNPerformance> => apiRequest('/api/cdn/performance'),
     refetchInterval: 60000 // Refresh every minute
   });
 
   // Fetch asset manifest
-  const { data: assetManifest, isLoading: manifestLoading } = useQuery({
-    queryKey: ['/api/assets/manifest']
+  const { data: assetManifest, isLoading: manifestLoading } = useQuery<AssetManifest>({
+    queryKey: ['/api/assets/manifest'],
+    queryFn: async (): Promise<AssetManifest> => apiRequest('/api/assets/manifest')
   });
 
   // Reset compression stats mutation
@@ -115,7 +119,8 @@ export default function CDNMonitoring() {
     setTestResults({ testing: true });
     
     try {
-      const results = {
+      type TestEntry = { name: string; status: string; details?: any; error?: any };
+      const results: { timestamp: string; tests: TestEntry[] } = {
         timestamp: new Date().toISOString(),
         tests: []
       };
@@ -128,7 +133,7 @@ export default function CDNMonitoring() {
           status: health.status === 'healthy' ? 'passed' : 'failed',
           details: health
         });
-      } catch (error) {
+      } catch (error: any) {
         results.tests.push({
           name: 'CDN Health Check',
           status: 'failed',
@@ -148,7 +153,7 @@ export default function CDNMonitoring() {
             savings: Math.round((1 - stats.averageCompressionRatio) * 100) + '%'
           }
         });
-      } catch (error) {
+      } catch (error: any) {
         results.tests.push({
           name: 'Compression Statistics',
           status: 'failed',
@@ -167,7 +172,7 @@ export default function CDNMonitoring() {
             version: manifest.version
           }
         });
-      } catch (error) {
+      } catch (error: any) {
         results.tests.push({
           name: 'Asset Manifest',
           status: 'failed',
@@ -183,7 +188,7 @@ export default function CDNMonitoring() {
           status: 'passed',
           details: performance
         });
-      } catch (error) {
+      } catch (error: any) {
         results.tests.push({
           name: 'Performance Metrics',
           status: 'failed',
@@ -192,7 +197,7 @@ export default function CDNMonitoring() {
       }
 
       setTestResults(results);
-    } catch (error) {
+    } catch (error: any) {
       setTestResults({
         error: 'Failed to run comprehensive test',
         details: error.message
@@ -491,7 +496,7 @@ export default function CDNMonitoring() {
                     {Object.keys(assetManifest.assets).length} assets in manifest (v{assetManifest.version})
                   </div>
                   <div className="space-y-2 max-h-96 overflow-auto">
-                    {Object.entries(assetManifest.assets).map(([path, asset]) => (
+                    {(Object.entries(assetManifest.assets as Record<string, { hash: string; url: string; size: number; contentType: string; lastModified: string }>)).map(([path, asset]) => (
                       <div key={path} className="flex items-center justify-between p-2 bg-muted rounded">
                         <div className="flex-1 min-w-0">
                           <div className="font-mono text-sm truncate">{path}</div>

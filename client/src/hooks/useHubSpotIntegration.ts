@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { apiRequest } from '@/lib/queryClient';
+import { verifyContact, searchContacts, syncQuote } from '@/services/hubspot';
+import { checkExistingQuotes } from '@/services/quotes';
 
 interface HubSpotContact {
   companyName?: string;
@@ -25,7 +26,7 @@ export function useHubSpotIntegration() {
     
     try {
       // Verify HubSpot contact first - this is critical
-      const hubspotData = await apiRequest('POST', '/api/hubspot/verify-contact', { email });
+      const hubspotData = await verifyContact(email);
 
       if (hubspotData.verified && hubspotData.contact) {
         setHubspotVerificationStatus('verified');
@@ -38,7 +39,7 @@ export function useHubSpotIntegration() {
       // Try to check for existing quotes, but don't fail if this fails
       let existingQuotesData = null;
       try {
-        existingQuotesData = await apiRequest('POST', '/api/quotes/check-existing', { email });
+        existingQuotesData = await checkExistingQuotes(email);
       } catch (quotesError) {
         console.warn('Failed to check existing quotes, continuing without this data:', quotesError);
         existingQuotesData = null;
@@ -59,8 +60,8 @@ export function useHubSpotIntegration() {
   const pushQuoteToHubSpot = async (quoteId: number) => {
     try {
       console.log('[HubSpot] Attempting to push quote ID:', quoteId);
-      const response = await apiRequest('POST', '/api/hubspot/push-quote', { quoteId });
-      const result = await response.json();
+      // Use unified queue/sync path; server falls back to direct sync if needed
+      const result = await syncQuote(quoteId, 'auto');
       console.log('[HubSpot] Push successful:', result);
       return result;
     } catch (error: any) {

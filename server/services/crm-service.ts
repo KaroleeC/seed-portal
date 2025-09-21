@@ -53,6 +53,13 @@ export class CRMService {
   };
 
   constructor() {
+    const crmDisabled = (process.env.DISABLE_CRM === '1' || (process.env.DISABLE_CRM || '').toLowerCase() === 'true');
+    if (crmDisabled) {
+      logger.info('CRM service disabled via DISABLE_CRM flag');
+      this.client = null as any;
+      return;
+    }
+
     const apiKey = process.env.HUBSPOT_ACCESS_TOKEN;
     logger.debug('CRM Service initialized with HUBSPOT_ACCESS_TOKEN');
     
@@ -72,8 +79,8 @@ export class CRMService {
     
     if (!this.client) {
       return {
-        status: 'unhealthy',
-        message: 'CRM service not configured - missing HUBSPOT_ACCESS_TOKEN',
+        status: 'degraded',
+        message: process.env.DISABLE_CRM ? 'CRM disabled via DISABLE_CRM' : 'CRM service not configured - missing HUBSPOT_ACCESS_TOKEN',
         responseTime: Date.now() - startTime
       };
     }
@@ -110,10 +117,10 @@ export class CRMService {
     
     try {
       // Check cache first
-      const cached = await cache.get(cacheKey);
+      const cached = await cache.get<CRMContact>(cacheKey);
       if (cached) {
         logger.debug('CRM contact cache hit', { email });
-        return JSON.parse(cached);
+        return cached;
       }
 
       logger.debug('CRM contact lookup', { email });
@@ -122,7 +129,7 @@ export class CRMService {
         filterGroups: [{
           filters: [{
             propertyName: 'email',
-            operator: 'EQ',
+            operator: 'EQ' as any,
             value: email
           }]
         }],
@@ -183,10 +190,10 @@ export class CRMService {
     
     try {
       // Check cache first
-      const cached = await cache.get(cacheKey);
+      const cached = await cache.get<CRMContactSearchResult>(cacheKey);
       if (cached) {
         logger.debug('CRM search cache hit', { query });
-        return JSON.parse(cached);
+        return cached;
       }
 
       logger.debug('CRM contact search', { query, limit });
@@ -196,7 +203,7 @@ export class CRMService {
           filters: [
             {
               propertyName: 'email',
-              operator: 'CONTAINS_TOKEN',
+              operator: 'CONTAINS_TOKEN' as any,
               value: query
             }
           ]
@@ -307,11 +314,8 @@ export class CRMService {
         logger.debug('CRM cache invalidated for contact', { email });
       } else {
         // Clear all CRM cache
-        const keys = await cache.keys('crm:*');
-        if (keys.length > 0) {
-          await cache.del(...keys);
-          logger.debug('All CRM cache invalidated', { clearedKeys: keys.length });
-        }
+        await cache.del('crm:');
+        logger.debug('All CRM cache invalidated');
       }
     } catch (error: any) {
       logger.warn('CRM cache invalidation failed', { error: error.message });

@@ -36,7 +36,9 @@ import {
 } from 'lucide-react';
 import { UniversalNavbar } from '@/components/UniversalNavbar';
 import { apiRequest } from "@/lib/queryClient";
-import logoPath from "@assets/Nav Logo_1753431362883.png";
+import logoLight from "@assets/Seed Financial Logo - Light Mode.png";
+import logoDark from "@assets/Seed Financial Logo - Dark Mode.png";
+import { useTheme } from "@/theme";
 
 // Types
 interface KbCategory {
@@ -91,6 +93,8 @@ export default function KnowledgeBase() {
   
   const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
+  const { resolvedTheme } = useTheme();
+  const logoSrc = resolvedTheme === "dark" ? logoDark : logoLight;
 
   const handleLogout = async () => {
     await logoutMutation.mutateAsync();
@@ -147,14 +151,14 @@ export default function KnowledgeBase() {
   // Article detail view
   if (selectedArticle) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
         {/* Navigation Header */}
-        <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
+        <div className="bg-popover backdrop-blur-sm border-b border-border px-4 py-3">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
-              className="text-gray-600 hover:text-orange-500 hover:bg-orange-50"
+              className="text-white hover:text-orange-200 hover:bg-white/10"
               onClick={handleBackToArticles}
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
@@ -163,7 +167,7 @@ export default function KnowledgeBase() {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-orange-500 hover:bg-orange-50">
+                <Button variant="ghost" size="sm" className="text-white hover:text-orange-200 hover:bg-white/10">
                   <User className="h-4 w-4 mr-2" />
                   {user?.firstName || user?.email?.split('@')[0] || 'User'}
                 </Button>
@@ -191,12 +195,12 @@ export default function KnowledgeBase() {
         <div className="max-w-4xl mx-auto px-6 py-8">
           {/* Article Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4 border-b-2 border-orange-500 pb-3" style={{ fontFamily: 'Open Sans, sans-serif' }}>
+            <h1 className="text-3xl font-bold text-white mb-4 border-b-2 border-orange-500 pb-3" style={{ fontFamily: 'Open Sans, sans-serif' }}>
               {selectedArticle.title}
             </h1>
             
             {/* Article Metadata */}
-            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 mb-4">
+            <div className="flex flex-wrap items-center gap-6 text-sm text-white/80 mb-4">
               <div className="flex items-center gap-1">
                 <span className="font-medium">Document Type:</span>
                 <span>Internal Sales Training</span>
@@ -211,7 +215,7 @@ export default function KnowledgeBase() {
               </div>
             </div>
 
-            <div className="flex items-center gap-6 text-sm text-gray-500">
+            <div className="flex items-center gap-6 text-sm text-white/70">
               <span className="flex items-center gap-1">
                 <Eye className="h-4 w-4" />
                 {selectedArticle.viewCount} views
@@ -235,11 +239,11 @@ export default function KnowledgeBase() {
 
           {/* Article Body */}
           <div 
-            className="prose max-w-none text-gray-900 leading-relaxed"
+            className="prose max-w-none text-white leading-relaxed"
             style={{
               fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               lineHeight: '1.6',
-              color: '#333'
+              color: 'inherit'
             }}
             dangerouslySetInnerHTML={{ 
               __html: (() => {
@@ -314,11 +318,7 @@ export default function KnowledgeBase() {
       <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a] py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           
-          <UniversalNavbar 
-            showBackButton={true} 
-            backButtonText="Back to Portal" 
-            backButtonPath="/" 
-          />
+          <UniversalNavbar showBackButton={true} fallbackPath="/" />
 
           {/* Title */}
           <div className="text-center mb-12">
@@ -568,10 +568,9 @@ export default function KnowledgeBase() {
           
           <div className="flex justify-center">
             <img 
-              src={logoPath} 
+              src={logoSrc}
               alt="Seed Financial Logo" 
-              className="h-16 brightness-0 invert"
-              style={{filter: 'brightness(0) invert(1)'}}
+              className="h-16"
             />
           </div>
         </div>

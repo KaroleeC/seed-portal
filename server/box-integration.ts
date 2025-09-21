@@ -16,7 +16,7 @@ try {
     // Use developer token for development
     sdk = sdk.getBasicClient(process.env.BOX_ACCESS_TOKEN);
   }
-} catch (error) {
+} catch (error: any) {
   logger.warn('[Box] Failed to initialize Box SDK:', error);
 }
 
@@ -65,9 +65,9 @@ export class BoxService {
         folderName: clientFolder.name,
         webUrl: `https://app.box.com/folder/${clientFolder.id}`
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[Box] Error creating client folder', error);
-      throw new Error(`Failed to create client folder: ${error.message}`);
+      throw new Error(`Failed to create client folder: ${(error as any)?.message}`);
     }
   }
 
@@ -124,9 +124,9 @@ export class BoxService {
         fileName: uploadedFile.entries[0].name,
         webUrl: `https://app.box.com/file/${uploadedFile.entries[0].id}`
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error('[Box] Error uploading MSA document', error);
-      throw new Error(`Failed to upload MSA: ${error.message}`);
+      throw new Error(`Failed to upload MSA: ${(error as any)?.message}`);
     }
   }
 

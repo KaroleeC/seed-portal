@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useDealsAll } from "@/hooks/useDeals";
+import { useSalesRepList } from "@/hooks/useSalesRepList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -82,7 +84,7 @@ interface Commission {
   type: 'month_1' | 'residual';
   monthNumber: number;
   amount: number;
-  status: 'pending' | 'approved' | 'paid' | 'disputed';
+  status: 'pending' | 'approved' | 'paid' | 'disputed' | 'rejected';
   dateEarned: string;
   datePaid?: string;
   hubspotDealId?: string;
@@ -109,7 +111,8 @@ interface SalesRep {
   id: string;
   name: string;
   email: string;
-  isActive: boolean;
+  isActive?: boolean;
+  hubspotUserId?: string | null;
   totalCommissions: number;
   projectedCommissions: number;
 }
@@ -214,78 +217,27 @@ export function AdminCommissionTracker() {
     queryKey: ['/api/commissions'],
     queryFn: async () => {
       console.log('🔄 Making fresh commissions API call...');
-      const response = await fetch('/api/commissions?v=' + Date.now(), {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      if (!response.ok) {
-        console.error('Commissions API error:', response.status, response.statusText);
-        throw new Error('Failed to fetch commissions');
-      }
-      const data = await response.json();
+      const data = await apiRequest<any[]>('GET', '/api/commissions?v=' + Date.now());
       console.log('📥 Raw commissions API response:', data);
       return data;
     }
   });
 
-  const { data: liveSalesReps = [], isLoading: salesRepsLoading } = useQuery({
-    queryKey: ['/api/sales-reps'],
-    queryFn: async () => {
-      console.log('🔄 Making fresh sales reps API call...');
-      const response = await fetch('/api/sales-reps?v=' + Date.now(), {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      if (!response.ok) {
-        console.error('Sales reps API error:', response.status, response.statusText);
-        throw new Error(`Failed to fetch sales reps: ${response.status}`);
-      }
-      const data = await response.json();
-      console.log('📥 Raw sales reps API response:', data);
-      return data;
-    },
-    refetchInterval: 10000, // Poll every 10 seconds for updates
-    refetchOnMount: true,
-    refetchOnWindowFocus: true
-  });
+  const { data: liveSalesReps = [], isLoading: salesRepsLoading } = useSalesRepList({ enabled: true });
 
-  const { data: liveDeals = [], isLoading: dealsLoading } = useQuery({
-    queryKey: ['/api/deals'],
-    queryFn: async () => {
-      const response = await fetch('/api/deals');
-      if (!response.ok) throw new Error('Failed to fetch deals');
-      return response.json();
-    }
-  });
+  const selectedOwnerId = useMemo(() => {
+    if (!filterSalesRep || filterSalesRep === 'all') return undefined;
+    const rep = salesReps.find(r => r.name === filterSalesRep);
+    return rep?.hubspotUserId ?? undefined;
+  }, [salesReps, filterSalesRep]);
+
+  const { data: dealsResult, isLoading: dealsLoading } = useDealsAll({ enabled: true, limit: 200, ownerId: selectedOwnerId });
 
   const { data: pipelineDeals = [], isLoading: pipelineLoading } = useQuery({
     queryKey: ['/api/pipeline-projections'],
     queryFn: async () => {
       console.log('🔄 Making fresh pipeline projections API call...');
-      const response = await fetch('/api/pipeline-projections?v=' + Date.now(), {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      if (!response.ok) {
-        console.error('Pipeline projections API error:', response.status, response.statusText);
-        throw new Error('Failed to fetch pipeline projections');
-      }
-      const data = await response.json();
+      const data = await apiRequest<any[]>('GET', '/api/pipeline-projections?v=' + Date.now());
       console.log('📥 Raw pipeline projections API response:', data);
       return data;
     },
@@ -297,7 +249,7 @@ export function AdminCommissionTracker() {
   const queryClient = useQueryClient();
 
   // Fetch commission adjustments from database
-  const { data: adjustmentRequests = [], refetch: refetchAdjustments } = useQuery({
+  const { data: adjustmentRequests = [], refetch: refetchAdjustments } = useQuery<AdjustmentRequest[]>({
     queryKey: ['/api/commission-adjustments'],
     enabled: !!user?.role && user.role === 'admin'
   });
@@ -357,12 +309,13 @@ export function AdminCommissionTracker() {
 
   useEffect(() => {
     if (liveSalesReps.length > 0) {
-      // Transform API data to match component interface  
-      const transformedSalesReps: SalesRep[] = liveSalesReps.map(rep => ({
-        id: rep.id.toString(),
-        name: rep.name || `${rep.first_name || ''} ${rep.last_name || ''}`.trim(),
-        email: rep.email || 'unknown@email.com',
-        isActive: rep.is_active !== false,
+      // Transform API data to match component interface (fields already normalized by useSalesRepList)
+      const transformedSalesReps: SalesRep[] = liveSalesReps.map((rep: any) => ({
+        id: String(rep.id ?? rep.userId ?? ''),
+        name: rep.name ?? '',
+        email: rep.email ?? 'unknown@email.com',
+        isActive: rep.isActive ?? true,
+        hubspotUserId: rep.hubspotUserId ?? null,
         totalCommissions: 0, // Will be calculated
         projectedCommissions: 0 // Will be calculated
       }));
@@ -374,25 +327,26 @@ export function AdminCommissionTracker() {
   }, [liveSalesReps]);
 
   useEffect(() => {
-    if (liveDeals.length > 0) {
-      // Transform API data to match component interface
-      const transformedDeals: Deal[] = liveDeals.map(deal => ({
-        id: deal.id.toString(),
-        dealName: deal.deal_name || deal.name || 'Untitled Deal',
-        companyName: deal.company_name || 'Unknown Company',
-        salesRep: deal.sales_rep_name || 'Unknown Rep',
-        serviceType: deal.service_type || 'bookkeeping',
-        amount: deal.amount || 0,
-        setupFee: deal.setup_fee || 0,
-        monthlyFee: deal.monthly_fee || 0,
-        status: deal.status || 'open',
-        probability: deal.probability || 50,
-        closedDate: deal.closed_date,
-        hubspotDealId: deal.hubspot_deal_id
+    const allDeals = dealsResult?.deals || [];
+    if (Array.isArray(allDeals)) {
+      // Transform normalized deals (BFF shape) to match component interface
+      const transformedDeals: Deal[] = (allDeals as any[]).map((d) => ({
+        id: String(d.id),
+        dealName: d.name || 'Untitled Deal',
+        companyName: d.companyName || 'Unknown Company',
+        salesRep: 'Unknown Rep',
+        serviceType: 'bookkeeping',
+        amount: Number(d.amount) || 0,
+        setupFee: 0,
+        monthlyFee: 0,
+        status: (typeof d.stage === 'string' && /won/i.test(d.stage)) ? 'closed_won' : ((typeof d.stage === 'string' && /lost/i.test(d.stage)) ? 'closed_lost' : 'open'),
+        probability: undefined,
+        closedDate: d.closeDate || undefined,
+        hubspotDealId: String(d.id)
       }));
       setDeals(transformedDeals);
     }
-  }, [liveDeals]);
+  }, [dealsResult]);
 
   // Data is now fetched via useQuery hooks above
 

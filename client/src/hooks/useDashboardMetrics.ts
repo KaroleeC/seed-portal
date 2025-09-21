@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useGoogleAuth } from '@/hooks/use-google-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { apiRequest } from '@/lib/queryClient';
 
 interface DashboardMetrics {
@@ -9,7 +9,7 @@ interface DashboardMetrics {
 }
 
 export function useDashboardMetrics() {
-  const { dbUser: user } = useGoogleAuth();
+  const { user } = useAuth();
   
   return useQuery({
     queryKey: ['/api/dashboard/metrics', user?.email],

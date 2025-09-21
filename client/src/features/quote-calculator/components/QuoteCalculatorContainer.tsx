@@ -11,7 +11,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { calculateCombinedFees } from "@shared/pricing";
+import { calculatePricingDisplay } from "@shared/pricing";
 
 // Import our new strongly-typed interfaces
 import { 
@@ -103,7 +103,8 @@ export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> =
   // Calculate pricing with proper error handling
   const pricingCalculation: PricingCalculationResult = React.useMemo(() => {
     try {
-      return calculateCombinedFees(formData);
+      // Use shared adapter to get top-level totals and accurate discount info
+      return calculatePricingDisplay(formData) as unknown as PricingCalculationResult;
     } catch (error) {
       console.error('Pricing calculation error:', error);
       // Return safe fallback values

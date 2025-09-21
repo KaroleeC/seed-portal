@@ -25,14 +25,18 @@ async function createRedisConnections(): Promise<RedisConfig | null> {
   try {
     console.log('[createRedisConnections] Creating Redis clients...');
     
+    // Determine key prefix
+    const derivedPrefix = process.env.REDIS_KEY_PREFIX ?? (process.env.NODE_ENV === 'development' ? 'oseed:dev:' : '');
+
     // Create ioredis instances with more aggressive connection settings for production
     const baseOptions = {
       enableReadyCheck: true,
       maxRetriesPerRequest: 3,
+      retryDelayOnFailover: 100,
       connectTimeout: 30000, // Increased from 10s to 30s
       commandTimeout: 20000, // Added command timeout
       lazyConnect: false, // Connect immediately instead of lazy
-      keepAlive: true,
+      keepAlive: 30000,
       family: 4, // Force IPv4
       retryStrategy: (times: number) => {
         console.log(`[Redis] Retry attempt ${times}`);
@@ -61,22 +65,22 @@ async function createRedisConnections(): Promise<RedisConfig | null> {
       connectTimeout: 30000, // Match session Redis timeout
       commandTimeout: 20000, // Add command timeout
       lazyConnect: false, // Connect immediately like others
-      keepAlive: true,
+      keepAlive: 30000,
       family: 4, // Force IPv4
       retryStrategy: baseOptions.retryStrategy,
       reconnectOnError: baseOptions.reconnectOnError,
     };
 
-    // Session Redis - no key prefix
+    // Session Redis - optional key prefix for clarity
     const sessionRedis = new Redis(redisUrl, {
       ...baseOptions,
-      keyPrefix: '',
+      keyPrefix: derivedPrefix,
     });
 
     // Cache Redis - using key prefix for isolation
     const cacheRedis = new Redis(redisUrl, {
       ...baseOptions,
-      keyPrefix: 'cache:',
+      keyPrefix: `${derivedPrefix}cache:`,
     });
 
     // Queue Redis - NO keyPrefix for BullMQ compatibility  
@@ -105,11 +109,11 @@ async function createRedisConnections(): Promise<RedisConfig | null> {
     
     console.log('[createRedisConnections] All Redis connections ready');
 
-    // ioredis already has promise-based methods
-    cacheRedis.getAsync = cacheRedis.get.bind(cacheRedis);
-    cacheRedis.setAsync = cacheRedis.set.bind(cacheRedis);
-    cacheRedis.delAsync = cacheRedis.del.bind(cacheRedis);
-    cacheRedis.existsAsync = cacheRedis.exists.bind(cacheRedis);
+    // Attach convenience promise helpers with relaxed typing
+    (cacheRedis as any).getAsync = cacheRedis.get.bind(cacheRedis);
+    (cacheRedis as any).setAsync = cacheRedis.set.bind(cacheRedis);
+    (cacheRedis as any).delAsync = cacheRedis.del.bind(cacheRedis);
+    (cacheRedis as any).existsAsync = cacheRedis.exists.bind(cacheRedis);
 
     // Monitor Redis memory usage
     const checkMemoryUsage = async () => {

@@ -11,6 +11,7 @@ interface ServiceCardsProps {
     serviceCfoAdvisory: boolean;
     servicePayrollService: boolean;
     serviceApArService: boolean; // Current AP/AR service flag
+    serviceArService: boolean; // AR service flag
     serviceApLite: boolean;
     serviceArLite: boolean;
     serviceApAdvanced: boolean;

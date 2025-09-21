@@ -61,10 +61,10 @@ export class GeocodingService {
     
     try {
       // Check cache first
-      const cached = await cache.get(cacheKey);
+      const cached = await cache.get<GeocodingResult[]>(cacheKey);
       if (cached) {
         logger.debug('Geocoding search cache hit', { query });
-        return JSON.parse(cached);
+        return cached;
       }
 
       logger.debug('Geocoding search', { query, limit });
@@ -108,10 +108,10 @@ export class GeocodingService {
     
     try {
       // Check cache first
-      const cached = await cache.get(cacheKey);
+      const cached = await cache.get<GeocodingResult | null>(cacheKey);
       if (cached) {
         logger.debug('Reverse geocoding cache hit', { latitude, longitude });
-        return JSON.parse(cached);
+        return cached;
       }
 
       logger.debug('Reverse geocoding', { latitude, longitude });

@@ -15,10 +15,12 @@ export async function initializeQueue(): Promise<void> {
   }
 
   try {
-    queueRedis = new Redis(process.env.REDIS_URL, {
-      maxRetriesPerRequest: null, // Required for BullMQ
-      retryDelayOnFailover: 100,
-    });
+    queueRedis = new Redis(process.env.REDIS_URL as string, {
+      maxRetriesPerRequest: null as any, // Required for BullMQ
+      enableReadyCheck: true,
+      lazyConnect: false,
+      connectTimeout: 15000,
+    } as any);
     
     await queueRedis.ping();
     console.log('[Queue] ✅ Redis connection established for queues');
@@ -27,8 +29,8 @@ export async function initializeQueue(): Promise<void> {
     aiInsightsQueue = new Queue('ai-insights', {
       connection: queueRedis,
       defaultJobOptions: {
-        removeOnComplete: 10, // Keep last 10 completed jobs
-        removeOnFail: 25,     // Keep last 25 failed jobs
+        removeOnComplete: { count: 10 }, // Keep last 10 completed jobs
+        removeOnFail: { count: 25 },     // Keep last 25 failed jobs
         attempts: 3,
         backoff: {
           type: 'exponential',

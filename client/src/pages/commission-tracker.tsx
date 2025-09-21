@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
 import { UniversalNavbar } from "@/components/UniversalNavbar";
 import { useQuery } from "@tanstack/react-query";
+import { seedpayKeys } from "@/lib/queryKeys";
+import { useCommissionSummary } from "@/hooks/useCommissionSummary";
+import { useSalesRepMe } from "@/hooks/useSalesRepMe";
 import {
   Dialog,
   DialogContent,
@@ -69,8 +72,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { calculateMonthlyBonus, calculateMilestoneBonus, getNextMilestone, calculateTotalEarnings } from "@shared/commission-calculator";
-import { queryClient } from "@/lib/queryClient";
+import { calculateMonthlyBonus, calculateMilestoneBonus, getNextMilestone, calculateTotalEarnings, calculateProjectedCommission } from "@shared/commission-calculator";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useDealsByOwner } from "@/hooks/useDeals";
 
 interface Commission {
   id: string;
@@ -201,74 +205,42 @@ export default function CommissionTracker() {
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
 
   // Fetch user's sales rep profile first
-  const { data: currentSalesRep, isLoading: salesRepLoading } = useQuery({
-    queryKey: ['/api/sales-reps/me'],
-    queryFn: async () => {
-      const response = await fetch('/api/sales-reps/me');
-      if (!response.ok) throw new Error('Failed to fetch current sales rep profile');
-      return response.json();
-    }
-  });
+  const { data: currentSalesRep, isLoading: salesRepLoading } = useSalesRepMe();
 
   // Fetch commission data for current user only
   const { data: commissionData = [], isLoading: commissionsLoading } = useQuery({
-    queryKey: ['/api/commissions', currentSalesRep?.id],
+    queryKey: seedpayKeys.commissions.list(currentSalesRep?.id),
     queryFn: async () => {
       if (!currentSalesRep?.id) return [];
-      const response = await fetch(`/api/commissions?salesRepId=${currentSalesRep.id}`);
-      if (!response.ok) throw new Error('Failed to fetch commissions');
-      return response.json();
+      return await apiRequest<Commission[]>('GET', `/api/apps/seedpay/commissions?salesRepId=${currentSalesRep.id}`);
     },
     enabled: !!currentSalesRep?.id
   });
 
-  const { data: dealsData = [], isLoading: dealsLoading } = useQuery({
-    queryKey: ['/api/deals', currentSalesRep?.id],
-    queryFn: async () => {
-      if (!currentSalesRep?.id) return [];
-      const response = await fetch(`/api/deals?salesRepId=${currentSalesRep.id}`);
-      if (!response.ok) throw new Error('Failed to fetch deals');
-      return response.json();
-    },
-    enabled: !!currentSalesRep?.id
-  });
+  // Use centralized Deals BFF filtered by HubSpot owner (sales rep ≡ owner)
+  const ownerId = user?.hubspotUserId || undefined;
+  const { data: dealsResult, isLoading: dealsLoading } = useDealsByOwner(ownerId, { enabled: !!ownerId, limit: 100 });
 
   const { data: monthlyBonusData = [], isLoading: monthlyBonusLoading } = useQuery({
-    queryKey: ['/api/monthly-bonuses', currentSalesRep?.id],
+    queryKey: seedpayKeys.bonuses.monthly(currentSalesRep?.id),
     queryFn: async () => {
       if (!currentSalesRep?.id) return [];
-      const response = await fetch(`/api/monthly-bonuses?salesRepId=${currentSalesRep.id}`);
-      if (!response.ok) throw new Error('Failed to fetch monthly bonuses');
-      return response.json();
+      return await apiRequest<MonthlyBonus[]>('GET', `/api/apps/seedpay/monthly-bonuses?salesRepId=${currentSalesRep.id}`);
     },
     enabled: !!currentSalesRep?.id
   });
 
   const { data: milestoneBonusData = [], isLoading: milestoneBonusLoading } = useQuery({
-    queryKey: ['/api/milestone-bonuses', currentSalesRep?.id],
+    queryKey: seedpayKeys.bonuses.milestone(currentSalesRep?.id),
     queryFn: async () => {
       if (!currentSalesRep?.id) return [];
-      const response = await fetch(`/api/milestone-bonuses?salesRepId=${currentSalesRep.id}`);
-      if (!response.ok) throw new Error('Failed to fetch milestone bonuses');
-      return response.json();
+      return await apiRequest<MilestoneBonus[]>('GET', `/api/apps/seedpay/milestone-bonuses?salesRepId=${currentSalesRep.id}`);
     },
     enabled: !!currentSalesRep?.id
   });
 
   // Fetch current period commission summary (from centrally processed data)
-  const { data: hubspotCommissionData = null, isLoading: hubspotLoading } = useQuery({
-    queryKey: ['/api/commissions/current-period-summary'],
-    queryFn: async () => {
-      const response = await fetch('/api/commissions/current-period-summary');
-      if (!response.ok) {
-        console.error('Failed to fetch commission summary:', response.status);
-        return null;
-      }
-      return response.json();
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 5 * 60 * 1000 // Refetch every 5 minutes
-  });
+  const { data: hubspotCommissionData = null, isLoading: hubspotLoading } = useCommissionSummary();
 
   // Set the fetched data to state
   useEffect(() => {
@@ -278,10 +250,26 @@ export default function CommissionTracker() {
   }, [commissionData]);
 
   useEffect(() => {
-    if (dealsData) {
-      setDeals(dealsData);
+    const normalizedDeals = dealsResult?.deals || [];
+    if (Array.isArray(normalizedDeals)) {
+      const transformed: Deal[] = normalizedDeals.map((d: any) => ({
+        id: String(d.id),
+        dealName: d.name || 'Untitled Deal',
+        companyName: d.companyName || 'Unknown Company',
+        amount: Number(d.amount) || 0,
+        setupFee: 0,
+        monthlyFee: 0,
+        status: (typeof d.stage === 'string' && /won/i.test(d.stage)) ? 'closed_won' : ((typeof d.stage === 'string' && /lost/i.test(d.stage)) ? 'closed_lost' : 'open'),
+        closedDate: d.closeDate || undefined,
+        serviceType: 'bookkeeping',
+        salesRep: 'Unknown Rep',
+        hubspotDealId: String(d.id),
+        pipelineStage: d.stage || undefined,
+        probability: undefined,
+      }));
+      setDeals(transformed);
     }
-  }, [dealsData]);
+  }, [dealsResult]);
 
   useEffect(() => {
     if (monthlyBonusData) {
@@ -297,9 +285,18 @@ export default function CommissionTracker() {
 
   useEffect(() => {
     if (currentSalesRep) {
-      setSalesReps([currentSalesRep]);
+      setSalesReps([{
+        id: String(currentSalesRep.id),
+        name: currentSalesRep.name || user?.email?.split('@')[0] || 'Unknown',
+        email: currentSalesRep.email || user?.email || 'unknown@email.com',
+        hubspotUserId: currentSalesRep.hubspotUserId || undefined,
+        totalCommissions: 0,
+        currentPeriodCommissions: 0,
+        projectedCommissions: 0,
+        isActive: true,
+      }]);
     }
-  }, [currentSalesRep]);
+  }, [currentSalesRep, user?.email]);
 
   // Calculate commission periods dynamically (14th to 13th cycle)
   useEffect(() => {
@@ -405,10 +402,53 @@ export default function CommissionTracker() {
     return deals
       .filter(d => d.status === 'open' && d.probability)
       .reduce((sum, d) => {
-        const firstMonthCommission = (d.setupFee * 0.2) + (d.monthlyFee * 0.4);
-        return sum + (firstMonthCommission * (d.probability! / 100));
+        const proj = calculateProjectedCommission(d.setupFee || 0, d.monthlyFee || 0, d.serviceType || 'bookkeeping');
+        // For dashboard purposes, project the first-month commission weighted by probability
+        return sum + (proj.firstMonth * ((d.probability || 0) / 100));
       }, 0);
   }, [deals]);
+
+  // Sales rep stats and bonuses/milestones wiring (mechanical, no UI change)
+  const { totalClientsClosedMonthly, totalClientsClosedAllTime } = useMemo(() => {
+    // Determine current calendar month range
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    // Unique deals closed (month_1) by dealId
+    const closedThisMonthIds = new Set(
+      commissions
+        .filter(c => c.type === 'month_1')
+        .filter(c => {
+          const d = new Date(c.dateEarned);
+          return d >= monthStart && d <= monthEnd;
+        })
+        .map(c => c.dealId)
+    );
+    const allClosedIds = new Set(
+      commissions
+        .filter(c => c.type === 'month_1')
+        .map(c => c.dealId)
+    );
+    return {
+      totalClientsClosedMonthly: closedThisMonthIds.size,
+      totalClientsClosedAllTime: allClosedIds.size
+    };
+  }, [commissions]);
+
+  const monthlyBonusEligibility = useMemo(() => {
+    return calculateMonthlyBonus(totalClientsClosedMonthly);
+  }, [totalClientsClosedMonthly]);
+
+  const nextMilestone = useMemo(() => {
+    return getNextMilestone(totalClientsClosedAllTime);
+  }, [totalClientsClosedAllTime]);
+
+  const salesRepStats = useMemo(() => {
+    return {
+      totalClientsClosedMonthly,
+      totalClientsClosedAllTime
+    } as Pick<SalesRepStats, 'totalClientsClosedMonthly' | 'totalClientsClosedAllTime'> & Partial<SalesRepStats>;
+  }, [totalClientsClosedMonthly, totalClientsClosedAllTime]);
 
   // Filter commissions based on current filters - memoized to prevent infinite re-renders
   const filteredCommissions = useMemo(() => {
@@ -593,8 +633,7 @@ export default function CommissionTracker() {
       <div className="max-w-7xl mx-auto p-6">
         <UniversalNavbar 
           showBackButton={true} 
-          backButtonText="Back to Admin Portal" 
-          backButtonPath="/admin" 
+          fallbackPath="/admin" 
         />
 
         {/* Header */}
@@ -635,11 +674,7 @@ export default function CommissionTracker() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                    Current Period Total
-                    {hubspotLoading && <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>}
-                    {hubspotCommissionData && <span className="w-2 h-2 bg-green-500 rounded-full"></span>}
-                  </p>
+                  <p className="text-sm font-medium text-gray-600">Current Period Total</p>
                   <p className="text-2xl font-bold text-gray-900">
                     ${totalCurrentPeriodCommissions.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </p>
@@ -1179,13 +1214,13 @@ export default function CommissionTracker() {
                               <TableCell>
                                 <div className="text-sm">
                                   <p className="font-medium">${(deal.setupFee * 0.2).toLocaleString()}</p>
-                                  <p className="text-gray-500">20% of ${deal.setupFee.toLocaleString()}</p>
+                                  <p className="text-gray-500">20% of ${deal.setupFee.toLocaleString()} setup fee</p>
                                 </div>
                               </TableCell>
                               <TableCell>
                                 <div className="text-sm">
                                   <p className="font-medium">${monthlyCommission.toLocaleString()}</p>
-                                  <p className="text-gray-500">10% of ${deal.monthlyFee.toLocaleString()}</p>
+                                  <p className="text-gray-500">10% of ${deal.monthlyFee.toLocaleString()} monthly fee</p>
                                 </div>
                               </TableCell>
                               <TableCell>
@@ -1730,4 +1765,3 @@ export default function CommissionTracker() {
     </div>
   );
 }
-

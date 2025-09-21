@@ -32,9 +32,17 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
     return `$${(amount || 0).toLocaleString()}`;
   };
 
-  // Calculate savings display
-  const bookkeepingPackageDiscount = calculation.includesBookkeeping && calculation.includesTaas ? 
-    (calculation.bookkeeping.monthlyFee * 0.5) : 0;
+  // Calculate savings display using shared adapter data when available
+  // Fallback: compute from bookkeeping.breakdown before/after (already provided by shared)
+  const bk: any = calculation.bookkeeping as any;
+  const computedDiscount = (typeof bk?.breakdown?.monthlyFeeBeforeDiscount === 'number'
+    && typeof bk?.breakdown?.monthlyFeeAfterDiscount === 'number')
+    ? Math.max(0, bk.breakdown.monthlyFeeBeforeDiscount - bk.breakdown.monthlyFeeAfterDiscount)
+    : 0;
+  const packageDiscountMonthly = (calculation as any).packageDiscountMonthly ?? computedDiscount;
+  const bookkeepingPackageDiscount = (calculation.includesBookkeeping && calculation.includesTaas)
+    ? packageDiscountMonthly
+    : 0;
 
   return (
     <div className="space-y-6">

@@ -8,7 +8,7 @@ import { FormData } from "./QuoteFormSchema";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface TaasSectionProps {
-  control: Control<FormData>;
+  control: Control<any>;
   currentFormView: 'bookkeeping' | 'taas';
   form: any; // Access to the full form for setValue
 }

@@ -89,12 +89,12 @@ export default function ClientIntel() {
   // Enhance prospect data mutation
   const enhanceDataMutation = useMutation({
     mutationFn: async (contactId: string) => {
-      const response = await apiRequest("POST", `/api/client-intel/enhance/${contactId}`, {});
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Enhancement failed with status ${response.status}`);
-      }
-      return response.json();
+      const data = await apiRequest<{ message?: string; airtableData?: any }>(
+        "POST",
+        `/api/client-intel/enhance/${contactId}`,
+        {}
+      );
+      return data;
     },
     onSuccess: (data) => {
       console.log('Enhancement successful:', data);
@@ -142,7 +142,7 @@ export default function ClientIntel() {
   };
 
   // Search for clients/prospects with error handling
-  const { data: searchResults, isLoading: isSearching, error: searchError } = useQuery({
+  const { data: searchResults = [], isLoading: isSearching, error: searchError } = useQuery({
     queryKey: ["/api/client-intel/search", debouncedSearchTerm],
     queryFn: async () => {
       if (!debouncedSearchTerm.trim()) return [];
@@ -150,19 +150,27 @@ export default function ClientIntel() {
       console.log(`[Frontend] Searching for: "${debouncedSearchTerm}"`);
       
       try {
-        const response = await apiRequest("GET", `/api/client-intel/search?q=${encodeURIComponent(debouncedSearchTerm)}`);
+        const data = await apiRequest<any[]>(
+          "GET",
+          `/api/client-intel/search?q=${encodeURIComponent(debouncedSearchTerm)}`
+        );
         
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`[Frontend] Search failed with status ${response.status}:`, errorText);
-          throw new Error(`Search failed: ${response.status} ${errorText}`);
+        // Update the count of results
+        // setResultsCount(data.length);
+        
+        // Log summary of results for debugging
+        if (data.length > 0) {
+          const sample = data[0];
+          console.log(`[Frontend] Search returned ${data.length} results. Sample:`, {
+            id: sample.id,
+            name: sample.name,
+            email: sample.email,
+          });
         }
         
-        const results = await response.json();
-        console.log(`[Frontend] Search results:`, results);
-        return results;
+        return data;
       } catch (error) {
-        console.error('[Frontend] Search error details:', error);
+        console.error('[Frontend] Search error:', error);
         throw error;
       }
     },
@@ -195,8 +203,8 @@ export default function ClientIntel() {
   // Generate AI insights for selected client (async with polling)
   const generateInsightsMutation = useMutation({
     mutationFn: async (clientId: string) => {
-      const response = await apiRequest("POST", "/api/client-intel/generate-insights", { clientId });
-      return response.json();
+      const data = await apiRequest<any>("POST", "/api/client-intel/generate-insights", { clientId });
+      return data;
     },
     onSuccess: (data) => {
       if (data.status === 'queued' || data.status === 'processing') {
@@ -240,11 +248,9 @@ export default function ClientIntel() {
   const pollJobStatus = async (jobId: string) => {
     const pollInterval = setInterval(async () => {
       try {
-        const response = await apiRequest("GET", `/api/jobs/${jobId}/status`);
-        const statusData = await response.json();
+        const statusData = await apiRequest<{ progress?: number; status?: string; result?: any; error?: string }>("GET", `/api/jobs/${jobId}/status`);
         
         setJobProgress(statusData.progress || 0);
-        setJobStatus(statusData.status);
         
         if (statusData.status === 'completed') {
           clearInterval(pollInterval);
@@ -325,8 +331,7 @@ export default function ClientIntel() {
     <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
       <UniversalNavbar 
         showBackButton={true} 
-        backButtonText="Back to Portal" 
-        backButtonPath="/" 
+        fallbackPath="/" 
       />
       {/* Main Content */}
 
@@ -372,7 +377,7 @@ export default function ClientIntel() {
                   <p className="text-white/70 mt-2">Searching...</p>
                 </div>
               ) : searchResults?.length > 0 ? (
-                searchResults.map((client: any) => (
+                (searchResults ?? []).map((client: any) => (
                   <div
                     key={client.id}
                     onClick={() => handleClientSelect(client)}

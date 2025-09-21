@@ -28,8 +28,12 @@ import {
   Cloud,
   Sun,
   CloudRain,
-  ChevronDown
+  ChevronDown,
+  Search,
+  Bell
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SalesInbox } from "@/components/SalesInbox";
 import { UniversalNavbar } from "@/components/UniversalNavbar";
@@ -78,7 +82,7 @@ export default function AdminDashboardTemplate() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-green-50 to-emerald-100">
-      <UniversalNavbar showBackButton={false} variant="light" />
+      <UniversalNavbar showBackButton={false} />
 
       {/* Executive Summary Bar */}
       <div className="bg-gradient-to-r from-[#253e31] via-[#2d4937] to-[#3a5d47] text-white shadow-lg">

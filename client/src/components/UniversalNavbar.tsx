@@ -3,13 +3,17 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { ArrowLeft, Bell, User, Settings, LogOut, Shield, UserMinus } from "lucide-react";
+import { PERMISSIONS, hasPermission } from "@shared/permissions";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BackButton } from "@/components/BackButton";
 import { useBackNavigation } from "@/hooks/use-navigation-history";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import logoPath from "@assets/Seed Financial Logo (1)_1753043325029.png";
+import logoLight from "@assets/Seed Financial Logo - Light Mode.png";
+import logoDark from "@assets/Seed Financial Logo - Dark Mode.png";
+import { useTheme } from "@/theme";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface UniversalNavbarProps {
   showBackButton?: boolean;
@@ -25,6 +29,7 @@ export function UniversalNavbar({
   const { canGoBack } = useBackNavigation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { resolvedTheme } = useTheme();
 
   // Memoize avatar content to prevent re-renders
   const avatarContent = useMemo(() => {
@@ -111,11 +116,43 @@ export function UniversalNavbar({
   // Only show back button if there's history and not on a main dashboard
   const shouldShowBackButton = showBackButton && canGoBack && !isMainDashboard;
 
+  // Compute dynamic fallback based on user's default dashboard if none provided by caller
+  const computedFallbackPath = useMemo(() => {
+    const defaultDash = dbUser?.defaultDashboard;
+    if (defaultDash === 'admin') return '/admin';
+    if (defaultDash === 'sales') return '/sales-dashboard';
+    if (defaultDash === 'service') return '/service-dashboard';
+    // Fallback to admin for admins, otherwise root which redirects based on role
+    if (dbUser?.role === 'admin') return '/admin';
+    return '/';
+  }, [dbUser?.defaultDashboard, dbUser?.role]);
+
+  const finalFallbackPath = fallbackPath || computedFallbackPath;
+
+  const logoSrc = resolvedTheme === "dark" ? logoDark : logoLight;
+
+  // SeedQC (Calculator) Settings access
+  const onCalculatorRoute = location.startsWith('/calculator') || location.startsWith('/apps/seedqc');
+  const canManageSeedQC = dbUser?.role ? hasPermission(dbUser.role as any, PERMISSIONS.MANAGE_PRICING) : false;
+  const showSeedQcSettings = onCalculatorRoute && canManageSeedQC;
+  const goToSeedQcSettings = useCallback(() => { setLocation('/apps/seedqc/settings'); }, []);
+
+  // SeedPay (Commission Tracker) Settings access
+  const onCommissionRoute = location.startsWith('/commission-tracker') || location.startsWith('/apps/seedpay');
+  const canManageSeedPay = dbUser?.role ? hasPermission(dbUser.role as any, PERMISSIONS.MANAGE_COMMISSIONS) : false;
+  const showSeedPaySettings = onCommissionRoute && canManageSeedPay;
+  const goToSeedPaySettings = useCallback(() => { setLocation('/apps/seedpay/settings'); }, []);
+
+  // Global settings hub navigation
+  const handleGoToSettings = useCallback(() => {
+    setLocation('/settings');
+  }, []);
+
   return (
     <header className="bg-transparent z-50 py-4 relative">
       <div className="max-w-5xl mx-auto px-6">
         <div className="flex items-center justify-center h-20">
-          <img src={logoPath} alt="Seed Financial" className="h-16" />
+          <img src={logoSrc} alt="Seed Financial" className="h-16" />
         </div>
         
         {/* Smart Back Button - Positioned Absolutely */}
@@ -125,7 +162,7 @@ export function UniversalNavbar({
               variant="ghost"
               size="sm"
               className="text-white hover:text-orange-200 hover:bg-white/10 backdrop-blur-sm border border-white/20"
-              fallbackPath={fallbackPath}
+              fallbackPath={finalFallbackPath}
             />
           </div>
         )}
@@ -136,6 +173,29 @@ export function UniversalNavbar({
             <Bell className="h-4 w-4" />
             <span className="absolute top-1 right-1 h-1.5 w-1.5 bg-orange-500 rounded-full"></span>
           </Button>
+          {showSeedPaySettings && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="relative p-2 hover:bg-white/10 text-white"
+              onClick={goToSeedPaySettings}
+              aria-label="Commission Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
+          {showSeedQcSettings && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="relative p-2 hover:bg-white/10 text-white"
+              onClick={goToSeedQcSettings}
+              aria-label="Calculator Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
+          <ThemeToggle className="text-white" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-2 p-2 hover:bg-white/10 text-white">
@@ -153,6 +213,10 @@ export function UniversalNavbar({
                   </div>
                 )}
               </div>
+              <DropdownMenuItem onClick={handleGoToSettings} className="text-sm">
+                <Settings className="mr-2 h-3 w-3" />
+                Settings
+              </DropdownMenuItem>
               {userInfo.isImpersonating && (
                 <DropdownMenuItem 
                   onClick={handleStopImpersonation} 

@@ -13,16 +13,14 @@ async function initializeWorkerRedis(): Promise<void> {
   }
 
   try {
-    workerRedis = new Redis(process.env.REDIS_URL, {
-      maxRetriesPerRequest: null, // Required for BullMQ
-      retryDelayOnFailover: 100,
+    workerRedis = new Redis(process.env.REDIS_URL as string, {
+      maxRetriesPerRequest: null as any, // Required for BullMQ
       lazyConnect: false,
       connectTimeout: 15000, // Match session Redis timeout
-      commandTimeout: 5000,
-      keepAlive: true,
+      keepAlive: 30000, // milliseconds
       family: 4,
       enableReadyCheck: true,
-    });
+    } as any);
     
     await workerRedis.ping();
     console.log('[Worker] ✅ Redis connection established for worker');
@@ -103,7 +101,7 @@ async function processAIInsights(job: Job<AIInsightsJobData>): Promise<JobResult
     console.error(`[Worker] ❌ Error details:`, {
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      errorType: error.constructor.name,
+      errorType: error instanceof Error ? error.constructor.name : typeof error,
       clientData: {
         companyName: job.data.clientData?.companyName,
         industry: job.data.clientData?.industry
@@ -123,10 +121,10 @@ export async function startAIInsightsWorker(): Promise<Worker | null> {
   }
 
   const worker = new Worker('ai-insights', processAIInsights, {
-    connection: workerRedis,
+    connection: workerRedis!,
     concurrency: 2, // Process up to 2 jobs concurrently
-    removeOnComplete: 10,
-    removeOnFail: 25,
+    removeOnComplete: { count: 100 },
+    removeOnFail: { count: 50 },
   });
 
   worker.on('completed', (job) => {

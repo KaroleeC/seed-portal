@@ -143,16 +143,13 @@ export function calculateTotalEarnings(
  * Calculate commission rates based on service type and month
  */
 export function calculateCommissionRate(serviceType: string, isFirstMonth: boolean): number {
-  const baseRates = {
-    bookkeeping: { first: 0.2, residual: 0.1 },
-    taas: { first: 0.25, residual: 0.15 },
-    payroll: { first: 0.2, residual: 0.1 },
-    ap_ar_lite: { first: 0.15, residual: 0.08 },
-    fpa_lite: { first: 0.18, residual: 0.09 }
-  };
-  
-  const rates = baseRates[serviceType as keyof typeof baseRates] || baseRates.bookkeeping;
-  return isFirstMonth ? rates.first : rates.residual;
+  // Aligned with COMMISSION_BONUS_STRUCTURE.md:
+  // - Month 1 Commission: 40% of first month's MRR
+  // - Residual Commission: 10% of months 2-12 MRR
+  // Note: Setup commission (20% of setup fee) is handled separately and should
+  // not use this function. We keep the signature for backward compatibility but
+  // ignore serviceType per the global policy.
+  return isFirstMonth ? 0.4 : 0.1;
 }
 
 /**
@@ -163,13 +160,16 @@ export function calculateProjectedCommission(
   monthlyFee: number,
   serviceType: string
 ): { firstMonth: number; monthly: number; total: number } {
-  const setupCommission = setupFee * calculateCommissionRate(serviceType, true);
-  const firstMonthCommission = monthlyFee * 0.4; // First month gets 40% of monthly fee
-  const monthlyCommission = monthlyFee * calculateCommissionRate(serviceType, false);
-  
+  // Setup commission: 20% of setup fee
+  const setupCommission = setupFee * 0.2;
+  // Month 1 commission: 40% of first month's MRR
+  const firstMonthCommission = monthlyFee * 0.4;
+  // Residual commission (months 2–12): 10% of MRR
+  const monthlyCommission = monthlyFee * 0.1;
+
   const firstMonth = setupCommission + firstMonthCommission;
-  const total = firstMonth + (monthlyCommission * 11); // Assuming 12 month projection
-  
+  const total = firstMonth + (monthlyCommission * 11); // 12-month projection (months 2–12)
+
   return {
     firstMonth,
     monthly: monthlyCommission,

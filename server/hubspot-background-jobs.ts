@@ -74,7 +74,7 @@ export async function scheduleFullSync(userId?: number): Promise<string | null> 
     });
 
     hubspotLogger.info({ jobId: job.id, userId }, 'Full HubSpot sync scheduled');
-    return job.id;
+    return job.id ? String(job.id) : null;
   } catch (error) {
     hubspotLogger.error({ error, userId }, 'Failed to schedule full sync');
     return null;
@@ -101,7 +101,7 @@ export async function scheduleIncrementalSync(lastSyncTime?: string): Promise<st
     });
 
     hubspotLogger.info({ jobId: job.id, lastSyncTime }, 'Incremental HubSpot sync scheduled');
-    return job.id;
+    return job.id ? String(job.id) : null;
   } catch (error) {
     hubspotLogger.error({ error, lastSyncTime }, 'Failed to schedule incremental sync');
     return null;
@@ -129,7 +129,7 @@ export async function scheduleContactEnrichment(contactId: string, userId?: numb
     });
 
     hubspotLogger.info({ jobId: job.id, contactId, userId }, 'Contact enrichment scheduled');
-    return job.id;
+    return job.id ? String(job.id) : null;
   } catch (error) {
     hubspotLogger.error({ error, contactId, userId }, 'Failed to schedule contact enrichment');
     return null;
@@ -156,7 +156,7 @@ export async function scheduleDealSync(dealId?: string): Promise<string | null> 
     });
 
     hubspotLogger.info({ jobId: job.id, dealId }, 'Deal sync scheduled');
-    return job.id;
+    return job.id ? String(job.id) : null;
   } catch (error) {
     hubspotLogger.error({ error, dealId }, 'Failed to schedule deal sync');
     return null;
@@ -244,7 +244,7 @@ export async function getHubSpotQueueMetrics() {
       failed: 0,
       delayed: 0,
       paused: 0,
-      error: error.message
+      error: (error as any)?.message
     };
   }
 }
@@ -272,7 +272,7 @@ export async function cleanupHubSpotQueue(): Promise<void> {
 export async function checkHubSpotApiHealth(): Promise<boolean> {
   try {
     // Check if we have HubSpot token in cache or environment
-    const cachedToken = await cache.get(CachePrefix.HUBSPOT, 'api-token');
+    const cachedToken = await cache.get<string>('hubspot:api-token');
     const hasToken = cachedToken || process.env.HUBSPOT_ACCESS_TOKEN;
     
     if (!hasToken) {

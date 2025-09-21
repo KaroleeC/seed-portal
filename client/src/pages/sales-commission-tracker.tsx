@@ -67,6 +67,7 @@ import {
 } from "@/components/ui/table";
 import { calculateMonthlyBonus, calculateMilestoneBonus, getNextMilestone, calculateTotalEarnings } from "@shared/commission-calculator";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useDealsByOwner } from "@/hooks/useDeals";
 import { useToast } from "@/hooks/use-toast";
 
 interface Commission {
@@ -81,6 +82,7 @@ interface Commission {
   status: 'pending' | 'approved' | 'paid' | 'disputed';
   dateEarned: string;
   datePaid?: string;
+  salesRep?: string;
 }
 
 // Removed unused interfaces
@@ -91,6 +93,10 @@ interface SalesRepStats {
   totalClientsClosedAllTime: number;
   currentPeriodCommissions: number;
   projectedEarnings: number;
+}
+
+interface PipelineDeal {
+  projectedCommission?: number;
 }
 
 export function SalesCommissionTracker() {
@@ -155,9 +161,12 @@ export function SalesCommissionTracker() {
   });
 
   // Fetch real commission data from API
-  const { data: liveCommissions = [], isLoading: commissionsLoading, error: commissionsError } = useQuery({
+  const { data: liveCommissions = [], isLoading: commissionsLoading, error: commissionsError } = useQuery<Commission[]>({
     queryKey: ['/api/commissions'],
     enabled: !!user,
+    queryFn: async (): Promise<Commission[]> => {
+      return await apiRequest<Commission[]>('GET', '/api/commissions');
+    },
     retry: (failureCount, error: any) => {
       // Don't retry on authentication errors
       if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
@@ -165,35 +174,26 @@ export function SalesCommissionTracker() {
       }
       return failureCount < 2;
     },
-    staleTime: 30000, // Cache for 30 seconds
-    onError: (error: any) => {
-      console.error('Commission data fetch error:', error);
-      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
-        toast({
-          title: "Authentication Error",
-          description: "Please refresh the page and try logging in again.",
-          variant: "destructive",
-        });
-      }
-    }
+    staleTime: 30000 // Cache for 30 seconds
   });
 
-  const { data: liveDeals = [], isLoading: dealsLoading, error: dealsError } = useQuery({
-    queryKey: ['/api/deals'],
+  // Centralized deals by HubSpot owner (sales rep ≡ owner)
+  const ownerId = user?.hubspotUserId || undefined;
+  const { data: dealsResult, isLoading: dealsLoading, error: dealsError } = useDealsByOwner(ownerId, {
+    enabled: !!ownerId,
+    limit: 100,
+  });
+
+  // Fetch pipeline projections filtered by owner for accuracy and performance
+  const { data: pipelineDeals = [], isLoading: pipelineLoading, error: pipelineError } = useQuery<PipelineDeal[]>({
+    queryKey: ['/api/pipeline-projections', ownerId ?? 'none'],
     enabled: !!user,
-    retry: (failureCount, error: any) => {
-      if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
-        return false;
-      }
-      return failureCount < 2;
+    queryFn: async (): Promise<PipelineDeal[]> => {
+      const qs = new URLSearchParams();
+      if (ownerId) qs.set('ownerId', ownerId);
+      const url = `/api/pipeline-projections${qs.toString() ? `?${qs.toString()}` : ''}`;
+      return await apiRequest<PipelineDeal[]>('GET', url);
     },
-    staleTime: 30000
-  });
-
-  // Fetch pipeline projections (same data as admin commission tracker)
-  const { data: pipelineDeals = [], isLoading: pipelineLoading, error: pipelineError } = useQuery({
-    queryKey: ['/api/pipeline-projections'],
-    enabled: !!user,
     retry: (failureCount, error: any) => {
       if (error?.message?.includes('401') || error?.message?.includes('Authentication')) {
         return false;
@@ -240,11 +240,12 @@ export function SalesCommissionTracker() {
   }, [user?.firstName, user?.lastName]);
 
   // Memoized commission processing to prevent infinite loops
-  const processedCommissions = useMemo(() => {
-    if (liveCommissions.length === 0 || !user) return [];
+  const processedCommissions = useMemo<Commission[]>(() => {
+    const list = (liveCommissions ?? []) as Commission[];
+    if (list.length === 0 || !user) return [];
     
-    return liveCommissions
-      .filter(invoice => {
+    return (list as any[])
+      .filter((invoice: any) => {
         // Build expected user name variations for better matching
         const firstName = user.firstName || '';
         const lastName = user.lastName || '';
@@ -260,7 +261,7 @@ export function SalesCommissionTracker() {
                            (lastName && salesRepName.toLowerCase().includes(lastName.toLowerCase()));
         return matchesUser;
       })
-      .map(invoice => ({
+      .map((invoice: any): Commission => ({
         id: invoice.id?.toString() || 'unknown',
         dealId: invoice.dealId?.toString() || invoice.id?.toString() || 'unknown',
         dealName: invoice.companyName || 'Unknown',
@@ -280,7 +281,7 @@ export function SalesCommissionTracker() {
   // Remove the useEffect that was causing infinite loops
   // setCommissions is now only used by user actions, not automatic updates
   // Filter to only show current period commissions in the main table
-  const displayCommissions = processedCommissions.filter(c => 
+  const displayCommissions: Commission[] = processedCommissions.filter((c: Commission) => 
     c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd
   );
 
@@ -298,42 +299,28 @@ export function SalesCommissionTracker() {
 
     // Calculate real metrics based on filtered data
     const currentPeriodCommissions = processedCommissions
-      .filter(c => c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd)
-      .reduce((sum, c) => sum + c.amount, 0);
+      .filter((c: Commission) => c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd)
+      .reduce((sum: number, c: Commission) => sum + c.amount, 0);
     
     // Total earnings should only include approved/paid commissions from previous periods
     const totalPaidEarnings = processedCommissions
-      .filter(c => (c.status === 'approved' || c.status === 'paid') && c.dateEarned < currentPeriod.periodStart)
-      .reduce((sum, c) => sum + c.amount, 0);
+      .filter((c: Commission) => (c.status === 'approved' || c.status === 'paid') && c.dateEarned < currentPeriod.periodStart)
+      .reduce((sum: number, c: Commission) => sum + c.amount, 0);
     
     // Count unique clients closed this period for bonuses
     const currentPeriodClients = new Set(
       processedCommissions
-        .filter(c => c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd)
-        .map(c => c.companyName)
+        .filter((c: Commission) => c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd)
+        .map((c: Commission) => c.companyName)
     ).size;
     
     // Count total clients all time (from all commissions for milestone tracking)
-    const totalClientsAllTime = new Set(processedCommissions.map(c => c.companyName)).size;
+    const totalClientsAllTime = new Set(processedCommissions.map((c: Commission) => c.companyName)).size;
     
     // Calculate projected earnings from pipeline projections
+    // With ownerId filtering at the API, include all returned deals
     const projectedFromPipeline = pipelineDeals
-      .filter(deal => {
-        if (!user) return false;
-        const salesRepName = deal.salesRep || '';
-        const firstName = user.firstName || '';
-        const lastName = user.lastName || '';
-        const fullName = `${firstName} ${lastName}`.trim();
-        
-        const matchesUser = salesRepName === fullName ||
-                           salesRepName === userName ||
-                           salesRepName === `${firstName} ${lastName}` ||
-                           salesRepName === `${lastName} ${firstName}` ||
-                           (firstName && salesRepName.toLowerCase().includes(firstName.toLowerCase())) ||
-                           (lastName && salesRepName.toLowerCase().includes(lastName.toLowerCase()));
-        return matchesUser;
-      })
-      .reduce((sum, deal) => sum + (deal.projectedCommission || 0), 0);
+      .reduce((sum: number, deal: PipelineDeal) => sum + (deal.projectedCommission || 0), 0);
     
     return {
       totalCommissionsEarned: totalPaidEarnings,

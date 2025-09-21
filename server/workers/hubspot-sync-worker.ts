@@ -38,15 +38,17 @@ export async function startHubSpotSyncWorker(): Promise<Worker | null> {
     });
 
     hubspotWorker.on('failed', async (job, err) => {
+      const jobId = job?.id ?? 'unknown';
+      const attempts = job?.attemptsMade ?? 0;
       hubspotWorkerLogger.error({ 
-        jobId: job?.id, 
+        jobId,
         data: job?.data,
         error: err.message,
-        attempts: job?.attemptsMade
+        attempts
       }, '❌ HubSpot sync job failed');
 
       // Send Slack alert for critical failures
-      if (job?.attemptsMade >= 3) {
+      if (attempts >= 3) {
         try {
           await sendSlackMessage({
             channel: process.env.SLACK_CHANNEL_ID,
@@ -57,10 +59,10 @@ export async function startHubSpotSyncWorker(): Promise<Worker | null> {
                 text: {
                   type: 'mrkdwn',
                   text: `*HubSpot Sync Job Failed (Final Attempt)*\n\n` +
-                        `• Job Type: ${job.data?.type || 'Unknown'}\n` +
-                        `• Job ID: ${job.id}\n` +
+                        `• Job Type: ${job?.data?.type || 'Unknown'}\n` +
+                        `• Job ID: ${jobId}\n` +
                         `• Error: ${err.message}\n` +
-                        `• Attempts: ${job.attemptsMade}/3\n` +
+                        `• Attempts: ${attempts}/3\n` +
                         `• Time: ${new Date().toISOString()}`
                 }
               }
@@ -116,7 +118,7 @@ async function processHubSpotJob(job: Job<HubSpotSyncJob>): Promise<any> {
     hubspotWorkerLogger.error({ 
       jobId: job.id, 
       type, 
-      error: error.message 
+      error: (error as any)?.message 
     }, 'HubSpot sync job processing failed');
     throw error;
   }
@@ -145,7 +147,8 @@ async function performFullSync(job: Job<HubSpotSyncJob>): Promise<{ synced: numb
     await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API calls
 
     // Cache the sync timestamp
-    await cache.set(CachePrefix.HUBSPOT, 'last-full-sync', new Date().toISOString(), CacheTTL.ONE_DAY);
+    const fullSyncKey = cache.generateKey(CachePrefix.HUBSPOT_METRICS, 'last-full-sync');
+    await cache.set(fullSyncKey, new Date().toISOString(), CacheTTL.ONE_DAY);
     
     await job.updateProgress(70);
     
@@ -178,8 +181,9 @@ async function performIncrementalSync(job: Job<HubSpotSyncJob>, lastSyncTime?: s
   try {
     await job.updateProgress(20);
 
-    const syncFrom = lastSyncTime || await cache.get(CachePrefix.HUBSPOT, 'last-incremental-sync') || 
-                    new Date(Date.now() - 60 * 60 * 1000).toISOString(); // Default: 1 hour ago
+    const incKey = cache.generateKey(CachePrefix.HUBSPOT_METRICS, 'last-incremental-sync');
+    const cachedInc = await cache.get<string>(incKey);
+    const syncFrom = lastSyncTime || cachedInc || new Date(Date.now() - 60 * 60 * 1000).toISOString(); // Default: 1 hour ago
 
     hubspotWorkerLogger.info({ 
       jobId: job.id, 
@@ -191,7 +195,7 @@ async function performIncrementalSync(job: Job<HubSpotSyncJob>, lastSyncTime?: s
     await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API calls
 
     // Cache the sync timestamp
-    await cache.set(CachePrefix.HUBSPOT, 'last-incremental-sync', new Date().toISOString(), CacheTTL.ONE_DAY);
+    await cache.set(incKey, new Date().toISOString(), CacheTTL.ONE_DAY);
     
     await job.updateProgress(100);
     
@@ -235,7 +239,8 @@ async function performContactEnrichment(job: Job<HubSpotSyncJob>, contactId: str
       properties: ['industry', 'company_size', 'last_activity']
     };
     
-    await cache.set(CachePrefix.HUBSPOT, `contact-${contactId}`, enrichedData, CacheTTL.ONE_HOUR);
+    const contactKey = cache.generateKey(CachePrefix.HUBSPOT_CONTACT, `contact-${contactId}`);
+    await cache.set(contactKey, enrichedData, CacheTTL.ONE_HOUR);
     
     await job.updateProgress(100);
     

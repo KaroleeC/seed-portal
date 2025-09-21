@@ -46,16 +46,16 @@ export class GoogleAdminService {
           console.log('🏢 Project ID:', serviceAccountKey.project_id);
           
           const { GoogleAuth } = await import('google-auth-library');
-          const auth = new GoogleAuth({
+          const authOptions: any = {
             credentials: serviceAccountKey,
             scopes: [
               'https://www.googleapis.com/auth/admin.directory.user.readonly',
               'https://www.googleapis.com/auth/admin.directory.group.readonly',
               'https://www.googleapis.com/auth/admin.directory.group.member.readonly'
-            ],
-            // Enable domain-wide delegation
-            subject: 'jon@seedfinancial.io' // Admin user to impersonate
-          });
+            ]
+          };
+          (authOptions as any)['subject'] = 'jon@seedfinancial.io';
+          const auth = new GoogleAuth(authOptions as any);
           
           // Test the service account credentials
           console.log('Testing service account credentials...');
@@ -67,7 +67,7 @@ export class GoogleAdminService {
           
           console.log('✅ Google Admin API initialized with service account (domain-wide delegation)');
           return;
-        } catch (serviceError) {
+        } catch (serviceError: any) {
           console.error('❌ Service account authentication failed:', serviceError.message);
           if (serviceError.message?.includes('domain-wide delegation')) {
             console.log('💡 Hint: Ensure domain-wide delegation is enabled in Google Workspace Admin Console');

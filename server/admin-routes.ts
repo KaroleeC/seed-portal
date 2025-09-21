@@ -1,8 +1,9 @@
 import type { Express } from "express";
 import { GoogleAdminService } from "./google-admin";
 import { storage } from "./storage";
-import { requireAuth, hashPassword } from "./auth";
+import { requireAuth } from "./auth";
 import { scheduleWorkspaceSync } from "./jobs";
+import { CalculatorContentResponseSchema, CalculatorContentItemResponseSchema } from "@shared/contracts";
 
 export async function registerAdminRoutes(app: Express): Promise<void> {
   let googleAdminService: GoogleAdminService | null = null;
@@ -31,7 +32,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
       userEmail: req.user?.email,
       userRole: req.user?.role
     });
-    
+
     // For hardcoded admin email - always allow
     if (req.user?.email === 'jon@seedfinancial.io') {
       return next();
@@ -157,7 +158,10 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
     try {
       const userId = parseInt(req.params.userId);
       const { role } = req.body;
-      const adminUserId = req.user.id;
+      const adminUserId = req.user?.id;
+      if (!adminUserId) {
+        return res.status(401).json({ message: 'User ID required' });
+      }
 
       if (!role || !['admin', 'employee'].includes(role)) {
         return res.status(400).json({ 
@@ -187,7 +191,10 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
   app.post('/api/admin/sync-workspace-user', requireAuth, requireAdmin, async (req, res) => {
     try {
       const { email, role = 'employee' } = req.body;
-      const adminUserId = req.user.id;
+      const adminUserId = req.user?.id;
+      if (!adminUserId) {
+        return res.status(401).json({ message: 'User ID required' });
+      }
 
       if (!email || !email.endsWith('@seedfinancial.io')) {
         return res.status(400).json({ 
@@ -208,17 +215,18 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         });
       }
 
-      // Create new user
+      // Create new user with plain password; storage will hash
       user = await storage.createUser({
         email,
-        password: await hashPassword('SeedAdmin1!'), // Default password
+        password: 'SeedAdmin1!', // Default password; hashed in storage.createUser
         firstName: '',
         lastName: '',
         hubspotUserId: null,
         role,
-        roleAssignedBy: adminUserId,
-        roleAssignedAt: new Date(),
-      });
+      } as any);
+
+      // Ensure role assignment metadata is set consistently
+      user = await storage.updateUserRole(user.id, role, adminUserId);
 
       res.json({ 
         message: 'User created successfully',
@@ -237,7 +245,10 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
   app.post('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
     try {
       const { firstName, lastName, email, role = 'employee', defaultDashboard = 'sales' } = req.body;
-      const adminUserId = req.user.id;
+      const adminUserId = req.user?.id;
+      if (!adminUserId) {
+        return res.status(401).json({ message: 'User ID required' });
+      }
 
       if (!firstName?.trim() || !lastName?.trim() || !email?.trim()) {
         return res.status(400).json({ 
@@ -274,18 +285,19 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
       // Generate a random password
       const generatedPassword = generatePassword();
 
-      // Create new user
-      const user = await storage.createUser({
+      // Create new user with plain password; storage will hash
+      let user = await storage.createUser({
         email,
-        password: await hashPassword(generatedPassword),
+        password: generatedPassword,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         hubspotUserId: null,
         role,
         defaultDashboard,
-        roleAssignedBy: adminUserId,
-        roleAssignedAt: new Date(),
-      });
+      } as any);
+
+      // Ensure role assignment metadata is set consistently
+      user = await storage.updateUserRole(user.id, role, adminUserId);
 
       res.json({ 
         message: 'User created successfully',
@@ -304,7 +316,10 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
   app.delete('/api/admin/users/:userId', requireAuth, requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
-      const currentUserId = req.user.id;
+      const currentUserId = req.user?.id;
+      if (!currentUserId) {
+        return res.status(401).json({ message: 'User ID required' });
+      }
 
       if (isNaN(userId)) {
         return res.status(400).json({ message: 'Invalid user ID' });
@@ -373,7 +388,11 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
   // Trigger manual workspace sync
   app.post('/api/admin/sync-workspace', requireAuth, requireAdmin, async (req, res) => {
     try {
-      const job = await scheduleWorkspaceSync('manual', req.user.id);
+      const adminUserId = req.user?.id;
+      if (!adminUserId) {
+        return res.status(401).json({ message: 'User ID required' });
+      }
+      const job = await scheduleWorkspaceSync('manual', adminUserId);
       res.json({ 
         message: 'Workspace sync job scheduled successfully',
         jobId: job.id,
@@ -428,8 +447,12 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: 'User not found' });
       }
 
+      // Ensure current user is present
+      if (!req.user) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
       // Store original user info in session for later restoration
-      req.session.originalUser = {
+      (req.session as any).originalUser = {
         id: req.user.id,
         email: req.user.email,
         firstName: req.user.firstName,
@@ -437,13 +460,13 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         role: req.user.role,
         defaultDashboard: req.user.defaultDashboard
       };
-      req.session.isImpersonating = true;
+      (req.session as any).isImpersonating = true;
       
       console.log('🎭 IMPERSONATION STARTED:');
       console.log('🎭 Original admin:', req.user.email, `(${req.user.id})`);
       console.log('🎭 Impersonating:', userToImpersonate.email, `(${userToImpersonate.id})`);
       console.log('🎭 Session ID:', req.sessionID);
-      console.log('🎭 Session isImpersonating:', req.session.isImpersonating);
+      console.log('🎭 Session isImpersonating:', (req.session as any).isImpersonating);
 
       // Update session with impersonated user - use passport's login method
       req.login(userToImpersonate, (err) => {
@@ -474,8 +497,8 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
       console.log('🛑 STOP IMPERSONATION CALLED:');
       console.log('🛑 Session ID:', req.sessionID);
       
-      // Check impersonation store
-      const impersonationData = impersonationStore.get(req.sessionID);
+      // Check original user info stored in session
+      const impersonationData = (req.session as any).originalUser;
       if (!impersonationData) {
         console.log('🛑 ERROR: Not currently impersonating');
         return res.status(400).json({ 
@@ -483,10 +506,10 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         });
       }
 
-      console.log('🛑 Found impersonation data:', impersonationData.adminEmail);
+      console.log('🛑 Found impersonation data:', impersonationData.email || impersonationData.adminEmail);
 
       // Get the full original admin user data from database
-      const fullOriginalUser = await storage.getUser(impersonationData.adminUserId);
+      const fullOriginalUser = await storage.getUser(impersonationData.id || impersonationData.adminUserId);
       if (!fullOriginalUser) {
         return res.status(404).json({ 
           message: 'Original admin user not found' 
@@ -494,8 +517,8 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
       }
 
       // Clear impersonation data from session
-      delete req.session.originalUser;
-      delete req.session.isImpersonating;
+      delete (req.session as any).originalUser;
+      delete (req.session as any).isImpersonating;
 
       // Restore original user session using passport's login method
       req.login(fullOriginalUser, (err) => {
@@ -788,6 +811,119 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
       res.status(500).json({ message: 'Failed to clear pricing cache: ' + error.message });
     }
   });
+
+  // ===== CALCULATOR MANAGER: SERVICE CONTENT =====
+  {
+    const { insertCalculatorServiceContentSchema } = await import('@shared/schema');
+    const { DEFAULT_INCLUDED_FIELDS, DEFAULT_AGREEMENT_LINKS, DEFAULT_MSA_LINK, SERVICE_KEYS_DB, getDefaultSowTitle, getDefaultSowTemplate } = await import('./calculator-defaults');
+
+    const safeParse = (s?: string | null): any => {
+      if (!s) return {};
+      try { return JSON.parse(s); } catch { return {}; }
+    };
+
+    const deepMerge = (base: any, override: any): any => {
+      if (!override || typeof override !== 'object') return base;
+      const result: any = Array.isArray(base) ? [...base] : { ...base };
+      for (const key of Object.keys(override)) {
+        const o = override[key];
+        if (o && typeof o === 'object' && !Array.isArray(o)) {
+          result[key] = deepMerge(base?.[key] || {}, o);
+        } else {
+          result[key] = o;
+        }
+      }
+      return result;
+    };
+
+    const isBlank = (v: any) => typeof v === 'string' && v.trim() === '';
+    const norm = (v: any) => (v === undefined || v === null || isBlank(v) ? undefined : v);
+    const asDbKey = (svc: string) => (
+      svc as 'bookkeeping' | 'taas' | 'payroll' | 'ap' | 'ar' | 'agent_of_service' | 'cfo_advisory'
+    );
+    const withDefaults = (existing: any | undefined, service: string) => {
+      const included = JSON.stringify(
+        deepMerge(DEFAULT_INCLUDED_FIELDS, safeParse(existing?.includedFieldsJson))
+      );
+      if (existing) {
+        return {
+          ...existing,
+          sowTitle: norm(existing.sowTitle) ?? getDefaultSowTitle(service as any),
+          sowTemplate: norm(existing.sowTemplate) ?? getDefaultSowTemplate(service as any),
+          agreementLink: norm(existing.agreementLink) ?? (DEFAULT_AGREEMENT_LINKS[asDbKey(service)] ?? null),
+          includedFieldsJson: included,
+        };
+      }
+      return {
+        id: 0,
+        service,
+        sowTitle: getDefaultSowTitle(service as any),
+        sowTemplate: getDefaultSowTemplate(service as any),
+        agreementLink: DEFAULT_AGREEMENT_LINKS[asDbKey(service)] ?? null,
+        includedFieldsJson: included,
+        updatedBy: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    };
+
+    // List all service content entries
+    app.get('/api/admin/calculator/content', requireAuth, requireAdmin, async (req, res) => {
+      try {
+        const items = await storage.getAllCalculatorServiceContent();
+        const map = new Map<string, any>((items || []).map(i => [i.service, i]));
+        const merged = SERVICE_KEYS_DB.map(svc => withDefaults(map.get(svc), svc));
+        const payload = { items: merged, msaLink: DEFAULT_MSA_LINK };
+        const parsed = CalculatorContentResponseSchema.safeParse(payload);
+        if (!parsed.success) {
+          console.error('[AdminCalculatorContent] invalid payload', parsed.error.issues);
+          return res.status(500).json({ status: 'error', message: 'Invalid calculator content payload' });
+        }
+        res.json(parsed.data);
+      } catch (error: any) {
+        res.status(500).json({ message: 'Failed to fetch calculator service content: ' + error.message });
+      }
+    });
+
+    // Get content for a specific service
+    app.get('/api/admin/calculator/content/:service', requireAuth, requireAdmin, async (req, res) => {
+      try {
+        const { service } = req.params;
+        const existing = await storage.getCalculatorServiceContent(service);
+        const payload = { item: withDefaults(existing, service), msaLink: DEFAULT_MSA_LINK };
+        const parsed = CalculatorContentItemResponseSchema.safeParse(payload);
+        if (!parsed.success) {
+          console.error('[AdminCalculatorContent:item] invalid payload', parsed.error.issues);
+          return res.status(500).json({ status: 'error', message: 'Invalid calculator content payload' });
+        }
+        res.json(parsed.data);
+      } catch (error: any) {
+        res.status(500).json({ message: 'Failed to fetch calculator service content: ' + error.message });
+      }
+    });
+
+    // Upsert content for a specific service
+    app.put('/api/admin/calculator/content/:service', requireAuth, requireAdmin, async (req, res) => {
+      try {
+        const { service } = req.params;
+        const payload = insertCalculatorServiceContentSchema.partial().parse(req.body);
+        const userId = req.user?.id;
+        if (!userId) {
+          return res.status(401).json({ message: 'User ID required' });
+        }
+        const updated = await storage.upsertCalculatorServiceContent({ ...payload, service, updatedBy: userId });
+        const resp = { item: updated };
+        const parsed = CalculatorContentItemResponseSchema.safeParse({ item: { ...resp.item, createdAt: resp.item.createdAt?.toISOString?.() ?? undefined, updatedAt: resp.item.updatedAt?.toISOString?.() ?? undefined } });
+        if (!parsed.success) {
+          console.error('[AdminCalculatorContent:put] invalid payload', parsed.error.issues);
+          return res.status(500).json({ status: 'error', message: 'Invalid calculator content payload' });
+        }
+        res.json(parsed.data);
+      } catch (error: any) {
+        res.status(500).json({ message: 'Failed to update calculator service content: ' + error.message });
+      }
+    });
+  }
 
 
 }

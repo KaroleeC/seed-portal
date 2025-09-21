@@ -12,20 +12,23 @@ import {
   TrendingUp, DollarSign, MessageSquare, Bot, Search, Filter, Plus, Bell,
   ExternalLink, RefreshCw, FileDown, Upload, Folder, ChevronRight,
   Activity, Target, Zap, Brain, Calculator, BarChart3, PieChart,
-  Mail, Phone, Calendar, Video, Slack, Box, HubSpot,
+  Mail, Phone, Calendar, Video, Slack, Box,
   ArrowUp, ArrowDown, Star, Clock3, AlertCircle, Info,
   MonitorSpeaker, Database, Cloud, Wifi, Shield, Building2,
   Edit, Share, Download, Sparkles, Building, Wand2, Eye,
   Lightbulb, GraduationCap
 } from "lucide-react";
-import navLogoPath from "@assets/Nav Logo_1753431362883.png";
+import logoLight from "@assets/Seed Financial Logo - Light Mode.png";
+import logoDark from "@assets/Seed Financial Logo - Dark Mode.png";
 import { useAuth } from "@/hooks/use-auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLocation } from "wouter";
 import { useNavigationHistory } from "@/hooks/use-navigation-history";
 import { useQuery } from '@tanstack/react-query';
+import { useDealsAll } from "@/hooks/useDeals";
 import { useState, useEffect } from 'react';
+import { useTheme } from "@/theme";
 
 // Interfaces for service dashboard data
 interface HubSpotDeal {
@@ -83,6 +86,11 @@ export default function ServiceDashboard() {
   const availableDashboards = getAvailableDashboards();
   const [activeModule, setActiveModule] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
+  const { resolvedTheme } = useTheme();
+  const logoSrc = resolvedTheme === "dark" ? logoDark : logoLight;
+
+  // Prefetch centralized deals (no UI changes)
+  const { data: dealsResult, isLoading: dealsLoading } = useDealsAll({ enabled: true, limit: 50 });
 
   // Mock data - in production this would come from APIs
   const [serviceMetrics] = useState<ServiceMetrics>({
@@ -161,19 +169,19 @@ export default function ServiceDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a] flex">
       {/* Sidebar Navigation */}
-      <div className="w-72 bg-white/10 backdrop-blur-md border-r border-white/20 shadow-xl fixed h-full overflow-y-auto">
+      <div className="w-72 bg-sidebar backdrop-blur-md border-r border-sidebar-border shadow-xl fixed h-full overflow-y-auto">
         {/* SEEDOS Header */}
-        <div className="p-6 border-b border-white/20 h-[88px] flex items-center justify-center">
+        <div className="p-6 border-b border-sidebar-border h-[88px] flex items-center justify-center">
           <div className="flex items-center gap-3">
-            <img src={navLogoPath} alt="Seed Financial" className="h-12" />
+            <img src={logoSrc} alt="Seed Financial" className="h-12" />
           </div>
         </div>
 
         {/* User Profile */}
-        <div className="p-4 border-b border-white/20 bg-white">
+        <div className="p-4 border-b border-sidebar-border bg-sidebar">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+              <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={currentUser?.profilePhoto || ''} />
                   <AvatarFallback className="bg-orange-500 text-white">
@@ -293,7 +301,7 @@ export default function ServiceDashboard() {
       {/* Main Content Area */}
       <div className="flex-1 ml-72">
         {/* Top Header */}
-        <div className="bg-white/10 backdrop-blur-md border-b border-white/20 px-6 py-6 h-[88px]">
+        <div className="bg-popover backdrop-blur-sm border-b border-border px-6 py-6 h-[88px]">
           <div className="flex items-center justify-between h-full">
             <div className="flex items-center gap-4">
               <h1 className="text-4xl font-bold text-white" style={{ fontFamily: 'League Spartan, sans-serif' }}>
@@ -302,7 +310,7 @@ export default function ServiceDashboard() {
               <p className="text-white/70 text-lg">Service Command Center</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 bg-popover backdrop-blur-sm border rounded-lg px-3 py-2">
                 <Search className="h-4 w-4 text-white/70" />
                 <Input 
                   placeholder="Search clients, deals..." 
@@ -311,11 +319,11 @@ export default function ServiceDashboard() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+              <Button variant="outline" className="text-white">
                 <Bell className="mr-2 h-4 w-4" />
                 <span className="bg-red-500 text-xs px-1.5 py-0.5 rounded-full ml-1">{serviceMetrics.urgentItems}</span>
               </Button>
-              <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+              <Button variant="outline" className="text-white">
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Sync
               </Button>
@@ -342,19 +350,19 @@ export default function ServiceDashboard() {
 
                 {/* Quick Stats Bar */}
                 <div className="grid grid-cols-4 gap-4">
-                  <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4 text-center">
+                  <div className="bg-muted rounded-xl p-4 text-center border">
                     <p className="text-2xl font-bold text-white">{currentTasks.length}</p>
                     <p className="text-white/70 text-sm">Active Tasks</p>
                   </div>
-                  <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4 text-center">
+                  <div className="bg-muted rounded-xl p-4 text-center border">
                     <p className="text-2xl font-bold text-white">{currentTasks.filter(t => t.priority === 'urgent').length}</p>
                     <p className="text-white/70 text-sm">Urgent</p>
                   </div>
-                  <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4 text-center">
+                  <div className="bg-muted rounded-xl p-4 text-center border">
                     <p className="text-2xl font-bold text-white">{Math.round(currentTasks.reduce((acc, t) => acc + t.progress, 0) / currentTasks.length)}%</p>
                     <p className="text-white/70 text-sm">Avg Progress</p>
                   </div>
-                  <div className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl p-4 text-center">
+                  <div className="bg-muted rounded-xl p-4 text-center border">
                     <p className="text-2xl font-bold text-white">{serviceMetrics.activeClients}</p>
                     <p className="text-white/70 text-sm">Active Clients</p>
                   </div>
@@ -365,7 +373,7 @@ export default function ServiceDashboard() {
               <div className="grid grid-cols-12 gap-6 mb-8">
                 {/* Current Tasks - Main Real Estate */}
                 <div className="col-span-8">
-                  <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl h-full">
+                  <Card className="border shadow-2xl h-full">
                     <CardHeader className="bg-slate-700 text-white rounded-t-lg">
                       <CardTitle className="flex items-center gap-2">
                         <Target className="h-6 w-6" />
@@ -434,7 +442,7 @@ export default function ServiceDashboard() {
 
                 {/* Client Communication Hub */}
                 <div className="col-span-4">
-                  <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl h-full">
+                  <Card className="border shadow-2xl h-full">
                     <CardHeader className="bg-slate-600 text-white rounded-t-lg">
                       <CardTitle className="flex items-center gap-2">
                         <MessageSquare className="h-6 w-6" />
@@ -484,7 +492,7 @@ export default function ServiceDashboard() {
               {/* ClickUp Integration & AI Tools */}
               <div className="grid grid-cols-2 gap-6">
                 {/* ClickUp Task Monitor */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-xl">
+                <Card className="border shadow-xl">
                   <CardHeader className="bg-slate-600 text-white rounded-t-lg">
                     <CardTitle className="flex items-center gap-2">
                       <Activity className="h-5 w-5" />
@@ -497,7 +505,7 @@ export default function ServiceDashboard() {
                   <CardContent className="p-6">
                     <div className="space-y-3">
                       {clickupTasks.map((task) => (
-                        <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div key={task.id} className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/70 transition-colors">
                           <div className="flex-1">
                             <h4 className="font-medium text-gray-900 text-sm">{task.name}</h4>
                             <div className="flex items-center gap-3 mt-1">
@@ -869,26 +877,25 @@ export default function ServiceDashboard() {
                             'border-l-green-500 bg-green-50/80 hover:bg-green-50'
                           }`}>
                             <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <div className={`w-3 h-3 rounded-full ${
-                                  channel.priority === 'urgent' ? 'bg-red-500 animate-pulse' :
-                                  channel.priority === 'high' ? 'bg-orange-500' : 'bg-green-500'
-                                }`}></div>
-                                <div>
-                                  <h4 className="font-bold text-gray-900">{channel.clientName}</h4>
-                                  <p className="text-sm text-gray-600">{channel.name}</p>
+                              <div className="flex-1">
+                                <h4 className="font-bold text-gray-900">{channel.clientName}</h4>
+                                <p className="text-sm text-gray-600">{channel.name}</p>
+                                <div className="flex items-center gap-3">
+                                  <Badge className={
+                                    channel.priority === 'urgent' ? 'bg-red-500 text-white' :
+                                    channel.priority === 'high' ? 'bg-orange-500 text-white' :
+                                    'bg-green-500 text-white'
+                                  }>
+                                    {channel.priority}
+                                  </Badge>
+                                  <span className="text-sm text-gray-500">Last activity: {channel.lastActivity}</span>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                {channel.unreadCount > 0 && (
-                                  <Badge className="bg-red-500 text-white animate-pulse">
-                                    {channel.unreadCount} new
-                                  </Badge>
-                                )}
-                                <Badge className={getPriorityColor(channel.priority)} variant="outline">
-                                  {channel.priority}
+                              {channel.unreadCount > 0 && (
+                                <Badge className="bg-red-500 text-white animate-pulse">
+                                  {channel.unreadCount} new
                                 </Badge>
-                              </div>
+                              )}
                             </div>
                             
                             <div className="flex items-center justify-between">
@@ -1136,8 +1143,8 @@ export default function ServiceDashboard() {
                                 <div className="flex items-center gap-3">
                                   <Badge className={
                                     request.status === 'completed' ? 'bg-green-500/20 text-green-700' :
-                                    request.status === 'in-progress' ? 'bg-blue-500/20 text-blue-700' :
-                                    request.status === 'review' ? 'bg-orange-500/20 text-orange-700' :
+                                    request.status === 'processing' ? 'bg-blue-500/20 text-blue-700' :
+                                    request.status === 'received' ? 'bg-orange-500/20 text-orange-700' :
                                     'bg-yellow-500/20 text-yellow-700'
                                   }>
                                     {request.status.replace('-', ' ')}
@@ -1432,8 +1439,8 @@ export default function ServiceDashboard() {
                         <div key={task.id} className="group">
                           <div className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg ${
                             task.status === 'completed' ? 'border-l-green-500 bg-green-50/80 hover:bg-green-50' :
-                            task.status === 'processing' ? 'border-l-blue-500 bg-blue-50/80 hover:bg-blue-50' :
-                            task.status === 'pending' ? 'border-l-yellow-500 bg-yellow-50/80 hover:bg-yellow-50' :
+                            task.status === 'running' ? 'border-l-blue-500 bg-blue-50/80 hover:bg-blue-50' :
+                            task.status === 'queued' ? 'border-l-yellow-500 bg-yellow-50/80 hover:bg-yellow-50' :
                             'border-l-red-500 bg-red-50/80 hover:bg-red-50'
                           }`}>
                             <div className="flex items-start justify-between mb-3">
@@ -1445,8 +1452,8 @@ export default function ServiceDashboard() {
                                 <div className="flex items-center gap-3">
                                   <Badge className={
                                     task.status === 'completed' ? 'bg-green-500/20 text-green-700' :
-                                    task.status === 'processing' ? 'bg-blue-500/20 text-blue-700' :
-                                    task.status === 'pending' ? 'bg-yellow-500/20 text-yellow-700' :
+                                    task.status === 'running' ? 'bg-blue-500/20 text-blue-700' :
+                                    task.status === 'queued' ? 'bg-yellow-500/20 text-yellow-700' :
                                     'bg-red-500/20 text-red-700'
                                   }>
                                     {task.status}

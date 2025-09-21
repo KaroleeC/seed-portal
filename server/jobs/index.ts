@@ -17,8 +17,8 @@ async function initializeJobSystem() {
 
     console.log('[Jobs] Initializing workspace sync job system...');
 
-    // Create dedicated Redis connection for BullMQ jobs
-    const jobRedis = redis.duplicate();
+    // Create dedicated Redis connection for BullMQ jobs using queueRedis
+    const jobRedis = redis.queueRedis.duplicate();
     await jobRedis.ping(); // Test connection
 
     // Job queues

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { pricingKeys } from '@/lib/queryKeys';
 import { UniversalNavbar } from '@/components/UniversalNavbar';
 import { PermissionGuard } from '@/components/PermissionGuard';
 import { PERMISSIONS } from '@shared/permissions';
@@ -111,31 +112,38 @@ export default function AdminPricingPage() {
 
   // Queries for all pricing data
   const { data: baseFees, isLoading: baseFeeLoading } = useQuery<PricingBase[]>({
-    queryKey: ['/api/admin/pricing/base']
+    queryKey: pricingKeys.admin.base(),
+    queryFn: async () => await apiRequest<PricingBase[]>('GET', '/api/admin/pricing/base'),
   });
 
   const { data: industryMultipliers, isLoading: industryLoading } = useQuery<IndustryMultiplier[]>({
-    queryKey: ['/api/admin/pricing/industry-multipliers']
+    queryKey: pricingKeys.admin.industryMultipliers(),
+    queryFn: async () => await apiRequest<IndustryMultiplier[]>('GET', '/api/admin/pricing/industry-multipliers'),
   });
 
   const { data: revenueMultipliers, isLoading: revenueLoading } = useQuery<RevenueMultiplier[]>({
-    queryKey: ['/api/admin/pricing/revenue-multipliers']
+    queryKey: pricingKeys.admin.revenueMultipliers(),
+    queryFn: async () => await apiRequest<RevenueMultiplier[]>('GET', '/api/admin/pricing/revenue-multipliers'),
   });
 
   const { data: transactionSurcharges, isLoading: transactionLoading } = useQuery<TransactionSurcharge[]>({
-    queryKey: ['/api/admin/pricing/transaction-surcharges']
+    queryKey: pricingKeys.admin.transactionSurcharges(),
+    queryFn: async () => await apiRequest<TransactionSurcharge[]>('GET', '/api/admin/pricing/transaction-surcharges'),
   });
 
   const { data: serviceSettings, isLoading: settingsLoading } = useQuery<ServiceSetting[]>({
-    queryKey: ['/api/admin/pricing/service-settings']
+    queryKey: pricingKeys.admin.serviceSettings(),
+    queryFn: async () => await apiRequest<ServiceSetting[]>('GET', '/api/admin/pricing/service-settings'),
   });
 
   const { data: pricingTiers, isLoading: tiersLoading } = useQuery<PricingTier[]>({
-    queryKey: ['/api/admin/pricing/tiers']
+    queryKey: pricingKeys.admin.tiers(),
+    queryFn: async () => await apiRequest<PricingTier[]>('GET', '/api/admin/pricing/tiers'),
   });
 
   const { data: pricingHistory, isLoading: historyLoading } = useQuery<PricingHistory[]>({
-    queryKey: ['/api/admin/pricing/history']
+    queryKey: pricingKeys.admin.history(),
+    queryFn: async () => await apiRequest<PricingHistory[]>('GET', '/api/admin/pricing/history'),
   });
 
   // Mutations for updates
@@ -146,7 +154,7 @@ export default function AdminPricingPage() {
         body: { baseFee: data.baseFee }
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/pricing/base'] });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.base() });
       toast({ title: 'Base fee updated successfully' });
       setEditingItem(null);
     },
@@ -169,7 +177,7 @@ export default function AdminPricingPage() {
         }
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/pricing/industry-multipliers'] });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.industryMultipliers() });
       toast({ title: 'Industry multiplier updated successfully' });
       setEditingItem(null);
     },
@@ -189,7 +197,7 @@ export default function AdminPricingPage() {
         body: { multiplier: data.multiplier }
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/pricing/revenue-multipliers'] });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.revenueMultipliers() });
       toast({ title: 'Revenue multiplier updated successfully' });
       setEditingItem(null);
     },
@@ -209,7 +217,7 @@ export default function AdminPricingPage() {
         body: { surcharge: data.surcharge }
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/pricing/transaction-surcharges'] });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.transactionSurcharges() });
       toast({ title: 'Transaction surcharge updated successfully' });
       setEditingItem(null);
     },
@@ -229,7 +237,7 @@ export default function AdminPricingPage() {
         body: { settingValue: data.settingValue }
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/pricing/service-settings'] });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.serviceSettings() });
       toast({ title: 'Service setting updated successfully' });
       setEditingItem(null);
     },
@@ -252,7 +260,7 @@ export default function AdminPricingPage() {
         }
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/pricing/tiers'] });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.tiers() });
       toast({ title: 'Pricing tier updated successfully' });
       setEditingItem(null);
     },
@@ -269,6 +277,14 @@ export default function AdminPricingPage() {
     mutationFn: () => apiRequest('/api/admin/pricing/clear-cache', { method: 'POST' }),
     onSuccess: () => {
       toast({ title: 'Pricing cache cleared successfully' });
+      // Proactively refresh all pricing datasets
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.base() });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.industryMultipliers() });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.revenueMultipliers() });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.transactionSurcharges() });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.serviceSettings() });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.tiers() });
+      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.history() });
     },
     onError: (error: any) => {
       toast({ 

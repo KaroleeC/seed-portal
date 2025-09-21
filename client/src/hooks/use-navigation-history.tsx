@@ -29,7 +29,16 @@ type NavigationAction =
   | { type: 'GO_BACK' }
   | { type: 'GO_FORWARD' }
   | { type: 'SET_INDEX'; index: number }
-  | { type: 'CLEAR' };
+  | { type: 'CLEAR' }
+  | { type: 'HYDRATE'; history: string[]; index: number };
+
+const MAX_HISTORY_LENGTH = 50;
+
+function clampHistory(history: string[]): string[] {
+  if (history.length <= MAX_HISTORY_LENGTH) return history;
+  // Keep the most recent entries
+  return history.slice(history.length - MAX_HISTORY_LENGTH);
+}
 
 function navigationReducer(state: NavigationState, action: NavigationAction): NavigationState {
   switch (action.type) {
@@ -53,9 +62,7 @@ function navigationReducer(state: NavigationState, action: NavigationAction): Na
       }
       
       // Remove forward history and add new location
-      const newHistory = state.history.slice(0, state.currentIndex + 1);
-      newHistory.push(action.location);
-      
+      const newHistory = clampHistory([...state.history.slice(0, state.currentIndex + 1), action.location]);
       return {
         history: newHistory,
         currentIndex: newHistory.length - 1
@@ -85,6 +92,15 @@ function navigationReducer(state: NavigationState, action: NavigationAction): Na
         currentIndex: action.index
       };
     
+    case 'HYDRATE': {
+      const hydratedHistory = clampHistory(action.history || []);
+      const idx = Math.max(0, Math.min(action.index ?? 0, hydratedHistory.length - 1));
+      return {
+        history: hydratedHistory,
+        currentIndex: hydratedHistory.length ? idx : -1
+      };
+    }
+    
     case 'CLEAR':
       return {
         history: [],
@@ -103,6 +119,21 @@ export function NavigationHistoryProvider({ children }: NavigationHistoryProvide
     currentIndex: -1
   });
 
+  // Hydrate from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const rawHistory = sessionStorage.getItem('navHistory');
+      const rawIndex = sessionStorage.getItem('navIndex');
+      const parsedHistory = rawHistory ? (JSON.parse(rawHistory) as string[]) : [];
+      const parsedIndex = rawIndex ? parseInt(rawIndex, 10) : -1;
+      if (parsedHistory && parsedHistory.length > 0) {
+        dispatch({ type: 'HYDRATE', history: parsedHistory, index: parsedIndex });
+      }
+    } catch (e) {
+      // Ignore storage errors
+    }
+  }, []);
+
   // Track location changes
   useEffect(() => {
     if (!location) return;
@@ -114,11 +145,22 @@ export function NavigationHistoryProvider({ children }: NavigationHistoryProvide
     }
   }, [location]);
 
+  // Persist history to sessionStorage whenever it changes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('navHistory', JSON.stringify(state.history));
+      sessionStorage.setItem('navIndex', String(state.currentIndex));
+    } catch (e) {
+      // Ignore storage errors
+    }
+  }, [state.history, state.currentIndex]);
+
   // Handle browser back/forward buttons
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
       const currentPath = window.location.pathname;
-      const historyIndex = state.history.indexOf(currentPath);
+      // Use lastIndexOf to handle duplicate paths in history (e.g., revisiting same route)
+      const historyIndex = state.history.lastIndexOf(currentPath);
       
       if (historyIndex !== -1) {
         dispatch({ type: 'SET_INDEX', index: historyIndex });
@@ -137,7 +179,6 @@ export function NavigationHistoryProvider({ children }: NavigationHistoryProvide
       const previousPath = state.history[state.currentIndex - 1];
       dispatch({ type: 'GO_BACK' });
       setLocation(previousPath);
-      window.history.pushState(null, '', previousPath);
     }
   };
 
@@ -146,9 +187,6 @@ export function NavigationHistoryProvider({ children }: NavigationHistoryProvide
       const nextPath = state.history[state.currentIndex + 1];
       dispatch({ type: 'GO_FORWARD' });
       setLocation(nextPath);
-      
-      // Update browser history
-      window.history.pushState(null, '', nextPath);
     }
   };
 

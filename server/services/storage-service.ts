@@ -29,6 +29,14 @@ export class StorageService {
   private serviceAccountClient: any;
 
   constructor() {
+    const boxDisabled = (process.env.DISABLE_BOX === '1' || (process.env.DISABLE_BOX || '').toLowerCase() === 'true');
+    if (boxDisabled) {
+      logger.info('Storage service (Box) disabled via DISABLE_BOX flag');
+      this.serviceAccountClient = null;
+      this.client = null;
+      return;
+    }
+
     const requiredVars = ['BOX_CLIENT_ID', 'BOX_CLIENT_SECRET', 'BOX_KEY_ID', 'BOX_PRIVATE_KEY', 'BOX_ENTERPRISE_ID'];
     const missingVars = requiredVars.filter(varName => !process.env[varName]);
     
@@ -70,8 +78,8 @@ export class StorageService {
       // Check if service is configured
       if (!this.serviceAccountClient || this.serviceAccountClient === null || this.serviceAccountClient === undefined) {
         return {
-          status: 'unhealthy',
-          message: 'Storage service not configured - missing Box credentials',
+          status: 'degraded',
+          message: process.env.DISABLE_BOX ? 'Storage disabled via DISABLE_BOX' : 'Storage service not configured - missing Box credentials',
           responseTime: Date.now() - startTime
         };
       }

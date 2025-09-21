@@ -32,7 +32,9 @@ import {
   Lock,
   Shield
 } from "lucide-react";
-import navLogoPath from "@assets/Seed Financial Logo (1)_1753043325029.png";
+import logoLight from "@assets/Seed Financial Logo - Light Mode.png";
+import logoDark from "@assets/Seed Financial Logo - Dark Mode.png";
+import { useTheme } from "@/theme";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -70,6 +72,8 @@ export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { resolvedTheme } = useTheme();
+  const logoSrc = resolvedTheme === "dark" ? logoDark : logoLight;
   
   // Password change modal state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -493,8 +497,7 @@ export default function Profile() {
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: async (data: UpdateProfile) => {
-      const response = await apiRequest('PATCH', '/api/user/profile', data);
-      return response.json();
+      return await apiRequest('PATCH', '/api/user/profile', data);
     },
     onSuccess: async (updatedUser, variables) => {
       // Always refresh weather card after profile update using current form values
@@ -616,7 +619,7 @@ export default function Profile() {
             {/* Centered Logo */}
             <div className="flex-1 flex justify-center">
               <img 
-                src={navLogoPath} 
+                src={logoSrc} 
                 alt="Seed Financial" 
                 className="h-16 w-auto"
               />

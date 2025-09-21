@@ -3,6 +3,7 @@ import {
   salesReps, deals, commissions, commissionAdjustments, monthlyBonuses, milestoneBonuses,
   pricingBase, pricingIndustryMultipliers, pricingRevenueMultipliers, pricingTransactionSurcharges,
   pricingServiceSettings, pricingTiers, pricingHistory,
+  calculatorServiceContent,
   type User, type InsertUser, type Quote, type InsertQuote, type ApprovalCode, type InsertApprovalCode, 
   type KbCategory, type InsertKbCategory, type KbArticle, type InsertKbArticle, type KbBookmark, type InsertKbBookmark,
   type KbSearchHistory, type InsertKbSearchHistory, type WorkspaceUser, type InsertWorkspaceUser, 
@@ -13,6 +14,7 @@ import {
   type PricingRevenueMultiplier, type InsertPricingRevenueMultiplier, type PricingTransactionSurcharge, type InsertPricingTransactionSurcharge,
   type PricingServiceSetting, type InsertPricingServiceSetting, type PricingTier, type InsertPricingTier,
   type PricingHistory, type InsertPricingHistory,
+  type CalculatorServiceContent, type InsertCalculatorServiceContent,
   updateQuoteSchema, type UpdateProfile 
 } from "@shared/schema";
 import { db } from "./db";
@@ -168,10 +170,15 @@ export interface IStorage {
   
   // Pricing history
   getPricingHistory(tableAffected?: string, recordId?: number): Promise<PricingHistory[]>;
+
+  // Calculator Service Content methods
+  getAllCalculatorServiceContent(): Promise<CalculatorServiceContent[]>;
+  getCalculatorServiceContent(service: string): Promise<CalculatorServiceContent | undefined>;
+  upsertCalculatorServiceContent(content: InsertCalculatorServiceContent & { service: string; updatedBy?: number }): Promise<CalculatorServiceContent>;
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.Store;
+  sessionStore!: session.Store;
 
   constructor() {
     console.log('[Storage] Initializing storage...');
@@ -179,6 +186,54 @@ export class DatabaseStorage implements IStorage {
     
     // Initialize with memory store first, will be replaced if Redis is available
     this.initMemoryStore();
+  }
+
+  // ===== Calculator Service Content =====
+  async getAllCalculatorServiceContent(): Promise<CalculatorServiceContent[]> {
+    return await safeDbQuery(async () => {
+      return await db.select().from(calculatorServiceContent).orderBy(asc(calculatorServiceContent.service));
+    }, 'getAllCalculatorServiceContent');
+  }
+
+  async getCalculatorServiceContent(service: string): Promise<CalculatorServiceContent | undefined> {
+    return await safeDbQuery(async () => {
+      const [row] = await db.select().from(calculatorServiceContent).where(eq(calculatorServiceContent.service, service));
+      return row || undefined;
+    }, 'getCalculatorServiceContent');
+  }
+
+  async upsertCalculatorServiceContent(content: InsertCalculatorServiceContent & { service: string; updatedBy?: number }): Promise<CalculatorServiceContent> {
+    return await safeDbQuery(async () => {
+      const existing = await this.getCalculatorServiceContent(content.service);
+      if (existing) {
+        const [updated] = await db
+          .update(calculatorServiceContent)
+          .set({
+            sowTitle: content.sowTitle ?? existing.sowTitle,
+            sowTemplate: content.sowTemplate ?? existing.sowTemplate,
+            agreementLink: content.agreementLink ?? existing.agreementLink,
+            includedFieldsJson: content.includedFieldsJson ?? existing.includedFieldsJson,
+            updatedBy: content.updatedBy ?? existing.updatedBy,
+            updatedAt: new Date(),
+          })
+          .where(eq(calculatorServiceContent.service, content.service))
+          .returning();
+        return updated || existing;
+      }
+      const [inserted] = await db
+        .insert(calculatorServiceContent)
+        .values({
+          service: content.service,
+          sowTitle: content.sowTitle ?? null as any,
+          sowTemplate: content.sowTemplate ?? null as any,
+          agreementLink: content.agreementLink ?? null as any,
+          includedFieldsJson: content.includedFieldsJson ?? null as any,
+          updatedBy: content.updatedBy ?? null as any,
+        })
+        .returning();
+      if (!inserted) throw new Error('Failed to upsert calculator service content');
+      return inserted;
+    }, 'upsertCalculatorServiceContent');
   }
 
   async init() {
@@ -294,7 +349,9 @@ export class DatabaseStorage implements IStorage {
       let userToInsert = { ...insertUser };
       if (userToInsert.password) {
         const saltRounds = 12;
-        userToInsert.password = await bcrypt.hash(userToInsert.password, saltRounds);
+        const plain = String(userToInsert.password);
+        const hashed = await bcrypt.hash(plain, saltRounds);
+        (userToInsert as any).password = hashed;
       }
 
       const [user] = await db
@@ -455,8 +512,7 @@ export class DatabaseStorage implements IStorage {
       console.log('🔵 Storage.createQuote - Insert data keys:', Object.keys(insertQuote));
       console.log('🔵 Storage.createQuote - Sample data:', { 
         contactEmail: insertQuote.contactEmail,
-        monthlyFee: insertQuote.monthlyFee,
-        ownerId: insertQuote.ownerId 
+        monthlyFee: insertQuote.monthlyFee
       });
       
       console.log('🔵 EXECUTING DATABASE INSERT...');

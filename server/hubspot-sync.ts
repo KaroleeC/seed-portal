@@ -1,7 +1,7 @@
-import { HubSpotService } from "./hubspot";
+import type { HubSpotService } from "./hubspot";
+import { hubSpotService } from "./hubspot";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
-import { calculateCommission } from "@shared/commission-calculator";
 
 interface HubSpotUser {
   id: string;
@@ -40,7 +40,10 @@ export class HubSpotCommissionSync {
   private hubspotService: HubSpotService;
 
   constructor() {
-    this.hubspotService = new HubSpotService();
+    if (!hubSpotService) {
+      throw new Error('HubSpot not configured (no HUBSPOT_ACCESS_TOKEN)');
+    }
+    this.hubspotService = hubSpotService;
   }
   
   /**
@@ -50,58 +53,88 @@ export class HubSpotCommissionSync {
     try {
       console.log('🔄 Syncing sales reps from HubSpot...');
       
-      // Get all HubSpot users/owners using the makeRequest method
-      const response = await this.hubspotService.makeRequest('/crm/v3/owners');
+      // Get all HubSpot owners via public API
+      const owners = await this.hubspotService.listOwners();
       
-      if (!response || !response.results) {
+      if (!owners || owners.length === 0) {
         throw new Error('Failed to fetch HubSpot owners - no results returned');
       }
       
-      const hubspotUsers = response.results;
+      const hubspotUsers = owners;
       
       for (const hsUser of hubspotUsers) {
         if (hsUser.email && hsUser.firstName && hsUser.lastName) {
-          // Check if sales rep already exists
-          const existingRep = await db.execute(sql`
-            SELECT id FROM sales_reps WHERE email = ${hsUser.email} LIMIT 1
+          // 1) Ensure a user exists with this email; update first/last name and hubspot_user_id
+          const existingUser = await db.execute(sql`
+            SELECT id FROM users WHERE lower(email) = lower(${hsUser.email}) LIMIT 1
           `);
-          
-          if (existingRep.rows.length === 0) {
-            // Insert new sales rep
-            await db.execute(sql`
-              INSERT INTO sales_reps (
-                first_name, 
-                last_name, 
-                email, 
-                hubspot_user_id, 
-                is_active, 
-                created_at, 
+
+          let userId: number;
+          if (existingUser.rows.length === 0) {
+            const inserted = await db.execute(sql`
+              INSERT INTO users (
+                email,
+                first_name,
+                last_name,
+                hubspot_user_id,
+                role,
+                created_at,
                 updated_at
               ) VALUES (
-                ${hsUser.firstName},
-                ${hsUser.lastName}, 
                 ${hsUser.email},
+                ${hsUser.firstName},
+                ${hsUser.lastName},
                 ${hsUser.id},
+                'employee',
+                NOW(),
+                NOW()
+              )
+              RETURNING id
+            `);
+            userId = (inserted.rows[0] as any).id;
+            console.log(`✅ Added user for sales rep: ${hsUser.firstName} ${hsUser.lastName} (${hsUser.email}) -> user_id=${userId}`);
+          } else {
+            userId = (existingUser.rows[0] as any).id;
+            await db.execute(sql`
+              UPDATE users
+              SET first_name = ${hsUser.firstName},
+                  last_name = ${hsUser.lastName},
+                  hubspot_user_id = ${hsUser.id},
+                  updated_at = NOW()
+              WHERE id = ${userId}
+            `);
+            console.log(`🔄 Updated user for sales rep: ${hsUser.firstName} ${hsUser.lastName} (${hsUser.email}) -> user_id=${userId}`);
+          }
+
+          // 2) Ensure a sales_reps row exists referencing this user
+          const existingRep = await db.execute(sql`
+            SELECT id FROM sales_reps WHERE user_id = ${userId} LIMIT 1
+          `);
+          if (existingRep.rows.length === 0) {
+            await db.execute(sql`
+              INSERT INTO sales_reps (
+                user_id,
+                is_active,
+                start_date,
+                created_at,
+                updated_at
+              ) VALUES (
+                ${userId},
                 true,
+                NOW(),
                 NOW(),
                 NOW()
               )
             `);
-            
-            console.log(`✅ Added sales rep: ${hsUser.firstName} ${hsUser.lastName} (${hsUser.email})`);
+            console.log(`✅ Added sales_rep for user_id=${userId}`);
           } else {
-            // Update existing sales rep
             await db.execute(sql`
-              UPDATE sales_reps 
-              SET 
-                first_name = ${hsUser.firstName},
-                last_name = ${hsUser.lastName},
-                hubspot_user_id = ${hsUser.id},
-                updated_at = NOW()
-              WHERE email = ${hsUser.email}
+              UPDATE sales_reps
+              SET is_active = true,
+                  updated_at = NOW()
+              WHERE user_id = ${userId}
             `);
-            
-            console.log(`🔄 Updated sales rep: ${hsUser.firstName} ${hsUser.lastName}`);
+            console.log(`🔄 Ensured sales_rep active for user_id=${userId}`);
           }
         }
       }
@@ -115,27 +148,26 @@ export class HubSpotCommissionSync {
   
   /**
    * Sync invoices from HubSpot with real line item data
+   * Returns the number of invoices processed.
    */
-  async syncInvoices(): Promise<void> {
+  async syncInvoices(): Promise<number> {
     try {
       console.log('🔄 Syncing invoices from HubSpot...');
       
-      // Get invoices from HubSpot with ALL needed data including balance_due for discounts
-      const invoicesResponse = await this.hubspotService.makeRequest(
-        '/crm/v3/objects/invoices?limit=100&properties=hs_createdate,hs_lastmodifieddate,hs_object_id,hs_invoice_amount,hs_balance_due,hs_invoice_number,hs_invoice_status,hs_deal_id,hs_deal_name,company_name,hs_company_name,recipient_company_name,billing_contact_name&associations=line_items,deals,companies,contacts'
-      );
+      // List invoices via billing service helper
+      const invoices = await this.hubspotService.listInvoices(100);
       
-      console.log(`📋 Found ${invoicesResponse.results.length} invoices in HubSpot`);
+      console.log(`📋 Found ${invoices.length} invoices in HubSpot`);
       
       let processedInvoices = 0;
       
-      for (const invoice of invoicesResponse.results) {
+      for (const invoice of invoices) {
         console.log(`🔍 Processing invoice ID: ${invoice.id}`);
         console.log(`📝 Invoice properties:`, JSON.stringify(invoice.properties, null, 2));
         console.log(`🔗 Invoice associations:`, JSON.stringify(invoice.associations, null, 2));
         
         // Get line items for this invoice
-        const lineItemIds = invoice.associations?.['line items']?.results?.map(li => li.id) || [];
+        const lineItemIds = invoice.associations?.['line items']?.results?.map((li: any) => li.id) || [];
         
         console.log(`🔗 Line item IDs for invoice ${invoice.id}:`, lineItemIds);
         
@@ -170,28 +202,14 @@ export class HubSpotCommissionSync {
         
         // Fetch line item details
         let totalAmount = 0;
-        const lineItems = [];
-        
-        for (const lineItemId of lineItemIds) {
-          try {
-            const lineItem = await this.hubspotService.makeRequest(
-              `/crm/v3/objects/line_items/${lineItemId}?properties=name,price,quantity,amount`
-            );
-            
-            const amount = parseFloat(lineItem.properties.amount || '0');
+        let lineItems: any[] = [];
+        if (lineItemIds.length > 0) {
+          // Prefer detailed fetch via billing helper to ensure properties
+          lineItems = await this.hubspotService.getInvoiceLineItems(String(invoice.id));
+          for (const li of lineItems) {
+            const amount = parseFloat(li.properties?.amount || '0');
             totalAmount += amount;
-            
-            lineItems.push({
-              id: lineItem.id,
-              name: lineItem.properties.name,
-              amount: amount,
-              price: parseFloat(lineItem.properties.price || '0'),
-              quantity: parseInt(lineItem.properties.quantity || '1')
-            });
-            
-            console.log(`  📦 Line item: ${lineItem.properties.name} - $${amount}`);
-          } catch (error) {
-            console.log(`❌ Error fetching line item ${lineItemId}:`, error);
+            console.log(`  📦 Line item: ${li.properties?.name} - $${amount}`);
           }
         }
         
@@ -260,43 +278,99 @@ export class HubSpotCommissionSync {
     
     if (existingInvoice.rows.length === 0) {
       // Get the actual deal owner from HubSpot deal association
-      let salesRepId = 3; // Jon Walls as fallback
-      let salesRepName = 'Jon Walls';
-      
+      let salesRepId: number | null = null;
+      let salesRepName = 'Unknown';
+
       if (invoice.associations && invoice.associations.deals && invoice.associations.deals.results.length > 0) {
         const dealId = invoice.associations.deals.results[0].id;
         console.log(`🔍 Fetching deal details for ID: ${dealId}`);
         
         try {
-          const dealData = await this.hubspotService.makeRequest(
-            `/crm/v3/objects/deals/${dealId}?properties=dealname,hubspot_owner_id,hs_deal_stage_probability`
-          );
+          const dealDataArr = await this.hubspotService.getDeals({ ids: [dealId], properties: ['dealname','hubspot_owner_id','hs_deal_stage_probability'] });
+          const dealData = Array.isArray(dealDataArr) ? dealDataArr[0] : null;
           
-          if (dealData.properties.hubspot_owner_id) {
+          if (dealData?.properties?.hubspot_owner_id) {
             // Get owner details from HubSpot
-            const ownerData = await this.hubspotService.makeRequest(
-              `/crm/v3/owners/${dealData.properties.hubspot_owner_id}`
-            );
-            
-            // Map HubSpot owner to our sales rep
-            const ownerEmail = ownerData.email?.toLowerCase();
-            if (ownerEmail === 'amanda@seedfinancial.io') {
-              salesRepId = 5;
-              salesRepName = 'Amanda Cooper';
-            } else if (ownerEmail === 'randall@seedfinancial.io') {
-              salesRepId = 4;
-              salesRepName = 'Randall Hall';
-            } else {
-              salesRepId = 3;
-              salesRepName = 'Jon Walls';
+            const ownerData = await this.hubspotService.getOwnerById(dealData.properties.hubspot_owner_id);
+
+            const ownerEmail = ownerData?.email ? ownerData.email.toLowerCase() : undefined;
+            if (ownerEmail) {
+              // Resolve sales_rep_id by joining users -> sales_reps. Create if missing.
+              const repRes = await db.execute(sql`
+                SELECT sr.id as sales_rep_id, u.first_name, u.last_name
+                FROM sales_reps sr
+                JOIN users u ON u.id = sr.user_id
+                WHERE lower(u.email) = lower(${ownerEmail})
+                LIMIT 1
+              `);
+
+              if (repRes.rows.length > 0) {
+                const row = repRes.rows[0] as any;
+                salesRepId = Number(row.sales_rep_id);
+                salesRepName = `${row.first_name ?? ''} ${row.last_name ?? ''}`.trim() || ownerEmail;
+              } else {
+                // Create user and sales_rep record for this owner
+                const userLookup = await db.execute(sql`SELECT id FROM users WHERE lower(email) = lower(${ownerEmail}) LIMIT 1`);
+                let userId: number;
+                if (userLookup.rows.length === 0) {
+                  const inserted = await db.execute(sql`
+                    INSERT INTO users (email, first_name, last_name, hubspot_user_id, role, created_at, updated_at)
+                    VALUES (${ownerEmail}, ${ownerData.firstName || ''}, ${ownerData.lastName || ''}, ${ownerData.id || ''}, 'employee', NOW(), NOW())
+                    RETURNING id
+                  `);
+                  userId = (inserted.rows[0] as any).id;
+                } else {
+                  userId = (userLookup.rows[0] as any).id;
+                  await db.execute(sql`
+                    UPDATE users SET first_name = ${ownerData.firstName || ''}, last_name = ${ownerData.lastName || ''}, hubspot_user_id = ${ownerData.id || ''}, updated_at = NOW()
+                    WHERE id = ${userId}
+                  `);
+                }
+
+                const repInserted = await db.execute(sql`
+                  INSERT INTO sales_reps (user_id, is_active, start_date, created_at, updated_at)
+                  VALUES (${userId}, true, NOW(), NOW(), NOW())
+                  ON CONFLICT DO NOTHING
+                  RETURNING id
+                `);
+                if (repInserted.rows.length > 0) {
+                  salesRepId = (repInserted.rows[0] as any).id;
+                } else {
+                  const repLookup = await db.execute(sql`SELECT id FROM sales_reps WHERE user_id = ${userId} LIMIT 1`);
+                  salesRepId = repLookup.rows.length > 0 ? Number((repLookup.rows[0] as any).id) : null;
+                }
+
+                salesRepName = `${ownerData.firstName || ''} ${ownerData.lastName || ''}`.trim() || ownerEmail;
+              }
             }
-            console.log(`✅ Deal owner: ${salesRepName} (${ownerEmail})`);
           }
         } catch (error) {
           console.log(`❌ Failed to fetch deal/owner details:`, error);
         }
       }
-      
+
+      // Fallback if still null: assign to first active sales rep if any
+      if (!salesRepId) {
+        const fallback = await db.execute(sql`SELECT id FROM sales_reps WHERE is_active = true ORDER BY id ASC LIMIT 1`);
+        if (fallback.rows.length > 0) {
+          salesRepId = Number((fallback.rows[0] as any).id);
+          salesRepName = 'Unassigned';
+        } else {
+          // As a last resort, create a placeholder sales rep tied to an admin user if present
+          const adminUser = await db.execute(sql`SELECT id, first_name, last_name, email FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1`);
+          if (adminUser.rows.length > 0) {
+            const u = adminUser.rows[0] as any;
+            const inserted = await db.execute(sql`
+              INSERT INTO sales_reps (user_id, is_active, start_date, created_at, updated_at)
+              VALUES (${u.id}, true, NOW(), NOW(), NOW())
+              RETURNING id
+            `);
+            salesRepId = Number((inserted.rows[0] as any).id);
+            salesRepName = `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email;
+          }
+        }
+      }
+
       console.log(`👤 Using sales rep: ${salesRepName} (ID: ${salesRepId})`);
       
       // Get real company name from HubSpot associations
@@ -307,10 +381,8 @@ export class HubSpotCommissionSync {
         console.log(`🏢 Fetching company details for ID: ${companyId}`);
         
         try {
-          const companyData = await this.hubspotService.makeRequest(
-            `/crm/v3/objects/companies/${companyId}?properties=name,domain`
-          );
-          companyName = companyData.properties.name || companyName;
+          const companyData = await this.hubspotService.getCompanyById(companyId);
+          companyName = companyData?.properties?.name || companyName;
           console.log(`✅ Retrieved company name: ${companyName}`);
         } catch (error) {
           console.log(`❌ Failed to fetch company ${companyId}:`, error);
@@ -351,8 +423,23 @@ export class HubSpotCommissionSync {
       
       const hubspotInvoiceId = (invoiceResult.rows[0] as any).id;
       
-      // Create line item records
-      for (const lineItem of lineItems) {
+      // Normalize line items to a consistent shape then create records
+      const normalizedItems = lineItems.map((li: any) => {
+        const p = li?.properties ?? {};
+        const name = String(p.name ?? li?.name ?? 'Line Item');
+        const description = String(p.description ?? li?.description ?? '');
+        const quantityRaw = p.quantity ?? li?.quantity ?? 1;
+        const priceRaw = p.price ?? li?.price ?? 0;
+        const amountRaw = p.amount ?? li?.amount ?? (Number(priceRaw) * Number(quantityRaw));
+        const quantity = typeof quantityRaw === 'number' ? quantityRaw : parseFloat(String(quantityRaw || '1'));
+        const unitPrice = typeof priceRaw === 'number' ? priceRaw : parseFloat(String(priceRaw || '0'));
+        const amount = typeof amountRaw === 'number' ? amountRaw : parseFloat(String(amountRaw || '0'));
+        const id = li?.id ?? p?.hs_object_id ?? undefined;
+        return { id, name, description, quantity, price: unitPrice, amount };
+      });
+
+      for (const item of normalizedItems) {
+        const isRecurring = item.name.toLowerCase().includes('monthly') || item.name.toLowerCase().includes('tax as a service') || item.name.toLowerCase().includes('recurring');
         await db.execute(sql`
           INSERT INTO hubspot_invoice_line_items (
             invoice_id,
@@ -367,14 +454,14 @@ export class HubSpotCommissionSync {
             created_at
           ) VALUES (
             ${hubspotInvoiceId},
-            ${lineItem.id},
-            ${lineItem.name},
-            ${lineItem.description || ''},
-            ${lineItem.quantity},
-            ${lineItem.price},
-            ${lineItem.amount},
-            ${this.determineServiceTypeFromName(lineItem.name)},
-            ${lineItem.name.toLowerCase().includes('monthly') || lineItem.name.toLowerCase().includes('tax as a service')},
+            ${item.id},
+            ${item.name},
+            ${item.description},
+            ${item.quantity},
+            ${item.price},
+            ${item.amount},
+            ${this.determineServiceTypeFromName(item.name)},
+            ${isRecurring},
             NOW()
           )
         `);
@@ -382,14 +469,12 @@ export class HubSpotCommissionSync {
       
       console.log(`✅ Created invoice ${invoice.id} with ${lineItems.length} line items - $${totalAmount}`);
       
-      // Generate commissions based on line items (apply discount ratio if needed)
-      const adjustedLineItems = hasDiscount ? lineItems.map(item => ({
-        ...item,
-        amount: item.amount * discountRatio,
-        price: item.price * discountRatio
-      })) : lineItems;
-      
-      await this.generateCommissionsForInvoice(hubspotInvoiceId, salesRepId, salesRepName, adjustedLineItems, invoice.properties.hs_createdate);
+      // Generate commissions based on normalized items (apply discount ratio if needed)
+      const adjustedItems = hasDiscount
+        ? normalizedItems.map(i => ({ ...i, amount: i.amount * discountRatio, price: i.price * discountRatio }))
+        : normalizedItems;
+
+      await this.generateCommissionsForInvoice(hubspotInvoiceId, salesRepId!, salesRepName, adjustedItems, invoice.properties.hs_createdate);
       
     } else {
       console.log(`🔄 Invoice ${invoice.id} already exists, skipping`);
@@ -441,30 +526,38 @@ export class HubSpotCommissionSync {
     // Look for recurring services like "Monthly Bookkeeping", "Tax as a Service"
     return lineItems
       .filter(item => {
-        const name = item.name.toLowerCase();
+        const name = String((item?.name ?? item?.properties?.name) || '').toLowerCase();
         return name.includes('monthly') || 
                name.includes('bookkeeping') ||
                name.includes('recurring') ||
                name.includes('tax as a service');
       })
-      .reduce((sum, item) => sum + item.amount, 0);
+      .reduce((sum, item) => {
+        const raw = item?.amount ?? (item?.properties?.amount ?? 0);
+        const amount = typeof raw === 'number' ? raw : parseFloat(String(raw || '0'));
+        return sum + (Number.isFinite(amount) ? amount : 0);
+      }, 0);
   }
   
   private calculateSetupFee(lineItems: any[]): number {
     // Look for one-time services like "Clean-Up"
     return lineItems
       .filter(item => {
-        const name = item.name.toLowerCase();
+        const name = String((item?.name ?? item?.properties?.name) || '').toLowerCase();
         return name.includes('clean') || 
                name.includes('setup') ||
                name.includes('catch') ||
                name.includes('prior');
       })
-      .reduce((sum, item) => sum + item.amount, 0);
+      .reduce((sum, item) => {
+        const raw = item?.amount ?? (item?.properties?.amount ?? 0);
+        const amount = typeof raw === 'number' ? raw : parseFloat(String(raw || '0'));
+        return sum + (Number.isFinite(amount) ? amount : 0);
+      }, 0);
   }
   
   private determineServiceType(lineItems: any[]): string {
-    const services = lineItems.map(item => item.name.toLowerCase());
+    const services = lineItems.map(item => String((item?.name ?? item?.properties?.name) || '').toLowerCase());
     
     const hasBookkeeping = services.some(s => 
       s.includes('bookkeeping') || 
@@ -621,4 +714,11 @@ export class HubSpotCommissionSync {
   }
 }
 
-export const hubspotSync = new HubSpotCommissionSync();
+export const hubspotSync: any = process.env.HUBSPOT_ACCESS_TOKEN
+  ? new HubSpotCommissionSync()
+  : {
+      async performFullSync() {
+        console.warn('HubSpot not configured (no HUBSPOT_ACCESS_TOKEN). Skipping performFullSync.');
+        return { salesReps: 0, invoices: 0, commissions: 0, invoicesProcessed: 0 };
+      }
+    };

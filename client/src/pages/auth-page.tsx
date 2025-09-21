@@ -1,3 +1,4 @@
+import React from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { Redirect } from "wouter";
@@ -6,10 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import logoPath from "@assets/Seed Financial Logo (1)_1753043325029.png";
+import logoLight from "@assets/Seed Financial Logo - Light Mode.png";
+import logoDark from "@assets/Seed Financial Logo - Dark Mode.png";
+import { useTheme } from "@/theme";
 
 export default function AuthPage() {
   const { user, loginMutation } = useAuth();
+  const { resolvedTheme } = useTheme();
+  const logoSrc = resolvedTheme === "dark" ? logoDark : logoLight;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +49,7 @@ export default function AuthPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <img 
-            src={logoPath} 
+            src={logoSrc} 
             alt="Seed Financial Logo" 
             className="h-16 mx-auto mb-6"
           />
@@ -56,7 +61,7 @@ export default function AuthPage() {
           </p>
         </div>
 
-        <Card className="bg-white shadow-xl">
+        <Card className="shadow-xl">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Sign In</CardTitle>
             <CardDescription className="text-center">

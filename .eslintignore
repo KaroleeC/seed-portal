@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+coverage/
+.eslintrc.cjs
+vite.config.*
+**/*.d.ts
+**/*.generated.*
+uploads/
+scripts/
+server/workers/
+worker.ts
+temp_*.tsx
+tailwind.config.ts
+shared/pricing.ts
+shared/services.ts

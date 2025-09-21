@@ -42,11 +42,11 @@ async function throwIfResNotOk(res: Response) {
 }
 
 // Overloaded function to support both old and new calling patterns
-export async function apiRequest(
+export async function apiRequest<T = any>(
   urlOrMethod: string,
   optionsOrUrl?: any,
   dataOrUndefined?: any
-): Promise<Response> {
+): Promise<T> {
   let method: string;
   let url: string;
   let data: any;
@@ -97,9 +97,8 @@ export async function apiRequest(
 
 
     const response = await fetch(url, requestOptions);
-    
     await throwIfResNotOk(response);
-    return await response.json();
+    return (await response.json()) as T;
   }
 
   // For new signature calls, build standard request options

@@ -284,7 +284,7 @@ export const getServiceIcons = () =>
 
 // ZOD SCHEMA HELPERS - Generate form schemas automatically
 export const generateServiceZodFields = () => {
-  const fields: Record<string, z.ZodBoolean> = {};
+  const fields: Record<string, z.ZodBoolean | z.ZodDefault<z.ZodBoolean>> = {};
   getServiceKeys().forEach(key => {
     fields[key] = z.boolean().default(false);
   });

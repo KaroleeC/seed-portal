@@ -1,5 +1,8 @@
 // Disable Redis OpenTelemetry instrumentation before any imports
 import "./disable-redis-instrumentation";
+// Load and validate environment (non-fatal in development)
+import { loadEnv } from './config/env';
+loadEnv();
 
 import express, { type Request, Response, NextFunction } from "express";
 import helmet from "helmet";
@@ -49,11 +52,14 @@ app.use(helmet({
 // Add CSRF debugging middleware BEFORE CSRF is applied
 app.use((req, res, next) => {
   if (req.originalUrl.startsWith('/api/')) {
-    console.log('🔒 [CSRF Debug] BEFORE CSRF middleware:', {
+    const rawCsrf = req.headers['x-csrf-token'];
+    const csrfValue = Array.isArray(rawCsrf) ? rawCsrf[0] : rawCsrf;
+    const csrfPreview = typeof csrfValue === 'string' ? csrfValue.substring(0, 10) + '...' : undefined;
+    console.log(' [CSRF Debug] BEFORE CSRF middleware:', {
       url: req.originalUrl,
       method: req.method,
       hasCsrfToken: !!req.headers['x-csrf-token'],
-      csrfToken: req.headers['x-csrf-token']?.substring(0, 10) + '...',
+      csrfToken: csrfPreview,
       contentType: req.headers['content-type'],
       timestamp: new Date().toISOString()
     });
@@ -353,6 +359,28 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
       next();
     });
 
+    // Private Sentry verification endpoint
+    // Note: This route is registered before Passport initialize/session middleware.
+    // Allow auth if either req.user exists (Passport attached) OR a session passport user id is present.
+    app.get('/api/_health/sentry-test', async (req, res) => {
+      const isProd = process.env.NODE_ENV === 'production';
+      const authedUser = (req as any)?.user;
+      const sessionUserId = (req as any)?.session?.passport?.user;
+      if (isProd && !authedUser && !sessionUserId) {
+        res.status(403).json({ status: 'forbidden' });
+        return;
+      }
+      try {
+        const { captureMessage } = await import('./sentry');
+        const userLabel = authedUser?.email || (sessionUserId ? `user_id:${sessionUserId}` : 'dev');
+        captureMessage('sentry_test', 'info', { user: userLabel });
+        res.json({ status: 'ok', timestamp: new Date().toISOString() });
+      } catch (e) {
+        console.error('Sentry test route error:', e);
+        res.status(500).json({ status: 'error', message: (e as any)?.message || 'unknown' });
+      }
+    });
+
     // Register routes after session middleware is ready
     console.log('[Server] 🔄 About to call registerRoutes...');
     let server;
@@ -362,8 +390,8 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
     } catch (error) {
       console.error('[Server] 🚨 CRITICAL ERROR during route registration:', error);
       console.error('[Server] Error type:', typeof error);
-      console.error('[Server] Error message:', error?.message);
-      console.error('[Server] Error stack:', error?.stack);
+      console.error('[Server] Error message:', (error as any)?.message);
+      console.error('[Server] Error stack:', (error as any)?.stack);
       throw error; // Re-throw to see the full error
     }
 
@@ -420,12 +448,11 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
     }
     
     // START THE SERVER FIRST - this prevents deployment timeouts
-    server.listen({
+    server.listen(
       port,
-      host: "0.0.0.0",
-      reusePort: true,
-    }, () => {
-      log(`serving on port ${port}`);
+      process.env.HOST ?? "127.0.0.1",
+      () => {
+        log(`serving on port ${port}`);
       console.log('[Server] 🚀 HTTP server started successfully');
       
       // Initialize heavy services AFTER server is listening

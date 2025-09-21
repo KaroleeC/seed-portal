@@ -208,8 +208,8 @@ export class BonusTrackingService {
         .orderBy(desc(milestoneBonuses.dateEarned));
 
       return [
-        ...pendingMonthlyBonuses.map(b => ({ ...b, bonusCategory: 'monthly' })),
-        ...pendingMilestoneBonuses.map(b => ({ ...b, bonusCategory: 'milestone' }))
+        ...pendingMonthlyBonuses.map((b: any) => ({ ...b, bonusCategory: 'monthly' })),
+        ...pendingMilestoneBonuses.map((b: any) => ({ ...b, bonusCategory: 'milestone' }))
       ];
     } catch (error) {
       logger.error('Error fetching pending bonuses:', error);

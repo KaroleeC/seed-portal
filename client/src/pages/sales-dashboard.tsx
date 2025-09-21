@@ -1,3 +1,4 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
@@ -39,11 +40,13 @@ import { UniversalNavbar } from "@/components/UniversalNavbar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { NewsAggregator } from "@/components/NewsAggregator";
+import { KbCard } from "@/components/seedkb/KbCard";
 import { useState, useEffect } from "react";
 import { Cloud, CloudRain, CloudSnow, Sun, CloudDrizzle, Zap } from "lucide-react";
 
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from "@/lib/queryClient";
+import { useDealsByOwner } from "@/hooks/useDeals";
 
 interface WeatherData {
   temperature: number | null;
@@ -112,6 +115,13 @@ export default function Dashboard() {
   // Fetch knowledge base categories for the SEEDKB card
   const { data: categories = [], isLoading: categoriesLoading } = useQuery<KbCategory[]>({
     queryKey: ["/api/kb/categories"],
+  });
+
+  // Prefetch centralized deals for the current sales owner (no UI changes)
+  const ownerId = user?.hubspotUserId || undefined;
+  const { data: dealsResult, isLoading: dealsLoading } = useDealsByOwner(ownerId, {
+    enabled: !!ownerId,
+    limit: 50,
   });
 
   const getIconComponent = (iconName: string) => {
@@ -217,7 +227,7 @@ export default function Dashboard() {
   }, [user?.latitude, user?.longitude, user?.city, user?.state]); // Removed user.id to prevent unnecessary re-runs
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
+    <div className="theme-seedkb dark min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
       <UniversalNavbar />
 
       {/* Main Content Container */}
@@ -245,7 +255,7 @@ export default function Dashboard() {
         <div className="mb-12">
           <div className={`grid gap-8 justify-items-center ${(user?.email === 'jon@seedfinancial.io' || user?.email === 'anthony@seedfinancial.io' || user?.role === 'admin') ? 'grid-cols-6' : 'grid-cols-5'}`}>
             <Link href="/calculator">
-              <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card" style={{"--delay": 1} as React.CSSProperties}>
+              <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card kb-quick-action" style={{"--delay": 1} as React.CSSProperties}>
                 <div className="action-card-content">
                   <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full mb-3 group-hover:from-orange-400 group-hover:to-orange-500 transition-all duration-300">
                     <Calculator className="h-4 w-4 text-white" />
@@ -256,7 +266,7 @@ export default function Dashboard() {
             </Link>
 
             <Link href="/sales-commission-tracker">
-              <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card" style={{"--delay": 2} as React.CSSProperties}>
+              <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card kb-quick-action" style={{"--delay": 2} as React.CSSProperties}>
                 <div className="action-card-content">
                   <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-full mb-3 group-hover:from-green-400 group-hover:to-green-500 transition-all duration-300">
                     <DollarSign className="h-4 w-4 text-white" />
@@ -267,7 +277,7 @@ export default function Dashboard() {
             </Link>
 
             <Link href="/client-intel">
-              <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card" style={{"--delay": 3} as React.CSSProperties}>
+              <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card kb-quick-action" style={{"--delay": 3} as React.CSSProperties}>
                 <div className="action-card-content">
                   <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full mb-3 group-hover:from-blue-400 group-hover:to-blue-500 transition-all duration-300">
                     <UserCheck className="h-4 w-4 text-white" />
@@ -277,7 +287,7 @@ export default function Dashboard() {
               </div>
             </Link>
 
-            <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card" style={{"--delay": 4} as React.CSSProperties}>
+            <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card kb-quick-action" style={{"--delay": 4} as React.CSSProperties}>
               <div className="action-card-content">
                 <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full mb-3 group-hover:from-purple-400 group-hover:to-purple-500 transition-all duration-300">
                   <Video className="h-4 w-4 text-white" />
@@ -286,7 +296,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card" style={{"--delay": 5} as React.CSSProperties}>
+            <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card kb-quick-action" style={{"--delay": 5} as React.CSSProperties}>
               <div className="action-card-content">
                 <div className="p-3 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full mb-3 group-hover:from-teal-400 group-hover:to-teal-500 transition-all duration-300">
                   <MessageSquare className="h-4 w-4 text-white" />
@@ -297,7 +307,7 @@ export default function Dashboard() {
 
             {/* Sales Trainer - Only visible to admins */}
             {(user?.email === 'jon@seedfinancial.io' || user?.email === 'anthony@seedfinancial.io' || user?.role === 'admin') && (
-              <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card" style={{"--delay": 6} as React.CSSProperties}>
+              <div className="group w-32 h-32 rounded-full hover:scale-110 transition-all duration-300 cursor-pointer action-card-bounce action-card kb-quick-action" style={{"--delay": 6} as React.CSSProperties}>
                 <div className="action-card-content">
                   <div className="p-3 bg-gradient-to-br from-red-500 to-red-600 rounded-full mb-3 group-hover:from-red-400 group-hover:to-red-500 transition-all duration-300">
                     <GraduationCap className="h-4 w-4 text-white" />
@@ -311,8 +321,8 @@ export default function Dashboard() {
 
         {/* Knowledge Base Access */}
         <div className="mb-12">
-          <Card className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-slate-600/50 backdrop-blur-xl border-2 rounded-2xl shadow-2xl">
-            <CardHeader className="pb-4 bg-gradient-to-r from-slate-700/50 to-slate-800/50 border-b border-slate-600/30">
+          <KbCard>
+            <CardHeader className="pb-4 seedkb-band">
               <CardTitle className="flex items-center gap-3 text-2xl font-bold" style={{ fontFamily: 'League Spartan, sans-serif' }}>
                 <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg">
                   <BookOpen className="h-6 w-6 text-white" />
@@ -350,7 +360,7 @@ export default function Dashboard() {
                                     <IconComponent className="h-4 w-4 text-white" />
                                   </div>
                                 </TooltipTrigger>
-                                <TooltipContent className="bg-slate-800 border-slate-600 text-white">
+                                <TooltipContent className="bg-popover border text-foreground">
                                   {category.name}
                                 </TooltipContent>
                               </Tooltip>
@@ -358,8 +368,8 @@ export default function Dashboard() {
                           );
                         })}
                         {categories.length > 4 && (
-                          <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">+{categories.length - 4}</span>
+                          <div className="w-8 h-8 rounded-lg bg-muted border flex items-center justify-center">
+                            <span className="text-foreground text-xs font-bold">+{categories.length - 4}</span>
                           </div>
                         )}
                       </div>
@@ -378,7 +388,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </KbCard>
         </div>
 
         {/* Sales Enablement Dashboard */}
@@ -386,7 +396,7 @@ export default function Dashboard() {
           {/* Left Column - Sales Resources */}
           <div className="col-span-2 space-y-6">
             {/* Sales Playbook */}
-            <Card className="bg-white/30 backdrop-blur-md border border-white/40 shadow-xl">
+            <KbCard>
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-3 text-white">
                   <div className="p-2 bg-indigo-500/20 rounded-lg">
@@ -400,28 +410,28 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-white/20 border border-white/20 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+                  <div className="p-4 bg-muted border rounded-lg hover:bg-muted/70 transition-colors cursor-pointer">
                     <h4 className="text-sm font-semibold text-white mb-2">Objection Handling</h4>
                     <p className="text-xs text-white/70">Common objections and proven responses</p>
                   </div>
-                  <div className="p-4 bg-white/20 border border-white/20 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+                  <div className="p-4 bg-muted border rounded-lg hover:bg-muted/70 transition-colors cursor-pointer">
                     <h4 className="text-sm font-semibold text-white mb-2">Discovery Questions</h4>
                     <p className="text-xs text-white/70">Questions to uncover client needs</p>
                   </div>
-                  <div className="p-4 bg-white/20 border border-white/20 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+                  <div className="p-4 bg-muted border rounded-lg hover:bg-muted/70 transition-colors cursor-pointer">
                     <h4 className="text-sm font-semibold text-white mb-2">Closing Techniques</h4>
                     <p className="text-xs text-white/70">Proven methods to close deals</p>
                   </div>
-                  <div className="p-4 bg-white/20 border border-white/20 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+                  <div className="p-4 bg-muted border rounded-lg hover:bg-muted/70 transition-colors cursor-pointer">
                     <h4 className="text-sm font-semibold text-white mb-2">Follow-up Templates</h4>
                     <p className="text-xs text-white/70">Email templates for every scenario</p>
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            </KbCard>
 
             {/* Competitive Intelligence */}
-            <Card className="bg-white/30 backdrop-blur-md border border-white/40 shadow-xl">
+            <Card className="kb-surface rounded-2xl">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-3 text-white">
                   <div className="p-2 bg-amber-500/20 rounded-lg">
@@ -434,7 +444,7 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="p-3 bg-white/20 border border-white/20 rounded-lg">
+                <div className="p-3 bg-muted border rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-sm font-semibold text-white">TaxGuard Pro</h4>
@@ -445,7 +455,7 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 </div>
-                <div className="p-3 bg-white/20 border border-white/20 rounded-lg">
+                <div className="p-3 bg-muted border rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-sm font-semibold text-white">BookKeeper Elite</h4>
@@ -456,7 +466,7 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 </div>
-                <div className="p-3 bg-white/20 border border-white/20 rounded-lg">
+                <div className="p-3 bg-muted border rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="text-sm font-semibold text-white">AccuFinance</h4>
@@ -480,7 +490,7 @@ export default function Dashboard() {
         {/* Additional Sales Tools */}
         <div className="grid grid-cols-2 gap-8 mb-12">
           {/* Quick Contact Templates */}
-          <Card className="bg-white/30 backdrop-blur-md border border-white/40 shadow-xl">
+          <KbCard>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-3 text-white">
                 <div className="p-2 bg-pink-500/20 rounded-lg">
@@ -490,23 +500,23 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="p-3 bg-white/20 border border-white/20 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+              <div className="p-3 bg-muted border rounded-lg hover:bg-muted/70 transition-colors cursor-pointer">
                 <h4 className="text-sm font-semibold text-white">Cold Outreach</h4>
                 <p className="text-xs text-white/70">Initial contact templates</p>
               </div>
-              <div className="p-3 bg-white/20 border border-white/20 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+              <div className="p-3 bg-muted border rounded-lg hover:bg-muted/70 transition-colors cursor-pointer">
                 <h4 className="text-sm font-semibold text-white">Meeting Follow-up</h4>
                 <p className="text-xs text-white/70">Post-meeting templates</p>
               </div>
-              <div className="p-3 bg-white/20 border border-white/20 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+              <div className="p-3 bg-muted border rounded-lg hover:bg-muted/70 transition-colors cursor-pointer">
                 <h4 className="text-sm font-semibold text-white">Proposal Delivery</h4>
                 <p className="text-xs text-white/70">Quote delivery templates</p>
               </div>
             </CardContent>
-          </Card>
+          </KbCard>
 
           {/* Call Scheduling */}
-          <Card className="bg-white/30 backdrop-blur-md border border-white/40 shadow-xl">
+          <Card className="kb-surface rounded-2xl">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-3 text-white">
                 <div className="p-2 bg-cyan-500/20 rounded-lg">
@@ -516,15 +526,15 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="p-3 bg-white/20 border border-white/20 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+              <div className="p-3 bg-muted border rounded-lg hover:bg-muted/70 transition-colors cursor-pointer">
                 <h4 className="text-sm font-semibold text-white">Discovery Call</h4>
                 <p className="text-xs text-white/70">30 min initial meeting</p>
               </div>
-              <div className="p-3 bg-white/20 border border-white/20 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+              <div className="p-3 bg-muted border rounded-lg hover:bg-muted/70 transition-colors cursor-pointer">
                 <h4 className="text-sm font-semibold text-white">Demo Session</h4>
                 <p className="text-xs text-white/70">45 min product demo</p>
               </div>
-              <div className="p-3 bg-white/20 border border-white/20 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+              <div className="p-3 bg-muted border rounded-lg hover:bg-muted/70 transition-colors cursor-pointer">
                 <h4 className="text-sm font-semibold text-white">Closing Call</h4>
                 <p className="text-xs text-white/70">Final decision meeting</p>
               </div>
