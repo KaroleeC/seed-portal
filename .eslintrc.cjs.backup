@@ -1,0 +1,313 @@
+/* eslint-env node */
+
+module.exports = {
+  root: true,
+  env: {
+    browser: true,
+    es2021: true,
+    node: false,
+  },
+  parser: "@typescript-eslint/parser",
+    ecmaVersion: 2021,
+    sourceType: "module",
+    ecmaFeatures: {
+      jsx: true,
+    },
+    // Only enable TypeScript parsing for .ts and .tsx files
+    project: ["./tsconfig.json"],
+    tsconfigRootDir: __dirname,
+  },
+  settings: {
+    react: {
+      version: "detect",
+    },
+    'import/resolver': {
+      typescript: {
+        alwaysTryTypes: true,
+        project: ["./tsconfig.json"],
+      },
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      },
+    },
+    'import/extensions': ['.js', '.jsx', '.ts', '.tsx'],
+    'import/parsers': {
+      '@typescript-eslint/parser': ['.ts', '.tsx'],
+    },
+  },
+  plugins: [
+    "@typescript-eslint",
+    "react",
+    "react-hooks",
+    "import",
+    "jsx-a11y",
+    "react-perf"
+  ],
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "plugin:jsx-a11y/recommended",
+    "plugin:react-perf/recommended",
+    "prettier",
+  ],
+  rules: {
+    // General
+    "no-console": ["warn", { allow: ["warn", "error", "info"] }],
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-param-reassign": ["error", { props: true }],
+    "prefer-template": "error",
+    "no-nested-ternary": "warn",
+    "no-unneeded-ternary": "warn",
+    "object-shorthand": ["warn", "always"],
+    "no-unused-expressions": ["error", { allowShortCircuit: true, allowTernary: true }],
+    "no-underscore-dangle": ["error", { allow: ["_id", "_count"] }],
+    "no-empty": ["warn", { allowEmptyCatch: true }],
+
+    // TypeScript
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      { 
+        argsIgnorePattern: "^_", 
+        varsIgnorePattern: "^_",
+        ignoreRestSiblings: true 
+      },
+    ],
+    "@typescript-eslint/ban-ts-comment": "warn",
+    "@typescript-eslint/no-explicit-any": "warn", // Will turn to error later
+    "@typescript-eslint/explicit-module-boundary-types": "warn", // Will turn to error later
+    "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }],
+    "@typescript-eslint/array-type": ["error", { default: "array-simple" }],
+    "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+    "@typescript-eslint/consistent-type-exports": ["error", { fixMixedExportsWithInlineTypeSpecifier: true }],
+
+    // React
+    "react/prop-types": "off", // Using TypeScript for typing
+    "react/no-unescaped-entities": "off",
+    "react/display-name": "off",
+    "react/react-in-jsx-scope": "off",
+    "react/jsx-key": ["error", { checkFragmentShorthand: true }],
+    "react/self-closing-comp": ["error", { component: true, html: true }],
+    "react/jsx-curly-brace-presence": ["error", { props: "never", children: "never" }],
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": [
+      "warn",
+      {
+        additionalHooks: "(useCustomHook|useAnotherCustomHook)"
+      }
+    ],
+
+    // Import/Export
+    "import/order": [
+      "error",
+      {
+        groups: [
+          "builtin",
+          "external",
+          "internal",
+          ["parent", "sibling"],
+          "index",
+          "object",
+          "type"
+        ],
+        pathGroups: [
+          {
+            pattern: "react",
+            group: "external",
+            position: "before"
+          },
+          {
+            pattern: "@/**",
+            group: "internal"
+          }
+        ],
+        pathGroupsExcludedImportTypes: ["react"],
+        "newlines-between": "always",
+        alphabetize: {
+          order: "asc",
+          caseInsensitive: true,
+        },
+      },
+    ],
+    "import/no-unresolved": ["error", { commonjs: true, caseSensitive: true }],
+    "import/no-duplicates": ["error", { considerQueryString: true }],
+    "import/no-default-export": "off",
+    "import/no-cycle": ["error", { maxDepth: Infinity }],
+    "import/no-self-import": "error",
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        devDependencies: [
+          "**/*.test.{js,jsx,ts,tsx}",
+          "**/*.spec.{js,jsx,ts,tsx}",
+          "**/*.stories.{js,jsx,ts,tsx}",
+          "**/test/**/*.{js,jsx,ts,tsx}",
+          "**/__mocks__/**/*.{js,jsx,ts,tsx}",
+          "**/vite.config.{js,ts}",
+          "**/vitest.config.{js,ts}",
+        ],
+      },
+    ],
+
+    // Performance
+    "react-perf/jsx-no-new-array-as-prop": "warn",
+    "react-perf/jsx-no-new-function-as-prop": "warn",
+    "react-perf/jsx-no-new-object-as-prop": ["warn", { nativeAllowList: ["style"] }],
+  },
+  // Common rules for all files
+  overrides: [
+    // TypeScript files
+    {
+      files: ["**/*.ts", "**/*.tsx"],
+      parser: "@typescript-eslint/parser",
+      parserOptions: {
+        project: "./tsconfig.json",
+        tsconfigRootDir: __dirname,
+      },
+      rules: {
+        // TypeScript rules
+        "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/explicit-module-boundary-types": [
+          "warn",
+          {
+            allowArgumentsExplicitlyTypedAsAny: true,
+            allowDirectConstAssertionInArrowFunctions: true,
+            allowHigherOrderFunctions: true,
+            allowTypedFunctionExpressions: true,
+          },
+        ],
+        "@typescript-eslint/no-unused-vars": [
+          "warn",
+          { 
+            argsIgnorePattern: "^_", 
+            varsIgnorePattern: "^_",
+            ignoreRestSiblings: true,
+            args: "after-used",
+            caughtErrors: "none",
+          },
+        ],
+      },
+    },
+    // JavaScript files (exclude TypeScript files)
+    {
+      files: ["**/*.js", "**/*.jsx"],
+      parser: "espree",
+      parserOptions: {
+        ecmaVersion: 2021,
+        sourceType: "module",
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+      rules: {
+        // Disable TypeScript-specific rules for JS files
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-call": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/no-unsafe-return": "off",
+        "@typescript-eslint/restrict-template-expressions": "off",
+        "@typescript-eslint/no-var-requires": "off",
+        "@typescript-eslint/restrict-plus-operands": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      },
+    },
+    // Test files
+    {
+      files: ["**/*.test.{js,jsx,ts,tsx}", "**/__tests__/**/*.{js,jsx,ts,tsx}"],
+      env: {
+        jest: true,
+        node: true,
+      },
+      rules: {
+        // Allow test files to use dev dependencies
+        "import/no-extraneous-dependencies": [
+          "error",
+          { devDependencies: true },
+        ],
+      },
+    },
+    // JSX/TSX files
+    {
+      files: ["**/*.tsx", "**/*.jsx"],
+      rules: {
+        "react/react-in-jsx-scope": "off",
+        // Disallow hard-coded neutral colors and hex codes inside className strings
+        // Encourage tokenized classes instead: bg-card, bg-muted, bg-popover, text-foreground, text-muted-foreground, border
+        "no-restricted-syntax": [
+          "warn",
+          // Disallow neutral Tailwind utility classes inside className literals
+          {
+            selector:
+              "JSXAttribute[name.name='className'] > Literal[value=/\\b(bg|text|border)-(white|gray|zinc|neutral)(-[^\\s\"']+)?\\b/]",
+            message:
+              "Use design tokens (bg-card, bg-muted, bg-popover, text-foreground, text-muted-foreground, border) instead of hard-coded neutral Tailwind classes.",
+          },
+          // Disallow neutral Tailwind utility classes inside template literals
+          {
+            selector:
+              "JSXAttribute[name.name='className'] TemplateElement[value.raw=/\\b(bg|text|border)-(white|gray|zinc|neutral)(-[^\\s\"']+)?\\b/]",
+            message:
+              "Use design tokens (bg-card, bg-muted, bg-popover, text-foreground, text-muted-foreground, border) instead of hard-coded neutral Tailwind classes.",
+          },
+          // Disallow hex colors in className
+          {
+            selector:
+              "JSXAttribute[name.name='className'] > Literal[value=/#[0-9a-fA-F]{3,6}\\b/]",
+            message:
+              "Avoid hex colors in className; use tokens or semantic utilities.",
+          },
+          {
+            selector:
+              "JSXAttribute[name.name='className'] TemplateElement[value.raw=/#[0-9a-fA-F]{3,6}\\b/]",
+            message:
+              "Avoid hex colors in className; use tokens or semantic utilities.",
+          },
+        ],
+      },
+    },
+    // Strictly enforce on migrated pages to prevent regressions
+    {
+      files: [
+        "client/src/pages/admin-dashboard.tsx",
+        "client/src/pages/service-dashboard.tsx",
+      ],
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          {
+            selector:
+              "JSXAttribute[name.name='className'] > Literal[value=/\\b(bg|text|border)-(gray|zinc|neutral)(-[^\\s\"']+)?\\b/]",
+            message:
+              "Use design tokens (bg-card, bg-muted, bg-popover, text-foreground, text-muted-foreground, border) instead of hard-coded neutral Tailwind classes.",
+          },
+          {
+            selector:
+              "JSXAttribute[name.name='className'] TemplateElement[value.raw=/\\b(bg|text|border)-(gray|zinc|neutral)(-[^\\s\"']+)?\\b/]",
+            message:
+              "Use design tokens (bg-card, bg-muted, bg-popover, text-foreground, text-muted-foreground, border) instead of hard-coded neutral Tailwind classes.",
+          },
+          {
+            selector:
+              "JSXAttribute[name.name='className'] > Literal[value=/#[0-9a-fA-F]{3,6}\\b/]",
+            message:
+              "Avoid hex colors in className; use tokens or semantic utilities.",
+          },
+          {
+            selector:
+              "JSXAttribute[name.name='className'] TemplateElement[value.raw=/#[0-9a-fA-F]{3,6}\\b/]",
+            message:
+              "Avoid hex colors in className; use tokens or semantic utilities.",
+          },
+        ],
+      },
+    },
+  ],
+};
