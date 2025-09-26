@@ -185,18 +185,10 @@ export function SalesCommissionTracker() {
   } = useQuery<Commission[]>({
     queryKey: ["/api/commissions"],
     enabled: !!user,
-    queryFn: async (): Promise<Commission[]> => {
-      return await apiRequest<Commission[]>("GET", "/api/commissions");
-    },
-    retry: (failureCount, error: any) => {
-      // Don't retry on authentication errors
-      if (
-        error?.message?.includes("401") ||
-        error?.message?.includes("Authentication")
-      ) {
-        return false;
-      }
-      return failureCount < 2;
+    queryFn: async ({ queryKey }) => {
+      const result = await apiRequest<Commission[]>("GET", "/api/commissions");
+      // Handle null response from 401 gracefully
+      return result || [];
     },
     staleTime: 30000, // Cache for 30 seconds
   });
@@ -220,22 +212,14 @@ export function SalesCommissionTracker() {
   } = useQuery<PipelineDeal[]>({
     queryKey: ["/api/pipeline-projections", ownerId ?? "none"],
     enabled: !!user,
-    queryFn: async (): Promise<PipelineDeal[]> => {
+    queryFn: async () => {
       const qs = new URLSearchParams();
       if (ownerId) qs.set("ownerId", ownerId);
       const url = `/api/pipeline-projections${qs.toString() ? `?${qs.toString()}` : ""}`;
-      return await apiRequest<PipelineDeal[]>("GET", url);
+      const result = await apiRequest<PipelineDeal[]>("GET", url);
+      // Handle null response from 401 gracefully
+      return result || [];
     },
-    retry: (failureCount, error: any) => {
-      if (
-        error?.message?.includes("401") ||
-        error?.message?.includes("Authentication")
-      ) {
-        return false;
-      }
-      return failureCount < 2;
-    },
-    refetchInterval: false,
     staleTime: 30000,
   });
 
