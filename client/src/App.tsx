@@ -160,7 +160,9 @@ function Router() {
 
 // Gate rendering until auth loading is resolved to avoid first-load flicker
 function AuthGate() {
-  const { isLoading } = useAuth();
+  const { isLoading, user, error } = useAuth();
+  
+  // Show loading spinner while auth is being determined
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -168,6 +170,12 @@ function AuthGate() {
       </div>
     );
   }
+
+  // If there's an auth error that's not a 401, show it
+  if (error && !error.message.includes("401")) {
+    console.error("[AuthGate] Auth error:", error);
+  }
+
   return (
     <>
       <Router />
