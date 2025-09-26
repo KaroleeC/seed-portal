@@ -119,13 +119,11 @@ export class HubSpotCommissionSync {
               INSERT INTO sales_reps (
                 user_id,
                 is_active,
-                start_date,
                 created_at,
                 updated_at
               ) VALUES (
                 ${userId},
                 true,
-                NOW(),
                 NOW(),
                 NOW()
               )
@@ -391,8 +389,8 @@ export class HubSpotCommissionSync {
                 }
 
                 const repInserted = await db.execute(sql`
-                  INSERT INTO sales_reps (user_id, is_active, start_date, created_at, updated_at)
-                  VALUES (${userId}, true, NOW(), NOW(), NOW())
+                  INSERT INTO sales_reps (user_id, is_active, created_at, updated_at)
+                  VALUES (${userId}, true, NOW(), NOW())
                   ON CONFLICT DO NOTHING
                   RETURNING id
                 `);
@@ -435,14 +433,27 @@ export class HubSpotCommissionSync {
           if (adminUser.rows.length > 0) {
             const u = adminUser.rows[0] as any;
             const inserted = await db.execute(sql`
-              INSERT INTO sales_reps (user_id, is_active, start_date, created_at, updated_at)
-              VALUES (${u.id}, true, NOW(), NOW(), NOW())
+              INSERT INTO sales_reps (user_id, is_active, created_at, updated_at)
+              VALUES (${u.id}, true, NOW(), NOW())
               RETURNING id
             `);
             salesRepId = Number((inserted.rows[0] as any).id);
             salesRepName =
               `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email;
           }
+        }
+      }
+
+      // Final verification: ensure salesRepId actually exists to avoid FK violations
+      if (salesRepId) {
+        const verifyRep = await db.execute(sql`
+          SELECT id FROM sales_reps WHERE id = ${salesRepId} LIMIT 1
+        `);
+        if (verifyRep.rows.length === 0) {
+          console.warn(
+            `⚠️ sales_rep_id ${salesRepId} not found; setting to null to avoid FK violation`,
+          );
+          salesRepId = null as any;
         }
       }
 
@@ -469,6 +480,17 @@ export class HubSpotCommissionSync {
         }
       }
 
+      // Verify salesRepId exists before inserting invoices, and allow null sales_rep_id to avoid FK violations
+      const verifySalesRepId = await db.execute(sql`
+        SELECT id FROM sales_reps WHERE id = ${salesRepId} LIMIT 1
+      `);
+      if (verifySalesRepId.rows.length === 0) {
+        console.warn(
+          `⚠️ sales_rep_id ${salesRepId} not found; setting to null to avoid FK violation`,
+        );
+        salesRepId = null;
+      }
+
       // Create HubSpot invoice record
       const invoiceResult = await db.execute(sql`
         INSERT INTO hubspot_invoices (
@@ -486,7 +508,7 @@ export class HubSpotCommissionSync {
           updated_at
         ) VALUES (
           ${invoice.id},
-          ${salesRepId},
+          ${salesRepId ?? null},
           ${`INV-${invoice.id}`},
           ${invoice.properties.hs_invoice_status || "paid"},
           ${totalAmount},
@@ -502,7 +524,7 @@ export class HubSpotCommissionSync {
       `);
 
       const hubspotInvoiceId = (invoiceResult.rows[0] as any).id;
-
+      
       // Normalize line items to a consistent shape then create records
       const normalizedItems = lineItems.map((li: any) => {
         const p = li?.properties ?? {};
@@ -573,13 +595,19 @@ export class HubSpotCommissionSync {
           }))
         : normalizedItems;
 
-      await this.generateCommissionsForInvoice(
-        hubspotInvoiceId,
-        salesRepId!,
-        salesRepName,
-        adjustedItems,
-        invoice.properties.hs_createdate,
-      );
+      if (salesRepId) {
+        await this.generateCommissionsForInvoice(
+          hubspotInvoiceId,
+          salesRepId,
+          salesRepName,
+          adjustedItems,
+          invoice.properties.hs_createdate,
+        );
+      } else {
+        console.warn(
+          `⚠️ Skipping commission generation for invoice ${hubspotInvoiceId} due to missing sales_rep_id`,
+        );
+      }
     } else {
       console.log(`🔄 Invoice ${invoice.id} already exists, skipping`);
     }
