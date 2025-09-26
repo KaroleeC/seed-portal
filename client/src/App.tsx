@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 // import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { AuthProvider } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth";
 import { useScrollToTop } from "@/hooks/use-scroll-to-top";
 import { NavigationHistoryProvider } from "@/hooks/use-navigation-history";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -37,6 +38,7 @@ import SettingsHub from "@/pages/settings-hub";
 import SeedPaySettings from "@/pages/seedpay-settings";
 import AssistantPage from "@/pages/assistant";
 import { AssistantWidget } from "@/components/assistant/AssistantWidget";
+import { Loader2 } from "lucide-react";
 
 // Simple redirect helper for client-side path consolidation
 function Redirect({ to }: { to: string }) {
@@ -55,14 +57,47 @@ function Router() {
     <ErrorBoundary>
       <RoleBasedRedirect />
       <Switch>
-        <ProtectedRoute path="/" component={SalesDashboard} />
-        <ProtectedRoute path="/admin" component={AdminDashboard} />
-        <ProtectedRoute path="/sales-dashboard" component={SalesDashboard} />
+        {/* Wrap heavy dashboards in per-page boundaries to avoid global overlay */}
+        <ProtectedRoute
+          path="/"
+          component={() => (
+            <ErrorBoundary>
+              <SalesDashboard />
+            </ErrorBoundary>
+          )}
+        />
+        <ProtectedRoute
+          path="/admin"
+          component={() => (
+            <ErrorBoundary>
+              <AdminDashboard />
+            </ErrorBoundary>
+          )}
+        />
+        <ProtectedRoute
+          path="/sales-dashboard"
+          component={() => (
+            <ErrorBoundary>
+              <SalesDashboard />
+            </ErrorBoundary>
+          )}
+        />
         <ProtectedRoute
           path="/service-dashboard"
-          component={ServiceDashboard}
+          component={() => (
+            <ErrorBoundary>
+              <ServiceDashboard />
+            </ErrorBoundary>
+          )}
         />
-        <ProtectedRoute path="/admin/hubspot" component={AdminHubspotPage} />
+        <ProtectedRoute
+          path="/admin/hubspot"
+          component={() => (
+            <ErrorBoundary>
+              <AdminHubspotPage />
+            </ErrorBoundary>
+          )}
+        />
         {/* Legacy route -> new app namespace */}
         <ProtectedRoute
           path="/calculator"
@@ -123,6 +158,25 @@ function Router() {
   );
 }
 
+// Gate rendering until auth loading is resolved to avoid first-load flicker
+function AuthGate() {
+  const { isLoading } = useAuth();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+  return (
+    <>
+      <Router />
+      {/* Global Assistant Widget (hidden on /auth and /request-access internally) */}
+      <AssistantWidget />
+    </>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -130,9 +184,7 @@ function App() {
         <AuthProvider>
           <NavigationHistoryProvider>
             <Toaster />
-            <Router />
-            {/* Global Assistant Widget (hidden on /auth and /request-access internally) */}
-            <AssistantWidget />
+            <AuthGate />
           </NavigationHistoryProvider>
         </AuthProvider>
       </QueryClientProvider>

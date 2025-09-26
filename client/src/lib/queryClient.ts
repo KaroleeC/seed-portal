@@ -131,7 +131,22 @@ export async function apiRequest<T = any>(
 
     const response = await fetch(url, requestOptions);
     await throwIfResNotOk(response);
-    return (await response.json()) as T;
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return (await response.json()) as T;
+    }
+    // Fallback: non-JSON response (often HTML when a proxy serves index.html)
+    const text = await response.text();
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      throw new Error(
+        `Unexpected non-JSON response from API: ${response.status} ${response.statusText} at ${response.url}. First 120 chars: ${text.slice(
+          0,
+          120,
+        )}`,
+      );
+    }
   }
 
   // For new signature calls, build standard request options
@@ -174,7 +189,29 @@ export async function apiRequest<T = any>(
   });
 
   await throwIfResNotOk(response);
-  return await response.json();
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return await response.json();
+  }
+  // Handle unexpected HTML/text response gracefully (likely an auth redirect or SPA shell)
+  const text = await response.text();
+  // If this looks like HTML, provide a helpful message
+  if (/<!doctype|<html/i.test(text)) {
+    throw new Error(
+      `Unexpected HTML response for ${url}. This usually indicates an auth redirect or proxy served index.html. Status: ${response.status}`,
+    );
+  }
+  // Try to parse if it's actually JSON with wrong content-type
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(
+      `Unexpected non-JSON response for ${url}. First 120 chars: ${text.slice(
+        0,
+        120,
+      )}`,
+    );
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -223,6 +260,28 @@ export const getQueryFn: <T>(options: {
       return null;
     }
 
+    // If server responded OK but not JSON (commonly HTML), avoid JSON.parse crash
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      const bodyText = await res.text();
+      console.warn("[QueryFn] ⚠️ Non-JSON response received:", {
+        url,
+        status: res.status,
+        contentType,
+        looksLikeHtml: /<!doctype|<html/i.test(bodyText),
+      });
+      // Treat HTML response as unauthenticated shell when configured
+      if (unauthorizedBehavior === "returnNull") {
+        return null;
+      }
+      throw new Error(
+        `Unexpected non-JSON response for ${url}. First 120 chars: ${bodyText.slice(
+          0,
+          120,
+        )}`,
+      );
+    }
+
     await throwIfResNotOk(res);
     return await res.json();
   };
@@ -230,7 +289,7 @@ export const getQueryFn: <T>(options: {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
+      queryFn: getQueryFn({ on401: "returnNull" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 1 * 60 * 1000, // 1 minute for faster initial loads
