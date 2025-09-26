@@ -423,23 +423,7 @@ export function registerHubspotRoutes(app: Express) {
           price: fees.agentOfService,
           quantity: 1,
         });
-      if ((quote as any).serviceTier === "Concierge" && fees.serviceTier > 0)
-        lineItemsPreview.push({
-          productKey: "CONCIERGE_SERVICE_TIER",
-          productId: null,
-          price: fees.serviceTier,
-          quantity: 1,
-        });
-      else if (
-        (quote as any).serviceTier === "Guided" &&
-        fees.serviceTier > 0
-      )
-        lineItemsPreview.push({
-          productKey: "GUIDED_SERVICE_TIER",
-          productId: null,
-          price: fees.serviceTier,
-          quantity: 1,
-        });
+      // Service tier preview disabled
       const qboFee = fees.qbo || (pricingInput.qboSubscription ? 60 : 0);
       if (pricingInput.qboSubscription)
         lineItemsPreview.push({
@@ -632,23 +616,7 @@ export function registerHubspotRoutes(app: Express) {
           price: fees2.agentOfService,
           quantity: 1,
         });
-      if ((quote as any).serviceTier === "Concierge" && fees2.serviceTier > 0)
-        lineItemsPreview.push({
-          productKey: "CONCIERGE_SERVICE_TIER",
-          productId: null,
-          price: fees2.serviceTier,
-          quantity: 1,
-        });
-      else if (
-        (quote as any).serviceTier === "Guided" &&
-        fees2.serviceTier > 0
-      )
-        lineItemsPreview.push({
-          productKey: "GUIDED_SERVICE_TIER",
-          productId: null,
-          price: fees2.serviceTier,
-          quantity: 1,
-        });
+      // Service tier preview disabled
       const qboFee2 = fees2.qbo || (pricingInput.qboSubscription ? 60 : 0);
       if (pricingInput.qboSubscription)
         lineItemsPreview.push({
@@ -857,23 +825,7 @@ export function registerHubspotRoutes(app: Express) {
           price: fees3.agentOfService,
           quantity: 1,
         });
-      if ((quote as any).serviceTier === "Concierge" && fees3.serviceTier > 0)
-        lineItemsPreview.push({
-          productKey: "CONCIERGE_SERVICE_TIER",
-          productId: null,
-          price: fees3.serviceTier,
-          quantity: 1,
-        });
-      else if (
-        (quote as any).serviceTier === "Guided" &&
-        fees3.serviceTier > 0
-      )
-        lineItemsPreview.push({
-          productKey: "GUIDED_SERVICE_TIER",
-          productId: null,
-          price: fees3.serviceTier,
-          quantity: 1,
-        });
+      // Service tier preview disabled
       const qboFee = fees3.qbo || (pricingInput.qboSubscription ? 60 : 0);
       if (pricingInput.qboSubscription)
         lineItemsPreview.push({

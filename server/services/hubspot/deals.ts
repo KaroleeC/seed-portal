@@ -296,32 +296,6 @@ export function createDealsService(
         pipeline: pipelineInfo.pipelineId,
         dealtype: "newbusiness",
         ...(ownerId && { hubspot_owner_id: ownerId }),
-          ...(quoteData?.entityType && {
-            entity_type:
-              quoteData.entityType === "C-Corp"
-                ? "c-corp"
-                : quoteData.entityType === "S-Corp"
-                  ? "s-corp"
-                  : quoteData.entityType === "Sole Proprietor"
-                    ? "sole_prop"
-                    : quoteData.entityType === "Partnership"
-                      ? "partnership"
-                      : quoteData.entityType === "Non-Profit"
-                        ? "non-profit"
-                        : String(quoteData.entityType)
-                            .toLowerCase()
-                            .replace("-", "_"),
-          }),
-          ...(quoteData?.serviceTier && {
-            service_tier:
-              quoteData.serviceTier === "Automated"
-                ? "Level 1 - Automated"
-                : quoteData.serviceTier === "Guided"
-                  ? "Level 2 - Guided"
-                  : quoteData.serviceTier === "Concierge"
-                    ? "Level 3 - Concierge"
-                    : "Level 1 - Automated",
-          }),
           ...(quoteData?.numEntities && {
             number_of_entities: String(quoteData.numEntities),
           }),
@@ -428,14 +402,7 @@ export function createDealsService(
       const updateProps: any = {
         ...(ownerId && { hubspot_owner_id: ownerId }),
         // Map to the same labels used in createDeal to satisfy HubSpot picklist
-        ...(serviceTier && {
-          service_tier:
-            serviceTier === "Guided"
-              ? "Level 2 - Guided"
-              : serviceTier === "Concierge"
-                ? "Level 3 - Concierge"
-                : "Level 1 - Automated",
-        }),
+        
       };
 
       // Compute updated deal name based on services, similar to createDeal
@@ -504,7 +471,7 @@ export function createDealsService(
         properties: updateProps,
       };
 
-      const result = await request(`/crm/v3/objects/deals/${dealId}`, {
+      const result: any = await request(`/crm/v3/objects/deals/${dealId}`, {
         method: "PATCH",
         body: JSON.stringify(updateBody),
       });

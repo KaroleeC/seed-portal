@@ -125,7 +125,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { UniversalNavbar } from "@/components/UniversalNavbar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { ServiceTierCards } from "@/components/quote-form/ServiceTierCards";
 import { QuoteSummarySection } from "@/components/seedqc/QuoteSummarySection";
 import { CommissionPreview } from "@/components/seedqc/CommissionPreview";
 import { ExistingQuotesModal } from "@/components/seedqc/ExistingQuotesModal";
@@ -833,7 +832,7 @@ function QuoteCalculator() {
       contact.properties.zip;
     form.setValue(
       "companyAddressLocked",
-      hasCompleteAddressData ? true : false,
+      !!hasCompleteAddressData,
     );
 
     // Hide the existing quotes modal and show client details
@@ -1503,7 +1502,7 @@ function QuoteCalculator() {
               customOverrideReason: formData.customOverrideReason || "",
               customSetupFee: formData.customSetupFee || "",
               monthlyFee: (fees as any)?.combined?.monthlyFee ?? 0,
-              setupFee: setupFee,
+              setupFee,
               originalCleanupMonths: currentMonth, // Include original minimum
             },
           }),
@@ -1563,7 +1562,7 @@ function QuoteCalculator() {
         method: "POST",
         body: JSON.stringify({
           code: approvalCode,
-          contactEmail: contactEmail,
+          contactEmail,
         }),
       });
 

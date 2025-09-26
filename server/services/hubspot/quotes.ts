@@ -198,24 +198,6 @@ export function createQuotesService(
       });
     }
 
-    if (
-      serviceConfig.serviceTier === "Concierge" &&
-      serviceConfig.serviceTierFee > 0
-    ) {
-      services.push({
-        price: serviceConfig.serviceTierFee,
-        productId: PRODUCT.CONCIERGE_SERVICE_TIER,
-      });
-    } else if (
-      serviceConfig.serviceTier === "Guided" &&
-      serviceConfig.serviceTierFee > 0
-    ) {
-      services.push({
-        price: serviceConfig.serviceTierFee,
-        productId: PRODUCT.GUIDED_SERVICE_TIER,
-      });
-    }
-
     if (serviceConfig.qboSubscription) {
       const qboPrice = serviceConfig.qboFee || 60;
       services.push({
@@ -674,7 +656,7 @@ export function createQuotesService(
     if (quoteData?.servicePriorYearFilings) services.push("Prior Year Filings");
     if (services.length === 0) services.push("Services");
 
-    const serviceName = services.join(" + ") + " Services";
+    const serviceName = `${services.join(" + ")  } Services`;
     const quoteName = `${companyName} - ${serviceName} Quote`;
 
     const expirationDate = new Date();
@@ -873,18 +855,7 @@ export function createQuotesService(
     }
     // Note: No FPA Build product in HUBSPOT_PRODUCT_IDS; omit line item and keep terms/assumptions only
 
-    const serviceTierFee = calculatedServiceTierFee || 0;
-    if (serviceTier === "Concierge" && serviceTierFee > 0) {
-      requiredServices.push({
-        price: serviceTierFee,
-        productId: PRODUCT.CONCIERGE_SERVICE_TIER,
-      });
-    } else if (serviceTier === "Guided" && serviceTierFee > 0) {
-      requiredServices.push({
-        price: serviceTierFee,
-        productId: PRODUCT.GUIDED_SERVICE_TIER,
-      });
-    }
+    // Service tier products disabled
 
     if (quoteData?.qboSubscription) {
       const qboPrice = quoteData?.qboFee || 60;
