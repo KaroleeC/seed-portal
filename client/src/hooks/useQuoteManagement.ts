@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { Quote } from '@shared/schema';
-import { FormData } from '@/components/quote-form/QuoteFormSchema';
-import { calculateCombinedFees } from '@shared/pricing';
+import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Quote } from "@shared/schema";
+import { QuoteFormFields as FormData } from "@/features/quote-calculator/schema";
+import { calculateCombinedFees } from "@shared/pricing";
 
 export function useQuoteManagement() {
   const { toast } = useToast();
@@ -15,12 +15,12 @@ export function useQuoteManagement() {
   const {
     data: quotes = [],
     refetch: refetchQuotes,
-    isLoading: quotesLoading
+    isLoading: quotesLoading,
   } = useQuery<Quote[]>({
     queryKey: ["/api/quotes"],
     queryFn: async () => {
       return await apiRequest("/api/quotes");
-    }
+    },
   });
 
   // Create/update quote mutation
@@ -35,9 +35,9 @@ export function useQuoteManagement() {
         overrideReason: data.overrideReason || undefined,
         customOverrideReason: data.customOverrideReason || undefined,
       };
-      
+
       const feeCalculation = calculateCombinedFees(cleanData);
-      
+
       const quoteData = {
         ...data,
         // Combined totals
@@ -60,23 +60,25 @@ export function useQuoteManagement() {
         // Include approval code if this is an approved duplicate quote creation
         approvalCode: data.approvalCode,
       };
-      
+
       if (editingQuoteId) {
         return await apiRequest(`/api/quotes/${editingQuoteId}`, {
           method: "PUT",
-          body: JSON.stringify(quoteData)
+          body: JSON.stringify(quoteData),
         });
       } else {
         return await apiRequest("/api/quotes", {
           method: "POST",
-          body: JSON.stringify(quoteData)
+          body: JSON.stringify(quoteData),
         });
       }
     },
     onSuccess: (data) => {
       toast({
         title: editingQuoteId ? "Quote Updated" : "Quote Saved",
-        description: editingQuoteId ? "Your quote has been updated successfully." : "Your quote has been saved successfully.",
+        description: editingQuoteId
+          ? "Your quote has been updated successfully."
+          : "Your quote has been saved successfully.",
       });
       setEditingQuoteId(null);
       setHasUnsavedChanges(false);
@@ -84,13 +86,15 @@ export function useQuoteManagement() {
       refetchQuotes();
     },
     onError: (error: any) => {
-      console.error('Quote save error:', error);
-      
+      console.error("Quote save error:", error);
+
       // Handle approval-based validation errors
       if (error.requiresApproval) {
         toast({
           title: "Approval Required",
-          description: error.message || "Approval is required to create additional quotes for this contact.",
+          description:
+            error.message ||
+            "Approval is required to create additional quotes for this contact.",
           variant: "destructive",
         });
       } else {
@@ -108,7 +112,7 @@ export function useQuoteManagement() {
     mutationFn: async (quoteId: number) => {
       return await apiRequest(`/api/quotes/${quoteId}/archive`, {
         method: "PATCH",
-        body: JSON.stringify({})
+        body: JSON.stringify({}),
       });
     },
     onSuccess: () => {
@@ -120,7 +124,7 @@ export function useQuoteManagement() {
       refetchQuotes();
     },
     onError: (error) => {
-      console.error('Archive error:', error);
+      console.error("Archive error:", error);
       toast({
         title: "Error",
         description: "Failed to archive quote. Please try again.",
@@ -138,6 +142,6 @@ export function useQuoteManagement() {
     hasUnsavedChanges,
     setHasUnsavedChanges,
     createQuoteMutation,
-    archiveQuoteMutation
+    archiveQuoteMutation,
   };
 }

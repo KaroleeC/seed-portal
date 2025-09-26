@@ -1,75 +1,116 @@
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { useState } from 'react';
-import { FileText, Users, CreditCard, CheckCircle, Clock } from 'lucide-react';
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import {
+  FileText,
+  Users,
+  CreditCard,
+  CheckCircle,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import type { UseFormReturn } from "react-hook-form";
+import type { QuoteFormFields } from "@/features/quote-calculator/schema";
+import { KbCard } from "@/components/seedkb/KbCard";
 
 interface ARSectionProps {
-  form: any;
+  form: UseFormReturn<QuoteFormFields>;
 }
 
 export default function ARSection({ form }: ARSectionProps) {
+  // Only show if AR service is selected
+  if (!form.watch("serviceArService")) return null;
+
   const [showCustomCustomerCount, setShowCustomCustomerCount] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const customerInvoicesBands = [
-    { value: '0-25', label: '0-25 invoices', description: 'Small volume' },
-    { value: '26-100', label: '26-100 invoices', description: 'Medium volume' },
-    { value: '101-250', label: '101-250 invoices', description: 'High volume' },
-    { value: '251+', label: '251+ invoices', description: 'Enterprise volume' }
+    { value: "0-25", label: "0-25 invoices", description: "Small volume" },
+    { value: "26-100", label: "26-100 invoices", description: "Medium volume" },
+    { value: "101-250", label: "101-250 invoices", description: "High volume" },
+    { value: "251+", label: "251+ invoices", description: "Enterprise volume" },
   ];
 
   const customerCounts = [
-    { value: 5, label: '5 or less', description: '5 customers or less' },
-    { value: 6, label: '6', description: '6 customers' },
-    { value: 7, label: '7', description: '7 customers' },
-    { value: 8, label: '8', description: '8 customers' },
-    { value: 9, label: '9', description: '9 customers' },
-    { value: 10, label: '10+', description: '10 or more customers' }
+    { value: 5, label: "5 or less", description: "5 customers or less" },
+    { value: 6, label: "6", description: "6 customers" },
+    { value: 7, label: "7", description: "7 customers" },
+    { value: 8, label: "8", description: "8 customers" },
+    { value: 9, label: "9", description: "9 customers" },
+    { value: 10, label: "10+", description: "10 or more customers" },
   ];
 
   const serviceTiers = [
     {
-      value: 'lite',
-      title: 'AR Lite (Reports Only)',
-      price: '$150-$1,000/month',
+      value: "lite",
+      title: "AR Lite (Reports Only)",
+      price: "$150-$1,000/month",
       features: [
-        'Automated categorization + reconciliation of customer invoices',
-        'AR aging reports monthly (who owes you, how much, how long overdue)',
-        'Great for: businesses who just need visibility'
+        "Automated categorization + reconciliation of customer invoices",
+        "AR aging reports monthly (who owes you, how much, how long overdue)",
+        "Great for: businesses who just need visibility",
       ],
       icon: FileText,
-      color: 'bg-blue-50 border-blue-200 hover:border-blue-300'
+      color: "bg-blue-50 border-blue-200 hover:border-blue-300",
     },
     {
-      value: 'advanced',
-      title: 'AR Advanced (Human Help)',
-      price: 'Premium service tier',
+      value: "advanced",
+      title: "AR Advanced (Human Help)",
+      price: "Premium service tier",
       features: [
-        'Everything in Lite plus:',
-        'We create/send invoices on client\'s behalf',
-        'Payment reminders & light collections outreach',
-        'Customer portal setup if available (QBO, etc.)',
-        'Great for: businesses tired of chasing checks or dealing with slow-paying clients'
+        "Everything in Lite plus:",
+        "We create/send invoices on client's behalf",
+        "Payment reminders & light collections outreach",
+        "Customer portal setup if available (QBO, etc.)",
+        "Great for: businesses tired of chasing checks or dealing with slow-paying clients",
       ],
       icon: CheckCircle,
-      color: 'bg-green-50 border-green-200 hover:border-green-300'
-    }
+      color: "bg-green-50 border-green-200 hover:border-green-300",
+    },
   ];
 
   const handleCustomerCountChange = (value: number) => {
     if (value === 10) {
       setShowCustomCustomerCount(true);
-      form.setValue('arCustomerCount', 10);
+      form.setValue("arCustomerCount", 10);
     } else {
       setShowCustomCustomerCount(false);
-      form.setValue('arCustomerCount', value);
-      form.setValue('customArCustomerCount', null);
+      form.setValue("arCustomerCount", value);
+      form.setValue("customArCustomerCount", null);
     }
   };
 
   return (
-    <div className="space-y-8">
+    <KbCard className="p-6 mb-8">
+      <div
+        className="cursor-pointer select-none"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between group p-3 -m-3 rounded-lg transition-colors">
+          <h3 className="text-xl font-semibold text-foreground">AR Service Details</h3>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <span className="text-sm font-medium">{isExpanded ? "Collapse" : "Expand"}</span>
+            {isExpanded ? (
+              <ChevronUp className="h-5 w-5 transition-transform" />
+            ) : (
+              <ChevronDown className="h-5 w-5 transition-transform" />
+            )}
+          </div>
+        </div>
+        <hr className="border mt-3 mb-5" />
+      </div>
+
+      {isExpanded && (
+        <div className="space-y-8 animate-in slide-in-from-top-2 duration-300">
       {/* Customer Invoices Per Month */}
       <div>
         <FormField
@@ -77,7 +118,7 @@ export default function ARSection({ form }: ARSectionProps) {
           name="arCustomerInvoicesBand"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <FormLabel className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <FileText className="w-5 h-5 text-blue-600" />
                 Number of Customer Invoices Per Month
               </FormLabel>
@@ -85,18 +126,18 @@ export default function ARSection({ form }: ARSectionProps) {
                 {customerInvoicesBands.map((band) => (
                   <Card
                     key={band.value}
-                    className={`cursor-pointer transition-all duration-200 ${
+                    className={`cursor-pointer transition-all duration-200 border-2 shadow-sm ${
                       field.value === band.value
-                        ? 'ring-2 ring-blue-500 border-blue-300 bg-blue-50'
-                        : 'hover:border-gray-300 hover:shadow-md'
+                        ? "kb-select kb-select-active"
+                        : "kb-select kb-select-hover"
                     }`}
                     onClick={() => field.onChange(band.value)}
                   >
                     <CardContent className="p-4 text-center">
-                      <div className="text-xl font-semibold text-gray-800 mb-1">
+                      <div className="text-xl font-semibold text-foreground mb-1">
                         {band.label}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         {band.description}
                       </div>
                       {field.value === band.value && (
@@ -121,27 +162,29 @@ export default function ARSection({ form }: ARSectionProps) {
           name="arCustomerCount"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <FormLabel className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <Users className="w-5 h-5 text-purple-600" />
                 Number of Customers / Clients
-                <span className="text-sm font-normal text-gray-600">(unique customers, not invoices)</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  (unique customers, not invoices)
+                </span>
               </FormLabel>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mt-4">
                 {customerCounts.map((count) => (
                   <Card
                     key={count.value}
-                    className={`cursor-pointer transition-all duration-200 ${
+                    className={`cursor-pointer transition-all duration-200 border-2 shadow-sm ${
                       field.value === count.value
-                        ? 'ring-2 ring-purple-500 border-purple-300 bg-purple-50'
-                        : 'hover:border-gray-300 hover:shadow-md'
+                        ? "kb-select kb-select-active"
+                        : "kb-select kb-select-hover"
                     }`}
                     onClick={() => handleCustomerCountChange(count.value)}
                   >
                     <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-gray-800 mb-1">
+                      <div className="text-2xl font-bold text-foreground mb-1">
                         {count.label}
                       </div>
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs text-muted-foreground">
                         {count.description}
                       </div>
                       {field.value === count.value && (
@@ -175,8 +218,12 @@ export default function ARSection({ form }: ARSectionProps) {
                     min="10"
                     className="max-w-xs"
                     {...field}
-                    value={field.value || ''}
-                    onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                    value={field.value || ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? parseInt(e.target.value) : null,
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -193,7 +240,7 @@ export default function ARSection({ form }: ARSectionProps) {
           name="arServiceTier"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <FormLabel className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-indigo-600" />
                 Select AR Service Level
               </FormLabel>
@@ -203,10 +250,10 @@ export default function ARSection({ form }: ARSectionProps) {
                   return (
                     <Card
                       key={tier.value}
-                      className={`cursor-pointer transition-all duration-200 ${tier.color} ${
+                      className={`cursor-pointer transition-all duration-200 border-2 shadow-sm ${
                         field.value === tier.value
-                          ? 'ring-2 ring-indigo-500 border-indigo-300'
-                          : 'hover:shadow-lg'
+                          ? "kb-select kb-select-active"
+                          : "kb-select kb-select-hover"
                       }`}
                       onClick={() => field.onChange(tier.value)}
                     >
@@ -219,9 +266,18 @@ export default function ARSection({ form }: ARSectionProps) {
                       <CardContent className="pt-0">
                         <ul className="space-y-2">
                           {tier.features.map((feature, index) => (
-                            <li key={index} className="flex items-start gap-2 text-sm">
+                            <li
+                              key={index}
+                              className="flex items-start gap-2 text-sm text-muted-foreground"
+                            >
                               <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                              <span className={feature.startsWith('Everything in Lite') ? 'font-semibold' : ''}>
+                              <span
+                                className={
+                                  feature.startsWith("Everything in Lite")
+                                    ? "font-semibold"
+                                    : ""
+                                }
+                              >
                                 {feature}
                               </span>
                             </li>
@@ -242,6 +298,8 @@ export default function ARSection({ form }: ARSectionProps) {
           )}
         />
       </div>
-    </div>
+        </div>
+      )}
+    </KbCard>
   );
 }

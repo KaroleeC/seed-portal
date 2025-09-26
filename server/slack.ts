@@ -1,15 +1,19 @@
 import { WebClient } from "@slack/web-api";
-import { logger } from './logger';
+import { logger } from "./logger";
 
-const slackLogger = logger.child({ module: 'slack' });
+const slackLogger = logger.child({ module: "slack" });
 
-const hasSlackCreds = Boolean(process.env.SLACK_BOT_TOKEN && process.env.SLACK_PA_CHANNEL_ID);
+const hasSlackCreds = Boolean(
+  process.env.SLACK_BOT_TOKEN && process.env.SLACK_PA_CHANNEL_ID,
+);
 let slack: WebClient | null = null;
 if (hasSlackCreds) {
   slack = new WebClient(process.env.SLACK_BOT_TOKEN);
 } else {
   // Do not throw in development or when running locally without Doppler
-  console.warn('[Slack] Credentials not configured - Slack integration disabled');
+  console.warn(
+    "[Slack] Credentials not configured - Slack integration disabled",
+  );
 }
 
 /**
@@ -17,16 +21,14 @@ if (hasSlackCreds) {
  * @param message - Message content and configuration
  * @returns Promise resolving to the sent message's timestamp
  */
-export async function sendSlackMessage(
-  message: {
-    text?: string;
-    blocks?: any[];
-    channel?: string;
-    attachments?: any[];
-  }
-): Promise<string | undefined> {
+export async function sendSlackMessage(message: {
+  text?: string;
+  blocks?: any[];
+  channel?: string;
+  attachments?: any[];
+}): Promise<string | undefined> {
   if (!hasSlackCreds || !slack) {
-    slackLogger.warn({ message }, 'Slack disabled - skipping sendSlackMessage');
+    slackLogger.warn({ message }, "Slack disabled - skipping sendSlackMessage");
     return undefined;
   }
   try {
@@ -36,12 +38,12 @@ export async function sendSlackMessage(
       text: message.text,
       // Cast to any to avoid strict type mismatch across Slack SDK versions
       blocks: message.blocks as any,
-      attachments: message.attachments as any
+      attachments: message.attachments as any,
     });
-    slackLogger.info({ channel, ts: response.ts }, 'Slack message sent');
+    slackLogger.info({ channel, ts: response.ts }, "Slack message sent");
     return response.ts;
   } catch (error) {
-    slackLogger.error({ error }, 'Error sending Slack message');
+    slackLogger.error({ error }, "Error sending Slack message");
     throw error;
   }
 }
@@ -52,52 +54,55 @@ export async function sendSlackMessage(
 export async function sendSystemAlert(
   title: string,
   description: string,
-  severity: 'low' | 'medium' | 'high' | 'critical' = 'medium',
-  channel?: string
+  severity: "low" | "medium" | "high" | "critical" = "medium",
+  channel?: string,
 ): Promise<void> {
   const severityColors = {
-    low: '#36C5F0',      // Blue
-    medium: '#ECB22E',   // Yellow  
-    high: '#E01E5A',     // Red
-    critical: '#FF0000'  // Bright Red
+    low: "#36C5F0", // Blue
+    medium: "#ECB22E", // Yellow
+    high: "#E01E5A", // Red
+    critical: "#FF0000", // Bright Red
   };
 
   const severityEmojis = {
-    low: ':information_source:',
-    medium: ':warning:',
-    high: ':rotating_light:',
-    critical: ':fire:'
+    low: ":information_source:",
+    medium: ":warning:",
+    high: ":rotating_light:",
+    critical: ":fire:",
   };
 
   try {
     await sendSlackMessage({
-      channel: channel,  // Use custom channel if provided
+      channel: channel, // Use custom channel if provided
       text: `${severityEmojis[severity]} ${title}`,
       attachments: [
         {
           color: severityColors[severity],
           fields: [
             {
-              title: 'Severity',
+              title: "Severity",
               value: severity.toUpperCase(),
-              short: true
+              short: true,
             },
             {
-              title: 'Timestamp',
+              title: "Timestamp",
               value: new Date().toISOString(),
-              short: true
+              short: true,
             },
             {
-              title: 'Description',
+              title: "Description",
               value: description,
-              short: false
-            }
-          ]
-        }
-      ]
+              short: false,
+            },
+          ],
+        },
+      ],
     });
   } catch (error) {
-    slackLogger.error({ error, title, description, severity }, 'Failed to send system alert');
+    slackLogger.error(
+      { error, title, description, severity },
+      "Failed to send system alert",
+    );
   }
 }
 
@@ -108,63 +113,69 @@ export async function sendJobFailureAlert(
   jobName: string,
   failureCount: number,
   timeWindow: string,
-  errors: string[]
+  errors: string[],
 ): Promise<void> {
   try {
     await sendSlackMessage({
       text: `:rotating_light: BullMQ Job Failures Detected`,
       blocks: [
         {
-          type: 'header',
+          type: "header",
           text: {
-            type: 'plain_text',
-            text: `🚨 BullMQ Alert: ${jobName} Failures`
-          }
+            type: "plain_text",
+            text: `🚨 BullMQ Alert: ${jobName} Failures`,
+          },
         },
         {
-          type: 'section',
+          type: "section",
           fields: [
             {
-              type: 'mrkdwn',
-              text: `*Failed Jobs:* ${failureCount}`
+              type: "mrkdwn",
+              text: `*Failed Jobs:* ${failureCount}`,
             },
             {
-              type: 'mrkdwn',
-              text: `*Time Window:* ${timeWindow}`
+              type: "mrkdwn",
+              text: `*Time Window:* ${timeWindow}`,
             },
             {
-              type: 'mrkdwn',
-              text: `*Queue:* ${jobName}`
+              type: "mrkdwn",
+              text: `*Queue:* ${jobName}`,
             },
             {
-              type: 'mrkdwn',
-              text: `*Timestamp:* ${new Date().toISOString()}`
-            }
-          ]
+              type: "mrkdwn",
+              text: `*Timestamp:* ${new Date().toISOString()}`,
+            },
+          ],
         },
         {
-          type: 'section',
+          type: "section",
           text: {
-            type: 'mrkdwn',
-            text: `*Recent Errors:*\n${errors.slice(0, 3).map(e => `• ${e}`).join('\n')}`
-          }
+            type: "mrkdwn",
+            text: `*Recent Errors:*\n${errors
+              .slice(0, 3)
+              .map((e) => `• ${e}`)
+              .join("\n")}`,
+          },
         },
         {
-          type: 'actions',
+          type: "actions",
           elements: [
             {
-              type: 'button',
+              type: "button",
               text: {
-                type: 'plain_text',
-                text: 'View Queue Metrics'
+                type: "plain_text",
+                text: "View Queue Metrics",
               },
-              url: `${process.env.APP_URL || 'https://app.seedfinancial.io'}/admin/queue`
-            }
-          ]
-        }
-      ]
+              url: `${process.env.APP_URL || "https://app.seedfinancial.io"}/admin/queue`,
+            },
+          ],
+        },
+      ],
     });
   } catch (error) {
-    slackLogger.error({ error, jobName, failureCount }, 'Failed to send job failure alert');
+    slackLogger.error(
+      { error, jobName, failureCount },
+      "Failed to send job failure alert",
+    );
   }
 }

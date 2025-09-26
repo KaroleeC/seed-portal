@@ -1,82 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Cookie Acceptance Test</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Cookie Acceptance Test</h1>
     <div id="results"></div>
-    
+
     <script>
-        console.log('🍪 Cookie Acceptance Test Started');
-        
-        async function testCookieAcceptance() {
-            const results = document.getElementById('results');
-            
-            // Test 1: Current browser environment
-            results.innerHTML += '<h3>Browser Environment</h3>';
-            results.innerHTML += '<p>User Agent: ' + navigator.userAgent + '</p>';
-            results.innerHTML += '<p>Location: ' + window.location.href + '</p>';
-            results.innerHTML += '<p>Origin: ' + window.location.origin + '</p>';
-            results.innerHTML += '<p>Protocol: ' + window.location.protocol + '</p>';
-            results.innerHTML += '<p>Cookies Enabled: ' + navigator.cookieEnabled + '</p>';
-            
-            // Test 2: Try to set a simple cookie
-            results.innerHTML += '<h3>Simple Cookie Test</h3>';
-            document.cookie = 'test=simple; Path=/; SameSite=Lax';
-            results.innerHTML += '<p>After setting simple cookie: ' + document.cookie + '</p>';
-            
-            // Test 3: Try to set a SameSite=None cookie
-            results.innerHTML += '<h3>SameSite=None Cookie Test</h3>';
-            document.cookie = 'testNone=none; Path=/; SameSite=None; Secure';
-            results.innerHTML += '<p>After setting SameSite=None cookie: ' + document.cookie + '</p>';
-            
-            // Test 4: Make login request and watch cookies
-            results.innerHTML += '<h3>Login Request Test</h3>';
-            try {
-                console.log('🍪 Before login request - cookies:', document.cookie);
-                
-                const loginResponse = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        email: 'amanda@seedfinancial.io',
-                        password: 'Seed2025!'
-                    })
-                });
-                
-                console.log('🍪 After login request - cookies:', document.cookie);
-                console.log('🍪 Login response headers:', Object.fromEntries(loginResponse.headers.entries()));
-                
-                const loginData = await loginResponse.json();
-                results.innerHTML += '<p>Login Status: ' + loginResponse.status + '</p>';
-                results.innerHTML += '<p>Cookies after login: ' + document.cookie + '</p>';
-                results.innerHTML += '<p>Response headers: ' + JSON.stringify(Object.fromEntries(loginResponse.headers.entries())) + '</p>';
-                
-                // Test 5: Try user endpoint
-                setTimeout(async () => {
-                    console.log('🍪 Before user request - cookies:', document.cookie);
-                    
-                    const userResponse = await fetch('/api/user', {
-                        credentials: 'include'
-                    });
-                    
-                    console.log('🍪 After user request - cookies:', document.cookie);
-                    results.innerHTML += '<p>User endpoint status: ' + userResponse.status + '</p>';
-                    results.innerHTML += '<p>Final cookies: ' + document.cookie + '</p>';
-                }, 1000);
-                
-            } catch (error) {
-                results.innerHTML += '<p>Error: ' + error.message + '</p>';
-                console.error('🍪 Test error:', error);
-            }
+      console.log("🍪 Cookie Acceptance Test Started");
+
+      async function testCookieAcceptance() {
+        const results = document.getElementById("results");
+
+        // Test 1: Current browser environment
+        results.innerHTML += "<h3>Browser Environment</h3>";
+        results.innerHTML += "<p>User Agent: " + navigator.userAgent + "</p>";
+        results.innerHTML += "<p>Location: " + window.location.href + "</p>";
+        results.innerHTML += "<p>Origin: " + window.location.origin + "</p>";
+        results.innerHTML +=
+          "<p>Protocol: " + window.location.protocol + "</p>";
+        results.innerHTML +=
+          "<p>Cookies Enabled: " + navigator.cookieEnabled + "</p>";
+
+        // Test 2: Try to set a simple cookie
+        results.innerHTML += "<h3>Simple Cookie Test</h3>";
+        document.cookie = "test=simple; Path=/; SameSite=Lax";
+        results.innerHTML +=
+          "<p>After setting simple cookie: " + document.cookie + "</p>";
+
+        // Test 3: Try to set a SameSite=None cookie
+        results.innerHTML += "<h3>SameSite=None Cookie Test</h3>";
+        document.cookie = "testNone=none; Path=/; SameSite=None; Secure";
+        results.innerHTML +=
+          "<p>After setting SameSite=None cookie: " + document.cookie + "</p>";
+
+        // Test 4: Make login request and watch cookies
+        results.innerHTML += "<h3>Login Request Test</h3>";
+        try {
+          console.log("🍪 Before login request - cookies:", document.cookie);
+
+          const loginResponse = await fetch("/api/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              email: "amanda@seedfinancial.io",
+              password: "Seed2025!",
+            }),
+          });
+
+          console.log("🍪 After login request - cookies:", document.cookie);
+          console.log(
+            "🍪 Login response headers:",
+            Object.fromEntries(loginResponse.headers.entries()),
+          );
+
+          const loginData = await loginResponse.json();
+          results.innerHTML +=
+            "<p>Login Status: " + loginResponse.status + "</p>";
+          results.innerHTML +=
+            "<p>Cookies after login: " + document.cookie + "</p>";
+          results.innerHTML +=
+            "<p>Response headers: " +
+            JSON.stringify(
+              Object.fromEntries(loginResponse.headers.entries()),
+            ) +
+            "</p>";
+
+          // Test 5: Try user endpoint
+          setTimeout(async () => {
+            console.log("🍪 Before user request - cookies:", document.cookie);
+
+            const userResponse = await fetch("/api/user", {
+              credentials: "include",
+            });
+
+            console.log("🍪 After user request - cookies:", document.cookie);
+            results.innerHTML +=
+              "<p>User endpoint status: " + userResponse.status + "</p>";
+            results.innerHTML +=
+              "<p>Final cookies: " + document.cookie + "</p>";
+          }, 1000);
+        } catch (error) {
+          results.innerHTML += "<p>Error: " + error.message + "</p>";
+          console.error("🍪 Test error:", error);
         }
-        
-        // Run test when page loads
-        setTimeout(testCookieAcceptance, 1000);
+      }
+
+      // Run test when page loads
+      setTimeout(testCookieAcceptance, 1000);
     </script>
-</body>
+  </body>
 </html>

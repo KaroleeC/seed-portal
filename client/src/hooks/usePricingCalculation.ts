@@ -1,5 +1,9 @@
-import { useMemo } from 'react';
-import { calculateCombinedFees, type PricingData, type CombinedFeeResult } from '@shared/pricing';
+import { useMemo } from "react";
+import {
+  calculateCombinedFees,
+  type PricingData,
+  type CombinedFeeResult,
+} from "@shared/pricing";
 
 export function usePricingCalculation(data: PricingData): CombinedFeeResult {
   return useMemo(() => {

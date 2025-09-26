@@ -12,7 +12,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { RoleBasedRedirect } from "@/components/RoleBasedRedirect";
 import NotFound from "@/pages/not-found";
-import Calculator from "@/pages/home.tsx"; // Quote Calculator component  
+import Calculator from "@/pages/home"; // Quote Calculator component
 import AuthPage from "@/pages/auth-page";
 import SalesDashboard from "@/pages/sales-dashboard"; // Sales dashboard
 import AdminDashboard from "@/pages/admin-dashboard"; // Admin dashboard
@@ -35,6 +35,8 @@ import AdminCalculatorManager from "@/pages/admin-calculator-manager";
 import AdminCalculatorSettings from "@/pages/admin-calculator-settings";
 import SettingsHub from "@/pages/settings-hub";
 import SeedPaySettings from "@/pages/seedpay-settings";
+import AssistantPage from "@/pages/assistant";
+import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 
 // Simple redirect helper for client-side path consolidation
 function Redirect({ to }: { to: string }) {
@@ -56,32 +58,63 @@ function Router() {
         <ProtectedRoute path="/" component={SalesDashboard} />
         <ProtectedRoute path="/admin" component={AdminDashboard} />
         <ProtectedRoute path="/sales-dashboard" component={SalesDashboard} />
-        <ProtectedRoute path="/service-dashboard" component={ServiceDashboard} />
+        <ProtectedRoute
+          path="/service-dashboard"
+          component={ServiceDashboard}
+        />
         <ProtectedRoute path="/admin/hubspot" component={AdminHubspotPage} />
         {/* Legacy route -> new app namespace */}
-        <ProtectedRoute path="/calculator" component={() => <Redirect to="/apps/seedqc" />} />
+        <ProtectedRoute
+          path="/calculator"
+          component={() => <Redirect to="/apps/seedqc" />}
+        />
         <ProtectedRoute path="/apps/seedqc" component={Calculator} />
-        <ProtectedRoute path="/apps/seedqc/settings" component={AdminCalculatorSettings} />
+        <ProtectedRoute
+          path="/apps/seedqc/settings"
+          component={AdminCalculatorSettings}
+        />
         <ProtectedRoute path="/apps/seedpay" component={CommissionTracker} />
-        <ProtectedRoute path="/apps/seedpay/settings" component={SeedPaySettings} />
+        <ProtectedRoute
+          path="/apps/seedpay/settings"
+          component={SeedPaySettings}
+        />
         <ProtectedRoute path="/settings" component={SettingsHub} />
         {/* Consolidate Commission Tracker routes */}
-        <ProtectedRoute path="/commission-tracker" component={() => <Redirect to="/apps/seedpay" />} />
-        <ProtectedRoute path="/admin-commission-tracker" component={() => <Redirect to="/admin/commission-tracker" />} />
-        <ProtectedRoute path="/admin/commission-tracker" component={AdminCommissionTracker} />
-        <ProtectedRoute path="/sales-commission-tracker" component={SalesCommissionTracker} />
+        <ProtectedRoute
+          path="/commission-tracker"
+          component={() => <Redirect to="/apps/seedpay" />}
+        />
+        <ProtectedRoute
+          path="/admin-commission-tracker"
+          component={() => <Redirect to="/admin/commission-tracker" />}
+        />
+        <ProtectedRoute
+          path="/admin/commission-tracker"
+          component={AdminCommissionTracker}
+        />
+        <ProtectedRoute
+          path="/sales-commission-tracker"
+          component={SalesCommissionTracker}
+        />
         <ProtectedRoute path="/client-intel" component={ClientIntel} />
         <ProtectedRoute path="/knowledge-base" component={KnowledgeBase} />
         <ProtectedRoute path="/kb-admin" component={KbAdmin} />
         <ProtectedRoute path="/user-management" component={UserManagement} />
         <ProtectedRoute path="/admin/pricing" component={AdminPricingPage} />
         {/* Consolidate legacy calculator admin routes under app settings */}
-        <ProtectedRoute path="/admin/calculator-manager" component={() => <Redirect to="/apps/seedqc/settings" />} />
-        <ProtectedRoute path="/admin/calculator-settings" component={() => <Redirect to="/apps/seedqc/settings" />} />
+        <ProtectedRoute
+          path="/admin/calculator-manager"
+          component={() => <Redirect to="/apps/seedqc/settings" />}
+        />
+        <ProtectedRoute
+          path="/admin/calculator-settings"
+          component={() => <Redirect to="/apps/seedqc/settings" />}
+        />
         <ProtectedRoute path="/cdn-monitoring" component={CDNMonitoring} />
         <ProtectedRoute path="/stripe-dashboard" component={StripeDashboard} />
         <ProtectedRoute path="/cdn-test" component={CDNTest} />
         <ProtectedRoute path="/profile" component={Profile} />
+        <ProtectedRoute path="/assistant" component={AssistantPage} />
         <Route path="/auth" component={AuthPage} />
         <Route path="/request-access" component={RequestAccess} />
         <Route component={NotFound} />
@@ -98,6 +131,8 @@ function App() {
           <NavigationHistoryProvider>
             <Toaster />
             <Router />
+            {/* Global Assistant Widget (hidden on /auth and /request-access internally) */}
+            <AssistantWidget />
           </NavigationHistoryProvider>
         </AuthProvider>
       </QueryClientProvider>

@@ -14,10 +14,10 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { calculatePricingDisplay } from "@shared/pricing";
 
 // Import our new strongly-typed interfaces
-import { 
-  QuoteFormData, 
+import {
+  QuoteFormData,
   PricingCalculationResult,
-  HubSpotContact
+  HubSpotContact,
 } from "../types/QuoteTypes";
 import { VALIDATION } from "../constants/PricingConstants";
 import { insertQuoteSchema } from "@shared/schema";
@@ -36,23 +36,25 @@ interface QuoteCalculatorContainerProps {
   className?: string;
 }
 
-export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> = ({ 
-  className 
-}) => {
+export const QuoteCalculatorContainer: React.FC<
+  QuoteCalculatorContainerProps
+> = ({ className }) => {
   const { toast } = useToast();
 
   // Form management with proper TypeScript typing
   const form = useForm<QuoteFormData>({
-    resolver: zodResolver(insertQuoteSchema.omit({
-      monthlyFee: true,
-      setupFee: true,
-      taasMonthlyFee: true,
-      taasPriorYearsFee: true,
-      hubspotContactId: true,
-      hubspotDealId: true,
-      hubspotQuoteId: true,
-      hubspotContactVerified: true,
-    })),
+    resolver: zodResolver(
+      insertQuoteSchema.omit({
+        monthlyFee: true,
+        setupFee: true,
+        taasMonthlyFee: true,
+        taasPriorYearsFee: true,
+        hubspotContactId: true,
+        hubspotDealId: true,
+        hubspotQuoteId: true,
+        hubspotContactVerified: true,
+      }),
+    ),
     defaultValues: {
       // Contact Information
       contactEmail: "",
@@ -60,18 +62,18 @@ export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> =
       contactLastName: "",
       contactPhone: "",
       companyName: "",
-      
+
       // Company Address
       clientStreetAddress: "",
       clientCity: "",
       clientState: "",
       clientZipCode: "",
-      
+
       // Business Details
       industry: "",
       monthlyRevenueRange: "",
       entityType: "",
-      
+
       // Service selections
       serviceMonthlyBookkeeping: false,
       serviceTaasMonthly: false,
@@ -82,19 +84,21 @@ export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> =
       serviceApArService: false,
       serviceArService: false,
       serviceAgentOfService: false,
-      
+
       // Service tier
-      serviceTier: 'Automated',
-      
+      serviceTier: "Automated",
+
       // Additional defaults
       cleanupMonths: 0,
       qboSubscription: false,
-    }
+    },
   });
 
   // Component state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<HubSpotContact | null>(null);
+  const [selectedContact, setSelectedContact] = useState<HubSpotContact | null>(
+    null,
+  );
   const [showApprovalWorkflow, setShowApprovalWorkflow] = useState(false);
 
   // Watch form values for reactive calculations
@@ -104,9 +108,11 @@ export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> =
   const pricingCalculation: PricingCalculationResult = React.useMemo(() => {
     try {
       // Use shared adapter to get top-level totals and accurate discount info
-      return calculatePricingDisplay(formData) as unknown as PricingCalculationResult;
+      return calculatePricingDisplay(
+        formData,
+      ) as unknown as PricingCalculationResult;
     } catch (error) {
-      console.error('Pricing calculation error:', error);
+      console.error("Pricing calculation error:", error);
       // Return safe fallback values
       return {
         bookkeeping: { monthlyFee: 0, setupFee: 0 },
@@ -127,7 +133,7 @@ export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> =
         arFee: 0,
         agentOfServiceFee: 0,
         totalMonthlyFee: 0,
-        totalSetupFee: 0
+        totalSetupFee: 0,
       };
     }
   }, [formData]);
@@ -144,7 +150,7 @@ export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> =
           setupFee: pricingCalculation.totalSetupFee.toString(),
           taasMonthlyFee: pricingCalculation.taas.monthlyFee.toString(),
           taasPriorYearsFee: pricingCalculation.priorYearFilingsFee.toString(),
-        })
+        }),
       });
     },
     onSuccess: (quote) => {
@@ -162,7 +168,8 @@ export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> =
       } else {
         toast({
           title: "Quote Creation Failed",
-          description: error?.message || "An error occurred while creating the quote.",
+          description:
+            error?.message || "An error occurred while creating the quote.",
           variant: "destructive",
         });
       }
@@ -187,19 +194,20 @@ export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> =
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 ${className}`}>
+    <div
+      className={`min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 ${className}`}
+    >
       <UniversalNavbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
           {/* Left Column: Form and Service Selection */}
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h1 className="text-2xl font-bold text-gray-900 mb-6">
                 Quote Calculator
               </h1>
-              
+
               <QuoteFormCore
                 form={form}
                 selectedContact={selectedContact}

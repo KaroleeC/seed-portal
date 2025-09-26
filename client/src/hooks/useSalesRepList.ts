@@ -21,7 +21,8 @@ export function useSalesRepList(options?: { enabled?: boolean }) {
       // Normalize minimal shape expected by admin tools
       return (data || []).map((rep: any) => ({
         id: Number(rep.id ?? rep.userId ?? 0),
-        name: rep.name || `${rep.first_name || ""} ${rep.last_name || ""}`.trim(),
+        name:
+          rep.name || `${rep.first_name || ""} ${rep.last_name || ""}`.trim(),
         email: rep.email || rep.userEmail || "",
         isActive: rep.isActive ?? rep.is_active ?? true,
         hubspotUserId: rep.hubspotUserId ?? rep.hubspot_user_id ?? null,

@@ -1,55 +1,70 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1"
+    />
     <!-- Prevent runtime error overlay conflicts with Replit beacon system -->
     <script>
       // Disable runtime error plugin before it initializes
       window.__REPLIT_RUNTIME_ERROR_DISABLED__ = true;
-      
+
       // Override error handlers to prevent conflicts
       const originalAddEventListener = window.addEventListener;
-      window.addEventListener = function(type, listener, options) {
+      window.addEventListener = function (type, listener, options) {
         // Skip runtime error listeners that conflict with beacon
-        if (type === 'error' && listener.toString().includes('runtime-error')) {
+        if (type === "error" && listener.toString().includes("runtime-error")) {
           return;
         }
-        if (type === 'unhandledrejection' && listener.toString().includes('runtime-error')) {
+        if (
+          type === "unhandledrejection" &&
+          listener.toString().includes("runtime-error")
+        ) {
           return;
         }
         return originalAddEventListener.call(this, type, listener, options);
       };
 
       // Enhanced error handling for Google OAuth
-      window.addEventListener('error', function(event) {
+      window.addEventListener("error", function (event) {
         // Suppress generic "Script error" from Google OAuth cross-origin scripts
-        if (event.message === 'Script error.' && event.filename === '') {
-          console.log('[Google OAuth] Suppressed cross-origin script error (expected)');
+        if (event.message === "Script error." && event.filename === "") {
+          console.log(
+            "[Google OAuth] Suppressed cross-origin script error (expected)",
+          );
           event.preventDefault();
           return false;
         }
-        
+
         // Suppress Google Identity Services errors that are expected
-        if (event.message && (
-          event.message.includes('gsi') ||
-          event.message.includes('gapi') ||
-          event.message.includes('accounts.google.com')
-        )) {
-          console.log('[Google OAuth] Suppressed Google Identity Services error (expected)');
+        if (
+          event.message &&
+          (event.message.includes("gsi") ||
+            event.message.includes("gapi") ||
+            event.message.includes("accounts.google.com"))
+        ) {
+          console.log(
+            "[Google OAuth] Suppressed Google Identity Services error (expected)",
+          );
           event.preventDefault();
           return false;
         }
       });
 
       // Handle Google OAuth specific errors
-      window.addEventListener('unhandledrejection', function(event) {
-        if (event.reason && event.reason.message && (
-          event.reason.message.includes('gapi') ||
-          event.reason.message.includes('gsi') ||
-          event.reason.message.includes('accounts.google.com')
-        )) {
-          console.log('[Google OAuth] Suppressed Google OAuth promise rejection (expected)');
+      window.addEventListener("unhandledrejection", function (event) {
+        if (
+          event.reason &&
+          event.reason.message &&
+          (event.reason.message.includes("gapi") ||
+            event.reason.message.includes("gsi") ||
+            event.reason.message.includes("accounts.google.com"))
+        ) {
+          console.log(
+            "[Google OAuth] Suppressed Google OAuth promise rejection (expected)",
+          );
           event.preventDefault();
         }
       });

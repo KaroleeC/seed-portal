@@ -1,5 +1,4 @@
 /**
- * 🎯 PROPER SOVIET TYPESCRIPT INTERFACES
  * No more 'any' types - everything strongly typed for glorious maintainability!
  */
 
@@ -57,28 +56,28 @@ export interface QuoteFormData {
   priorYearsUnfiled?: number;
 
   // Service Tier
-  serviceTier?: 'Automated' | 'Guided' | 'Concierge';
+  serviceTier?: "Automated" | "Guided" | "Concierge";
 
   // Prior Year Filings
   priorYearFilings?: string[];
 
-  // Cleanup Projects  
+  // Cleanup Projects
   cleanupPeriods?: string[];
 
   // CFO Advisory
-  cfoAdvisoryType?: 'pay_as_you_go' | 'prepaid_bundle';
+  cfoAdvisoryType?: "pay_as_you_go" | "prepaid_bundle";
   cfoAdvisoryBundleHours?: number;
 
   // Payroll Service
   payrollEmployeeCount?: number;
-  payrollFrequency?: 'weekly' | 'biweekly' | 'monthly';
+  payrollFrequency?: "weekly" | "biweekly" | "monthly";
 
   // AP/AR Service
-  apServiceTier?: 'lite' | 'advanced';
-  arServiceTier?: 'lite' | 'advanced';
+  apServiceTier?: "lite" | "advanced";
+  arServiceTier?: "lite" | "advanced";
 
   // Agent of Service
-  agentOfServiceType?: 'registered_agent' | 'ct_corporation';
+  agentOfServiceType?: "registered_agent" | "ct_corporation";
   agentOfServiceStates?: string[];
 
   // Approval System
@@ -140,19 +139,19 @@ export interface PayrollBreakdown {
 }
 
 export interface APBreakdown {
-  tier: 'lite' | 'advanced';
+  tier: "lite" | "advanced";
   baseFee: number;
   multiplier?: number;
 }
 
 export interface ARBreakdown {
-  tier: 'lite' | 'advanced';
+  tier: "lite" | "advanced";
   baseFee: number;
   multiplier?: number;
 }
 
 export interface AgentOfServiceBreakdown {
-  type: 'registered_agent' | 'ct_corporation';
+  type: "registered_agent" | "ct_corporation";
   baseFee: number;
   stateCount: number;
   perStateFee: number;

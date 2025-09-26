@@ -1,62 +1,69 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>Cookie Debug Test</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Authentication Debug Test</h1>
     <div id="results"></div>
-    
+
     <script>
-        console.log('🍪 Cookie Debug Test Started');
-        
-        async function testAuthentication() {
-            const results = document.getElementById('results');
-            
-            // Test 1: Check current cookies
-            results.innerHTML += '<h3>Step 1: Current Cookies</h3>';
-            results.innerHTML += '<p>Document cookies: ' + (document.cookie || 'NONE') + '</p>';
-            console.log('🍪 Current cookies:', document.cookie);
-            
-            // Test 2: Try login
-            results.innerHTML += '<h3>Step 2: Testing Login</h3>';
-            try {
-                const loginResponse = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        email: 'amanda@seedfinancial.io',
-                        password: 'Seed2025!'
-                    })
-                });
-                
-                const loginData = await loginResponse.json();
-                results.innerHTML += '<p>Login Status: ' + loginResponse.status + '</p>';
-                results.innerHTML += '<p>Login Data: ' + JSON.stringify(loginData) + '</p>';
-                results.innerHTML += '<p>Set-Cookie Header: ' + (loginResponse.headers.get('set-cookie') || 'NONE') + '</p>';
-                console.log('🍪 After login cookies:', document.cookie);
-                
-                // Test 3: Check user endpoint
-                results.innerHTML += '<h3>Step 3: Testing User Endpoint</h3>';
-                const userResponse = await fetch('/api/user', {
-                    credentials: 'include'
-                });
-                
-                const userData = await userResponse.json();
-                results.innerHTML += '<p>User Status: ' + userResponse.status + '</p>';
-                results.innerHTML += '<p>User Data: ' + JSON.stringify(userData) + '</p>';
-                
-            } catch (error) {
-                results.innerHTML += '<p>Error: ' + error.message + '</p>';
-                console.error('🍪 Test error:', error);
-            }
+      console.log("🍪 Cookie Debug Test Started");
+
+      async function testAuthentication() {
+        const results = document.getElementById("results");
+
+        // Test 1: Check current cookies
+        results.innerHTML += "<h3>Step 1: Current Cookies</h3>";
+        results.innerHTML +=
+          "<p>Document cookies: " + (document.cookie || "NONE") + "</p>";
+        console.log("🍪 Current cookies:", document.cookie);
+
+        // Test 2: Try login
+        results.innerHTML += "<h3>Step 2: Testing Login</h3>";
+        try {
+          const loginResponse = await fetch("/api/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              email: "amanda@seedfinancial.io",
+              password: "Seed2025!",
+            }),
+          });
+
+          const loginData = await loginResponse.json();
+          results.innerHTML +=
+            "<p>Login Status: " + loginResponse.status + "</p>";
+          results.innerHTML +=
+            "<p>Login Data: " + JSON.stringify(loginData) + "</p>";
+          results.innerHTML +=
+            "<p>Set-Cookie Header: " +
+            (loginResponse.headers.get("set-cookie") || "NONE") +
+            "</p>";
+          console.log("🍪 After login cookies:", document.cookie);
+
+          // Test 3: Check user endpoint
+          results.innerHTML += "<h3>Step 3: Testing User Endpoint</h3>";
+          const userResponse = await fetch("/api/user", {
+            credentials: "include",
+          });
+
+          const userData = await userResponse.json();
+          results.innerHTML +=
+            "<p>User Status: " + userResponse.status + "</p>";
+          results.innerHTML +=
+            "<p>User Data: " + JSON.stringify(userData) + "</p>";
+        } catch (error) {
+          results.innerHTML += "<p>Error: " + error.message + "</p>";
+          console.error("🍪 Test error:", error);
         }
-        
-        // Run test when page loads
-        setTimeout(testAuthentication, 1000);
+      }
+
+      // Run test when page loads
+      setTimeout(testAuthentication, 1000);
     </script>
-</body>
+  </body>
 </html>

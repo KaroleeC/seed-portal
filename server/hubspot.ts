@@ -37,7 +37,13 @@ export interface HubSpotDeal {
 }
 
 import { cache, CacheTTL, CachePrefix } from "./cache.js";
-import type { Invoice, InvoiceLineItem, Subscription, SubscriptionPayment } from "@shared/billing";
+import { getRedisAsync } from "./redis";
+import type {
+  Invoice,
+  InvoiceLineItem,
+  Subscription,
+  SubscriptionPayment,
+} from "@shared/billing";
 import { createProductsService } from "./services/hubspot/products.js";
 import { createContactsService } from "./services/hubspot/contacts.js";
 import { createDealsService } from "./services/hubspot/deals.js";
@@ -48,35 +54,35 @@ import { createBillingService } from "./services/hubspot/billing.js";
 // All IDs verified with HubSpot native product names (September 2025)
 const HUBSPOT_PRODUCT_IDS = {
   // Core Services
-  MONTHLY_BOOKKEEPING: "25687054003",           // Monthly Bookkeeping
-  MONTHLY_BOOKKEEPING_SETUP: "29049077309",    // Monthly Bookkeeping Setup Fee
-  CLEANUP_PROJECT: "25683750263",               // Clean-Up / Catch-Up Project
-  TAAS: "26203849099",                          // Tax as a Service (Monthly)
-  MANAGED_QBO_SUBSCRIPTION: "26213746490",     // Managed QBO Subscription
-  PRIOR_YEAR_FILINGS: "26354718811",           // Prior Years Tax Filing(s)
-  
+  MONTHLY_BOOKKEEPING: "25687054003", // Monthly Bookkeeping
+  MONTHLY_BOOKKEEPING_SETUP: "29049077309", // Monthly Bookkeeping Setup Fee
+  CLEANUP_PROJECT: "25683750263", // Clean-Up / Catch-Up Project
+  TAAS: "26203849099", // Tax as a Service (Monthly)
+  MANAGED_QBO_SUBSCRIPTION: "26213746490", // Managed QBO Subscription
+  PRIOR_YEAR_FILINGS: "26354718811", // Prior Years Tax Filing(s)
+
   // Service Tier Upgrades
-  GUIDED_SERVICE_TIER: "28884795543",          // Guided Service Tier Upgrade
-  CONCIERGE_SERVICE_TIER: "28891925782",       // Concierge Service Tier Upgrade
-  
+  GUIDED_SERVICE_TIER: "28884795543", // Guided Service Tier Upgrade
+  CONCIERGE_SERVICE_TIER: "28891925782", // Concierge Service Tier Upgrade
+
   // CFO Advisory Services
-  CFO_ADVISORY_DEPOSIT: "28945017957",         // CFO Advisory Pay-as-you-Go Deposit
-  CFO_ADVISORY_8_HOUR: "28928008785",          // CFO Advisory 8-Hour Bundle
-  CFO_ADVISORY_16_HOUR: "28945017959",         // CFO Advisory 16-Hour Bundle
-  CFO_ADVISORY_32_HOUR: "28960863883",         // CFO Advisory 32-Hour Bundle
-  CFO_ADVISORY_40_HOUR: "28960863884",         // CFO Advisory 40-Hour Bundle
-  
+  CFO_ADVISORY_DEPOSIT: "28945017957", // CFO Advisory Pay-as-you-Go Deposit
+  CFO_ADVISORY_8_HOUR: "28928008785", // CFO Advisory 8-Hour Bundle
+  CFO_ADVISORY_16_HOUR: "28945017959", // CFO Advisory 16-Hour Bundle
+  CFO_ADVISORY_32_HOUR: "28960863883", // CFO Advisory 32-Hour Bundle
+  CFO_ADVISORY_40_HOUR: "28960863884", // CFO Advisory 40-Hour Bundle
+
   // Payroll Services
-  PAYROLL_SERVICE: "29038614325",              // Payroll Administration
-  
+  PAYROLL_SERVICE: "29038614325", // Payroll Administration
+
   // Accounts Receivable/Payable Services
-  AR_LITE_SERVICE: "28960244571",              // AR Lite
-  AP_LITE_SERVICE: "28960182651",              // AP Lite
-  AR_ADVANCED_SERVICE: "28928071009",          // AR Advanced
-  AP_ADVANCED_SERVICE: "28960182653",          // AP Advanced
-  
+  AR_LITE_SERVICE: "28960244571", // AR Lite
+  AP_LITE_SERVICE: "28960182651", // AP Lite
+  AR_ADVANCED_SERVICE: "28928071009", // AR Advanced
+  AP_ADVANCED_SERVICE: "28960182653", // AP Advanced
+
   // Agent Services
-  AGENT_OF_SERVICE: "29001355021",             // Agent of Service
+  AGENT_OF_SERVICE: "29001355021", // Agent of Service
 } as const;
 
 export class HubSpotService {
@@ -94,17 +100,25 @@ export class HubSpotService {
     }
     this.accessToken = process.env.HUBSPOT_ACCESS_TOKEN;
     // Initialize modular products service with this class's request method
-    this.products = createProductsService((endpoint: string, options?: RequestInit) => this.makeRequest(endpoint, options));
+    this.products = createProductsService(
+      (endpoint: string, options?: RequestInit) =>
+        this.makeRequest(endpoint, options),
+    );
     // Initialize modular contacts service with this class's request method
-    this.contacts = createContactsService((endpoint: string, options?: RequestInit) => this.makeRequest(endpoint, options));
+    this.contacts = createContactsService(
+      (endpoint: string, options?: RequestInit) =>
+        this.makeRequest(endpoint, options),
+    );
     // Initialize modular deals service with this class's request method
     this.deals = createDealsService(
-      (endpoint: string, options?: RequestInit) => this.makeRequest(endpoint, options),
-      { getSeedSalesPipelineStage: () => this.getSeedSalesPipelineStage() }
+      (endpoint: string, options?: RequestInit) =>
+        this.makeRequest(endpoint, options),
+      { getSeedSalesPipelineStage: () => this.getSeedSalesPipelineStage() },
     );
     // Initialize modular quotes service with this class's request method
     this.quotes = createQuotesService(
-      (endpoint: string, options?: RequestInit) => this.makeRequest(endpoint, options),
+      (endpoint: string, options?: RequestInit) =>
+        this.makeRequest(endpoint, options),
       {
         getUserProfile: (email: string) => this.getUserProfile(email),
         getProductsCached: () => this.getProductsCached(),
@@ -129,11 +143,12 @@ export class HubSpotService {
             quoteData,
           ),
         HUBSPOT_PRODUCT_IDS,
-      }
+      },
     );
     // Initialize modular billing service with this class's request method
     this.billing = createBillingService(
-      (endpoint: string, options?: RequestInit) => this.makeRequest(endpoint, options)
+      (endpoint: string, options?: RequestInit) =>
+        this.makeRequest(endpoint, options),
     );
   }
 
@@ -263,32 +278,80 @@ export class HubSpotService {
         return null;
       }
 
+      // Attempt to use configured pipeline and stage IDs from Redis if present
+      try {
+        const redisConns = await getRedisAsync();
+        const cacheRedis: any = redisConns?.cacheRedis;
+        if (cacheRedis) {
+          const configuredPipelineId = await cacheRedis.get(
+            "config:hubspot:pipeline_id",
+          );
+          const configuredStageId = await cacheRedis.get(
+            "config:hubspot:qualified_stage_id",
+          );
+          if (configuredPipelineId && configuredStageId) {
+            const selectedPipeline = pipelines.results.find(
+              (p: any) => String(p.id) === String(configuredPipelineId),
+            );
+            const selectedStage = selectedPipeline?.stages?.find(
+              (s: any) => String(s.id) === String(configuredStageId),
+            );
+            if (selectedPipeline && selectedStage) {
+              console.log(
+                `Using configured HubSpot pipeline ${selectedPipeline.id} and stage ${selectedStage.id}`,
+              );
+              return {
+                pipelineId: selectedPipeline.id,
+                qualifiedStageId: selectedStage.id,
+              };
+            } else {
+              console.warn(
+                "Configured pipeline/stage not found; falling back to detection",
+                { configuredPipelineId, configuredStageId },
+              );
+            }
+          }
+        }
+      } catch (e) {
+        console.warn(
+          "Failed reading configured pipeline/stage from Redis; proceeding with fallback",
+          (e as any)?.message,
+        );
+      }
+
       // Find "Seed Sales Pipeline" (case-insensitive search)
-      const seedPipeline = pipelines.results.find(
+      let seedPipeline = pipelines.results.find(
         (p: any) =>
           p.label?.toLowerCase().includes("seed sales") ||
           p.label?.toLowerCase() === "seed sales pipeline",
       );
 
       if (!seedPipeline) {
-        console.error(
-          "Seed Sales Pipeline not found. Available pipelines:",
+        console.warn(
+          "Seed Sales Pipeline not found. Falling back to first available pipeline. Available:",
           pipelines.results.map((p: any) => p.label),
         );
-        return null;
+        seedPipeline = pipelines.results[0];
       }
 
       // Find "Qualified" stage (case-insensitive search)
-      const qualifiedStage = seedPipeline.stages?.find((stage: any) =>
+      let qualifiedStage = seedPipeline.stages?.find((stage: any) =>
         stage.label?.toLowerCase().includes("qualified"),
       );
 
       if (!qualifiedStage) {
-        console.error(
-          "Qualified stage not found in Seed Sales Pipeline. Available stages:",
-          seedPipeline.stages?.map((s: any) => s.label),
-        );
-        return null;
+        if (Array.isArray(seedPipeline.stages) && seedPipeline.stages.length > 0) {
+          console.warn(
+            "Qualified stage not found. Falling back to first stage in pipeline. Available stages:",
+            seedPipeline.stages.map((s: any) => s.label),
+          );
+          qualifiedStage = seedPipeline.stages[0];
+        } else {
+          console.error(
+            "No stages available in selected pipeline; cannot determine stage",
+          );
+          return null;
+        }
       }
 
       console.log(
@@ -397,9 +460,7 @@ export class HubSpotService {
     return response.json();
   }
 
-  async getUserProfile(
-    email: string,
-  ): Promise<{
+  async getUserProfile(email: string): Promise<{
     firstName?: string;
     lastName?: string;
     companyName?: string;
@@ -710,13 +771,16 @@ export class HubSpotService {
   }
 
   // Verify product IDs and potentially find alternatives
-  async verifyAndGetProductIds(): Promise<{ bookkeeping: string; cleanup: string; valid: boolean }> {
+  async verifyAndGetProductIds(): Promise<{
+    bookkeeping: string;
+    cleanup: string;
+    valid: boolean;
+  }> {
     return await this.products.verifyAndGetProductIds({
       MONTHLY_BOOKKEEPING: HUBSPOT_PRODUCT_IDS.MONTHLY_BOOKKEEPING,
       CLEANUP_PROJECT: HUBSPOT_PRODUCT_IDS.CLEANUP_PROJECT,
     });
   }
-
 
   // Get all custom objects to find the Leads object
   async getCustomObjects(): Promise<any[]> {
@@ -1143,7 +1207,11 @@ export class HubSpotService {
     endDate: string,
     salesRepHubspotId?: string,
   ): Promise<any[]> {
-    return await this.deals.getDealsClosedInPeriod(startDate, endDate, salesRepHubspotId);
+    return await this.deals.getDealsClosedInPeriod(
+      startDate,
+      endDate,
+      salesRepHubspotId,
+    );
   }
 
   // Generic deals search delegation for BFF services
@@ -1163,7 +1231,11 @@ export class HubSpotService {
     endDate: string,
     salesRepHubspotId?: string,
   ): Promise<Invoice[]> {
-    return await this.billing.getPaidInvoicesInPeriod(startDate, endDate, salesRepHubspotId);
+    return await this.billing.getPaidInvoicesInPeriod(
+      startDate,
+      endDate,
+      salesRepHubspotId,
+    );
   }
 
   // Get invoice line items for detailed commission calculations
@@ -1172,7 +1244,9 @@ export class HubSpotService {
   }
 
   // Get active subscriptions for ongoing commission tracking
-  async getActiveSubscriptions(salesRepHubspotId?: string): Promise<Subscription[]> {
+  async getActiveSubscriptions(
+    salesRepHubspotId?: string,
+  ): Promise<Subscription[]> {
     return await this.billing.getActiveSubscriptions(salesRepHubspotId);
   }
 
@@ -1182,7 +1256,11 @@ export class HubSpotService {
     startDate: string,
     endDate: string,
   ): Promise<SubscriptionPayment[]> {
-    return await this.billing.getSubscriptionPaymentsInPeriod(subscriptionId, startDate, endDate);
+    return await this.billing.getSubscriptionPaymentsInPeriod(
+      subscriptionId,
+      startDate,
+      endDate,
+    );
   }
 
   // General invoice listing for diagnostics/sync utilities
@@ -1393,10 +1471,13 @@ export class HubSpotService {
       }
 
       // Check if contact has associated company
-      const existingCompanies = await this.getContactAssociatedCompanies(contactId);
+      const existingCompanies =
+        await this.getContactAssociatedCompanies(contactId);
 
       if (existingCompanies.length === 0) {
-        console.log(`Contact ${contactId} has no associated companies - skipping company update`);
+        console.log(
+          `Contact ${contactId} has no associated companies - skipping company update`,
+        );
         return;
       }
 
@@ -1411,17 +1492,21 @@ export class HubSpotService {
       companyUpdateProperties.name = companyName;
 
       // Address fields (2-way sync - moved from contact to company only)
-      if (quote.clientStreetAddress) companyUpdateProperties.address = quote.clientStreetAddress;
+      if (quote.clientStreetAddress)
+        companyUpdateProperties.address = quote.clientStreetAddress;
       if (quote.clientCity) companyUpdateProperties.city = quote.clientCity;
       if (quote.clientState) companyUpdateProperties.state = quote.clientState;
-      if (quote.clientZipCode) companyUpdateProperties.zip = quote.clientZipCode;
-      if (quote.clientCountry) companyUpdateProperties.country = quote.clientCountry;
+      if (quote.clientZipCode)
+        companyUpdateProperties.zip = quote.clientZipCode;
+      if (quote.clientCountry)
+        companyUpdateProperties.country = quote.clientCountry;
 
       // Conditional employee count (only if payroll service is selected)
       if (quote.includesPayroll || quote.servicePayroll) {
         // Add employee count from payroll data if available
         if (quote.numberOfEmployees) {
-          companyUpdateProperties.numberofemployees = quote.numberOfEmployees.toString();
+          companyUpdateProperties.numberofemployees =
+            quote.numberOfEmployees.toString();
         }
       }
 

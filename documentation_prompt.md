@@ -9,11 +9,13 @@ Use this prompt with Claude to generate comprehensive internal documentation for
 Please create a comprehensive "Internal Document Walk Through: How to Use the Seed Financial Pricing Calculator" based on the following application details. This document should be written for internal sales team members and should include step-by-step instructions, feature explanations, and best practices.
 
 ## Application Overview
+
 The Seed Financial Pricing Calculator is an internal web application built for generating accurate pricing quotes for bookkeeping and tax services. It features HubSpot CRM integration, approval workflows, and comprehensive quote management capabilities.
 
 ## Key Features to Document:
 
 ### 1. Authentication & Access
+
 - Secure login system for @seedfinancial.io email addresses
 - Automatic user registration for valid company emails
 - HubSpot contact verification (only existing HubSpot contacts/owners can access)
@@ -21,9 +23,10 @@ The Seed Financial Pricing Calculator is an internal web application built for g
 - User menu with logout functionality
 
 ### 2. Service Selection (Top of Page)
+
 - Three service cards displayed in a single row:
   - **Bookkeeping**: Monthly bookkeeping, cleanup, and financial statements
-  - **TaaS (Tax as a Service)**: Tax preparation, filing and planning services  
+  - **TaaS (Tax as a Service)**: Tax preparation, filing and planning services
   - **Other Services**: Coming soon (Payroll, FP&A Lite, AP/AR Lite)
 - Click to activate/deactivate services
 - Visual indicators (green checkmarks, pricing updates)
@@ -32,12 +35,14 @@ The Seed Financial Pricing Calculator is an internal web application built for g
 ### 3. Quote Generation Process
 
 #### Contact Information Section:
+
 - Email verification with real-time HubSpot integration
 - Visual indicators: green checkmark (verified) or red X (not found)
 - Company name auto-population from HubSpot contact data
 - Industry selection dropdown
 
 #### Bookkeeping Service Configuration:
+
 - Monthly Revenue Band selection (affects pricing multipliers)
 - Monthly Transaction Volume selection
 - Cleanup Complexity assessment
@@ -45,6 +50,7 @@ The Seed Financial Pricing Calculator is an internal web application built for g
 - Approval code workflow for cleanup month overrides
 
 #### TaaS Service Configuration:
+
 - Number of business entities
 - States filed in
 - International filing requirements
@@ -55,6 +61,7 @@ The Seed Financial Pricing Calculator is an internal web application built for g
 - Seed Bookkeeping Package discount eligibility
 
 ### 4. Pricing Display & Calculations
+
 - Real-time pricing updates as form changes
 - Side-by-side layout: Quote Details | Pricing Summary
 - Combined service pricing when both Bookkeeping and TaaS selected
@@ -66,12 +73,14 @@ The Seed Financial Pricing Calculator is an internal web application built for g
 ### 5. Quote Management Features
 
 #### Save & Update Quotes:
+
 - Auto-save functionality before HubSpot push
 - Quote editing with form pre-population
 - Unsaved changes warnings
 - 30-day quote validity period
 
 #### HubSpot Integration:
+
 - Automatic deal creation with "New Business" classification
 - Quote generation with proper Seed Financial company information
 - Deal owner assignment to current user
@@ -80,6 +89,7 @@ The Seed Financial Pricing Calculator is an internal web application built for g
 - Error handling for integration issues
 
 #### Quote History Table:
+
 - Search by contact email
 - Sortable columns (contact, date, fees, industry)
 - Quote loading for editing
@@ -90,6 +100,7 @@ The Seed Financial Pricing Calculator is an internal web application built for g
   - "Standard" (gray text) - normal quote
 
 ### 6. Approval Workflow System
+
 - Request Approval button triggers Slack notifications
 - 4-digit approval code generation
 - Codes expire after 1 hour and are single-use
@@ -98,6 +109,7 @@ The Seed Financial Pricing Calculator is an internal web application built for g
 - Approval tracking in database for auditing
 
 ### 7. User Interface Features
+
 - Modern, responsive design with Seed Financial branding
 - Form navigation between Bookkeeping and TaaS sections
 - Service toggle switches for combined quotes
@@ -121,6 +133,7 @@ Please organize the documentation into these sections:
 10. **Troubleshooting** - Common issues and solutions
 
 ## Writing Style:
+
 - Use clear, simple language suitable for sales team members
 - Include specific examples and use cases
 - Provide screenshots placeholders where helpful: [Screenshot: Description]

@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 export type Theme = "light" | "dark" | "system";
 
@@ -14,7 +20,8 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 function getSystemTheme(): "light" | "dark" {
   if (typeof window === "undefined") return "light";
-  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+  return window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 }
@@ -35,12 +42,13 @@ export function ThemeProvider({
 }) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") return defaultTheme;
-    const saved = (localStorage.getItem(THEME_STORAGE_KEY) as Theme | null) || null;
+    const saved =
+      (localStorage.getItem(THEME_STORAGE_KEY) as Theme | null) || null;
     return saved || defaultTheme;
   });
 
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(
-    theme === "system" ? getSystemTheme() : theme
+    theme === "system" ? getSystemTheme() : theme,
   );
 
   // Apply theme and persist selection
@@ -64,18 +72,24 @@ export function ThemeProvider({
     };
     // Initial sync
     handler();
-    mql.addEventListener ? mql.addEventListener("change", handler) : mql.addListener(handler as any);
+    mql.addEventListener
+      ? mql.addEventListener("change", handler)
+      : mql.addListener(handler as any);
     return () => {
-      mql.removeEventListener ? mql.removeEventListener("change", handler) : mql.removeListener(handler as any);
+      mql.removeEventListener
+        ? mql.removeEventListener("change", handler)
+        : mql.removeListener(handler as any);
     };
   }, [theme]);
 
   const value = useMemo(
     () => ({ theme, resolvedTheme, setTheme }),
-    [theme, resolvedTheme]
+    [theme, resolvedTheme],
   );
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 export function useTheme() {

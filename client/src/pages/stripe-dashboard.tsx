@@ -1,20 +1,26 @@
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Calendar, 
-  Receipt, 
+import { useQuery } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DollarSign,
+  TrendingUp,
+  Calendar,
+  Receipt,
   ArrowUpRight,
   ArrowDownRight,
   RefreshCw,
   CreditCard,
-  Activity
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useQueryClient } from '@tanstack/react-query';
+  Activity,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface StripeRevenue {
   currentMonth: {
@@ -55,50 +61,58 @@ export default function StripeDashboard() {
   const queryClient = useQueryClient();
 
   // Fetch revenue data
-  const { data: revenueData, isLoading: revenueLoading, error: revenueError } = useQuery<StripeRevenue>({
-    queryKey: ['/api/stripe/revenue'],
+  const {
+    data: revenueData,
+    isLoading: revenueLoading,
+    error: revenueError,
+  } = useQuery<StripeRevenue>({
+    queryKey: ["/api/stripe/revenue"],
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
   });
 
   // Fetch recent transactions
-  const { data: transactionsData, isLoading: transactionsLoading, error: transactionsError } = useQuery<StripeTransactions>({
-    queryKey: ['/api/stripe/recent-transactions'],
+  const {
+    data: transactionsData,
+    isLoading: transactionsLoading,
+    error: transactionsError,
+  } = useQuery<StripeTransactions>({
+    queryKey: ["/api/stripe/recent-transactions"],
     refetchInterval: 2 * 60 * 1000, // Refresh every 2 minutes
   });
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'succeeded':
-        return 'text-green-600 bg-green-100';
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-100';
-      case 'failed':
-        return 'text-red-600 bg-red-100';
+      case "succeeded":
+        return "text-green-600 bg-green-100";
+      case "pending":
+        return "text-yellow-600 bg-yellow-100";
+      case "failed":
+        return "text-red-600 bg-red-100";
       default:
-        return 'text-gray-600 bg-gray-100';
+        return "text-gray-600 bg-gray-100";
     }
   };
 
   const refreshData = () => {
-    queryClient.invalidateQueries({ queryKey: ['/api/stripe/'] });
+    queryClient.invalidateQueries({ queryKey: ["/api/stripe/"] });
   };
 
   if (revenueError || transactionsError) {
@@ -107,10 +121,13 @@ export default function StripeDashboard() {
       <div className="container mx-auto p-6">
         <Alert variant="destructive">
           <AlertDescription>
-            Failed to load Stripe data: {error?.message || 'Unknown error'}
-            {error?.message?.includes('not configured') && (
+            Failed to load Stripe data: {error?.message || "Unknown error"}
+            {error?.message?.includes("not configured") && (
               <div className="mt-2">
-                <p>Please ensure your Stripe API keys are properly configured in the environment variables.</p>
+                <p>
+                  Please ensure your Stripe API keys are properly configured in
+                  the environment variables.
+                </p>
               </div>
             )}
           </AlertDescription>
@@ -145,7 +162,9 @@ export default function StripeDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {revenueLoading ? '...' : formatCurrency(revenueData?.currentMonth.revenue || 0)}
+              {revenueLoading
+                ? "..."
+                : formatCurrency(revenueData?.currentMonth.revenue || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               {revenueData?.currentMonth.transactions || 0} transactions
@@ -160,7 +179,9 @@ export default function StripeDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {revenueLoading ? '...' : formatCurrency(revenueData?.lastMonth.revenue || 0)}
+              {revenueLoading
+                ? "..."
+                : formatCurrency(revenueData?.lastMonth.revenue || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               {revenueData?.lastMonth.transactions || 0} transactions
@@ -175,7 +196,9 @@ export default function StripeDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {revenueLoading ? '...' : formatCurrency(revenueData?.yearToDate.revenue || 0)}
+              {revenueLoading
+                ? "..."
+                : formatCurrency(revenueData?.yearToDate.revenue || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               {revenueData?.yearToDate.transactions || 0} transactions
@@ -193,14 +216,18 @@ export default function StripeDashboard() {
             )}
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${
-              (revenueData?.growth.monthOverMonth || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {revenueLoading ? '...' : `${(revenueData?.growth.monthOverMonth || 0).toFixed(1)}%`}
+            <div
+              className={`text-2xl font-bold ${
+                (revenueData?.growth.monthOverMonth || 0) >= 0
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {revenueLoading
+                ? "..."
+                : `${(revenueData?.growth.monthOverMonth || 0).toFixed(1)}%`}
             </div>
-            <p className="text-xs text-muted-foreground">
-              vs previous month
-            </p>
+            <p className="text-xs text-muted-foreground">vs previous month</p>
           </CardContent>
         </Card>
       </div>
@@ -220,7 +247,10 @@ export default function StripeDashboard() {
           {transactionsLoading ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4 animate-pulse">
+                <div
+                  key={i}
+                  className="flex items-center space-x-4 animate-pulse"
+                >
                   <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
                   <div className="flex-1 space-y-2">
                     <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -233,7 +263,10 @@ export default function StripeDashboard() {
           ) : transactionsData?.transactions.length ? (
             <div className="space-y-4">
               {transactionsData.transactions.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full">
                       <CreditCard className="w-6 h-6 text-blue-600" />
@@ -241,7 +274,8 @@ export default function StripeDashboard() {
                     <div>
                       <p className="font-medium">{transaction.description}</p>
                       <p className="text-sm text-gray-600">
-                        {transaction.customer} • {formatDate(transaction.created)}
+                        {transaction.customer} •{" "}
+                        {formatDate(transaction.created)}
                       </p>
                     </div>
                   </div>
@@ -249,7 +283,9 @@ export default function StripeDashboard() {
                     <p className="font-semibold">
                       {formatCurrency(transaction.amount)}
                     </p>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}
+                    >
                       {transaction.status}
                     </span>
                   </div>

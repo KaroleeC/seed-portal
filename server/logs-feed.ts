@@ -1,10 +1,10 @@
-import { getRedisAsync } from './redis.js';
+import { getRedisAsync } from "./redis.js";
 
 // Lightweight in-app logs feed with Redis-backed storage and in-memory fallback
 // Keys:
 //  - logs:module:<module> (list of JSON entries)
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 export interface ModuleLog {
   ts: string; // ISO timestamp
@@ -16,8 +16,18 @@ export interface ModuleLog {
 const memBuffers = new Map<string, ModuleLog[]>();
 const MAX_LOGS = 1000;
 
-export async function appendModuleLog(moduleName: string, level: LogLevel, message: string, context?: any) {
-  const entry: ModuleLog = { ts: new Date().toISOString(), level, message, context };
+export async function appendModuleLog(
+  moduleName: string,
+  level: LogLevel,
+  message: string,
+  context?: any,
+) {
+  const entry: ModuleLog = {
+    ts: new Date().toISOString(),
+    level,
+    message,
+    context,
+  };
   const redis = await getRedisAsync();
   const key = `logs:module:${moduleName}`;
   try {
@@ -35,15 +45,28 @@ export async function appendModuleLog(moduleName: string, level: LogLevel, messa
   memBuffers.set(moduleName, list);
 }
 
-export async function getModuleLogs(moduleName: string, limit = 100): Promise<ModuleLog[]> {
+export async function getModuleLogs(
+  moduleName: string,
+  limit = 100,
+): Promise<ModuleLog[]> {
   const redis = await getRedisAsync();
   const key = `logs:module:${moduleName}`;
   try {
     if (redis?.cacheRedis) {
-      const raw = await redis.cacheRedis.lrange(key, 0, Math.max(0, Math.min(MAX_LOGS - 1, limit - 1)));
-      return (raw || []).map((s: string) => {
-        try { return JSON.parse(s); } catch { return null; }
-      }).filter(Boolean);
+      const raw = await redis.cacheRedis.lrange(
+        key,
+        0,
+        Math.max(0, Math.min(MAX_LOGS - 1, limit - 1)),
+      );
+      return (raw || [])
+        .map((s: string) => {
+          try {
+            return JSON.parse(s);
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
     }
   } catch (err) {
     // fall through to memory

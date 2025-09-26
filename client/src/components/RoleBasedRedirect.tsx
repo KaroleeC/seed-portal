@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { usePermissions } from '@/hooks/use-permissions';
-import { useAuth } from '@/hooks/use-auth';
+import { useEffect } from "react";
+import { useLocation } from "wouter";
+import { usePermissions } from "@/hooks/use-permissions";
+import { useAuth } from "@/hooks/use-auth";
 
 export function RoleBasedRedirect() {
   const [location, setLocation] = useLocation();
@@ -10,9 +10,9 @@ export function RoleBasedRedirect() {
 
   useEffect(() => {
     // Only redirect if we're on the root path and user is authenticated
-    if (location === '/' && currentUser) {
+    if (location === "/" && currentUser) {
       const defaultDashboard = getDefaultDashboard();
-      if (defaultDashboard !== '/') {
+      if (defaultDashboard !== "/") {
         setLocation(defaultDashboard);
       }
     }

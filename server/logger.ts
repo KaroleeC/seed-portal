@@ -1,17 +1,17 @@
-import pino from 'pino';
-import pinoHttp from 'pino-http';
-import { log as viteLog } from './vite';
+import pino from "pino";
+import pinoHttp from "pino-http";
+import { log as viteLog } from "./vite";
 
 // Create different logger configurations based on environment
-const isProduction = process.env.NODE_ENV === 'production';
-const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === "production";
+const isDevelopment = process.env.NODE_ENV === "development";
 
 // Base logger configuration
 const baseConfig: pino.LoggerOptions = {
-  level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug'),
+  level: process.env.LOG_LEVEL || (isProduction ? "info" : "debug"),
   timestamp: pino.stdTimeFunctions.isoTime,
-  messageKey: 'message',
-  errorKey: 'error',
+  messageKey: "message",
+  errorKey: "error",
   base: {
     env: process.env.NODE_ENV,
     pid: process.pid,
@@ -19,19 +19,19 @@ const baseConfig: pino.LoggerOptions = {
   // Redact sensitive information
   redact: {
     paths: [
-      'password',
-      'req.headers.authorization',
-      'req.headers.cookie',
+      "password",
+      "req.headers.authorization",
+      "req.headers.cookie",
       'res.headers["set-cookie"]',
-      '*.password',
-      '*.token',
-      '*.apiKey',
-      '*.secret',
-      'hubspotAccessToken',
-      'slackBotToken',
-      'openaiApiKey',
+      "*.password",
+      "*.token",
+      "*.apiKey",
+      "*.secret",
+      "hubspotAccessToken",
+      "slackBotToken",
+      "openaiApiKey",
     ],
-    censor: '[REDACTED]'
+    censor: "[REDACTED]",
   },
   serializers: {
     req: (req) => ({
@@ -42,9 +42,9 @@ const baseConfig: pino.LoggerOptions = {
       query: req.query,
       params: req.params,
       headers: {
-        'user-agent': req.headers['user-agent'],
-        'content-type': req.headers['content-type'],
-        'x-request-id': req.headers['x-request-id'],
+        "user-agent": req.headers["user-agent"],
+        "content-type": req.headers["content-type"],
+        "x-request-id": req.headers["x-request-id"],
       },
       remoteAddress: req.connection?.remoteAddress,
       remotePort: req.connection?.remotePort,
@@ -61,13 +61,13 @@ const baseConfig: pino.LoggerOptions = {
 const developmentConfig: pino.LoggerOptions = {
   ...baseConfig,
   transport: {
-    target: 'pino-pretty',
+    target: "pino-pretty",
     options: {
       colorize: true,
-      translateTime: 'SYS:standard',
-      ignore: 'pid,hostname',
-      messageFormat: '{levelLabel} - {message}',
-      errorLikeObjectKeys: ['err', 'error'],
+      translateTime: "SYS:standard",
+      ignore: "pid,hostname",
+      messageFormat: "{levelLabel} - {message}",
+      errorLikeObjectKeys: ["err", "error"],
     },
   },
 };
@@ -87,11 +87,11 @@ const productionConfig: pino.LoggerOptions = {
 export const logger = pino(isProduction ? productionConfig : developmentConfig);
 
 // Create child loggers for different modules
-export const dbLogger = logger.child({ module: 'database' });
-export const authLogger = logger.child({ module: 'auth' });
-export const apiLogger = logger.child({ module: 'api' });
-export const redisLogger = logger.child({ module: 'redis' });
-export const hubspotLogger = logger.child({ module: 'hubspot' });
+export const dbLogger = logger.child({ module: "database" });
+export const authLogger = logger.child({ module: "auth" });
+export const apiLogger = logger.child({ module: "api" });
+export const redisLogger = logger.child({ module: "redis" });
+export const hubspotLogger = logger.child({ module: "hubspot" });
 
 // Utility function to log and also output to Vite dev server
 export function logInfo(message: string, data?: any) {
@@ -125,28 +125,30 @@ export function requestLogger() {
     logger,
     autoLogging: {
       ignore(req: any): boolean {
-        const url = req?.url || '';
+        const url = req?.url || "";
         // Skip logging for health checks and static assets
-        return !!(url === '/api/health' || 
-               url.startsWith('/assets/') ||
-               url.startsWith('/@vite/') ||
-               url.endsWith('.js') ||
-               url.endsWith('.css'));
+        return !!(
+          url === "/api/health" ||
+          url.startsWith("/assets/") ||
+          url.startsWith("/@vite/") ||
+          url.endsWith(".js") ||
+          url.endsWith(".css")
+        );
       },
     },
     customLogLevel(req, res, err) {
       if (res.statusCode >= 400 && res.statusCode < 500) {
-        return 'warn';
+        return "warn";
       } else if (res.statusCode >= 500 || err) {
-        return 'error';
+        return "error";
       }
-      return 'info';
+      return "info";
     },
     customSuccessMessage(req, res) {
       return `${req.method} ${req.url} completed with ${res.statusCode}`;
     },
     customErrorMessage(req, res, err: any) {
-      const msg = err?.message || 'Unknown error';
+      const msg = err?.message || "Unknown error";
       return `Request failed with ${res.statusCode}: ${msg}`;
     },
   });

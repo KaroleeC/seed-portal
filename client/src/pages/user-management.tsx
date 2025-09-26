@@ -4,27 +4,48 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { 
-  Users, 
-  UserPlus, 
-  Settings, 
-  Trash2, 
-  RotateCcw, 
-  Copy, 
-  CheckCircle, 
+import {
+  Users,
+  UserPlus,
+  Settings,
+  Trash2,
+  RotateCcw,
+  Copy,
+  CheckCircle,
   AlertTriangle,
   Eye,
   EyeOff,
-  UserCheck
+  UserCheck,
 } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 
@@ -42,14 +63,25 @@ interface User {
 }
 
 const createUserSchema = z.object({
-  firstName: z.string().min(1, "First name is required").max(50, "First name too long"),
-  lastName: z.string().min(1, "Last name is required").max(50, "Last name too long"),
-  email: z.string().email("Invalid email").refine(
-    (email) => email.endsWith("@seedfinancial.io"),
-    "Email must be a @seedfinancial.io address"
-  ),
+  firstName: z
+    .string()
+    .min(1, "First name is required")
+    .max(50, "First name too long"),
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .max(50, "Last name too long"),
+  email: z
+    .string()
+    .email("Invalid email")
+    .refine(
+      (email) => email.endsWith("@seedfinancial.io"),
+      "Email must be a @seedfinancial.io address",
+    ),
   role: z.enum(["admin", "employee"], { required_error: "Role is required" }),
-  defaultDashboard: z.enum(["admin", "sales", "service"], { required_error: "Default dashboard is required" })
+  defaultDashboard: z.enum(["admin", "sales", "service"], {
+    required_error: "Default dashboard is required",
+  }),
 });
 
 type CreateUserForm = z.infer<typeof createUserSchema>;
@@ -58,9 +90,12 @@ export default function UserManagement() {
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] =
+    useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedUserForReset, setSelectedUserForReset] = useState<User | null>(null);
+  const [selectedUserForReset, setSelectedUserForReset] = useState<User | null>(
+    null,
+  );
   const [generatedPassword, setGeneratedPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -71,110 +106,136 @@ export default function UserManagement() {
       lastName: "",
       email: "",
       role: "employee",
-      defaultDashboard: "sales"
-    }
+      defaultDashboard: "sales",
+    },
   });
 
   // Fetch all users
-  const { data: usersData, isLoading, refetch } = useQuery({
-    queryKey: ['/api/admin/users'],
+  const {
+    data: usersData,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["/api/admin/users"],
     queryFn: async () => {
-      return await apiRequest<{ users: User[] }>('GET', '/api/admin/users');
+      return await apiRequest<{ users: User[] }>("GET", "/api/admin/users");
     },
   });
 
   // Create user mutation
   const createUserMutation = useMutation({
     mutationFn: async (userData: CreateUserForm) => {
-      return await apiRequest<any>('POST', '/api/admin/users', userData);
+      return await apiRequest<any>("POST", "/api/admin/users", userData);
     },
     onSuccess: (data) => {
-      toast({ 
-        title: "User Created Successfully", 
-        description: `${data.user.firstName} ${data.user.lastName} has been added to the portal.` 
+      toast({
+        title: "User Created Successfully",
+        description: `${data.user.firstName} ${data.user.lastName} has been added to the portal.`,
       });
       setGeneratedPassword(data.generatedPassword);
       setIsCreateDialogOpen(false);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
     onError: (error: any) => {
       toast({
         title: "Error Creating User",
         description: error.message || "Failed to create user",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Update user role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: number; role: string }) => {
-      return await apiRequest<any>('PATCH', `/api/admin/users/${userId}/role`, { role });
+      return await apiRequest<any>("PATCH", `/api/admin/users/${userId}/role`, {
+        role,
+      });
     },
     onSuccess: () => {
-      toast({ title: "Success", description: "User role updated successfully" });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({
+        title: "Success",
+        description: "User role updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
         description: error.message || "Failed to update user role",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Update user default dashboard mutation
   const updateDashboardMutation = useMutation({
-    mutationFn: async ({ userId, defaultDashboard }: { userId: number; defaultDashboard: string }) => {
-      return await apiRequest<any>('PATCH', `/api/admin/users/${userId}/dashboard`, { defaultDashboard });
+    mutationFn: async ({
+      userId,
+      defaultDashboard,
+    }: {
+      userId: number;
+      defaultDashboard: string;
+    }) => {
+      return await apiRequest<any>(
+        "PATCH",
+        `/api/admin/users/${userId}/dashboard`,
+        { defaultDashboard },
+      );
     },
     onSuccess: () => {
-      toast({ title: "Success", description: "Default dashboard updated successfully" });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({
+        title: "Success",
+        description: "Default dashboard updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
         description: error.message || "Failed to update default dashboard",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest<any>('DELETE', `/api/admin/users/${userId}`);
+      return await apiRequest<any>("DELETE", `/api/admin/users/${userId}`);
     },
     onSuccess: (data) => {
-      toast({ 
-        title: "User Deleted", 
-        description: `${data.deletedUser.firstName} ${data.deletedUser.lastName} has been removed from the portal.` 
+      toast({
+        title: "User Deleted",
+        description: `${data.deletedUser.firstName} ${data.deletedUser.lastName} has been removed from the portal.`,
       });
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
     onError: (error: any) => {
       toast({
         title: "Error Deleting User",
         description: error.message || "Failed to delete user",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Reset password mutation
   const resetPasswordMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest<any>('POST', `/api/admin/users/${userId}/reset-password`, {});
+      return await apiRequest<any>(
+        "POST",
+        `/api/admin/users/${userId}/reset-password`,
+        {},
+      );
     },
     onSuccess: (data) => {
-      toast({ 
-        title: "Password Reset", 
-        description: `New password generated for ${data.user.firstName} ${data.user.lastName}` 
+      toast({
+        title: "Password Reset",
+        description: `New password generated for ${data.user.firstName} ${data.user.lastName}`,
       });
       setGeneratedPassword(data.newPassword);
     },
@@ -182,9 +243,9 @@ export default function UserManagement() {
       toast({
         title: "Error Resetting Password",
         description: error.message || "Failed to reset password",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const handleRoleUpdate = (userId: number, newRole: string) => {
@@ -202,40 +263,44 @@ export default function UserManagement() {
 
   const impersonateMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest<any>('POST', `/api/admin/impersonate/${userId}`, {});
+      return await apiRequest<any>(
+        "POST",
+        `/api/admin/impersonate/${userId}`,
+        {},
+      );
     },
     onSuccess: (data) => {
       toast({
         title: "Impersonation Started",
         description: `Now signed in as ${data.user.firstName} ${data.user.lastName}`,
       });
-      
+
       // Invalidate auth queries to refresh with impersonated user
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
       // Navigate to their default dashboard
-      const dashboard = data.user.defaultDashboard || 'sales';
+      const dashboard = data.user.defaultDashboard || "sales";
       switch (dashboard) {
-        case 'admin':
-          window.location.href = '/admin';
+        case "admin":
+          window.location.href = "/admin";
           break;
-        case 'sales':
-          window.location.href = '/sales-dashboard';
+        case "sales":
+          window.location.href = "/sales-dashboard";
           break;
-        case 'service':
-          window.location.href = '/service-dashboard';
+        case "service":
+          window.location.href = "/service-dashboard";
           break;
         default:
-          window.location.href = '/';
+          window.location.href = "/";
       }
     },
     onError: (error: any) => {
       toast({
         title: "Impersonation Failed",
         description: error.message || "Failed to impersonate user",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const handleImpersonate = (user: User) => {
@@ -257,27 +322,38 @@ export default function UserManagement() {
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800 border-red-200';
-      case 'employee': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "admin":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "employee":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getDashboardBadgeColor = (dashboard: string) => {
     switch (dashboard) {
-      case 'admin': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'sales': return 'bg-green-100 text-green-800 border-green-200';
-      case 'service': return 'bg-orange-100 text-orange-800 border-orange-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "admin":
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      case "sales":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "service":
+        return "bg-orange-100 text-orange-800 border-orange-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getDashboardDisplayName = (dashboard: string) => {
     switch (dashboard) {
-      case 'admin': return 'Admin';
-      case 'sales': return 'Sales';
-      case 'service': return 'Service';
-      default: return dashboard;
+      case "admin":
+        return "Admin";
+      case "sales":
+        return "Sales";
+      case "service":
+        return "Service";
+      default:
+        return dashboard;
     }
   };
 
@@ -291,14 +367,24 @@ export default function UserManagement() {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
-          <p className="text-white/80">Manage portal users and their access permissions</p>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            User Management
+          </h1>
+          <p className="text-white/80">
+            Manage portal users and their access permissions
+          </p>
         </div>
 
         <div className="flex justify-center mb-8">
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
             <DialogTrigger asChild>
-              <Button className="bg-[#e24c00] hover:bg-[#c13e00] text-white shadow-sm" data-testid="button-add-user">
+              <Button
+                className="bg-[#e24c00] hover:bg-[#c13e00] text-white shadow-sm"
+                data-testid="button-add-user"
+              >
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add User
               </Button>
@@ -307,11 +393,17 @@ export default function UserManagement() {
               <DialogHeader>
                 <DialogTitle>Add New User</DialogTitle>
                 <DialogDescription>
-                  Create a new user account for the portal. A secure password will be generated automatically and displayed after creation.
+                  Create a new user account for the portal. A secure password
+                  will be generated automatically and displayed after creation.
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => createUserMutation.mutate(data))} className="space-y-4">
+                <form
+                  onSubmit={form.handleSubmit((data) =>
+                    createUserMutation.mutate(data),
+                  )}
+                  className="space-y-4"
+                >
                   <FormField
                     control={form.control}
                     name="firstName"
@@ -319,7 +411,11 @@ export default function UserManagement() {
                       <FormItem>
                         <FormLabel>First Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter first name" data-testid="input-first-name" {...field} />
+                          <Input
+                            placeholder="Enter first name"
+                            data-testid="input-first-name"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -332,7 +428,11 @@ export default function UserManagement() {
                       <FormItem>
                         <FormLabel>Last Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter last name" data-testid="input-last-name" {...field} />
+                          <Input
+                            placeholder="Enter last name"
+                            data-testid="input-last-name"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -345,7 +445,11 @@ export default function UserManagement() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="user@seedfinancial.io" data-testid="input-email" {...field} />
+                          <Input
+                            placeholder="user@seedfinancial.io"
+                            data-testid="input-email"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -357,15 +461,22 @@ export default function UserManagement() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Permission Level</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger data-testid="select-role">
                               <SelectValue placeholder="Select permission level" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="employee">Employee - Regular portal access</SelectItem>
-                            <SelectItem value="admin">Admin - Full administrative access</SelectItem>
+                            <SelectItem value="employee">
+                              Employee - Regular portal access
+                            </SelectItem>
+                            <SelectItem value="admin">
+                              Admin - Full administrative access
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -378,16 +489,26 @@ export default function UserManagement() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Default Dashboard</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger data-testid="select-default-dashboard">
                               <SelectValue placeholder="Select default dashboard" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="admin">Admin Dashboard - User management & system settings</SelectItem>
-                            <SelectItem value="sales">Sales Dashboard - Quotes, clients & commissions</SelectItem>
-                            <SelectItem value="service">Service Dashboard - Client support & operations</SelectItem>
+                            <SelectItem value="admin">
+                              Admin Dashboard - User management & system
+                              settings
+                            </SelectItem>
+                            <SelectItem value="sales">
+                              Sales Dashboard - Quotes, clients & commissions
+                            </SelectItem>
+                            <SelectItem value="service">
+                              Service Dashboard - Client support & operations
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -395,13 +516,15 @@ export default function UserManagement() {
                     )}
                   />
                   <DialogFooter>
-                    <Button 
+                    <Button
                       type="submit"
                       className="bg-[#e24c00] hover:bg-[#c13e00] text-white"
                       disabled={createUserMutation.isPending}
                       data-testid="button-create-user"
                     >
-                      {createUserMutation.isPending ? "Creating..." : "Create User"}
+                      {createUserMutation.isPending
+                        ? "Creating..."
+                        : "Create User"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -421,7 +544,8 @@ export default function UserManagement() {
             </CardHeader>
             <CardContent>
               <p className="text-green-700 dark:text-green-300 mb-3">
-                Save this password and share it with the user. It won't be shown again.
+                Save this password and share it with the user. It won't be shown
+                again.
               </p>
               <div className="flex items-center gap-2">
                 <div className="bg-white dark:bg-gray-800 border rounded px-3 py-2 flex-1 font-mono text-sm">
@@ -433,7 +557,11 @@ export default function UserManagement() {
                   onClick={() => setShowPassword(!showPassword)}
                   data-testid="button-toggle-password"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </Button>
                 <Button
                   variant="outline"
@@ -460,45 +588,61 @@ export default function UserManagement() {
             {isLoading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-3 text-gray-600 dark:text-gray-400 text-sm">Loading users...</p>
+                <p className="mt-3 text-gray-600 dark:text-gray-400 text-sm">
+                  Loading users...
+                </p>
               </div>
             ) : users.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400 text-sm">No users found</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  No users found
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200 dark:divide-gray-800">
                 {users.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                  >
                     <div className="flex items-center space-x-4">
                       <div className="bg-blue-100 dark:bg-blue-900/30 rounded-full p-2">
                         <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
                         <div className="font-medium text-gray-900 dark:text-white">
-                          {user.firstName && user.lastName 
-                            ? `${user.firstName} ${user.lastName}` 
-                            : user.email.split('@')[0]
-                          }
+                          {user.firstName && user.lastName
+                            ? `${user.firstName} ${user.lastName}`
+                            : user.email.split("@")[0]}
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">{user.email}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {user.email}
+                        </div>
                         <div className="text-xs text-gray-500 dark:text-gray-500">
-                          Created {new Date(user.createdAt).toLocaleDateString()}
+                          Created{" "}
+                          {new Date(user.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-end space-x-3">
                       {/* Role Selector */}
                       <div className="flex flex-col">
-                        <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Permission Level</label>
+                        <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          Permission Level
+                        </label>
                         <Select
                           value={user.role}
-                          onValueChange={(newRole) => handleRoleUpdate(user.id, newRole)}
+                          onValueChange={(newRole) =>
+                            handleRoleUpdate(user.id, newRole)
+                          }
                           disabled={updateRoleMutation.isPending}
                         >
-                          <SelectTrigger className="w-32 h-9 text-xs" data-testid={`select-role-${user.id}`}>
+                          <SelectTrigger
+                            className="w-32 h-9 text-xs"
+                            data-testid={`select-role-${user.id}`}
+                          >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -510,13 +654,20 @@ export default function UserManagement() {
 
                       {/* Dashboard Selector */}
                       <div className="flex flex-col">
-                        <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Default Dashboard</label>
+                        <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          Default Dashboard
+                        </label>
                         <Select
-                          value={user.defaultDashboard || 'sales'}
-                          onValueChange={(newDashboard) => handleDashboardUpdate(user.id, newDashboard)}
+                          value={user.defaultDashboard || "sales"}
+                          onValueChange={(newDashboard) =>
+                            handleDashboardUpdate(user.id, newDashboard)
+                          }
                           disabled={updateDashboardMutation.isPending}
                         >
-                          <SelectTrigger className="w-32 h-9 text-xs" data-testid={`select-dashboard-${user.id}`}>
+                          <SelectTrigger
+                            className="w-32 h-9 text-xs"
+                            data-testid={`select-dashboard-${user.id}`}
+                          >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -526,7 +677,7 @@ export default function UserManagement() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       {/* Impersonate Button */}
                       <Button
                         variant="outline"
@@ -538,7 +689,7 @@ export default function UserManagement() {
                         <UserCheck className="h-4 w-4 mr-1" />
                         Sign In As
                       </Button>
-                      
+
                       {/* Reset Password Button */}
                       <Button
                         variant="outline"
@@ -554,7 +705,7 @@ export default function UserManagement() {
                         <RotateCcw className="h-4 w-4 mr-1" />
                         Reset Password
                       </Button>
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -583,21 +734,25 @@ export default function UserManagement() {
               <DialogDescription>
                 Are you sure you want to delete{" "}
                 <span className="font-medium">
-                  {selectedUser?.firstName && selectedUser?.lastName 
-                    ? `${selectedUser.firstName} ${selectedUser.lastName}` 
-                    : selectedUser?.email
-                  }
+                  {selectedUser?.firstName && selectedUser?.lastName
+                    ? `${selectedUser.firstName} ${selectedUser.lastName}`
+                    : selectedUser?.email}
                 </span>
                 ? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
                 variant="destructive"
-                onClick={() => selectedUser && deleteUserMutation.mutate(selectedUser.id)}
+                onClick={() =>
+                  selectedUser && deleteUserMutation.mutate(selectedUser.id)
+                }
                 disabled={deleteUserMutation.isPending}
                 data-testid="button-confirm-delete"
               >
@@ -608,7 +763,10 @@ export default function UserManagement() {
         </Dialog>
 
         {/* Reset Password Confirmation Dialog */}
-        <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <Dialog
+          open={isResetPasswordDialogOpen}
+          onOpenChange={setIsResetPasswordDialogOpen}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center text-orange-600">
@@ -618,19 +776,23 @@ export default function UserManagement() {
               <DialogDescription>
                 Are you sure you want to reset the password for{" "}
                 <span className="font-medium">
-                  {selectedUserForReset?.firstName && selectedUserForReset?.lastName 
-                    ? `${selectedUserForReset.firstName} ${selectedUserForReset.lastName}` 
-                    : selectedUserForReset?.email
-                  }
+                  {selectedUserForReset?.firstName &&
+                  selectedUserForReset?.lastName
+                    ? `${selectedUserForReset.firstName} ${selectedUserForReset.lastName}`
+                    : selectedUserForReset?.email}
                 </span>
-                ? A new password will be generated and you'll need to share it with the user.
+                ? A new password will be generated and you'll need to share it
+                with the user.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => {
-                setIsResetPasswordDialogOpen(false);
-                setSelectedUserForReset(null);
-              }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsResetPasswordDialogOpen(false);
+                  setSelectedUserForReset(null);
+                }}
+              >
                 Cancel
               </Button>
               <Button
@@ -639,7 +801,9 @@ export default function UserManagement() {
                 disabled={resetPasswordMutation.isPending}
                 data-testid="button-confirm-reset-password"
               >
-                {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
+                {resetPasswordMutation.isPending
+                  ? "Resetting..."
+                  : "Reset Password"}
               </Button>
             </DialogFooter>
           </DialogContent>

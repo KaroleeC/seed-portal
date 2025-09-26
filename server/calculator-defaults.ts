@@ -15,7 +15,7 @@ export const SERVICE_KEYS_DB = [
   "cfo_advisory",
 ] as const;
 
-export type DbServiceKey = typeof SERVICE_KEYS_DB[number];
+export type DbServiceKey = (typeof SERVICE_KEYS_DB)[number];
 
 // Default Included Fields per service (kept server-side to avoid UI hardcoding)
 export const DEFAULT_INCLUDED_FIELDS: Record<string, any> = {
@@ -60,39 +60,49 @@ const envLink = (svc: DbServiceKey): string | null => {
 
 // Static defaults matching hardcoded links in server/services/hubspot/quotes.ts
 const STATIC_AGREEMENT_LINKS: Record<DbServiceKey, string | null> = {
-  bookkeeping: 'https://seedfinancial.io/legal/ssa-v-2025-09-01', // Schedule A
-  taas: 'https://seedfinancial.io/legal/ssb-v-2025-09-01',         // Schedule B
-  payroll: 'https://www.seedfinancial.io/legal/ssc-v-2025-09-01',  // Schedule C
-  ap: 'https://www.seedfinancial.io/legal/ssd-v-2025-09-01',       // Schedule D
-  ar: 'https://www.seedfinancial.io/legal/sse-v-2025-09-01',       // Schedule E
-  agent_of_service: 'https://www.seedfinancial.io/legal/ssf-v-2025-09-01', // Schedule F
+  bookkeeping: "https://seedfinancial.io/legal/ssa-v-2025-09-01", // Schedule A
+  taas: "https://seedfinancial.io/legal/ssb-v-2025-09-01", // Schedule B
+  payroll: "https://www.seedfinancial.io/legal/ssc-v-2025-09-01", // Schedule C
+  ap: "https://www.seedfinancial.io/legal/ssd-v-2025-09-01", // Schedule D
+  ar: "https://www.seedfinancial.io/legal/sse-v-2025-09-01", // Schedule E
+  agent_of_service: "https://www.seedfinancial.io/legal/ssf-v-2025-09-01", // Schedule F
   // CFO Advisory uses Schedule A link per quotes.ts inclusion behavior
-  cfo_advisory: 'https://seedfinancial.io/legal/ssa-v-2025-09-01',
+  cfo_advisory: "https://seedfinancial.io/legal/ssa-v-2025-09-01",
 };
 
 export const DEFAULT_AGREEMENT_LINKS: Record<DbServiceKey, string | null> = {
-  bookkeeping: envLink('bookkeeping') ?? STATIC_AGREEMENT_LINKS.bookkeeping,
-  taas: envLink('taas') ?? STATIC_AGREEMENT_LINKS.taas,
-  payroll: envLink('payroll') ?? STATIC_AGREEMENT_LINKS.payroll,
-  ap: envLink('ap') ?? STATIC_AGREEMENT_LINKS.ap,
-  ar: envLink('ar') ?? STATIC_AGREEMENT_LINKS.ar,
-  agent_of_service: envLink('agent_of_service') ?? STATIC_AGREEMENT_LINKS.agent_of_service,
-  cfo_advisory: envLink('cfo_advisory') ?? STATIC_AGREEMENT_LINKS.cfo_advisory,
+  bookkeeping: envLink("bookkeeping") ?? STATIC_AGREEMENT_LINKS.bookkeeping,
+  taas: envLink("taas") ?? STATIC_AGREEMENT_LINKS.taas,
+  payroll: envLink("payroll") ?? STATIC_AGREEMENT_LINKS.payroll,
+  ap: envLink("ap") ?? STATIC_AGREEMENT_LINKS.ap,
+  ar: envLink("ar") ?? STATIC_AGREEMENT_LINKS.ar,
+  agent_of_service:
+    envLink("agent_of_service") ?? STATIC_AGREEMENT_LINKS.agent_of_service,
+  cfo_advisory: envLink("cfo_advisory") ?? STATIC_AGREEMENT_LINKS.cfo_advisory,
 };
 
 // Single, global MSA link used across all services in payment terms
-export const DEFAULT_MSA_LINK = 'https://seedfinancial.io/legal/msa-v-2025-07-01';
+export const DEFAULT_MSA_LINK =
+  "https://seedfinancial.io/legal/msa-v-2025-07-01";
 
 function toTitle(dbKey: DbServiceKey): string {
   switch (dbKey) {
-    case "bookkeeping": return "Bookkeeping";
-    case "taas": return "TaaS";
-    case "payroll": return "Payroll";
-    case "ap": return "AP";
-    case "ar": return "AR";
-    case "agent_of_service": return "Agent of Service";
-    case "cfo_advisory": return "CFO Advisory";
-    default: return dbKey;
+    case "bookkeeping":
+      return "Bookkeeping";
+    case "taas":
+      return "TaaS";
+    case "payroll":
+      return "Payroll";
+    case "ap":
+      return "AP";
+    case "ar":
+      return "AR";
+    case "agent_of_service":
+      return "Agent of Service";
+    case "cfo_advisory":
+      return "CFO Advisory";
+    default:
+      return dbKey;
   }
 }
 
@@ -103,9 +113,14 @@ export function getDefaultSowTitle(service: DbServiceKey): string {
 export function getDefaultSowTemplate(service: DbServiceKey): string {
   // Minimal per-service default with shared tokens used by the Calculator/Quotes
   const header = `# ${getDefaultSowTitle(service)}\n`;
-  const common = "\nClient: {{companyName}}\n" +
-                 "Monthly Fee: $" + "{{monthlyFee}}" + "\n" +
-                 "Setup Fee: $" + "{{setupFee}}" + "\n";
+  const common =
+    "\nClient: {{companyName}}\n" +
+    "Monthly Fee: $" +
+    "{{monthlyFee}}" +
+    "\n" +
+    "Setup Fee: $" +
+    "{{setupFee}}" +
+    "\n";
   const details: Record<DbServiceKey, string> = {
     bookkeeping: `Cleanup Months: {{cleanupMonths}}\nIndustry: {{industry}}\n`,
     taas: `Entities: {{numEntities}}\nStates Filed: {{statesFiled}}\nInternational Filing: {{internationalFiling}}\nOwners: {{numBusinessOwners}}\n`,
@@ -118,7 +133,9 @@ export function getDefaultSowTemplate(service: DbServiceKey): string {
   return header + common + (details[service] || "");
 }
 
-export function computeDefaultItem(service: DbServiceKey): CalculatorServiceContent {
+export function computeDefaultItem(
+  service: DbServiceKey,
+): CalculatorServiceContent {
   return {
     id: 0 as any,
     service,
@@ -133,5 +150,5 @@ export function computeDefaultItem(service: DbServiceKey): CalculatorServiceCont
 }
 
 export function computeDefaultItems(): CalculatorServiceContent[] {
-  return SERVICE_KEYS_DB.map(svc => computeDefaultItem(svc));
+  return SERVICE_KEYS_DB.map((svc) => computeDefaultItem(svc));
 }

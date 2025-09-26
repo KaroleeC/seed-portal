@@ -3,7 +3,11 @@ import { apiRequest } from "@/lib/queryClient";
 import type { DealsResult } from "@shared/contracts";
 import { seedpayKeys } from "@/lib/queryKeys";
 
-export function useDealsAll(options?: { enabled?: boolean; limit?: number; ownerId?: string }) {
+export function useDealsAll(options?: {
+  enabled?: boolean;
+  limit?: number;
+  ownerId?: string;
+}) {
   const enabled = options?.enabled ?? true;
   const limit = options?.limit;
   const ownerId = options?.ownerId;
@@ -15,7 +19,9 @@ export function useDealsAll(options?: { enabled?: boolean; limit?: number; owner
       const qs = new URLSearchParams();
       if (typeof limit === "number") qs.set("limit", String(limit));
       if (ownerId) qs.set("ownerId", ownerId);
-      const url = qs.toString() ? `/api/apps/seedpay/deals?${qs.toString()}` : "/api/apps/seedpay/deals";
+      const url = qs.toString()
+        ? `/api/apps/seedpay/deals?${qs.toString()}`
+        : "/api/apps/seedpay/deals";
       return await apiRequest<DealsResult>("GET", url);
     },
     staleTime: 5 * 60 * 1000,
@@ -23,7 +29,10 @@ export function useDealsAll(options?: { enabled?: boolean; limit?: number; owner
   });
 }
 
-export function useDealsByOwner(ownerId: string | undefined, options?: { enabled?: boolean; limit?: number }) {
+export function useDealsByOwner(
+  ownerId: string | undefined,
+  options?: { enabled?: boolean; limit?: number },
+) {
   const enabled = (options?.enabled ?? true) && !!ownerId;
   const limit = options?.limit;
 
@@ -35,14 +44,20 @@ export function useDealsByOwner(ownerId: string | undefined, options?: { enabled
       const qs = new URLSearchParams();
       qs.set("ownerId", ownerId);
       if (typeof limit === "number") qs.set("limit", String(limit));
-      return await apiRequest<DealsResult>("GET", `/api/apps/seedpay/deals/by-owner?${qs.toString()}`);
+      return await apiRequest<DealsResult>(
+        "GET",
+        `/api/apps/seedpay/deals/by-owner?${qs.toString()}`,
+      );
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 }
 
-export function useDealsByIds(ids: string[] | undefined, options?: { enabled?: boolean; limit?: number }) {
+export function useDealsByIds(
+  ids: string[] | undefined,
+  options?: { enabled?: boolean; limit?: number },
+) {
   const enabled = (options?.enabled ?? true) && !!ids && ids.length > 0;
   const limit = options?.limit;
 
@@ -54,7 +69,10 @@ export function useDealsByIds(ids: string[] | undefined, options?: { enabled?: b
       const qs = new URLSearchParams();
       qs.set("ids", ids.join(","));
       if (typeof limit === "number") qs.set("limit", String(limit));
-      return await apiRequest<DealsResult>("GET", `/api/apps/seedpay/deals?${qs.toString()}`);
+      return await apiRequest<DealsResult>(
+        "GET",
+        `/api/apps/seedpay/deals?${qs.toString()}`,
+      );
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,

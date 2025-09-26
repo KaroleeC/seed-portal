@@ -1,12 +1,18 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/hooks/use-auth';
-import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Clock, Mail, Shield } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/use-auth";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { CheckCircle, Clock, Mail, Shield } from "lucide-react";
 
 export default function RequestAccess() {
   const { user: googleUser, logoutMutation } = useAuth();
@@ -15,13 +21,13 @@ export default function RequestAccess() {
 
   const requestAccessMutation = useMutation({
     mutationFn: async () => {
-      if (!googleUser) throw new Error('No Google user found');
-      
-      await apiRequest('/api/auth/request-access', {
-        method: 'POST',
+      if (!googleUser) throw new Error("No Google user found");
+
+      await apiRequest("/api/auth/request-access", {
+        method: "POST",
         body: JSON.stringify({
           email: googleUser.email,
-          name: googleUser.name
+          name: googleUser.name,
         }),
       });
     },
@@ -36,7 +42,8 @@ export default function RequestAccess() {
     onError: (error: any) => {
       toast({
         title: "Request Failed",
-        description: error.message || "Failed to send access request. Please try again.",
+        description:
+          error.message || "Failed to send access request. Please try again.",
         variant: "destructive",
       });
     },
@@ -56,12 +63,14 @@ export default function RequestAccess() {
             You need admin approval to access the Seed Financial portal
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-center gap-3 mb-2">
               <Mail className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Your Account</span>
+              <span className="text-sm font-medium text-gray-700">
+                Your Account
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-900">{googleUser?.name}</span>
@@ -75,13 +84,15 @@ export default function RequestAccess() {
             <div className="space-y-4">
               <div className="text-sm text-gray-600 leading-relaxed">
                 <p className="mb-2">
-                  Your Google Workspace account is valid, but you haven't been granted portal access yet.
+                  Your Google Workspace account is valid, but you haven't been
+                  granted portal access yet.
                 </p>
                 <p>
-                  Click below to notify the admin and request access to the portal.
+                  Click below to notify the admin and request access to the
+                  portal.
                 </p>
               </div>
-              
+
               <Button
                 onClick={() => requestAccessMutation.mutate()}
                 disabled={requestAccessMutation.isPending}
@@ -107,11 +118,12 @@ export default function RequestAccess() {
                 <div className="text-sm">
                   <p className="font-medium">Request sent successfully!</p>
                   <p className="text-green-600 mt-1">
-                    The admin has been notified via Slack and will review your request.
+                    The admin has been notified via Slack and will review your
+                    request.
                   </p>
                 </div>
               </div>
-              
+
               <div className="text-sm text-gray-600 space-y-2">
                 <p>
                   <strong>What happens next:</strong>

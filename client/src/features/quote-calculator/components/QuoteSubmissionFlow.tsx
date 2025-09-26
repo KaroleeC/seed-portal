@@ -10,7 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Send, CheckCircle } from "lucide-react";
 
-import { QuoteFormData, PricingCalculationResult, HubSpotContact } from "../types/QuoteTypes";
+import {
+  QuoteFormData,
+  PricingCalculationResult,
+  HubSpotContact,
+} from "../types/QuoteTypes";
 
 interface QuoteSubmissionFlowProps {
   form: UseFormReturn<QuoteFormData>;
@@ -25,13 +29,14 @@ export const QuoteSubmissionFlow: React.FC<QuoteSubmissionFlowProps> = ({
   calculation,
   selectedContact,
   isSubmitting,
-  onSubmit
+  onSubmit,
 }) => {
   const formData = form.watch();
-  
+
   // Check if form is ready for submission
-  const isReadyForSubmission = formData.contactEmail && 
-    formData.contactFirstName && 
+  const isReadyForSubmission =
+    formData.contactEmail &&
+    formData.contactFirstName &&
     formData.contactLastName &&
     formData.clientStreetAddress &&
     formData.clientCity &&
@@ -52,7 +57,6 @@ export const QuoteSubmissionFlow: React.FC<QuoteSubmissionFlowProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        
         {/* Submission Summary */}
         <div className="p-4 bg-white rounded-lg border">
           <div className="space-y-2">
@@ -68,7 +72,9 @@ export const QuoteSubmissionFlow: React.FC<QuoteSubmissionFlowProps> = ({
             </div>
             <div className="flex justify-between text-sm">
               <span>Company:</span>
-              <span className="font-medium">{formData.companyName || 'Not specified'}</span>
+              <span className="font-medium">
+                {formData.companyName || "Not specified"}
+              </span>
             </div>
           </div>
         </div>
@@ -113,10 +119,10 @@ export const QuoteSubmissionFlow: React.FC<QuoteSubmissionFlowProps> = ({
 
         {!isReadyForSubmission && (
           <p className="text-sm text-gray-600 text-center">
-            Please complete all required fields and select at least one service to continue.
+            Please complete all required fields and select at least one service
+            to continue.
           </p>
         )}
-
       </CardContent>
     </Card>
   );

@@ -25,7 +25,7 @@ export function useCommissionSummary(options?: {
       try {
         return await apiRequest<CommissionSummary>(
           "GET",
-          "/api/apps/seedpay/commissions/current-period-summary"
+          "/api/apps/seedpay/commissions/current-period-summary",
         );
       } catch (e) {
         // Return null rather than throw to keep UIs resilient

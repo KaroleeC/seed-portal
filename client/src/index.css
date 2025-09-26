@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Nunito+Sans:wght@400;500;600&family=League+Spartan:wght@400;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Nunito+Sans:wght@400;500;600&family=League+Spartan:wght@400;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -25,12 +25,12 @@
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
   --ring: hsl(20, 14.3%, 4.1%);
   --radius: 0.5rem;
-  
+
   /* Seed Financial Brand Colors */
   --seed-dark: hsl(155, 24%, 21%);
   --seed-light: hsl(150, 47%, 59%);
   --seed-orange: hsl(15, 100%, 44%);
-  
+
   /* Sidebar tokens (used by tailwind.config.ts theme.sidebar) */
   --sidebar-background: hsl(0, 0%, 100%);
   --sidebar-foreground: hsl(20, 14.3%, 4.1%);
@@ -63,7 +63,7 @@
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsla(210, 40%, 98%, 0.35);
-  
+
   /* Sidebar tokens (dark) */
   --sidebar-background: hsla(221, 33%, 15%, 0.58);
   --sidebar-foreground: hsl(210, 40%, 96%);
@@ -78,7 +78,8 @@
 /* Theme Variants (dark mode)
    - .dark.theme-seedkb applies the SeedKB navy glass palette explicitly
    - .dark.theme-classic restores the prior classic dark palette for A/B comparison */
-.dark.theme-seedkb {
+.dark.theme-seedkb,
+.dark.theme-seed-dark {
   --background: hsl(222, 28%, 8%);
   --foreground: hsl(210, 40%, 96%);
   --muted: hsla(221, 33%, 14%, 0.55);
@@ -109,12 +110,12 @@
   --sidebar-ring: hsla(210, 40%, 98%, 0.35);
 
   /* Hero surface custom props for reusable utilities */
-  --card-hero-start: hsla(217, 33%, 17%, 0.90); /* slate-800/90 */
-  --card-hero-end:   hsla(222, 47%, 11%, 0.90); /* slate-900/90 */
-  --card-hero-border: hsla(215, 20%, 36%, 0.50); /* slate-600/50 */
-  --band-start: hsla(215, 28%, 27%, 0.50); /* slate-700/50 */
-  --band-end:   hsla(217, 33%, 17%, 0.50); /* slate-800/50 */
-  --band-border: hsla(215, 20%, 36%, 0.30); /* slate-600/30 */
+  --card-hero-start: hsla(217, 33%, 17%, 0.9); /* slate-800/90 */
+  --card-hero-end: hsla(222, 47%, 11%, 0.9); /* slate-900/90 */
+  --card-hero-border: hsla(215, 20%, 36%, 0.5); /* slate-600/50 */
+  --band-start: hsla(215, 28%, 27%, 0.5); /* slate-700/50 */
+  --band-end: hsla(217, 33%, 17%, 0.5); /* slate-800/50 */
+  --band-border: hsla(215, 20%, 36%, 0.3); /* slate-600/30 */
 }
 
 .dark.theme-classic {
@@ -155,56 +156,152 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Nunito Sans', sans-serif;
+    font-family: "Nunito Sans", sans-serif;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Open Sans', sans-serif;
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Open Sans", sans-serif;
   }
 }
 
 @layer components {
   /* Reuse the exact KB category card surface */
-  .theme-seedkb .kb-surface {
+  .theme-seedkb .kb-surface,
+  .theme-seed-dark .kb-surface {
     position: relative;
-    background-image: linear-gradient(135deg, rgba(30,41,59,0.90), rgba(15,23,42,0.90)); /* slate-800/90 -> slate-900/90 */
-    border: 2px solid rgba(71,85,105,0.50); /* slate-600/50 */
+    background-image: linear-gradient(
+      135deg,
+      rgba(30, 41, 59, 0.9),
+      rgba(15, 23, 42, 0.9)
+    ); /* slate-800/90 -> slate-900/90 */
+    border: 2px solid rgba(71, 85, 105, 0.5); /* slate-600/50 */
     border-radius: 1rem; /* ~rounded-2xl */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.40);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
     transition: all 500ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .theme-seedkb .kb-surface:hover {
-    background-image: linear-gradient(135deg, rgba(51,65,85,0.90), rgba(30,41,59,0.90)); /* slate-700/90 -> slate-800/90 */
-    border-color: rgba(251,146,60,0.70); /* orange-400/70 */
-    transform: translateY(-0.5rem) scale(1.05);
-    box-shadow: 0 35px 60px -20px rgba(0,0,0,0.40), 0 10px 20px -10px rgba(0,0,0,0.40);
+  .theme-seedkb .kb-surface:hover,
+  .theme-seed-dark .kb-surface:hover {
+    background-image: linear-gradient(
+      135deg,
+      rgba(51, 65, 85, 0.9),
+      rgba(30, 41, 59, 0.9)
+    ); /* slate-700/90 -> slate-800/90 */
+    border-color: rgba(251, 146, 60, 0.7); /* orange-400/70 */
+    /* Reduce hover lift/zoom intensity by ~75% */
+    transform: translateY(-0.125rem) scale(1.012);
+    box-shadow:
+      0 35px 60px -20px rgba(0, 0, 0, 0.4),
+      0 10px 20px -10px rgba(0, 0, 0, 0.4);
   }
 
   /* Optional overlay to mimic the KB hover glaze */
-  .theme-seedkb .kb-surface::after {
+  .theme-seedkb .kb-surface::after,
+  .theme-seed-dark .kb-surface::after {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(0,0,0,0.20));
+    background-image: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(0, 0, 0, 0.2)
+    );
     opacity: 0;
     transition: opacity 500ms;
     border-radius: inherit;
   }
-  .theme-seedkb .kb-surface:hover::after { opacity: 1; }
+  .theme-seedkb .kb-surface:hover::after,
+  .theme-seed-dark .kb-surface:hover::after {
+    opacity: 1;
+  }
 
   /* SeedKB variant: circular quick action cards blend with navy glass */
-  .theme-seedkb .kb-quick-action { @apply bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-2 border-slate-600/50 backdrop-blur-xl; }
-  .theme-seedkb .kb-quick-action:hover { @apply from-slate-700/90 to-slate-800/90 border-orange-400/70; }
+  .theme-seedkb .kb-quick-action,
+  .theme-seed-dark .kb-quick-action {
+    @apply bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-2 border-slate-600/50 backdrop-blur-xl;
+  }
+  .theme-seedkb .kb-quick-action:hover,
+  .theme-seed-dark .kb-quick-action:hover {
+    @apply from-slate-700/90 to-slate-800/90 border-orange-400/70;
+  }
+
+  /* Shared motion utility for KB surfaces */
+  .kb-hover-motion {
+    transition:
+      transform 500ms,
+      box-shadow 500ms,
+      background-image 500ms,
+      border-color 500ms;
+    transform: translateY(0) scale(1);
+  }
+  .kb-hover-motion:hover {
+    /* Reduce hover lift/zoom intensity by ~75% */
+    transform: translateY(-0.125rem) scale(1.012);
+    box-shadow:
+      0 35px 60px -20px rgba(0, 0, 0, 0.4),
+      0 10px 20px -10px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Universal KB selection utilities for cards/tiles */
+  .kb-select {
+    transition: all 300ms ease;
+  }
+  .kb-select-hover:hover {
+    border-color: var(--primary);
+    /* Subtle primary-tinted background */
+    background-color: color-mix(in srgb, var(--primary) 5%, transparent);
+    box-shadow: 0 10px 18px -12px rgba(0, 0, 0, 0.25);
+  }
+  .kb-select-active {
+    border-color: var(--primary);
+    background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+    box-shadow: 0 14px 22px -12px rgba(0, 0, 0, 0.35);
+    transform: scale(1.01);
+  }
+
+  /* Give quick actions the same motion and glaze overlay as KbCard */
+  .theme-seedkb .kb-quick-action,
+  .theme-seed-dark .kb-quick-action {
+    position: relative;
+    overflow: hidden;
+  }
+  .theme-seedkb .kb-quick-action::after,
+  .theme-seed-dark .kb-quick-action::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(0, 0, 0, 0.2)
+    );
+    opacity: 0;
+    transition: opacity 500ms;
+    border-radius: inherit;
+  }
+  .theme-seedkb .kb-quick-action:hover::after,
+  .theme-seed-dark .kb-quick-action:hover::after {
+    opacity: 1;
+  }
 
   /* SeedKB hero utilities (reusable) */
   .seedkb-hero {
-    background: linear-gradient(135deg, var(--card-hero-start, hsla(217,33%,17%,0.90)), var(--card-hero-end, hsla(222,47%,11%,0.90)));
-    border: 2px solid var(--card-hero-border, hsla(215,20%,36%,0.50));
+    background: linear-gradient(
+      135deg,
+      var(--card-hero-start, hsla(217, 33%, 17%, 0.9)),
+      var(--card-hero-end, hsla(222, 47%, 11%, 0.9))
+    );
+    border: 2px solid var(--card-hero-border, hsla(215, 20%, 36%, 0.5));
     border-radius: 1rem; /* ~rounded-2xl */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -212,43 +309,97 @@
   }
 
   .seedkb-band {
-    background: linear-gradient(90deg, var(--band-start, hsla(215, 28%, 27%, 0.50)), var(--band-end, hsla(217, 33%, 17%, 0.50)));
-    border-bottom: 1px solid var(--band-border, hsla(215, 20%, 36%, 0.30));
+    background: linear-gradient(
+      90deg,
+      var(--band-start, hsla(215, 28%, 27%, 0.5)),
+      var(--band-end, hsla(217, 33%, 17%, 0.5))
+    );
+    border-bottom: 1px solid var(--band-border, hsla(215, 20%, 36%, 0.3));
+  }
+
+  /* Dark theme compatibility shims
+     Remap common hard-coded gray/white utilities to tokenized colors when Seed Dark Theme is active.
+     This allows a gradual migration without breaking existing pages. */
+  .dark.theme-seed-dark .bg-white,
+  .dark.theme-seed-dark .bg-gray-50,
+  .dark.theme-seed-dark .bg-gray-100,
+  .dark.theme-seed-dark .bg-slate-50,
+  .dark.theme-seed-dark .bg-zinc-50,
+  .dark.theme-seed-dark .bg-neutral-50 {
+    background-color: var(--card) !important;
+  }
+
+  .dark.theme-seed-dark .text-gray-900,
+  .dark.theme-seed-dark .text-slate-900,
+  .dark.theme-seed-dark .text-neutral-900,
+  .dark.theme-seed-dark .text-zinc-900 {
+    color: var(--foreground) !important;
+  }
+
+  .dark.theme-seed-dark .text-gray-700,
+  .dark.theme-seed-dark .text-gray-600,
+  .dark.theme-seed-dark .text-slate-600,
+  .dark.theme-seed-dark .text-neutral-600,
+  .dark.theme-seed-dark .text-zinc-600,
+  .dark.theme-seed-dark .text-gray-500 {
+    color: var(--muted-foreground) !important;
+  }
+
+  .dark.theme-seed-dark .border-gray-100,
+  .dark.theme-seed-dark .border-gray-200,
+  .dark.theme-seed-dark .border-gray-300,
+  .dark.theme-seed-dark .border-slate-200,
+  .dark.theme-seed-dark .border-neutral-200,
+  .dark.theme-seed-dark .border-zinc-200 {
+    border-color: var(--border) !important;
+  }
+
+  /* Heuristic for bg-white with opacity utilities */
+  .dark.theme-seed-dark [class*="bg-white/"],
+  .dark.theme-seed-dark [class*="bg-gray-100/"],
+  .dark.theme-seed-dark [class*="bg-gray-50/"] {
+    background-color: color-mix(
+      in srgb,
+      var(--card) 90%,
+      #ffffff 10%
+    ) !important;
   }
 
   /* Subtle card entrance animations */
   .card-bounce-in-1 {
     animation: cardBounceIn 0.45s ease-out 0.075s both;
   }
-  
+
   .card-bounce-in-2 {
     animation: cardBounceIn 0.45s ease-out 0.15s both;
   }
-  
+
   .card-bounce-in-3 {
     animation: cardBounceIn 0.45s ease-out 0.225s both;
   }
-  
+
   .action-card-bounce {
     animation: cardBounceIn 0.375s ease-out calc(var(--delay, 0) * 0.075s) both;
   }
-  
+
   /* Action card styling */
   .action-card {
     position: relative;
     background: rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(12px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
     transition: all 0.3s ease;
   }
-  
+
   .action-card:hover {
     background: rgba(255, 255, 255, 0.3);
     border-color: rgba(255, 165, 0, 0.5);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
-  
+
   .action-card-content {
     display: flex;
     flex-direction: column;
@@ -258,7 +409,7 @@
     width: 100%;
     padding: 12px;
   }
-  
+
   @keyframes cardBounceIn {
     0% {
       opacity: 0;
@@ -273,54 +424,54 @@
       transform: translateY(0) scale(1);
     }
   }
-  
+
   /* Enhanced card hover effects */
   .quote-card {
     @apply transition-shadow duration-300 ease-in-out;
   }
-  
+
   .quote-card:hover {
     @apply shadow-2xl;
   }
-  
+
   /* Enhanced table row hover */
   .quote-table-row {
     @apply transition-all duration-200 ease-in-out;
   }
-  
+
   .quote-table-row:hover {
     @apply bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm;
   }
-  
+
   /* Gradient text effects */
   .gradient-text {
     @apply bg-gradient-to-r from-[#253e31] to-[#75c29a] bg-clip-text text-transparent;
   }
-  
+
   /* Enhanced button styles */
   .button-shimmer {
     @apply relative overflow-hidden;
   }
-  
+
   .button-shimmer::before {
     @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-100%] transition-transform duration-700;
-    content: '';
+    content: "";
   }
-  
+
   .button-shimmer:hover::before {
     @apply translate-x-[200%];
   }
-  
+
   /* Pulse animation for status indicators */
   .status-pulse {
     @apply animate-pulse;
   }
-  
+
   /* Enhanced form inputs */
   .enhanced-input {
     @apply transition-all duration-200 ease-in-out;
   }
-  
+
   .enhanced-input:focus {
     @apply shadow-lg ring-2 ring-[#e24c00]/20;
   }
@@ -369,14 +520,16 @@
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     border-radius: 12px;
     padding: 2.5rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
     position: relative;
     overflow: hidden;
     margin: 1rem 0;
   }
 
   .client-article::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -399,14 +552,15 @@
   .client-article h2 {
     color: #1e40af !important;
     font-size: 1.5rem !important;
-    font-weight: 600 !important;  
+    font-weight: 600 !important;
     margin-top: 2rem !important;
     margin-bottom: 1rem !important;
     border-bottom: 2px solid #dbeafe !important;
     padding-bottom: 0.5rem !important;
   }
 
-  .client-article h3, .client-article h4 {
+  .client-article h3,
+  .client-article h4 {
     color: #2563eb !important;
     font-size: 1.25rem !important;
     font-weight: 600 !important;
@@ -421,7 +575,8 @@
     margin-bottom: 1.25rem !important;
   }
 
-  .client-article ul, .client-article ol {
+  .client-article ul,
+  .client-article ol {
     color: #475569 !important;
     font-size: 1.125rem !important;
     line-height: 1.7 !important;
@@ -443,7 +598,8 @@
     border-radius: 4px;
   }
 
-  .client-article strong, .client-article b {
+  .client-article strong,
+  .client-article b {
     background: linear-gradient(120deg, #dbeafe 0%, #bfdbfe 100%) !important;
     padding: 0.25rem 0.5rem !important;
     border-radius: 4px !important;

@@ -7,7 +7,7 @@
 export function getApprovalButtonDisabledReason(
   formValues: any,
   isRequestingApproval: boolean,
-  hasRequestedApproval: boolean
+  hasRequestedApproval: boolean,
 ): string | null {
   // Mirror original behavior: if in-flight request, don't disable by reason
   if (isRequestingApproval) return null;
@@ -28,7 +28,10 @@ export function getApprovalButtonDisabledReason(
     if (!hasCustomSetupFee && !hasDecreasedMonths) {
       return "Enter a custom setup fee OR reduce cleanup months below the minimum";
     }
-  } else if (overrideReason === "Brand New Business" || overrideReason === "Books Confirmed Current") {
+  } else if (
+    overrideReason === "Brand New Business" ||
+    overrideReason === "Books Confirmed Current"
+  ) {
     // For these reasons, enabled only if cleanup months are decreased
     if (cleanupMonths >= currentMonth) {
       return "Reduce cleanup months below the minimum to request approval";
@@ -41,7 +44,13 @@ export function getApprovalButtonDisabledReason(
 export function isApprovalButtonDisabled(
   formValues: any,
   isRequestingApproval: boolean,
-  hasRequestedApproval: boolean
+  hasRequestedApproval: boolean,
 ): boolean {
-  return getApprovalButtonDisabledReason(formValues, isRequestingApproval, hasRequestedApproval) !== null;
+  return (
+    getApprovalButtonDisabledReason(
+      formValues,
+      isRequestingApproval,
+      hasRequestedApproval,
+    ) !== null
+  );
 }

@@ -48,13 +48,29 @@ function run(name: string, fn: () => void) {
         services: { taas: { enabled: false } },
       };
       const ui = calculatePricingDisplay(base, config);
-      assert(ui.taas.monthlyFee === 0, `TaaS monthly expected 0, got ${ui.taas.monthlyFee}`);
+      assert(
+        ui.taas.monthlyFee === 0,
+        `TaaS monthly expected 0, got ${ui.taas.monthlyFee}`,
+      );
       // When TaaS disabled, discount should not be applied
-      const discountApplied = (ui.bookkeeping as any).breakdown?.discountApplied;
-      assert(!discountApplied, "Discount should not be applied when TaaS disabled");
+      const discountApplied = (ui.bookkeeping as any).breakdown
+        ?.discountApplied;
+      assert(
+        !discountApplied,
+        "Discount should not be applied when TaaS disabled",
+      );
       // combined total should equal BK + tier + payroll/ap/ar (all zero) + qbo (0 here)
-      const sum = ui.bookkeeping.monthlyFee + ui.serviceTierFee + ui.payrollFee + ui.apFee + ui.arFee + (ui as any).qboFee;
-      assert(sum === ui.totalMonthlyFee, `sum ${sum} != totalMonthlyFee ${ui.totalMonthlyFee}`);
+      const sum =
+        ui.bookkeeping.monthlyFee +
+        ui.serviceTierFee +
+        ui.payrollFee +
+        ui.apFee +
+        ui.arFee +
+        (ui as any).qboFee;
+      assert(
+        sum === ui.totalMonthlyFee,
+        `sum ${sum} != totalMonthlyFee ${ui.totalMonthlyFee}`,
+      );
     });
 
     run("Config rounding step 10 -> TaaS monthly divisible by 10", () => {
@@ -63,10 +79,16 @@ function run(name: string, fn: () => void) {
         rounding: { monthlyStep: 10 },
       };
       const ui = calculatePricingDisplay(base, config);
-      assert(ui.taas.monthlyFee % 10 === 0, `TaaS monthly not divisible by 10: ${ui.taas.monthlyFee}`);
+      assert(
+        ui.taas.monthlyFee % 10 === 0,
+        `TaaS monthly not divisible by 10: ${ui.taas.monthlyFee}`,
+      );
       // With bundle, bookkeeping discount should also round to step 10
       const bkAfter = ui.bookkeeping.monthlyFee;
-      assert(bkAfter % 10 === 0, `BK monthly after discount not divisible by 10: ${bkAfter}`);
+      assert(
+        bkAfter % 10 === 0,
+        `BK monthly after discount not divisible by 10: ${bkAfter}`,
+      );
     });
 
     run("Config disables QBO -> qboFee 0 despite subscription", () => {
@@ -80,13 +102,20 @@ function run(name: string, fn: () => void) {
     });
 
     run("Config baseMonthlyFee override affects BK monthly", () => {
-      const input: QuotePricingInput = { ...base, serviceTaasMonthly: false, includesTaas: false };
+      const input: QuotePricingInput = {
+        ...base,
+        serviceTaasMonthly: false,
+        includesTaas: false,
+      };
       const config: PricingConfig = {
         fees: { baseMonthlyFee: 200 },
       };
       const result = calculateQuotePricing(input, config);
       // expected: base 200 + tx 100 = 300; * revenue 2.2 * industry 1.0 => 660 (no discount)
-      assert(result.bookkeeping.monthlyFee === 660, `BK monthly expected 660, got ${result.bookkeeping.monthlyFee}`);
+      assert(
+        result.bookkeeping.monthlyFee === 660,
+        `BK monthly expected 660, got ${result.bookkeeping.monthlyFee}`,
+      );
       // setup should still be computed from afterMultipliers and current month
       assert(result.bookkeeping.setupFee > 0, "setup fee should be > 0");
     });

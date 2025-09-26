@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 interface UseCounterAnimationOptions {
   target: number;
@@ -7,11 +7,11 @@ interface UseCounterAnimationOptions {
   enabled?: boolean;
 }
 
-export function useCounterAnimation({ 
-  target, 
-  duration = 2000, 
-  delay = 0, 
-  enabled = true 
+export function useCounterAnimation({
+  target,
+  duration = 2000,
+  delay = 0,
+  enabled = true,
 }: UseCounterAnimationOptions) {
   const [count, setCount] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -31,11 +31,13 @@ export function useCounterAnimation({
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        
+
         // Easing function for smooth animation (ease-out)
         const easeOut = 1 - Math.pow(1 - progress, 3);
-        const currentValue = Math.floor(startValue + (endValue - startValue) * easeOut);
-        
+        const currentValue = Math.floor(
+          startValue + (endValue - startValue) * easeOut,
+        );
+
         setCount(currentValue);
 
         if (progress < 1) {

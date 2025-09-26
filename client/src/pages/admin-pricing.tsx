@@ -1,16 +1,22 @@
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { pricingKeys } from '@/lib/queryKeys';
-import { UniversalNavbar } from '@/components/UniversalNavbar';
-import { PermissionGuard } from '@/components/PermissionGuard';
-import { PERMISSIONS } from '@shared/permissions';
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { pricingKeys } from "@/lib/queryKeys";
+import { UniversalNavbar } from "@/components/UniversalNavbar";
+import { PermissionGuard } from "@/components/PermissionGuard";
+import { PERMISSIONS } from "@shared/permissions";
 import {
   Calculator,
   DollarSign,
@@ -21,8 +27,8 @@ import {
   History,
   Save,
   RefreshCw,
-  AlertCircle
-} from 'lucide-react';
+  AlertCircle,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -30,8 +36,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface PricingBase {
   id: number;
@@ -107,202 +113,259 @@ interface PricingHistory {
 
 export default function AdminPricingPage() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('base-fees');
+  const [activeTab, setActiveTab] = useState("base-fees");
   const [editingItem, setEditingItem] = useState<any>(null);
 
   // Queries for all pricing data
-  const { data: baseFees, isLoading: baseFeeLoading } = useQuery<PricingBase[]>({
-    queryKey: pricingKeys.admin.base(),
-    queryFn: async () => await apiRequest<PricingBase[]>('GET', '/api/admin/pricing/base'),
-  });
+  const { data: baseFees, isLoading: baseFeeLoading } = useQuery<PricingBase[]>(
+    {
+      queryKey: pricingKeys.admin.base(),
+      queryFn: async () =>
+        await apiRequest<PricingBase[]>("GET", "/api/admin/pricing/base"),
+    },
+  );
 
-  const { data: industryMultipliers, isLoading: industryLoading } = useQuery<IndustryMultiplier[]>({
+  const { data: industryMultipliers, isLoading: industryLoading } = useQuery<
+    IndustryMultiplier[]
+  >({
     queryKey: pricingKeys.admin.industryMultipliers(),
-    queryFn: async () => await apiRequest<IndustryMultiplier[]>('GET', '/api/admin/pricing/industry-multipliers'),
+    queryFn: async () =>
+      await apiRequest<IndustryMultiplier[]>(
+        "GET",
+        "/api/admin/pricing/industry-multipliers",
+      ),
   });
 
-  const { data: revenueMultipliers, isLoading: revenueLoading } = useQuery<RevenueMultiplier[]>({
+  const { data: revenueMultipliers, isLoading: revenueLoading } = useQuery<
+    RevenueMultiplier[]
+  >({
     queryKey: pricingKeys.admin.revenueMultipliers(),
-    queryFn: async () => await apiRequest<RevenueMultiplier[]>('GET', '/api/admin/pricing/revenue-multipliers'),
+    queryFn: async () =>
+      await apiRequest<RevenueMultiplier[]>(
+        "GET",
+        "/api/admin/pricing/revenue-multipliers",
+      ),
   });
 
-  const { data: transactionSurcharges, isLoading: transactionLoading } = useQuery<TransactionSurcharge[]>({
-    queryKey: pricingKeys.admin.transactionSurcharges(),
-    queryFn: async () => await apiRequest<TransactionSurcharge[]>('GET', '/api/admin/pricing/transaction-surcharges'),
-  });
+  const { data: transactionSurcharges, isLoading: transactionLoading } =
+    useQuery<TransactionSurcharge[]>({
+      queryKey: pricingKeys.admin.transactionSurcharges(),
+      queryFn: async () =>
+        await apiRequest<TransactionSurcharge[]>(
+          "GET",
+          "/api/admin/pricing/transaction-surcharges",
+        ),
+    });
 
-  const { data: serviceSettings, isLoading: settingsLoading } = useQuery<ServiceSetting[]>({
+  const { data: serviceSettings, isLoading: settingsLoading } = useQuery<
+    ServiceSetting[]
+  >({
     queryKey: pricingKeys.admin.serviceSettings(),
-    queryFn: async () => await apiRequest<ServiceSetting[]>('GET', '/api/admin/pricing/service-settings'),
+    queryFn: async () =>
+      await apiRequest<ServiceSetting[]>(
+        "GET",
+        "/api/admin/pricing/service-settings",
+      ),
   });
 
-  const { data: pricingTiers, isLoading: tiersLoading } = useQuery<PricingTier[]>({
+  const { data: pricingTiers, isLoading: tiersLoading } = useQuery<
+    PricingTier[]
+  >({
     queryKey: pricingKeys.admin.tiers(),
-    queryFn: async () => await apiRequest<PricingTier[]>('GET', '/api/admin/pricing/tiers'),
+    queryFn: async () =>
+      await apiRequest<PricingTier[]>("GET", "/api/admin/pricing/tiers"),
   });
 
-  const { data: pricingHistory, isLoading: historyLoading } = useQuery<PricingHistory[]>({
+  const { data: pricingHistory, isLoading: historyLoading } = useQuery<
+    PricingHistory[]
+  >({
     queryKey: pricingKeys.admin.history(),
-    queryFn: async () => await apiRequest<PricingHistory[]>('GET', '/api/admin/pricing/history'),
+    queryFn: async () =>
+      await apiRequest<PricingHistory[]>("GET", "/api/admin/pricing/history"),
   });
 
   // Mutations for updates
   const updateBaseFee = useMutation({
-    mutationFn: (data: { id: number; baseFee: string }) => 
+    mutationFn: (data: { id: number; baseFee: string }) =>
       apiRequest(`/api/admin/pricing/base/${data.id}`, {
-        method: 'PUT',
-        body: { baseFee: data.baseFee }
+        method: "PUT",
+        body: { baseFee: data.baseFee },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: pricingKeys.admin.base() });
-      toast({ title: 'Base fee updated successfully' });
+      toast({ title: "Base fee updated successfully" });
       setEditingItem(null);
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error updating base fee', 
+      toast({
+        title: "Error updating base fee",
         description: error.message,
-        variant: 'destructive' 
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const updateIndustryMultiplier = useMutation({
-    mutationFn: (data: { id: number; monthlyMultiplier: string; cleanupMultiplier: string }) => 
+    mutationFn: (data: {
+      id: number;
+      monthlyMultiplier: string;
+      cleanupMultiplier: string;
+    }) =>
       apiRequest(`/api/admin/pricing/industry-multipliers/${data.id}`, {
-        method: 'PUT',
-        body: { 
-          monthlyMultiplier: data.monthlyMultiplier, 
-          cleanupMultiplier: data.cleanupMultiplier 
-        }
+        method: "PUT",
+        body: {
+          monthlyMultiplier: data.monthlyMultiplier,
+          cleanupMultiplier: data.cleanupMultiplier,
+        },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.industryMultipliers() });
-      toast({ title: 'Industry multiplier updated successfully' });
+      queryClient.invalidateQueries({
+        queryKey: pricingKeys.admin.industryMultipliers(),
+      });
+      toast({ title: "Industry multiplier updated successfully" });
       setEditingItem(null);
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error updating industry multiplier', 
+      toast({
+        title: "Error updating industry multiplier",
         description: error.message,
-        variant: 'destructive' 
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const updateRevenueMultiplier = useMutation({
-    mutationFn: (data: { id: number; multiplier: string }) => 
+    mutationFn: (data: { id: number; multiplier: string }) =>
       apiRequest(`/api/admin/pricing/revenue-multipliers/${data.id}`, {
-        method: 'PUT',
-        body: { multiplier: data.multiplier }
+        method: "PUT",
+        body: { multiplier: data.multiplier },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.revenueMultipliers() });
-      toast({ title: 'Revenue multiplier updated successfully' });
+      queryClient.invalidateQueries({
+        queryKey: pricingKeys.admin.revenueMultipliers(),
+      });
+      toast({ title: "Revenue multiplier updated successfully" });
       setEditingItem(null);
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error updating revenue multiplier', 
+      toast({
+        title: "Error updating revenue multiplier",
         description: error.message,
-        variant: 'destructive' 
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const updateTransactionSurcharge = useMutation({
-    mutationFn: (data: { id: number; surcharge: string }) => 
+    mutationFn: (data: { id: number; surcharge: string }) =>
       apiRequest(`/api/admin/pricing/transaction-surcharges/${data.id}`, {
-        method: 'PUT',
-        body: { surcharge: data.surcharge }
+        method: "PUT",
+        body: { surcharge: data.surcharge },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.transactionSurcharges() });
-      toast({ title: 'Transaction surcharge updated successfully' });
+      queryClient.invalidateQueries({
+        queryKey: pricingKeys.admin.transactionSurcharges(),
+      });
+      toast({ title: "Transaction surcharge updated successfully" });
       setEditingItem(null);
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error updating transaction surcharge', 
+      toast({
+        title: "Error updating transaction surcharge",
         description: error.message,
-        variant: 'destructive' 
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const updateServiceSetting = useMutation({
-    mutationFn: (data: { id: number; settingValue: string }) => 
+    mutationFn: (data: { id: number; settingValue: string }) =>
       apiRequest(`/api/admin/pricing/service-settings/${data.id}`, {
-        method: 'PUT',
-        body: { settingValue: data.settingValue }
+        method: "PUT",
+        body: { settingValue: data.settingValue },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.serviceSettings() });
-      toast({ title: 'Service setting updated successfully' });
+      queryClient.invalidateQueries({
+        queryKey: pricingKeys.admin.serviceSettings(),
+      });
+      toast({ title: "Service setting updated successfully" });
       setEditingItem(null);
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error updating service setting', 
+      toast({
+        title: "Error updating service setting",
         description: error.message,
-        variant: 'destructive' 
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const updatePricingTier = useMutation({
-    mutationFn: (data: { id: number; baseFee: string; tierMultiplier: string }) => 
+    mutationFn: (data: {
+      id: number;
+      baseFee: string;
+      tierMultiplier: string;
+    }) =>
       apiRequest(`/api/admin/pricing/tiers/${data.id}`, {
-        method: 'PUT',
-        body: { 
-          baseFee: data.baseFee, 
-          tierMultiplier: data.tierMultiplier 
-        }
+        method: "PUT",
+        body: {
+          baseFee: data.baseFee,
+          tierMultiplier: data.tierMultiplier,
+        },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: pricingKeys.admin.tiers() });
-      toast({ title: 'Pricing tier updated successfully' });
+      toast({ title: "Pricing tier updated successfully" });
       setEditingItem(null);
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error updating pricing tier', 
+      toast({
+        title: "Error updating pricing tier",
         description: error.message,
-        variant: 'destructive' 
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const clearCache = useMutation({
-    mutationFn: () => apiRequest('/api/admin/pricing/clear-cache', { method: 'POST' }),
+    mutationFn: () =>
+      apiRequest("/api/admin/pricing/clear-cache", { method: "POST" }),
     onSuccess: () => {
-      toast({ title: 'Pricing cache cleared successfully' });
+      toast({ title: "Pricing cache cleared successfully" });
       // Proactively refresh all pricing datasets
       queryClient.invalidateQueries({ queryKey: pricingKeys.admin.base() });
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.industryMultipliers() });
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.revenueMultipliers() });
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.transactionSurcharges() });
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.serviceSettings() });
+      queryClient.invalidateQueries({
+        queryKey: pricingKeys.admin.industryMultipliers(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: pricingKeys.admin.revenueMultipliers(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: pricingKeys.admin.transactionSurcharges(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: pricingKeys.admin.serviceSettings(),
+      });
       queryClient.invalidateQueries({ queryKey: pricingKeys.admin.tiers() });
       queryClient.invalidateQueries({ queryKey: pricingKeys.admin.history() });
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Error clearing cache', 
+      toast({
+        title: "Error clearing cache",
         description: error.message,
-        variant: 'destructive' 
+        variant: "destructive",
       });
-    }
+    },
   });
 
   const formatCurrency = (value: string) => {
     const num = parseFloat(value);
-    return isNaN(num) ? '$0' : `$${num.toLocaleString()}`;
+    return isNaN(num) ? "$0" : `$${num.toLocaleString()}`;
   };
 
   const formatMultiplier = (value: string) => {
     const num = parseFloat(value);
-    return isNaN(num) ? '1.0x' : `${num}x`;
+    return isNaN(num) ? "1.0x" : `${num}x`;
   };
 
   const formatDate = (dateString: string) => {
@@ -310,10 +373,13 @@ export default function AdminPricingPage() {
   };
 
   return (
-    <PermissionGuard permissions={PERMISSIONS.MANAGE_PRICING} fallback={<div>Access denied</div>}>
+    <PermissionGuard
+      permissions={PERMISSIONS.MANAGE_PRICING}
+      fallback={<div>Access denied</div>}
+    >
       <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
         <UniversalNavbar />
-        
+
         <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
@@ -325,16 +391,19 @@ export default function AdminPricingPage() {
                     Pricing Configuration Management
                   </h1>
                   <p className="mt-2 text-white/80">
-                    Manage all pricing variables for the calculator system without touching code
+                    Manage all pricing variables for the calculator system
+                    without touching code
                   </p>
                 </div>
-                <Button 
+                <Button
                   onClick={() => clearCache.mutate()}
                   disabled={clearCache.isPending}
                   variant="outline"
                   className="flex items-center gap-2"
                 >
-                  <RefreshCw className={`w-4 h-4 ${clearCache.isPending ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`w-4 h-4 ${clearCache.isPending ? "animate-spin" : ""}`}
+                  />
                   Clear Cache
                 </Button>
               </div>
@@ -346,10 +415,13 @@ export default function AdminPricingPage() {
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="text-sm font-medium text-orange-800">Important Notice</h3>
+                    <h3 className="text-sm font-medium text-orange-800">
+                      Important Notice
+                    </h3>
                     <p className="text-sm text-orange-700 mt-1">
-                      Changes to pricing configurations will immediately affect all new quotes. 
-                      Clear the cache after making changes to ensure they take effect.
+                      Changes to pricing configurations will immediately affect
+                      all new quotes. Clear the cache after making changes to
+                      ensure they take effect.
                     </p>
                   </div>
                 </div>
@@ -357,29 +429,51 @@ export default function AdminPricingPage() {
             </Card>
 
             {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="space-y-6"
+            >
               <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="base-fees" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="base-fees"
+                  className="flex items-center gap-2"
+                >
                   <DollarSign className="w-4 h-4" />
                   Base Fees
                 </TabsTrigger>
-                <TabsTrigger value="industry" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="industry"
+                  className="flex items-center gap-2"
+                >
                   <Building2 className="w-4 h-4" />
                   Industries
                 </TabsTrigger>
-                <TabsTrigger value="revenue" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="revenue"
+                  className="flex items-center gap-2"
+                >
                   <TrendingUp className="w-4 h-4" />
                   Revenue
                 </TabsTrigger>
-                <TabsTrigger value="transactions" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="transactions"
+                  className="flex items-center gap-2"
+                >
                   <Target className="w-4 h-4" />
                   Transactions
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="settings"
+                  className="flex items-center gap-2"
+                >
                   <Settings className="w-4 h-4" />
                   Settings
                 </TabsTrigger>
-                <TabsTrigger value="history" className="flex items-center gap-2">
+                <TabsTrigger
+                  value="history"
+                  className="flex items-center gap-2"
+                >
                   <History className="w-4 h-4" />
                   History
                 </TabsTrigger>
@@ -411,23 +505,32 @@ export default function AdminPricingPage() {
                         <TableBody>
                           {baseFees?.map((fee) => (
                             <TableRow key={fee.id}>
-                              <TableCell className="font-medium">{fee.service}</TableCell>
+                              <TableCell className="font-medium">
+                                {fee.service}
+                              </TableCell>
                               <TableCell>
                                 {editingItem?.id === fee.id ? (
                                   <div className="flex items-center gap-2">
                                     <Input
                                       type="number"
                                       value={editingItem.baseFee}
-                                      onChange={(e) => setEditingItem({...editingItem, baseFee: e.target.value})}
+                                      onChange={(e) =>
+                                        setEditingItem({
+                                          ...editingItem,
+                                          baseFee: e.target.value,
+                                        })
+                                      }
                                       className="w-24"
                                       data-testid={`input-base-fee-${fee.service.toLowerCase()}`}
                                     />
                                     <Button
                                       size="sm"
-                                      onClick={() => updateBaseFee.mutate({
-                                        id: fee.id,
-                                        baseFee: editingItem.baseFee
-                                      })}
+                                      onClick={() =>
+                                        updateBaseFee.mutate({
+                                          id: fee.id,
+                                          baseFee: editingItem.baseFee,
+                                        })
+                                      }
                                       disabled={updateBaseFee.isPending}
                                       data-testid={`button-save-base-fee-${fee.service.toLowerCase()}`}
                                     >
@@ -453,10 +556,12 @@ export default function AdminPricingPage() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => setEditingItem({
-                                      id: fee.id,
-                                      baseFee: fee.baseFee
-                                    })}
+                                    onClick={() =>
+                                      setEditingItem({
+                                        id: fee.id,
+                                        baseFee: fee.baseFee,
+                                      })
+                                    }
                                     data-testid={`button-edit-base-fee-${fee.service.toLowerCase()}`}
                                   >
                                     Edit
@@ -498,16 +603,23 @@ export default function AdminPricingPage() {
                         <TableBody>
                           {industryMultipliers?.map((multiplier) => (
                             <TableRow key={multiplier.id}>
-                              <TableCell className="font-medium">{multiplier.industry}</TableCell>
+                              <TableCell className="font-medium">
+                                {multiplier.industry}
+                              </TableCell>
                               <TableCell>
                                 {editingItem?.id === multiplier.id ? (
                                   <Input
                                     type="number"
                                     step="0.1"
                                     value={editingItem.monthlyMultiplier}
-                                    onChange={(e) => setEditingItem({...editingItem, monthlyMultiplier: e.target.value})}
+                                    onChange={(e) =>
+                                      setEditingItem({
+                                        ...editingItem,
+                                        monthlyMultiplier: e.target.value,
+                                      })
+                                    }
                                     className="w-24"
-                                    data-testid={`input-monthly-multiplier-${multiplier.industry.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                    data-testid={`input-monthly-multiplier-${multiplier.industry.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                   />
                                 ) : (
                                   formatMultiplier(multiplier.monthlyMultiplier)
@@ -519,27 +631,40 @@ export default function AdminPricingPage() {
                                     type="number"
                                     step="0.1"
                                     value={editingItem.cleanupMultiplier}
-                                    onChange={(e) => setEditingItem({...editingItem, cleanupMultiplier: e.target.value})}
+                                    onChange={(e) =>
+                                      setEditingItem({
+                                        ...editingItem,
+                                        cleanupMultiplier: e.target.value,
+                                      })
+                                    }
                                     className="w-24"
-                                    data-testid={`input-cleanup-multiplier-${multiplier.industry.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                    data-testid={`input-cleanup-multiplier-${multiplier.industry.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                   />
                                 ) : (
                                   formatMultiplier(multiplier.cleanupMultiplier)
                                 )}
                               </TableCell>
-                              <TableCell>{formatDate(multiplier.updatedAt)}</TableCell>
+                              <TableCell>
+                                {formatDate(multiplier.updatedAt)}
+                              </TableCell>
                               <TableCell>
                                 {editingItem?.id === multiplier.id ? (
                                   <div className="flex gap-2">
                                     <Button
                                       size="sm"
-                                      onClick={() => updateIndustryMultiplier.mutate({
-                                        id: multiplier.id,
-                                        monthlyMultiplier: editingItem.monthlyMultiplier,
-                                        cleanupMultiplier: editingItem.cleanupMultiplier
-                                      })}
-                                      disabled={updateIndustryMultiplier.isPending}
-                                      data-testid={`button-save-industry-multiplier-${multiplier.industry.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                      onClick={() =>
+                                        updateIndustryMultiplier.mutate({
+                                          id: multiplier.id,
+                                          monthlyMultiplier:
+                                            editingItem.monthlyMultiplier,
+                                          cleanupMultiplier:
+                                            editingItem.cleanupMultiplier,
+                                        })
+                                      }
+                                      disabled={
+                                        updateIndustryMultiplier.isPending
+                                      }
+                                      data-testid={`button-save-industry-multiplier-${multiplier.industry.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                     >
                                       <Save className="w-3 h-3" />
                                     </Button>
@@ -547,7 +672,7 @@ export default function AdminPricingPage() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() => setEditingItem(null)}
-                                      data-testid={`button-cancel-industry-multiplier-${multiplier.industry.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                      data-testid={`button-cancel-industry-multiplier-${multiplier.industry.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                     >
                                       Cancel
                                     </Button>
@@ -556,12 +681,16 @@ export default function AdminPricingPage() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => setEditingItem({
-                                      id: multiplier.id,
-                                      monthlyMultiplier: multiplier.monthlyMultiplier,
-                                      cleanupMultiplier: multiplier.cleanupMultiplier
-                                    })}
-                                    data-testid={`button-edit-industry-multiplier-${multiplier.industry.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                    onClick={() =>
+                                      setEditingItem({
+                                        id: multiplier.id,
+                                        monthlyMultiplier:
+                                          multiplier.monthlyMultiplier,
+                                        cleanupMultiplier:
+                                          multiplier.cleanupMultiplier,
+                                      })
+                                    }
+                                    data-testid={`button-edit-industry-multiplier-${multiplier.industry.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                   >
                                     Edit
                                   </Button>
@@ -601,7 +730,9 @@ export default function AdminPricingPage() {
                         <TableBody>
                           {revenueMultipliers?.map((multiplier) => (
                             <TableRow key={multiplier.id}>
-                              <TableCell className="font-medium">{multiplier.revenueRange}</TableCell>
+                              <TableCell className="font-medium">
+                                {multiplier.revenueRange}
+                              </TableCell>
                               <TableCell>
                                 {editingItem?.id === multiplier.id ? (
                                   <div className="flex items-center gap-2">
@@ -609,18 +740,27 @@ export default function AdminPricingPage() {
                                       type="number"
                                       step="0.1"
                                       value={editingItem.multiplier}
-                                      onChange={(e) => setEditingItem({...editingItem, multiplier: e.target.value})}
+                                      onChange={(e) =>
+                                        setEditingItem({
+                                          ...editingItem,
+                                          multiplier: e.target.value,
+                                        })
+                                      }
                                       className="w-24"
-                                      data-testid={`input-revenue-multiplier-${multiplier.revenueRange.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                      data-testid={`input-revenue-multiplier-${multiplier.revenueRange.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                     />
                                     <Button
                                       size="sm"
-                                      onClick={() => updateRevenueMultiplier.mutate({
-                                        id: multiplier.id,
-                                        multiplier: editingItem.multiplier
-                                      })}
-                                      disabled={updateRevenueMultiplier.isPending}
-                                      data-testid={`button-save-revenue-multiplier-${multiplier.revenueRange.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                      onClick={() =>
+                                        updateRevenueMultiplier.mutate({
+                                          id: multiplier.id,
+                                          multiplier: editingItem.multiplier,
+                                        })
+                                      }
+                                      disabled={
+                                        updateRevenueMultiplier.isPending
+                                      }
+                                      data-testid={`button-save-revenue-multiplier-${multiplier.revenueRange.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                     >
                                       <Save className="w-3 h-3" />
                                     </Button>
@@ -628,7 +768,7 @@ export default function AdminPricingPage() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() => setEditingItem(null)}
-                                      data-testid={`button-cancel-revenue-multiplier-${multiplier.revenueRange.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                      data-testid={`button-cancel-revenue-multiplier-${multiplier.revenueRange.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                     >
                                       Cancel
                                     </Button>
@@ -637,17 +777,21 @@ export default function AdminPricingPage() {
                                   formatMultiplier(multiplier.multiplier)
                                 )}
                               </TableCell>
-                              <TableCell>{formatDate(multiplier.updatedAt)}</TableCell>
+                              <TableCell>
+                                {formatDate(multiplier.updatedAt)}
+                              </TableCell>
                               <TableCell>
                                 {editingItem?.id !== multiplier.id && (
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => setEditingItem({
-                                      id: multiplier.id,
-                                      multiplier: multiplier.multiplier
-                                    })}
-                                    data-testid={`button-edit-revenue-multiplier-${multiplier.revenueRange.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                    onClick={() =>
+                                      setEditingItem({
+                                        id: multiplier.id,
+                                        multiplier: multiplier.multiplier,
+                                      })
+                                    }
+                                    data-testid={`button-edit-revenue-multiplier-${multiplier.revenueRange.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                   >
                                     Edit
                                   </Button>
@@ -687,25 +831,36 @@ export default function AdminPricingPage() {
                         <TableBody>
                           {transactionSurcharges?.map((surcharge) => (
                             <TableRow key={surcharge.id}>
-                              <TableCell className="font-medium">{surcharge.transactionRange}</TableCell>
+                              <TableCell className="font-medium">
+                                {surcharge.transactionRange}
+                              </TableCell>
                               <TableCell>
                                 {editingItem?.id === surcharge.id ? (
                                   <div className="flex items-center gap-2">
                                     <Input
                                       type="number"
                                       value={editingItem.surcharge}
-                                      onChange={(e) => setEditingItem({...editingItem, surcharge: e.target.value})}
+                                      onChange={(e) =>
+                                        setEditingItem({
+                                          ...editingItem,
+                                          surcharge: e.target.value,
+                                        })
+                                      }
                                       className="w-24"
-                                      data-testid={`input-transaction-surcharge-${surcharge.transactionRange.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                      data-testid={`input-transaction-surcharge-${surcharge.transactionRange.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                     />
                                     <Button
                                       size="sm"
-                                      onClick={() => updateTransactionSurcharge.mutate({
-                                        id: surcharge.id,
-                                        surcharge: editingItem.surcharge
-                                      })}
-                                      disabled={updateTransactionSurcharge.isPending}
-                                      data-testid={`button-save-transaction-surcharge-${surcharge.transactionRange.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                      onClick={() =>
+                                        updateTransactionSurcharge.mutate({
+                                          id: surcharge.id,
+                                          surcharge: editingItem.surcharge,
+                                        })
+                                      }
+                                      disabled={
+                                        updateTransactionSurcharge.isPending
+                                      }
+                                      data-testid={`button-save-transaction-surcharge-${surcharge.transactionRange.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                     >
                                       <Save className="w-3 h-3" />
                                     </Button>
@@ -713,7 +868,7 @@ export default function AdminPricingPage() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() => setEditingItem(null)}
-                                      data-testid={`button-cancel-transaction-surcharge-${surcharge.transactionRange.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                      data-testid={`button-cancel-transaction-surcharge-${surcharge.transactionRange.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                     >
                                       Cancel
                                     </Button>
@@ -722,17 +877,21 @@ export default function AdminPricingPage() {
                                   formatCurrency(surcharge.surcharge)
                                 )}
                               </TableCell>
-                              <TableCell>{formatDate(surcharge.updatedAt)}</TableCell>
+                              <TableCell>
+                                {formatDate(surcharge.updatedAt)}
+                              </TableCell>
                               <TableCell>
                                 {editingItem?.id !== surcharge.id && (
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => setEditingItem({
-                                      id: surcharge.id,
-                                      surcharge: surcharge.surcharge
-                                    })}
-                                    data-testid={`button-edit-transaction-surcharge-${surcharge.transactionRange.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                                    onClick={() =>
+                                      setEditingItem({
+                                        id: surcharge.id,
+                                        surcharge: surcharge.surcharge,
+                                      })
+                                    }
+                                    data-testid={`button-edit-transaction-surcharge-${surcharge.transactionRange.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                                   >
                                     Edit
                                   </Button>
@@ -775,25 +934,37 @@ export default function AdminPricingPage() {
                           {serviceSettings?.map((setting) => (
                             <TableRow key={setting.id}>
                               <TableCell>
-                                <Badge variant="outline">{setting.service}</Badge>
+                                <Badge variant="outline">
+                                  {setting.service}
+                                </Badge>
                               </TableCell>
-                              <TableCell className="font-medium">{setting.settingKey}</TableCell>
+                              <TableCell className="font-medium">
+                                {setting.settingKey}
+                              </TableCell>
                               <TableCell>
                                 {editingItem?.id === setting.id ? (
                                   <div className="flex items-center gap-2">
                                     <Input
                                       type="number"
                                       value={editingItem.settingValue}
-                                      onChange={(e) => setEditingItem({...editingItem, settingValue: e.target.value})}
+                                      onChange={(e) =>
+                                        setEditingItem({
+                                          ...editingItem,
+                                          settingValue: e.target.value,
+                                        })
+                                      }
                                       className="w-24"
                                       data-testid={`input-service-setting-${setting.service}-${setting.settingKey}`}
                                     />
                                     <Button
                                       size="sm"
-                                      onClick={() => updateServiceSetting.mutate({
-                                        id: setting.id,
-                                        settingValue: editingItem.settingValue
-                                      })}
+                                      onClick={() =>
+                                        updateServiceSetting.mutate({
+                                          id: setting.id,
+                                          settingValue:
+                                            editingItem.settingValue,
+                                        })
+                                      }
                                       disabled={updateServiceSetting.isPending}
                                       data-testid={`button-save-service-setting-${setting.service}-${setting.settingKey}`}
                                     >
@@ -813,16 +984,20 @@ export default function AdminPricingPage() {
                                 )}
                               </TableCell>
                               <TableCell>{setting.description}</TableCell>
-                              <TableCell>{formatDate(setting.updatedAt)}</TableCell>
+                              <TableCell>
+                                {formatDate(setting.updatedAt)}
+                              </TableCell>
                               <TableCell>
                                 {editingItem?.id !== setting.id && (
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => setEditingItem({
-                                      id: setting.id,
-                                      settingValue: setting.settingValue
-                                    })}
+                                    onClick={() =>
+                                      setEditingItem({
+                                        id: setting.id,
+                                        settingValue: setting.settingValue,
+                                      })
+                                    }
                                     data-testid={`button-edit-service-setting-${setting.service}-${setting.settingKey}`}
                                   >
                                     Edit
@@ -866,17 +1041,23 @@ export default function AdminPricingPage() {
                           {pricingHistory?.slice(0, 50).map((history) => (
                             <TableRow key={history.id}>
                               <TableCell>
-                                <Badge variant="outline">{history.tableAffected}</Badge>
+                                <Badge variant="outline">
+                                  {history.tableAffected}
+                                </Badge>
                               </TableCell>
-                              <TableCell className="font-medium">{history.fieldChanged}</TableCell>
+                              <TableCell className="font-medium">
+                                {history.fieldChanged}
+                              </TableCell>
                               <TableCell className="text-gray-500">
-                                {history.oldValue || 'N/A'}
+                                {history.oldValue || "N/A"}
                               </TableCell>
                               <TableCell className="font-medium">
                                 {history.newValue}
                               </TableCell>
                               <TableCell>User #{history.changedBy}</TableCell>
-                              <TableCell>{formatDate(history.createdAt)}</TableCell>
+                              <TableCell>
+                                {formatDate(history.createdAt)}
+                              </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
