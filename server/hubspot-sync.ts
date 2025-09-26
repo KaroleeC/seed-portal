@@ -119,13 +119,11 @@ export class HubSpotCommissionSync {
               INSERT INTO sales_reps (
                 user_id,
                 is_active,
-                start_date,
                 created_at,
                 updated_at
               ) VALUES (
                 ${userId},
                 true,
-                NOW(),
                 NOW(),
                 NOW()
               )
@@ -391,8 +389,8 @@ export class HubSpotCommissionSync {
                 }
 
                 const repInserted = await db.execute(sql`
-                  INSERT INTO sales_reps (user_id, is_active, start_date, created_at, updated_at)
-                  VALUES (${userId}, true, NOW(), NOW(), NOW())
+                  INSERT INTO sales_reps (user_id, is_active, created_at, updated_at)
+                  VALUES (${userId}, true, NOW(), NOW())
                   ON CONFLICT DO NOTHING
                   RETURNING id
                 `);
@@ -435,8 +433,8 @@ export class HubSpotCommissionSync {
           if (adminUser.rows.length > 0) {
             const u = adminUser.rows[0] as any;
             const inserted = await db.execute(sql`
-              INSERT INTO sales_reps (user_id, is_active, start_date, created_at, updated_at)
-              VALUES (${u.id}, true, NOW(), NOW(), NOW())
+              INSERT INTO sales_reps (user_id, is_active, created_at, updated_at)
+              VALUES (${u.id}, true, NOW(), NOW())
               RETURNING id
             `);
             salesRepId = Number((inserted.rows[0] as any).id);
