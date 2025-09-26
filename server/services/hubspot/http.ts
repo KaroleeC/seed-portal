@@ -3,15 +3,15 @@
 
 export type HubSpotRequestFn = (
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
 ) => Promise<any>;
 
 export class HubSpotHttpClient {
   private baseUrl: string;
   private accessToken: string;
 
-  constructor(accessToken: string, baseUrl = 'https://api.hubapi.com') {
-    if (!accessToken) throw new Error('HubSpot access token required');
+  constructor(accessToken: string, baseUrl = "https://api.hubapi.com") {
+    if (!accessToken) throw new Error("HubSpot access token required");
     this.accessToken = accessToken;
     this.baseUrl = baseUrl;
   }
@@ -22,7 +22,7 @@ export class HubSpotHttpClient {
         ...options,
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...(options.headers || {}),
         },
       });
@@ -40,22 +40,22 @@ export class HubSpotHttpClient {
         if (!response.ok) {
           const retryErrorText = await response.text();
           throw new Error(
-            `HubSpot API error: ${response.status} ${response.statusText} - ${retryErrorText}`
+            `HubSpot API error: ${response.status} ${response.statusText} - ${retryErrorText}`,
           );
         }
       } else {
         throw new Error(
-          `HubSpot API error: ${response.status} ${response.statusText} - ${errorText}`
+          `HubSpot API error: ${response.status} ${response.statusText} - ${errorText}`,
         );
       }
     }
 
-    const contentType = response.headers.get('content-type');
-    const contentLength = response.headers.get('content-length');
+    const contentType = response.headers.get("content-type");
+    const contentLength = response.headers.get("content-length");
     if (
       response.status === 204 ||
-      contentLength === '0' ||
-      !contentType?.includes('application/json')
+      contentLength === "0" ||
+      !contentType?.includes("application/json")
     ) {
       return null;
     }

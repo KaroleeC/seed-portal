@@ -1,18 +1,52 @@
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Building2, ExternalLink, Filter, Inbox, Calendar, User, X, Search } from 'lucide-react';
-import { format, parseISO, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
-import { useAuth } from '@/hooks/use-auth';
-import { apiRequest } from '@/lib/queryClient';
-import { useState } from 'react';
+import { useQuery } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Building2,
+  ExternalLink,
+  Filter,
+  Inbox,
+  Calendar,
+  User,
+  X,
+  Search,
+} from "lucide-react";
+import {
+  format,
+  parseISO,
+  isAfter,
+  isBefore,
+  startOfDay,
+  endOfDay,
+} from "date-fns";
+import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
+import { useState } from "react";
 
 interface SalesLead {
   id: string;
@@ -38,12 +72,19 @@ interface SalesInboxProps {
 export function SalesInbox({ limit = 8 }: SalesInboxProps) {
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [dateFilter, setDateFilter] = useState<{ start: string; end: string }>({ start: '', end: '' });
-  const [stageFilter, setStageFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  
-  const { data: leadsData, isLoading, error } = useQuery({
-    queryKey: ['/api/sales-inbox/leads', limit, user?.email],
+  const [dateFilter, setDateFilter] = useState<{ start: string; end: string }>({
+    start: "",
+    end: "",
+  });
+  const [stageFilter, setStageFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const {
+    data: leadsData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["/api/sales-inbox/leads", limit, user?.email],
     queryFn: async () => {
       return await apiRequest(`/api/sales-inbox/leads?limit=${limit}`);
     },
@@ -55,9 +96,9 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
 
   // Separate query for all leads (for modal)
   const { data: allLeadsData, isLoading: isLoadingAll } = useQuery({
-    queryKey: ['/api/sales-inbox/leads', 'all', user?.email],
+    queryKey: ["/api/sales-inbox/leads", "all", user?.email],
     queryFn: async () => {
-      return await apiRequest('/api/sales-inbox/leads?limit=100'); // Get up to 100 leads
+      return await apiRequest("/api/sales-inbox/leads?limit=100"); // Get up to 100 leads
     },
     staleTime: 0,
     gcTime: 0,
@@ -66,14 +107,24 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
     enabled: true, // Always fetch to get the total count for button
   });
 
-  const leads: SalesLead[] = (leadsData?.leads || []).sort((a: SalesLead, b: SalesLead) => {
-    // Sort by assigned date (most recent first) - use this reliable date field
-    const dateA = new Date(a.properties.hubspot_owner_assigneddate || a.properties.hs_createdate || '1970-01-01');
-    const dateB = new Date(b.properties.hubspot_owner_assigneddate || b.properties.hs_createdate || '1970-01-01');
-    return dateB.getTime() - dateA.getTime();
-  });
+  const leads: SalesLead[] = (leadsData?.leads || []).sort(
+    (a: SalesLead, b: SalesLead) => {
+      // Sort by assigned date (most recent first) - use this reliable date field
+      const dateA = new Date(
+        a.properties.hubspot_owner_assigneddate ||
+          a.properties.hs_createdate ||
+          "1970-01-01",
+      );
+      const dateB = new Date(
+        b.properties.hubspot_owner_assigneddate ||
+          b.properties.hs_createdate ||
+          "1970-01-01",
+      );
+      return dateB.getTime() - dateA.getTime();
+    },
+  );
 
-  const allLeads: SalesLead[] = (allLeadsData?.leads || []);
+  const allLeads: SalesLead[] = allLeadsData?.leads || [];
   const totalLeadCount = allLeads.length > 0 ? allLeads.length : leads.length;
 
   // Filter function for modal leads
@@ -81,36 +132,40 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
     // Search filter (company name or email)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      const companyName = (lead.properties.company || '').toLowerCase();
-      const email = (lead.properties.email || '').toLowerCase();
-      const firstName = (lead.properties.firstname || '').toLowerCase();
-      const lastName = (lead.properties.lastname || '').toLowerCase();
+      const companyName = (lead.properties.company || "").toLowerCase();
+      const email = (lead.properties.email || "").toLowerCase();
+      const firstName = (lead.properties.firstname || "").toLowerCase();
+      const lastName = (lead.properties.lastname || "").toLowerCase();
       const fullName = `${firstName} ${lastName}`.trim();
-      
-      if (!companyName.includes(query) && 
-          !email.includes(query) && 
-          !fullName.includes(query)) {
+
+      if (
+        !companyName.includes(query) &&
+        !email.includes(query) &&
+        !fullName.includes(query)
+      ) {
         return false;
       }
     }
 
     // Stage filter
-    if (stageFilter !== 'all' && lead.leadStage !== stageFilter) {
+    if (stageFilter !== "all" && lead.leadStage !== stageFilter) {
       return false;
     }
 
     // Date range filter
     if (dateFilter.start || dateFilter.end) {
-      const leadDate = lead.properties.hubspot_owner_assigneddate || lead.properties.hs_createdate;
+      const leadDate =
+        lead.properties.hubspot_owner_assigneddate ||
+        lead.properties.hs_createdate;
       if (!leadDate) return false;
 
       const leadDateObj = parseISO(leadDate);
-      
+
       if (dateFilter.start) {
         const startDate = startOfDay(parseISO(dateFilter.start));
         if (isBefore(leadDateObj, startDate)) return false;
       }
-      
+
       if (dateFilter.end) {
         const endDate = endOfDay(parseISO(dateFilter.end));
         if (isAfter(leadDateObj, endDate)) return false;
@@ -121,17 +176,19 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
   });
 
   // Get unique lead stages for filter dropdown
-  const uniqueStages = Array.from(new Set(allLeads.map(lead => lead.leadStage)));
+  const uniqueStages = Array.from(
+    new Set(allLeads.map((lead) => lead.leadStage)),
+  );
 
   const clearFilters = () => {
-    setDateFilter({ start: '', end: '' });
-    setStageFilter('all');
-    setSearchQuery('');
+    setDateFilter({ start: "", end: "" });
+    setStageFilter("all");
+    setSearchQuery("");
   };
 
   const formatContactName = (lead: SalesLead) => {
-    const firstName = lead.properties.firstname || '';
-    const lastName = lead.properties.lastname || '';
+    const firstName = lead.properties.firstname || "";
+    const lastName = lead.properties.lastname || "";
     if (firstName && lastName) {
       return `${firstName} ${lastName}`;
     }
@@ -141,11 +198,11 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
   };
 
   const formatCreateDate = (dateString?: string) => {
-    if (!dateString) return 'No date';
+    if (!dateString) return "No date";
     try {
-      return format(new Date(dateString), 'MMM d, yyyy');
+      return format(new Date(dateString), "MMM d, yyyy");
     } catch {
-      return 'Invalid date';
+      return "Invalid date";
     }
   };
 
@@ -159,16 +216,19 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
 
   const getLeadStageColor = (stage: string) => {
     const lowerStage = stage.toLowerCase();
-    if (lowerStage.includes('new') || lowerStage.includes('lead')) {
-      return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (lowerStage.includes("new") || lowerStage.includes("lead")) {
+      return "bg-blue-100 text-blue-800 border-blue-200";
     }
-    if (lowerStage.includes('qualified') || lowerStage.includes('opportunity')) {
-      return 'bg-green-100 text-green-800 border-green-200';
+    if (
+      lowerStage.includes("qualified") ||
+      lowerStage.includes("opportunity")
+    ) {
+      return "bg-green-100 text-green-800 border-green-200";
     }
-    if (lowerStage.includes('contact') || lowerStage.includes('attempt')) {
-      return 'bg-orange-100 text-orange-800 border-orange-200';
+    if (lowerStage.includes("contact") || lowerStage.includes("attempt")) {
+      return "bg-orange-100 text-orange-800 border-orange-200";
     }
-    return 'bg-gray-100 text-gray-800 border-gray-200';
+    return "bg-gray-100 text-gray-800 border-gray-200";
   };
 
   if (isLoading) {
@@ -181,14 +241,19 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
             </div>
             <div>
               <CardTitle className="text-xl text-white">Sales Inbox</CardTitle>
-              <CardDescription className="text-white/80">Loading active leads...</CardDescription>
+              <CardDescription className="text-white/80">
+                Loading active leads...
+              </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between p-4 bg-white/20 border border-white/20 rounded-lg animate-pulse">
+              <div
+                key={i}
+                className="flex items-center justify-between p-4 bg-white/20 border border-white/20 rounded-lg animate-pulse"
+              >
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-white/30 rounded-full"></div>
                   <div>
@@ -215,13 +280,16 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
             </div>
             <div>
               <CardTitle className="text-xl text-white">Sales Inbox</CardTitle>
-              <CardDescription className="text-red-300">Failed to load leads</CardDescription>
+              <CardDescription className="text-red-300">
+                Failed to load leads
+              </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-white/80">
-            Unable to connect to HubSpot. Please check your integration settings.
+            Unable to connect to HubSpot. Please check your integration
+            settings.
           </p>
         </CardContent>
       </Card>
@@ -233,8 +301,12 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg font-medium text-white">Sales Inbox</CardTitle>
-            <CardDescription className="text-sm text-white/80">Active leads requiring attention</CardDescription>
+            <CardTitle className="text-lg font-medium text-white">
+              Sales Inbox
+            </CardTitle>
+            <CardDescription className="text-sm text-white/80">
+              Active leads requiring attention
+            </CardDescription>
           </div>
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
@@ -244,9 +316,11 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
             </DialogTrigger>
             <DialogContent className="max-w-5xl max-h-[90vh]">
               <DialogHeader>
-                <DialogTitle className="text-xl font-semibold">All Active Leads</DialogTitle>
+                <DialogTitle className="text-xl font-semibold">
+                  All Active Leads
+                </DialogTitle>
               </DialogHeader>
-              
+
               {/* Filter Controls */}
               <div className="border-b pb-4 mb-4 space-y-4">
                 {/* Search Bar */}
@@ -259,51 +333,72 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                     className="pl-10 w-full"
                   />
                 </div>
-                
+
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-gray-500" />
                     <span className="text-sm font-medium">Filters:</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="stage-filter" className="text-sm">Stage:</Label>
+                    <Label htmlFor="stage-filter" className="text-sm">
+                      Stage:
+                    </Label>
                     <Select value={stageFilter} onValueChange={setStageFilter}>
                       <SelectTrigger className="w-48" id="stage-filter">
                         <SelectValue placeholder="All stages" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All stages</SelectItem>
-                        {uniqueStages.map(stage => (
-                          <SelectItem key={stage} value={stage}>{stage}</SelectItem>
+                        {uniqueStages.map((stage) => (
+                          <SelectItem key={stage} value={stage}>
+                            {stage}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="date-start" className="text-sm">From:</Label>
+                    <Label htmlFor="date-start" className="text-sm">
+                      From:
+                    </Label>
                     <Input
                       id="date-start"
                       type="date"
                       value={dateFilter.start}
-                      onChange={(e) => setDateFilter(prev => ({ ...prev, start: e.target.value }))}
+                      onChange={(e) =>
+                        setDateFilter((prev) => ({
+                          ...prev,
+                          start: e.target.value,
+                        }))
+                      }
                       className="w-36"
                     />
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="date-end" className="text-sm">To:</Label>
+                    <Label htmlFor="date-end" className="text-sm">
+                      To:
+                    </Label>
                     <Input
                       id="date-end"
                       type="date"
                       value={dateFilter.end}
-                      onChange={(e) => setDateFilter(prev => ({ ...prev, end: e.target.value }))}
+                      onChange={(e) =>
+                        setDateFilter((prev) => ({
+                          ...prev,
+                          end: e.target.value,
+                        }))
+                      }
                       className="w-36"
                     />
                   </div>
 
-                  {(stageFilter !== 'all' || dateFilter.start || dateFilter.end || searchQuery) && (
+                  {(stageFilter !== "all" ||
+                    dateFilter.start ||
+                    dateFilter.end ||
+                    searchQuery) && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -315,7 +410,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                     </Button>
                   )}
                 </div>
-                
+
                 <div className="text-sm text-gray-600">
                   Showing {filteredLeads.length} of {allLeads.length} leads
                 </div>
@@ -325,7 +420,10 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                 {isLoadingAll ? (
                   <div className="space-y-4">
                     {[...Array(6)].map((_, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-gray-50 border rounded-lg animate-pulse">
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-4 bg-gray-50 border rounded-lg animate-pulse"
+                      >
                         <div className="flex items-center space-x-4">
                           <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
                           <div>
@@ -341,8 +439,16 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                   <div className="space-y-3">
                     {filteredLeads
                       .sort((a: SalesLead, b: SalesLead) => {
-                        const dateA = new Date(a.properties.hubspot_owner_assigneddate || a.properties.hs_createdate || '1970-01-01');
-                        const dateB = new Date(b.properties.hubspot_owner_assigneddate || b.properties.hs_createdate || '1970-01-01');
+                        const dateA = new Date(
+                          a.properties.hubspot_owner_assigneddate ||
+                            a.properties.hs_createdate ||
+                            "1970-01-01",
+                        );
+                        const dateB = new Date(
+                          b.properties.hubspot_owner_assigneddate ||
+                            b.properties.hs_createdate ||
+                            "1970-01-01",
+                        );
                         return dateB.getTime() - dateA.getTime();
                       })
                       .map((lead) => (
@@ -356,16 +462,23 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                             </div>
                             <div>
                               <h3 className="font-semibold text-gray-900 text-base">
-                                {lead.properties.company || 'Unknown Company'}
+                                {lead.properties.company || "Unknown Company"}
                               </h3>
                               <p className="text-sm text-gray-600">
-                                {formatContactName(lead)} • {formatCreateDate(lead.properties.hubspot_owner_assigneddate || lead.properties.hs_createdate)} • {lead.leadStage}
+                                {formatContactName(lead)} •{" "}
+                                {formatCreateDate(
+                                  lead.properties.hubspot_owner_assigneddate ||
+                                    lead.properties.hs_createdate,
+                                )}{" "}
+                                • {lead.leadStage}
                               </p>
                             </div>
                           </div>
                           <Button
                             size="sm"
-                            onClick={() => window.open(lead.hubspotContactUrl, '_blank')}
+                            onClick={() =>
+                              window.open(lead.hubspotContactUrl, "_blank")
+                            }
                             className="bg-orange-500 hover:bg-orange-600 text-white"
                           >
                             <ExternalLink className="h-4 w-4 mr-2" />
@@ -376,15 +489,24 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                     {filteredLeads.length === 0 && allLeads.length > 0 && (
                       <div className="text-center py-12">
                         <Filter className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-700 mb-2">No leads match your filters</h3>
-                        <p className="text-gray-500">Try adjusting your date range or stage selection.</p>
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                          No leads match your filters
+                        </h3>
+                        <p className="text-gray-500">
+                          Try adjusting your date range or stage selection.
+                        </p>
                       </div>
                     )}
                     {allLeads.length === 0 && (
                       <div className="text-center py-12">
                         <Inbox className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-700 mb-2">No active leads</h3>
-                        <p className="text-gray-500">All caught up! No leads requiring attention at the moment.</p>
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                          No active leads
+                        </h3>
+                        <p className="text-gray-500">
+                          All caught up! No leads requiring attention at the
+                          moment.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -394,12 +516,16 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
           </Dialog>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3" style={{ minHeight: '520px' }}>
+      <CardContent className="space-y-3" style={{ minHeight: "520px" }}>
         {leads.length === 0 ? (
           <div className="text-center py-8">
             <Inbox className="h-12 w-12 text-white/40 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No active leads</h3>
-            <p className="text-white/60">All caught up! No leads requiring attention at the moment.</p>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              No active leads
+            </h3>
+            <p className="text-white/60">
+              All caught up! No leads requiring attention at the moment.
+            </p>
           </div>
         ) : (
           <>
@@ -414,16 +540,21 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 text-sm">
-                      {lead.properties.company || 'Unknown Company'}
+                      {lead.properties.company || "Unknown Company"}
                     </h3>
                     <p className="text-xs text-gray-600">
-                      {formatContactName(lead)} • {formatCreateDate(lead.properties.hubspot_owner_assigneddate || lead.properties.hs_createdate)} • {lead.leadStage}
+                      {formatContactName(lead)} •{" "}
+                      {formatCreateDate(
+                        lead.properties.hubspot_owner_assigneddate ||
+                          lead.properties.hs_createdate,
+                      )}{" "}
+                      • {lead.leadStage}
                     </p>
                   </div>
                 </div>
                 <Button
                   size="sm"
-                  onClick={() => window.open(lead.hubspotContactUrl, '_blank')}
+                  onClick={() => window.open(lead.hubspotContactUrl, "_blank")}
                   className="bg-orange-500 hover:bg-orange-600 text-white text-xs"
                 >
                   Open in HubSpot

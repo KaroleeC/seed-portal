@@ -5,7 +5,7 @@ This guide explains how to run non-blocking, production-safe SQL migrations that
 ## File
 
 - `seed-portal/migrations/0002_deals_indexes_owner_trigger_prod.sql`
-  - Creates indexes with `CONCURRENTLY` on hot tables (deals, commissions, hubspot_* tables, users)
+  - Creates indexes with `CONCURRENTLY` on hot tables (deals, commissions, hubspot\_\* tables, users)
   - Adds/ensures a trigger to keep `deals.owner_id` and `deals.hubspot_owner_id` in sync
   - Idempotent and safe to re-run
   - Intentionally not wrapped in a transaction

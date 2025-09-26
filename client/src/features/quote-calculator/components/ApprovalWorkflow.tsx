@@ -8,12 +8,12 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { AlertTriangle, Lock } from "lucide-react";
 
@@ -28,7 +28,7 @@ interface ApprovalWorkflowProps {
 export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
   formData,
   onApprovalSuccess,
-  onCancel
+  onCancel,
 }) => {
   const [approvalCode, setApprovalCode] = useState("");
   const [overrideReason, setOverrideReason] = useState("");
@@ -50,16 +50,16 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
             Approval Required
           </DialogTitle>
           <DialogDescription>
-            This quote requires special approval. Please provide an approval code to proceed.
+            This quote requires special approval. Please provide an approval
+            code to proceed.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          
           {/* Override Reason */}
           <div>
             <Label htmlFor="overrideReason">Override Reason</Label>
-            <select 
+            <select
               id="overrideReason"
               value={overrideReason}
               onChange={(e) => setOverrideReason(e.target.value)}
@@ -68,7 +68,9 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
               <option value="">Select reason...</option>
               <option value="complex_cleanup">Complex cleanup project</option>
               <option value="custom_pricing">Custom pricing arrangement</option>
-              <option value="special_client">Special client circumstances</option>
+              <option value="special_client">
+                Special client circumstances
+              </option>
               <option value="other">Other (please specify)</option>
             </select>
           </div>
@@ -103,11 +105,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">
-            <Button
-              onClick={onCancel}
-              variant="outline"
-              className="flex-1"
-            >
+            <Button onClick={onCancel} variant="outline" className="flex-1">
               Cancel
             </Button>
             <Button
@@ -118,7 +116,6 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
               Submit for Approval
             </Button>
           </div>
-
         </div>
       </DialogContent>
     </Dialog>

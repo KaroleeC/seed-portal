@@ -8,15 +8,18 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { 
-  TrendingUp, 
-  Calendar, 
-  DollarSign, 
+import {
+  TrendingUp,
+  Calendar,
+  DollarSign,
   Calculator,
-  CheckCircle2
+  CheckCircle2,
 } from "lucide-react";
 
-import { PricingCalculationResult, QuoteFormData } from "../../types/QuoteTypes";
+import {
+  PricingCalculationResult,
+  QuoteFormData,
+} from "../../types/QuoteTypes";
 
 interface PricingDisplayPanelProps {
   calculation: PricingCalculationResult;
@@ -25,7 +28,7 @@ interface PricingDisplayPanelProps {
 
 export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
   calculation,
-  formData
+  formData,
 }) => {
   // Helper to format currency with safety check
   const formatCurrency = (amount: number | undefined) => {
@@ -35,18 +38,24 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
   // Calculate savings display using shared adapter data when available
   // Fallback: compute from bookkeeping.breakdown before/after (already provided by shared)
   const bk: any = calculation.bookkeeping as any;
-  const computedDiscount = (typeof bk?.breakdown?.monthlyFeeBeforeDiscount === 'number'
-    && typeof bk?.breakdown?.monthlyFeeAfterDiscount === 'number')
-    ? Math.max(0, bk.breakdown.monthlyFeeBeforeDiscount - bk.breakdown.monthlyFeeAfterDiscount)
-    : 0;
-  const packageDiscountMonthly = (calculation as any).packageDiscountMonthly ?? computedDiscount;
-  const bookkeepingPackageDiscount = (calculation.includesBookkeeping && calculation.includesTaas)
-    ? packageDiscountMonthly
-    : 0;
+  const computedDiscount =
+    typeof bk?.breakdown?.monthlyFeeBeforeDiscount === "number" &&
+    typeof bk?.breakdown?.monthlyFeeAfterDiscount === "number"
+      ? Math.max(
+          0,
+          bk.breakdown.monthlyFeeBeforeDiscount -
+            bk.breakdown.monthlyFeeAfterDiscount,
+        )
+      : 0;
+  const packageDiscountMonthly =
+    (calculation as any).packageDiscountMonthly ?? computedDiscount;
+  const bookkeepingPackageDiscount =
+    calculation.includesBookkeeping && calculation.includesTaas
+      ? packageDiscountMonthly
+      : 0;
 
   return (
     <div className="space-y-6">
-      
       {/* Main Pricing Summary */}
       <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
         <CardHeader>
@@ -56,14 +65,15 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          
           {/* Monthly Fee */}
           <div className="flex justify-between items-center p-4 bg-white rounded-lg border">
             <div className="flex items-center gap-3">
               <TrendingUp className="w-5 h-5 text-green-600" />
               <div>
                 <div className="font-semibold text-gray-900">Monthly Total</div>
-                <div className="text-sm text-gray-600">Recurring monthly fees</div>
+                <div className="text-sm text-gray-600">
+                  Recurring monthly fees
+                </div>
               </div>
             </div>
             <div className="text-right">
@@ -80,7 +90,9 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
               <Calendar className="w-5 h-5 text-blue-600" />
               <div>
                 <div className="font-semibold text-gray-900">Setup Total</div>
-                <div className="text-sm text-gray-600">One-time implementation</div>
+                <div className="text-sm text-gray-600">
+                  One-time implementation
+                </div>
               </div>
             </div>
             <div className="text-right">
@@ -99,13 +111,15 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
                 <span className="text-sm font-medium text-green-800">
                   Bookkeeping Package Savings
                 </span>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-800"
+                >
                   -{formatCurrency(bookkeepingPackageDiscount)}/month
                 </Badge>
               </div>
             </div>
           )}
-
         </CardContent>
       </Card>
 
@@ -118,7 +132,6 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          
           {/* Core Services */}
           {calculation.includesBookkeeping && (
             <div className="flex justify-between items-center py-2">
@@ -126,7 +139,9 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span className="text-sm">Monthly Bookkeeping</span>
                 {bookkeepingPackageDiscount > 0 && (
-                  <Badge variant="outline" className="text-xs">50% off</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    50% off
+                  </Badge>
                 )}
               </div>
               <div className="font-medium">
@@ -152,7 +167,9 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
             <div className="flex justify-between items-center py-2">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-sm">Service Tier ({formData.serviceTier})</span>
+                <span className="text-sm">
+                  Service Tier ({formData.serviceTier})
+                </span>
               </div>
               <div className="font-medium">
                 {formatCurrency(calculation.serviceTierFee)}/mo
@@ -210,11 +227,15 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
           )}
 
           {/* One-time Services */}
-          {(calculation.cleanupProjectFee > 0 || calculation.priorYearFilingsFee > 0 || calculation.cfoAdvisoryFee > 0) && (
+          {(calculation.cleanupProjectFee > 0 ||
+            calculation.priorYearFilingsFee > 0 ||
+            calculation.cfoAdvisoryFee > 0) && (
             <>
               <Separator className="my-3" />
-              <div className="text-sm font-medium text-gray-700 mb-2">One-Time Services</div>
-              
+              <div className="text-sm font-medium text-gray-700 mb-2">
+                One-Time Services
+              </div>
+
               {calculation.cleanupProjectFee > 0 && (
                 <div className="flex justify-between items-center py-2">
                   <div className="flex items-center gap-2">
@@ -252,7 +273,6 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
               )}
             </>
           )}
-
         </CardContent>
       </Card>
     </div>

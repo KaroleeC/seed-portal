@@ -4,12 +4,20 @@ import { UniversalNavbar } from "@/components/UniversalNavbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { Shield, Calculator, DollarSign, BookOpen, Users, Wrench, Settings } from "lucide-react";
+import {
+  Shield,
+  Calculator,
+  DollarSign,
+  BookOpen,
+  Users,
+  Wrench,
+  Settings,
+} from "lucide-react";
 
 export default function SettingsHub() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
 
   const Section = ({
     title,
@@ -19,7 +27,11 @@ export default function SettingsHub() {
   }: {
     title: string;
     description: string;
-    actions: Array<{ label: string; to: string; variant?: "default" | "outline" | "ghost" | "secondary" }>; 
+    actions: Array<{
+      label: string;
+      to: string;
+      variant?: "default" | "outline" | "ghost" | "secondary";
+    }>;
     icon: any;
   }) => (
     <Card className="border shadow-md">
@@ -33,7 +45,11 @@ export default function SettingsHub() {
         <p className="text-sm text-muted-foreground">{description}</p>
         <div className="flex gap-2">
           {actions.map((a) => (
-            <Button key={a.to} variant={a.variant ?? "default"} onClick={() => setLocation(a.to)}>
+            <Button
+              key={a.to}
+              variant={a.variant ?? "default"}
+              onClick={() => setLocation(a.to)}
+            >
               {a.label}
             </Button>
           ))}
@@ -58,7 +74,9 @@ export default function SettingsHub() {
               </div>
             )}
           </div>
-          <p className="text-white/80 mt-1">Configure the SeedOS apps and system based on your access.</p>
+          <p className="text-white/80 mt-1">
+            Configure the SeedOS apps and system based on your access.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4">
@@ -73,7 +91,9 @@ export default function SettingsHub() {
             <Section
               title="Calculator (SeedQC)"
               description="Manage SOW templates, agreement links, and pricing settings for the calculator."
-              actions={[{ label: "Open Settings", to: "/apps/seedqc/settings" }]}
+              actions={[
+                { label: "Open Settings", to: "/apps/seedqc/settings" },
+              ]}
               icon={Calculator}
             />
           )}
@@ -82,7 +102,9 @@ export default function SettingsHub() {
             <Section
               title="Commission Tracker (SeedPay)"
               description="View commission diagnostics and settings (read-only for now)."
-              actions={[{ label: "Open Settings", to: "/apps/seedpay/settings" }]}
+              actions={[
+                { label: "Open Settings", to: "/apps/seedpay/settings" },
+              ]}
               icon={DollarSign}
             />
           )}
@@ -91,7 +113,9 @@ export default function SettingsHub() {
           <Section
             title="Knowledge Base"
             description="Manage knowledge base content and settings."
-            actions={[{ label: "KB Admin", to: "/kb-admin", variant: "outline" }]}
+            actions={[
+              { label: "KB Admin", to: "/kb-admin", variant: "outline" },
+            ]}
             icon={BookOpen}
           />
 
@@ -100,9 +124,21 @@ export default function SettingsHub() {
               title="System (Admin)"
               description="Manage users, integrations, and diagnostics."
               actions={[
-                { label: "User Management", to: "/user-management", variant: "outline" },
-                { label: "Pricing Management", to: "/admin/pricing", variant: "outline" },
-                { label: "HubSpot Diagnostics", to: "/admin/hubspot", variant: "outline" },
+                {
+                  label: "User Management",
+                  to: "/user-management",
+                  variant: "outline",
+                },
+                {
+                  label: "Pricing Management",
+                  to: "/admin/pricing",
+                  variant: "outline",
+                },
+                {
+                  label: "HubSpot Diagnostics",
+                  to: "/admin/hubspot",
+                  variant: "outline",
+                },
               ]}
               icon={Users}
             />

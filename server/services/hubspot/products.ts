@@ -1,31 +1,33 @@
-import { cache, CacheTTL } from '../../cache.js';
-import type { HubSpotRequestFn } from './http.js';
+import { cache, CacheTTL } from "../../cache.js";
+import type { HubSpotRequestFn } from "./http.js";
 
 export function createProductsService(request: HubSpotRequestFn) {
   async function getProducts(): Promise<any[]> {
     try {
-      console.log('🔍 FETCHING ALL HUBSPOT PRODUCTS...');
-      const result = await request('/crm/v3/objects/products');
-      console.log('🔍 ALL HUBSPOT PRODUCTS:');
+      console.log("🔍 FETCHING ALL HUBSPOT PRODUCTS...");
+      const result = await request("/crm/v3/objects/products");
+      console.log("🔍 ALL HUBSPOT PRODUCTS:");
       if (result?.results) {
         result.results.forEach((product: any) => {
           console.log(
-            `  ID: ${product.id} | Name: "${product.properties?.name}" | SKU: ${product.properties?.hs_sku}`
+            `  ID: ${product.id} | Name: "${product.properties?.name}" | SKU: ${product.properties?.hs_sku}`,
           );
         });
       }
       return result?.results || [];
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error("Error fetching products:", error);
       return [];
     }
   }
 
   async function getProductsCached(): Promise<any[]> {
     try {
-      return await cache.wrap('hs:products:all', () => getProducts(), { ttl: CacheTTL.ONE_DAY });
+      return await cache.wrap("hs:products:all", () => getProducts(), {
+        ttl: CacheTTL.ONE_DAY,
+      });
     } catch (error) {
-      console.error('Error fetching cached products, falling back:', error);
+      console.error("Error fetching cached products, falling back:", error);
       return await getProducts();
     }
   }
@@ -35,7 +37,7 @@ export function createProductsService(request: HubSpotRequestFn) {
     CLEANUP_PROJECT: string;
   }): Promise<{ bookkeeping: string; cleanup: string; valid: boolean }> {
     try {
-      console.log('🔍 VERIFYING HUBSPOT PRODUCT IDS');
+      console.log("🔍 VERIFYING HUBSPOT PRODUCT IDS");
 
       const currentIds = {
         bookkeeping: productIds.MONTHLY_BOOKKEEPING,
@@ -48,9 +50,13 @@ export function createProductsService(request: HubSpotRequestFn) {
       try {
         await request(`/crm/v3/objects/products/${currentIds.bookkeeping}`);
         bookkeepingValid = true;
-        console.log(`✅ Bookkeeping product ID ${currentIds.bookkeeping} is valid`);
+        console.log(
+          `✅ Bookkeeping product ID ${currentIds.bookkeeping} is valid`,
+        );
       } catch {
-        console.log(`❌ Bookkeeping product ID ${currentIds.bookkeeping} is invalid`);
+        console.log(
+          `❌ Bookkeeping product ID ${currentIds.bookkeeping} is invalid`,
+        );
       }
 
       try {
@@ -62,36 +68,45 @@ export function createProductsService(request: HubSpotRequestFn) {
       }
 
       if (bookkeepingValid && cleanupValid) {
-        console.log('🎉 All product IDs are valid');
+        console.log("🎉 All product IDs are valid");
         return { ...currentIds, valid: true };
       }
 
-      console.log('🔍 Searching for alternative products...');
+      console.log("🔍 Searching for alternative products...");
       const products = await getProducts();
 
       let altBookkeeping = currentIds.bookkeeping;
       let altCleanup = currentIds.cleanup;
 
       for (const product of products) {
-        const name = product.properties?.name?.toLowerCase() || '';
-        const sku = product.properties?.hs_sku?.toLowerCase() || '';
+        const name = product.properties?.name?.toLowerCase() || "";
+        const sku = product.properties?.hs_sku?.toLowerCase() || "";
 
         if (
           !bookkeepingValid &&
-          (name.includes('bookkeeping') || name.includes('monthly') || sku.includes('book'))
+          (name.includes("bookkeeping") ||
+            name.includes("monthly") ||
+            sku.includes("book"))
         ) {
           altBookkeeping = product.id;
           bookkeepingValid = true;
-          console.log(`🔄 Found alternative bookkeeping product: ${product.id} - ${product.properties?.name}`);
+          console.log(
+            `🔄 Found alternative bookkeeping product: ${product.id} - ${product.properties?.name}`,
+          );
         }
 
         if (
           !cleanupValid &&
-          (name.includes('cleanup') || name.includes('catch') || name.includes('setup') || sku.includes('setup'))
+          (name.includes("cleanup") ||
+            name.includes("catch") ||
+            name.includes("setup") ||
+            sku.includes("setup"))
         ) {
           altCleanup = product.id;
           cleanupValid = true;
-          console.log(`🔄 Found alternative cleanup product: ${product.id} - ${product.properties?.name}`);
+          console.log(
+            `🔄 Found alternative cleanup product: ${product.id} - ${product.properties?.name}`,
+          );
         }
       }
 
@@ -101,7 +116,7 @@ export function createProductsService(request: HubSpotRequestFn) {
         valid: bookkeepingValid && cleanupValid,
       };
     } catch (error) {
-      console.error('❌ Error verifying product IDs:', error);
+      console.error("❌ Error verifying product IDs:", error);
       return {
         bookkeeping: productIds.MONTHLY_BOOKKEEPING,
         cleanup: productIds.CLEANUP_PROJECT,

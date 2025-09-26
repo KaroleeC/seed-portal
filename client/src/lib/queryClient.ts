@@ -14,9 +14,8 @@ const getBaseApiUrl = (): string => {
   // If same-origin as current page, prefer relative
   try {
     const current = window.location;
-    // On Vercel preview/production domains, always prefer same-origin so rewrites proxy /api -> server
-    const isVercel = /\.vercel\.app$/.test(current.hostname);
-    if (isVercel) {
+    // On Vercel domains, prefer same-origin so rewrites proxy /api -> server
+    if (/\.vercel\.app$/.test(current.hostname)) {
       return "";
     }
     const parsed = new URL(normalized);

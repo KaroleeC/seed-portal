@@ -422,7 +422,9 @@ export function calculateCleanupProjectFees(data: PricingData): {
   cleanupProjectFee: number;
 } {
   const cleanupPeriods = (data as any).cleanupPeriods || [];
-  const cleanupProjectFee = cleanupPeriods.length * 100; // $100 per month
+  const cleanupMonths = Number((data as any).cleanupMonths) || 0;
+  const months = cleanupPeriods.length > 0 ? cleanupPeriods.length : cleanupMonths;
+  const cleanupProjectFee = months * 100; // $100 per month
   return { cleanupProjectFee };
 }
 
@@ -969,17 +971,14 @@ function calculateCombinedFeesWithConfig(
     };
   }
 
-  // Service tier fee via config
-  let serviceTierFee = 0;
-  if ((data as any).serviceTier === "Guided")
-    serviceTierFee = tierFees.Guided ?? 79;
-  else if ((data as any).serviceTier === "Concierge")
-    serviceTierFee = tierFees.Concierge ?? 249;
-  else serviceTierFee = tierFees.Automated ?? 0;
+  // Service tier fee disabled: always 0 (selection removed from UI)
+  const serviceTierFee = 0;
 
   // Additional project fees
   const cleanupPeriods = (data as any).cleanupPeriods || [];
-  const cleanupProjectFee = cleanupPeriods.length * cleanupPerMonth;
+  const cleanupMonths = Number((data as any).cleanupMonths) || 0;
+  const cleanupCount = cleanupPeriods.length > 0 ? cleanupPeriods.length : cleanupMonths;
+  const cleanupProjectFee = cleanupCount * cleanupPerMonth;
 
   const priorYearFilings = (data as any).priorYearFilings || [];
   const priorYearFilingsFee = priorYearFilings.length * priorYearFilingPerYear;
@@ -1015,7 +1014,6 @@ function calculateCombinedFeesWithConfig(
   const combinedMonthlyFee =
     finalBookkeeping.monthlyFee +
     taasFees.monthlyFee +
-    serviceTierFee +
     payrollFee +
     apFee +
     arFee +

@@ -30,13 +30,16 @@ export function ThemeToggle({ className }: { className?: string }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem className="text-sm" onClick={() => setTheme("light")}> 
+        <DropdownMenuItem className="text-sm" onClick={() => setTheme("light")}>
           <Sun className="mr-2 h-4 w-4" /> Light
         </DropdownMenuItem>
         <DropdownMenuItem className="text-sm" onClick={() => setTheme("dark")}>
           <Moon className="mr-2 h-4 w-4" /> Dark
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-sm" onClick={() => setTheme("system")}>
+        <DropdownMenuItem
+          className="text-sm"
+          onClick={() => setTheme("system")}
+        >
           <Laptop className="mr-2 h-4 w-4" /> System
         </DropdownMenuItem>
       </DropdownMenuContent>

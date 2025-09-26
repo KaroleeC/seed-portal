@@ -1,13 +1,13 @@
 // HubSpot Quote Sync Background Jobs
-import { Job } from 'bullmq';
-import { logger } from '../logger';
-import { storage } from '../storage';
+import { Job } from "bullmq";
+import { logger } from "../logger";
+import { storage } from "../storage";
 
-const hubspotLogger = logger.child({ module: 'hubspot-quote-sync' });
+const hubspotLogger = logger.child({ module: "hubspot-quote-sync" });
 
 export interface HubSpotQuoteSyncJobData {
   quoteId: number;
-  action: 'create' | 'update';
+  action: "create" | "update";
   userId: number;
   retryCount?: number;
 }
@@ -20,16 +20,21 @@ export interface HubSpotQuoteSyncResult {
   error?: string;
 }
 
-export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>): Promise<HubSpotQuoteSyncResult> {
+export async function processHubSpotQuoteSync(
+  job: Job<HubSpotQuoteSyncJobData>,
+): Promise<HubSpotQuoteSyncResult> {
   const { quoteId, action, userId } = job.data;
-  
-  hubspotLogger.info({ 
-    jobId: job.id, 
-    quoteId, 
-    action, 
-    userId,
-    attempt: job.attemptsMade + 1 
-  }, `🔄 Processing HubSpot quote sync`);
+
+  hubspotLogger.info(
+    {
+      jobId: job.id,
+      quoteId,
+      action,
+      userId,
+      attempt: job.attemptsMade + 1,
+    },
+    `🔄 Processing HubSpot quote sync`,
+  );
 
   try {
     // Get the quote from database
@@ -47,8 +52,12 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
     await job.updateProgress(50);
 
     // Use unified sync function for both create/update
-    const { syncQuoteToHubSpot } = await import('../services/hubspot/sync.js');
-    const unified = await syncQuoteToHubSpot(quoteId, action as any, user.email);
+    const { syncQuoteToHubSpot } = await import("../services/hubspot/sync.js");
+    const unified = await syncQuoteToHubSpot(
+      quoteId,
+      action as any,
+      user.email,
+    );
 
     await job.updateProgress(100);
 
@@ -58,24 +67,26 @@ export async function processHubSpotQuoteSync(job: Job<HubSpotQuoteSyncJobData>)
       dealId: unified.hubspotDealId || undefined,
       hubspotQuoteId: unified.hubspotQuoteId || undefined,
     };
-
   } catch (error: any) {
-    const errorMessage = error.message || 'Unknown error occurred';
-    
-    hubspotLogger.error({ 
-      jobId: job.id,
-      quoteId, 
-      action,
-      error: errorMessage,
-      attempt: job.attemptsMade + 1,
-      stack: error.stack
-    }, '❌ HubSpot quote sync failed');
+    const errorMessage = error.message || "Unknown error occurred";
+
+    hubspotLogger.error(
+      {
+        jobId: job.id,
+        quoteId,
+        action,
+        error: errorMessage,
+        attempt: job.attemptsMade + 1,
+        stack: error.stack,
+      },
+      "❌ HubSpot quote sync failed",
+    );
 
     // Return failure result
     return {
       success: false,
       quoteId,
-      error: errorMessage
+      error: errorMessage,
     };
   }
 }

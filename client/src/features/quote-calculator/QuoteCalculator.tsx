@@ -35,7 +35,6 @@ import PayrollSection from "@/components/quote-form/PayrollSection";
 import APSection from "@/components/quote-form/APSection";
 import ARSection from "@/components/quote-form/ARSection";
 import AgentOfServiceSection from "@/components/quote-form/AgentOfServiceSection";
-import { ServiceTierCards } from "@/components/quote-form/ServiceTierCards";
 import { CommissionPreview } from "@/components/seedqc/CommissionPreview";
 import { useQuotes } from "@/hooks/use-quotes";
 import { useAuth } from "@/hooks/use-auth";
@@ -829,7 +828,7 @@ function QuoteCalculator() {
       contact.properties.zip;
     form.setValue(
       "companyAddressLocked",
-      hasCompleteAddressData ? true : false,
+      !!hasCompleteAddressData,
     );
     setShowExistingQuotesModal(false);
     setHubspotVerificationStatus("verified");
@@ -906,8 +905,6 @@ function QuoteCalculator() {
                     hubspotContact={hubspotContact}
                     onEmailChange={debouncedVerifyEmail}
                   />
-
-                  <ServiceTierCards form={form} />
 
                   <ServiceCards
                     selectedServices={{

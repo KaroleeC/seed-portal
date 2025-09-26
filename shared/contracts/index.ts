@@ -1,13 +1,13 @@
-import { z } from 'zod';
-import { DealsResultSchema } from '../deals';
+import { z } from "zod";
+import { DealsResultSchema } from "../deals";
 
 // Re-export existing shared contracts
-export { DealSchema, DealsResultSchema } from '../deals';
-export type { Deal } from '../deals';
+export { DealSchema, DealsResultSchema } from "../deals";
+export type { Deal } from "../deals";
 export type DealsResult = z.infer<typeof DealsResultSchema>;
 
-export { PricingConfigSchema } from '../pricing-config';
-export type { PricingConfig } from '../pricing-config';
+export { PricingConfigSchema } from "../pricing-config";
+export type { PricingConfig } from "../pricing-config";
 
 // Commission Summary for current period (SeedPay)
 export const CommissionSummarySchema = z.object({
@@ -35,23 +35,29 @@ export const CalculatorServiceContentItemSchema = z.object({
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
-export type CalculatorServiceContentItem = z.infer<typeof CalculatorServiceContentItemSchema>;
+export type CalculatorServiceContentItem = z.infer<
+  typeof CalculatorServiceContentItemSchema
+>;
 
 export const CalculatorContentResponseSchema = z.object({
   items: z.array(CalculatorServiceContentItemSchema),
   msaLink: z.string().optional(),
 });
-export type CalculatorContentResponse = z.infer<typeof CalculatorContentResponseSchema>;
+export type CalculatorContentResponse = z.infer<
+  typeof CalculatorContentResponseSchema
+>;
 
 export const CalculatorContentItemResponseSchema = z.object({
   item: CalculatorServiceContentItemSchema,
   msaLink: z.string().optional(),
 });
-export type CalculatorContentItemResponse = z.infer<typeof CalculatorContentItemResponseSchema>;
+export type CalculatorContentItemResponse = z.infer<
+  typeof CalculatorContentItemResponseSchema
+>;
 
 // Standard error envelope for consistency on failure paths
 export const ErrorEnvelopeSchema = z.object({
-  status: z.literal('error'),
+  status: z.literal("error"),
   message: z.string(),
 });
 export type ErrorEnvelope = z.infer<typeof ErrorEnvelopeSchema>;

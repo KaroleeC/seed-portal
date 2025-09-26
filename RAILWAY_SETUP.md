@@ -3,12 +3,14 @@
 ## Environment Variables Required
 
 ### Essential Backend Variables (from Doppler)
+
 - `DATABASE_URL` - Supabase PostgreSQL connection string
 - `REDIS_URL` - Railway will provide this automatically
 - `SESSION_SECRET` - For session encryption
 - `NODE_ENV` - Set to "production"
 
 ### API Keys (from Doppler)
+
 - `OPENAI_API_KEY`
 - `HUBSPOT_PRIVATE_APP_TOKEN`
 - `ANTHROPIC_API_KEY`
@@ -21,6 +23,7 @@
 - `AIRTABLE_BASE_ID`
 
 ### Google APIs (from Doppler)
+
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_PRIVATE_KEY`

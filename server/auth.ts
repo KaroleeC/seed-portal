@@ -28,16 +28,20 @@ async function hashPassword(password: string) {
 
 async function comparePasswords(supplied: string, stored: string) {
   // Check if this is a bcrypt hash (starts with $2a$, $2b$, or $2y$)
-  if (stored.startsWith('$2a$') || stored.startsWith('$2b$') || stored.startsWith('$2y$')) {
+  if (
+    stored.startsWith("$2a$") ||
+    stored.startsWith("$2b$") ||
+    stored.startsWith("$2y$")
+  ) {
     // Use bcrypt for comparison
-    const bcrypt = await import('bcryptjs');
+    const bcrypt = await import("bcryptjs");
     return await bcrypt.compare(supplied, stored);
   }
-  
+
   // Legacy scrypt hash format (hash.salt)
   const [hashed, salt] = stored.split(".");
   if (!hashed || !salt) {
-    throw new Error('Invalid password hash format');
+    throw new Error("Invalid password hash format");
   }
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
@@ -49,18 +53,22 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
   // Initialize HubSpot service for user verification (use singleton)
   let hubSpotService: HubSpotService | null = hsSingleton;
   if (!hubSpotService) {
-    console.warn('HubSpot service not available for user verification: missing HUBSPOT_ACCESS_TOKEN');
+    console.warn(
+      "HubSpot service not available for user verification: missing HUBSPOT_ACCESS_TOKEN",
+    );
   }
 
   // Require SESSION_SECRET in production
   if (!process.env.SESSION_SECRET) {
-    console.error('CRITICAL: SESSION_SECRET environment variable is not set!');
-    console.error('Generate a secure secret with: openssl rand -base64 32');
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('SESSION_SECRET is required in production');
+    console.error("CRITICAL: SESSION_SECRET environment variable is not set!");
+    console.error("Generate a secure secret with: openssl rand -base64 32");
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SESSION_SECRET is required in production");
     }
     // Development warning but allow to continue
-    console.warn('Using insecure default session secret - DO NOT USE IN PRODUCTION');
+    console.warn(
+      "Using insecure default session secret - DO NOT USE IN PRODUCTION",
+    );
   }
 
   // Session setup is centralized, now configuring passport strategies
@@ -71,196 +79,256 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
 
   passport.use(
     new LocalStrategy(
-      { usernameField: 'email' }, // Use email as username field
+      { usernameField: "email" }, // Use email as username field
       async (email, password, done) => {
-        console.log('[Passport LocalStrategy] 🔐 ===== AUTHENTICATION ATTEMPT =====');
-        console.log('[Passport LocalStrategy] 🔐 Credentials:', {
+        console.log(
+          "[Passport LocalStrategy] 🔐 ===== AUTHENTICATION ATTEMPT =====",
+        );
+        console.log("[Passport LocalStrategy] 🔐 Credentials:", {
           email: email,
           hasPassword: !!password,
           passwordLength: password?.length,
           environment: {
             nodeEnv: process.env.NODE_ENV,
             replitDeployment: process.env.REPLIT_DEPLOYMENT,
-            isProduction: process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT === '1'
-          }
+            isProduction:
+              process.env.NODE_ENV === "production" ||
+              process.env.REPLIT_DEPLOYMENT === "1",
+          },
         });
-        
+
         try {
-          console.log('[Passport LocalStrategy] 🔍 Looking up user by email...');
+          console.log(
+            "[Passport LocalStrategy] 🔍 Looking up user by email...",
+          );
           let user = await storage.getUserByEmail(email);
-          console.log('[Passport LocalStrategy] 🔍 User lookup result:', {
+          console.log("[Passport LocalStrategy] 🔍 User lookup result:", {
             userFound: !!user,
             userId: user?.id,
             userEmail: user?.email,
             userRole: user?.role,
             hasPassword: !!user?.password,
-            passwordType: user?.password ? (user.password.startsWith('$2') ? 'bcrypt' : 'scrypt') : 'none'
+            passwordType: user?.password
+              ? user.password.startsWith("$2")
+                ? "bcrypt"
+                : "scrypt"
+              : "none",
           });
-          
+
           // If user doesn't exist, create them automatically for verified @seedfinancial.io emails
           if (!user) {
-            console.log('[Passport LocalStrategy] ❌ User not found, checking domain...');
+            console.log(
+              "[Passport LocalStrategy] ❌ User not found, checking domain...",
+            );
             // Validate email domain
-            if (!email.endsWith('@seedfinancial.io')) {
-              console.log('[Passport LocalStrategy] ❌ Invalid domain - not @seedfinancial.io');
+            if (!email.endsWith("@seedfinancial.io")) {
+              console.log(
+                "[Passport LocalStrategy] ❌ Invalid domain - not @seedfinancial.io",
+              );
               return done(null, false);
             }
 
             // Verify user exists in HubSpot (skip for development testing)
-            if (hubSpotService && process.env.NODE_ENV === 'production') {
+            if (hubSpotService && process.env.NODE_ENV === "production") {
               try {
-                const hubSpotUserExists = await hubSpotService.verifyUserByEmail(email);
+                const hubSpotUserExists =
+                  await hubSpotService.verifyUserByEmail(email);
                 if (!hubSpotUserExists) {
-                  console.log(`Email ${email} not found in HubSpot - access denied`);
+                  console.log(
+                    `Email ${email} not found in HubSpot - access denied`,
+                  );
                   return done(null, false);
                 }
                 console.log(`Email ${email} verified in HubSpot`);
               } catch (error) {
-                console.error(`HubSpot verification failed for ${email}:`, error);
+                console.error(
+                  `HubSpot verification failed for ${email}:`,
+                  error,
+                );
                 return done(null, false);
               }
             } else {
-              console.log(`Development mode: Skipping HubSpot verification for new user ${email}`);
+              console.log(
+                `Development mode: Skipping HubSpot verification for new user ${email}`,
+              );
             }
 
             // Create user automatically with default password and role assignment
             console.log(`Creating new user for ${email} with default password`);
-            
+
             // Create user with default employee role (admin can manually assign admin role later)
-            let role = 'employee'; // Default role for all new users
+            let role = "employee"; // Default role for all new users
             // Hardcode jon@seedfinancial.io as permanent admin to bootstrap the system
-            if (email === 'jon@seedfinancial.io') {
-              role = 'admin';
+            if (email === "jon@seedfinancial.io") {
+              role = "admin";
             }
-            
+
             try {
               // IMPORTANT: pass plain password; storage.createUser will bcrypt-hash it
               user = await storage.createUser({
                 email,
-                password: 'SeedAdmin1!', // Default password for initial bootstrap in dev
-                firstName: '',
-                lastName: '',
+                password: "SeedAdmin1!", // Default password for initial bootstrap in dev
+                firstName: "",
+                lastName: "",
                 hubspotUserId: null,
                 role,
               } as any);
               console.log(`Successfully created user with ID: ${user.id}`);
             } catch (createError: any) {
               // Handle race condition - if another request created the user first
-              if (createError.code === '23505' || createError.message?.includes('unique constraint')) {
-                console.log(`User creation race condition detected for ${email}, fetching existing user`);
+              if (
+                createError.code === "23505" ||
+                createError.message?.includes("unique constraint")
+              ) {
+                console.log(
+                  `User creation race condition detected for ${email}, fetching existing user`,
+                );
                 user = await storage.getUserByEmail(email);
                 if (!user) {
-                  console.error(`Failed to fetch user after race condition for ${email}`);
+                  console.error(
+                    `Failed to fetch user after race condition for ${email}`,
+                  );
                   return done(null, false);
                 }
               } else {
-                console.error(`Failed to create user for ${email}:`, createError);
+                console.error(
+                  `Failed to create user for ${email}:`,
+                  createError,
+                );
                 return done(createError);
               }
             }
           } else {
             // Ensure jon@seedfinancial.io always has admin role (hardcoded protection)
-            if (user.email === 'jon@seedfinancial.io' && user.role !== 'admin') {
-              console.log(`Updating jon@seedfinancial.io role from ${user.role} to admin`);
-              user = await storage.updateUserRole(user.id, 'admin', user.id);
+            if (
+              user.email === "jon@seedfinancial.io" &&
+              user.role !== "admin"
+            ) {
+              console.log(
+                `Updating jon@seedfinancial.io role from ${user.role} to admin`,
+              );
+              user = await storage.updateUserRole(user.id, "admin", user.id);
             }
-            
+
             // For existing users, also verify they still exist in HubSpot (skip for local testing)
-            if (hubSpotService && process.env.NODE_ENV === 'production') {
+            if (hubSpotService && process.env.NODE_ENV === "production") {
               try {
-                const hubSpotUserExists = await hubSpotService.verifyUserByEmail(email);
+                const hubSpotUserExists =
+                  await hubSpotService.verifyUserByEmail(email);
                 if (!hubSpotUserExists) {
-                  console.log(`Existing user ${email} no longer found in HubSpot - access denied`);
+                  console.log(
+                    `Existing user ${email} no longer found in HubSpot - access denied`,
+                  );
                   return done(null, false);
                 }
               } catch (error) {
-                console.error(`HubSpot verification failed for existing user ${email}:`, error);
+                console.error(
+                  `HubSpot verification failed for existing user ${email}:`,
+                  error,
+                );
                 return done(null, false);
               }
             } else {
-              console.log(`Development mode: Skipping HubSpot verification for existing user ${email}`);
+              console.log(
+                `Development mode: Skipping HubSpot verification for existing user ${email}`,
+              );
             }
           }
-          
+
           // Check password
-          console.log('[Passport LocalStrategy] 🔐 Checking password...');
+          console.log("[Passport LocalStrategy] 🔐 Checking password...");
           if (!user.password) {
-            console.log('[Passport LocalStrategy] ❌ User has no password stored!');
+            console.log(
+              "[Passport LocalStrategy] ❌ User has no password stored!",
+            );
             return done(null, false);
           }
-          
-          console.log('[Passport LocalStrategy] 🔐 Comparing passwords...');
+
+          console.log("[Passport LocalStrategy] 🔐 Comparing passwords...");
           let passwordMatches = false;
           try {
             passwordMatches = await comparePasswords(password, user.password);
-            console.log('[Passport LocalStrategy] 🔐 Password comparison result:', {
-              matches: passwordMatches,
-              storedPasswordType: user.password.startsWith('$2') ? 'bcrypt' : 'scrypt',
-              suppliedPasswordLength: password.length
-            });
+            console.log(
+              "[Passport LocalStrategy] 🔐 Password comparison result:",
+              {
+                matches: passwordMatches,
+                storedPasswordType: user.password.startsWith("$2")
+                  ? "bcrypt"
+                  : "scrypt",
+                suppliedPasswordLength: password.length,
+              },
+            );
           } catch (compareError) {
-            console.error('[Passport LocalStrategy] ❌ Password comparison error:', compareError);
+            console.error(
+              "[Passport LocalStrategy] ❌ Password comparison error:",
+              compareError,
+            );
             return done(null, false);
           }
-          
+
           if (!passwordMatches) {
-            console.log('[Passport LocalStrategy] ❌ Password does not match!');
+            console.log("[Passport LocalStrategy] ❌ Password does not match!");
             return done(null, false);
           }
-          
-          console.log('[Passport LocalStrategy] ✅ Authentication successful for:', user.email);
-          console.log('[Passport LocalStrategy] 🔐 ===== AUTHENTICATION COMPLETE =====');
+
+          console.log(
+            "[Passport LocalStrategy] ✅ Authentication successful for:",
+            user.email,
+          );
+          console.log(
+            "[Passport LocalStrategy] 🔐 ===== AUTHENTICATION COMPLETE =====",
+          );
           return done(null, user);
         } catch (error: any) {
-          console.error('Authentication error:', error);
+          console.error("Authentication error:", error);
           return done(error);
         }
-      }
+      },
     ),
   );
 
   passport.serializeUser((user, done) => {
-    console.log('🔄 [PASSPORT] Serializing user:', {
+    console.log("🔄 [PASSPORT] Serializing user:", {
       email: user.email,
       id: user.id,
       role: user.role,
       userKeys: Object.keys(user),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
     done(null, user.id);
   });
-  
+
   passport.deserializeUser(async (id: number, done) => {
-    console.log('🔄 [PASSPORT] Deserializing user ID:', {
+    console.log("🔄 [PASSPORT] Deserializing user ID:", {
       id,
       idType: typeof id,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     try {
       const user = await storage.getUser(id);
       if (user) {
-        console.log('🔄 [PASSPORT] ✅ Deserialized user successfully:', {
+        console.log("🔄 [PASSPORT] ✅ Deserialized user successfully:", {
           email: user.email,
           id: user.id,
           role: user.role,
-          userKeys: Object.keys(user)
+          userKeys: Object.keys(user),
         });
         done(null, user);
       } else {
-        console.log('🔄 [PASSPORT] ❌ User not found for ID:', {
+        console.log("🔄 [PASSPORT] ❌ User not found for ID:", {
           attemptedId: id,
           idType: typeof id,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
         done(null, null);
       }
     } catch (error: any) {
-      console.error('🔄 [PASSPORT] ❌ Deserialization error:', {
+      console.error("🔄 [PASSPORT] ❌ Deserialization error:", {
         error: error.message,
         userId: id,
-        stack: error.stack?.split('\n').slice(0, 3),
-        timestamp: new Date().toISOString()
+        stack: error.stack?.split("\n").slice(0, 3),
+        timestamp: new Date().toISOString(),
       });
       done(error);
     }
@@ -271,9 +339,9 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
       const { email, password } = req.body;
 
       // Validate email domain
-      if (!email.endsWith('@seedfinancial.io')) {
-        return res.status(400).json({ 
-          message: "Only @seedfinancial.io email addresses are allowed" 
+      if (!email.endsWith("@seedfinancial.io")) {
+        return res.status(400).json({
+          message: "Only @seedfinancial.io email addresses are allowed",
         });
       }
 
@@ -285,13 +353,16 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
 
       // Verify user exists in HubSpot
       if (!hubSpotService) {
-        return res.status(500).json({ message: "HubSpot service not available" });
+        return res
+          .status(500)
+          .json({ message: "HubSpot service not available" });
       }
-      
+
       const hubspotVerification = await hubSpotService.verifyUser(email);
       if (!hubspotVerification.exists) {
-        return res.status(400).json({ 
-          message: "Email not found in HubSpot. Please contact your administrator." 
+        return res.status(400).json({
+          message:
+            "Email not found in HubSpot. Please contact your administrator.",
         });
       }
 
@@ -299,9 +370,9 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
       // IMPORTANT: pass plain password; storage.createUser will bcrypt-hash it
       const user = await storage.createUser({
         email,
-        password: (password || 'SeedAdmin1!'), // Use provided password or default
-        firstName: hubspotVerification.userData?.firstName || '',
-        lastName: hubspotVerification.userData?.lastName || '',
+        password: password || "SeedAdmin1!", // Use provided password or default
+        firstName: hubspotVerification.userData?.firstName || "",
+        lastName: hubspotVerification.userData?.lastName || "",
         hubspotUserId: hubspotVerification.userData?.hubspotUserId || null,
       } as any);
 
@@ -311,82 +382,98 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
           id: user.id,
           email: user.email,
           firstName: user.firstName,
-          lastName: user.lastName
+          lastName: user.lastName,
         });
       });
     } catch (error: any) {
-      console.error('Registration error:', error);
-      res.status(500).json({ message: "Registration failed", error: error.message });
+      console.error("Registration error:", error);
+      res
+        .status(500)
+        .json({ message: "Registration failed", error: error.message });
     }
   });
 
   app.post("/api/login", async (req, res, next) => {
-    console.log('🔐 /api/login endpoint called');
-    console.log('🔐 Request body keys:', Object.keys(req.body));
-    console.log('🔐 Has googleAccessToken:', !!req.body.googleAccessToken);
-    console.log('🔐 Has googleCredential:', !!req.body.googleCredential);
-    console.log('🔐 User-Agent:', req.headers['user-agent']);
-    console.log('🔐 Referer:', req.headers.referer);
-    
+    console.log("🔐 /api/login endpoint called");
+    console.log("🔐 Request body keys:", Object.keys(req.body));
+    console.log("🔐 Has googleAccessToken:", !!req.body.googleAccessToken);
+    console.log("🔐 Has googleCredential:", !!req.body.googleCredential);
+    console.log("🔐 User-Agent:", req.headers["user-agent"]);
+    console.log("🔐 Referer:", req.headers.referer);
+
     // Handle Google OAuth credential (JWT ID Token) login
     if (req.body.googleCredential) {
-      console.log('🔍 Google OAuth credential login detected, processing JWT...');
-      console.log('🔍 Credential length:', req.body.googleCredential.length);
+      console.log(
+        "🔍 Google OAuth credential login detected, processing JWT...",
+      );
+      console.log("🔍 Credential length:", req.body.googleCredential.length);
       try {
         const credential = req.body.googleCredential;
-        
+
         // Verify the JWT credential with Google's tokeninfo endpoint
-        const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`, {
-          signal: AbortSignal.timeout(10000),
-        });
-        
+        const response = await fetch(
+          `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`,
+          {
+            signal: AbortSignal.timeout(10000),
+          },
+        );
+
         if (!response.ok) {
-          console.error('❌ Google credential verification failed:', response.status, response.statusText);
+          console.error(
+            "❌ Google credential verification failed:",
+            response.status,
+            response.statusText,
+          );
           return res.status(401).json({ message: "Invalid Google credential" });
         }
 
         const userInfo = await response.json();
-        console.log('✅ Google credential verified for:', userInfo.email);
-        
+        console.log("✅ Google credential verified for:", userInfo.email);
+
         // Check domain restriction
-        if (userInfo.hd !== 'seedfinancial.io') {
-          console.log('❌ Domain restriction failed:', userInfo.hd);
-          return res.status(403).json({ 
-            message: "Access restricted to @seedfinancial.io domain" 
+        if (userInfo.hd !== "seedfinancial.io") {
+          console.log("❌ Domain restriction failed:", userInfo.hd);
+          return res.status(403).json({
+            message: "Access restricted to @seedfinancial.io domain",
           });
         }
 
         // Get or create user
         let user = await storage.getUserByEmail(userInfo.email);
-        
+
         if (!user) {
-          console.log('🆕 Creating new user for:', userInfo.email);
+          console.log("🆕 Creating new user for:", userInfo.email);
           // Determine role - admin for jon@seedfinancial.io, service for others
-          let role = 'service';
-          if (userInfo.email === 'jon@seedfinancial.io') {
-            role = 'admin';
+          let role = "service";
+          if (userInfo.email === "jon@seedfinancial.io") {
+            role = "admin";
           }
-          
+
           // IMPORTANT: pass plain password; storage.createUser will bcrypt-hash it
           user = await storage.createUser({
             email: userInfo.email,
-            password: 'oauth-google-' + Date.now(),
-            firstName: userInfo.given_name || '',
-            lastName: userInfo.family_name || '',
+            password: "oauth-google-" + Date.now(),
+            firstName: userInfo.given_name || "",
+            lastName: userInfo.family_name || "",
             profilePhoto: userInfo.picture || null,
             googleId: userInfo.sub,
-            authProvider: 'google',
+            authProvider: "google",
             role,
             hubspotUserId: null,
           } as any);
-          console.log('✅ User created with ID:', user.id);
+          console.log("✅ User created with ID:", user.id);
         } else {
-          console.log('👤 Existing user found:', user.email);
+          console.log("👤 Existing user found:", user.email);
           // Update Google info if needed
           if (userInfo.sub && userInfo.sub !== user.googleId) {
-            await storage.updateUserGoogleId(user.id, userInfo.sub, 'google', userInfo.picture || null);
+            await storage.updateUserGoogleId(
+              user.id,
+              userInfo.sub,
+              "google",
+              userInfo.picture || null,
+            );
           }
-          
+
           // Update profile if needed
           const updates: any = {};
           if (userInfo.given_name && userInfo.given_name !== user.firstName) {
@@ -398,7 +485,7 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
           if (userInfo.picture && userInfo.picture !== user.profilePhoto) {
             updates.profilePhoto = userInfo.picture;
           }
-          
+
           if (Object.keys(updates).length > 0) {
             await storage.updateUserProfile(user.id, updates);
           }
@@ -407,11 +494,11 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
         // Create session
         req.login(user, (err) => {
           if (err) {
-            console.error('❌ Session creation failed:', err);
+            console.error("❌ Session creation failed:", err);
             return res.status(500).json({ message: "Session creation failed" });
           }
-          
-          console.log('✅ User logged in successfully:', user.email);
+
+          console.log("✅ User logged in successfully:", user.email);
           res.json({
             id: user.id,
             email: user.email,
@@ -419,17 +506,17 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
             lastName: user.lastName,
             role: user.role,
             profilePhoto: user.profilePhoto,
-            authMethod: 'google-credential'
+            authMethod: "google-credential",
           });
         });
-        
       } catch (error: any) {
-        console.error('❌ Google credential login error:', error);
-        res.status(500).json({ message: "Authentication failed", error: error.message });
+        console.error("❌ Google credential login error:", error);
+        res
+          .status(500)
+          .json({ message: "Authentication failed", error: error.message });
       }
       return; // Exit early for credential flow
     }
-
 
     // Handle traditional email/password login
     passport.authenticate("local", (err: any, user: any, info: any) => {
@@ -443,45 +530,54 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
           id: user.id,
           email: user.email,
           firstName: user.firstName,
-          lastName: user.lastName
+          lastName: user.lastName,
         });
       });
     })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
-    console.log('🚪 Session logout endpoint called');
-    console.log('🚪 Session ID before logout:', req.sessionID);
-    console.log('🚪 User before logout:', req.user ? req.user.email : 'None');
-    
+    console.log("🚪 Session logout endpoint called");
+    console.log("🚪 Session ID before logout:", req.sessionID);
+    console.log("🚪 User before logout:", req.user ? req.user.email : "None");
+
     req.logout((err) => {
       if (err) {
-        console.error('❌ Session logout error:', err);
+        console.error("❌ Session logout error:", err);
         return next(err);
       }
-      
-      console.log('✅ Session logout successful');
-      console.log('🚪 Session destroyed, user logged out');
+
+      console.log("✅ Session logout successful");
+      console.log("🚪 Session destroyed, user logged out");
       res.json({ message: "Logged out successfully" });
     });
   });
 
   app.get("/api/user", (req, res) => {
-    console.log('🔐 /api/user endpoint called');
-    console.log('🔐 Session ID:', req.sessionID);
-    console.log('🔐 Session exists:', !!req.session);
-    console.log('🔐 Session store type:', req.sessionStore?.constructor?.name || 'Unknown');
-    console.log('🔐 Session data keys:', Object.keys(req.session || {}));
-    console.log('🔐 Authenticated:', req.isAuthenticated ? req.isAuthenticated() : 'Unknown');
-    console.log('🔐 User:', req.user ? req.user.email : 'None');
-    console.log('🔐 Session passport:', (req.session as any)?.passport || 'None');
-    
+    console.log("🔐 /api/user endpoint called");
+    console.log("🔐 Session ID:", req.sessionID);
+    console.log("🔐 Session exists:", !!req.session);
+    console.log(
+      "🔐 Session store type:",
+      req.sessionStore?.constructor?.name || "Unknown",
+    );
+    console.log("🔐 Session data keys:", Object.keys(req.session || {}));
+    console.log(
+      "🔐 Authenticated:",
+      req.isAuthenticated ? req.isAuthenticated() : "Unknown",
+    );
+    console.log("🔐 User:", req.user ? req.user.email : "None");
+    console.log(
+      "🔐 Session passport:",
+      (req.session as any)?.passport || "None",
+    );
+
     if (!req.isAuthenticated()) {
-      console.log('❌ User not authenticated, returning 401');
+      console.log("❌ User not authenticated, returning 401");
       return res.sendStatus(401);
     }
-    
-    console.log('✅ User authenticated, returning user data');
+
+    console.log("✅ User authenticated, returning user data");
     res.json({
       id: req.user.id,
       email: req.user.email,
@@ -501,13 +597,9 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
       lastHubspotSync: req.user.lastHubspotSync,
       defaultDashboard: req.user.defaultDashboard,
       isImpersonating: (req.session as any).isImpersonating || false,
-      originalUser: (req.session as any).originalUser || null
+      originalUser: (req.session as any).originalUser || null,
     });
   });
-
-
-
-
 
   // Test endpoint for HubSpot verification
   app.post("/api/test-hubspot", async (req, res) => {
@@ -516,32 +608,36 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
       }
-      
+
       if (!hubSpotService) {
-        return res.status(500).json({ message: "HubSpot service not available" });
+        return res
+          .status(500)
+          .json({ message: "HubSpot service not available" });
       }
-      
+
       const result = await hubSpotService.verifyUser(email);
       res.json(result);
     } catch (error: any) {
-      console.error('HubSpot test error:', error);
-      res.status(500).json({ message: "HubSpot test failed", error: error.message });
+      console.error("HubSpot test error:", error);
+      res
+        .status(500)
+        .json({ message: "HubSpot test failed", error: error.message });
     }
   });
 }
 
 // Middleware to require authentication (session-based only)
 export async function requireAuth(req: any, res: any, next: any) {
-  console.log('requireAuth: Checking authentication for', req.url);
-  console.log('requireAuth: Session authenticated:', req.isAuthenticated());
-  console.log('requireAuth: Auth header present:', !!req.headers.authorization);
-  
+  console.log("requireAuth: Checking authentication for", req.url);
+  console.log("requireAuth: Session authenticated:", req.isAuthenticated());
+  console.log("requireAuth: Auth header present:", !!req.headers.authorization);
+
   // Check session-based auth only
   if (req.isAuthenticated()) {
-    console.log('requireAuth: Session auth successful for', req.user?.email);
+    console.log("requireAuth: Session auth successful for", req.user?.email);
     return next();
   }
-  
-  console.log('requireAuth: Authentication failed - no valid session');
+
+  console.log("requireAuth: Authentication failed - no valid session");
   return res.status(401).json({ message: "Authentication required" });
 }

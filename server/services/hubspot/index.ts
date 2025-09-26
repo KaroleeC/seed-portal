@@ -4,15 +4,19 @@
 export async function getPaidInvoicesInPeriod(
   startDate: string,
   endDate: string,
-  salesRepHubspotId?: string
+  salesRepHubspotId?: string,
 ): Promise<any[]> {
-  const { hubSpotService } = await import('../../hubspot.js');
+  const { hubSpotService } = await import("../../hubspot.js");
   if (!hubSpotService) return [];
-  return hubSpotService.getPaidInvoicesInPeriod(startDate, endDate, salesRepHubspotId);
+  return hubSpotService.getPaidInvoicesInPeriod(
+    startDate,
+    endDate,
+    salesRepHubspotId,
+  );
 }
 
 export async function getInvoiceLineItems(invoiceId: string): Promise<any[]> {
-  const { hubSpotService } = await import('../../hubspot.js');
+  const { hubSpotService } = await import("../../hubspot.js");
   if (!hubSpotService) return [];
   return hubSpotService.getInvoiceLineItems(invoiceId);
 }

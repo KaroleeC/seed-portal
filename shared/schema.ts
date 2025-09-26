@@ -1,4 +1,12 @@
-import { pgTable, text, serial, integer, decimal, timestamp, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  decimal,
+  timestamp,
+  boolean,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -9,7 +17,10 @@ export const quotes = pgTable("quotes", {
   monthlyTransactions: text("monthly_transactions").notNull(),
   industry: text("industry").notNull(),
   cleanupMonths: integer("cleanup_months").notNull(),
-  cleanupComplexity: decimal("cleanup_complexity", { precision: 3, scale: 2 }).notNull(),
+  cleanupComplexity: decimal("cleanup_complexity", {
+    precision: 3,
+    scale: 2,
+  }).notNull(),
   cleanupPeriods: text("cleanup_periods").array(), // Store year-month combinations like ["2024-01", "2024-02", "2023-12"]
   cleanupOverride: boolean("cleanup_override").default(false).notNull(),
   overrideReason: text("override_reason"),
@@ -17,8 +28,15 @@ export const quotes = pgTable("quotes", {
   monthlyFee: decimal("monthly_fee", { precision: 10, scale: 2 }).notNull(),
   setupFee: decimal("setup_fee", { precision: 10, scale: 2 }).notNull(),
   // TaaS pricing fields
-  taasMonthlyFee: decimal("taas_monthly_fee", { precision: 10, scale: 2 }).default("0").notNull(),
-  taasPriorYearsFee: decimal("taas_prior_years_fee", { precision: 10, scale: 2 }).default("0").notNull(),
+  taasMonthlyFee: decimal("taas_monthly_fee", { precision: 10, scale: 2 })
+    .default("0")
+    .notNull(),
+  taasPriorYearsFee: decimal("taas_prior_years_fee", {
+    precision: 10,
+    scale: 2,
+  })
+    .default("0")
+    .notNull(),
   // Combined service flags
   includesBookkeeping: boolean("includes_bookkeeping").default(true).notNull(),
   includesTaas: boolean("includes_taas").default(false).notNull(),
@@ -54,13 +72,15 @@ export const quotes = pgTable("quotes", {
   otherMerchantProvider: text("other_merchant_provider"),
   // Service selections - new 5-card system (preserved for backwards compatibility)
   serviceBookkeeping: boolean("service_bookkeeping").default(false),
-  serviceTaas: boolean("service_taas").default(false), 
+  serviceTaas: boolean("service_taas").default(false),
   servicePayroll: boolean("service_payroll").default(false),
   serviceApArLite: boolean("service_ap_ar_lite").default(false),
   serviceFpaLite: boolean("service_fpa_lite").default(false),
-  
+
   // New separated service selections
-  serviceMonthlyBookkeeping: boolean("service_monthly_bookkeeping").default(false),
+  serviceMonthlyBookkeeping: boolean("service_monthly_bookkeeping").default(
+    false,
+  ),
   serviceCleanupProjects: boolean("service_cleanup_projects").default(false),
   serviceTaasMonthly: boolean("service_taas_monthly").default(false),
   servicePriorYearFilings: boolean("service_prior_year_filings").default(false),
@@ -90,26 +110,34 @@ export const quotes = pgTable("quotes", {
   // Agent of Service selection
   serviceAgentOfService: boolean("service_agent_of_service").default(false),
   // Agent of Service specific fields
-  agentOfServiceAdditionalStates: integer("agent_of_service_additional_states").default(0), // Number of additional states beyond base
-  agentOfServiceComplexCase: boolean("agent_of_service_complex_case").default(false), // Complex Case upgrade (+$300)
-  
+  agentOfServiceAdditionalStates: integer(
+    "agent_of_service_additional_states",
+  ).default(0), // Number of additional states beyond base
+  agentOfServiceComplexCase: boolean("agent_of_service_complex_case").default(
+    false,
+  ), // Complex Case upgrade (+$300)
+
   // Additional FP&A service selections
   serviceFpaBuild: boolean("service_fpa_build").default(false),
   serviceFpaSupport: boolean("service_fpa_support").default(false),
-  
+
   // Additional specialized service selections
   serviceNexusStudy: boolean("service_nexus_study").default(false),
-  serviceEntityOptimization: boolean("service_entity_optimization").default(false),
+  serviceEntityOptimization: boolean("service_entity_optimization").default(
+    false,
+  ),
   serviceCostSegregation: boolean("service_cost_segregation").default(false),
   serviceRdCredit: boolean("service_rd_credit").default(false),
-  serviceRealEstateAdvisory: boolean("service_real_estate_advisory").default(false),
-  
+  serviceRealEstateAdvisory: boolean("service_real_estate_advisory").default(
+    false,
+  ),
+
   // Individual AP/AR service selections (separate from combined serviceApArService)
   serviceApLite: boolean("service_ap_lite").default(false),
   serviceArLite: boolean("service_ar_lite").default(false),
   serviceApAdvanced: boolean("service_ap_advanced").default(false),
   serviceArAdvanced: boolean("service_ar_advanced").default(false),
-  
+
   // Client address information for MSA generation
   clientStreetAddress: text("client_street_address"),
   clientCity: text("client_city"),
@@ -145,9 +173,12 @@ export const insertQuoteSchema = createInsertSchema(quotes).omit({
   updatedAt: true,
 });
 
-export const updateQuoteSchema = createInsertSchema(quotes).omit({
-  createdAt: true,
-}).partial().required({ id: true });
+export const updateQuoteSchema = createInsertSchema(quotes)
+  .omit({
+    createdAt: true,
+  })
+  .partial()
+  .required({ id: true });
 
 export type InsertQuote = z.infer<typeof insertQuoteSchema>;
 export type Quote = typeof quotes.$inferSelect;
@@ -173,7 +204,9 @@ export const workspaceUsers = pgTable("workspace_users", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertWorkspaceUserSchema = createInsertSchema(workspaceUsers).omit({
+export const insertWorkspaceUserSchema = createInsertSchema(
+  workspaceUsers,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -247,26 +280,36 @@ export type User = typeof users.$inferSelect;
 export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 
 // Password change schema
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(8, "New password must be at least 8 characters"),
-  confirmPassword: z.string().min(1, "Please confirm your new password"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "New passwords don't match",
-  path: ["confirmPassword"],
-});
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z
+      .string()
+      .min(8, "New password must be at least 8 characters"),
+    confirmPassword: z.string().min(1, "Please confirm your new password"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "New passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
 
 // Sales Representatives (extends users)
 export const salesReps = pgTable("sales_reps", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   isActive: boolean("is_active").default(true).notNull(),
   startDate: timestamp("start_date").defaultNow().notNull(),
   endDate: timestamp("end_date"),
-  totalClientsClosedMonthly: integer("total_clients_closed_monthly").default(0).notNull(),
-  totalClientsClosedAllTime: integer("total_clients_closed_all_time").default(0).notNull(),
+  totalClientsClosedMonthly: integer("total_clients_closed_monthly")
+    .default(0)
+    .notNull(),
+  totalClientsClosedAllTime: integer("total_clients_closed_all_time")
+    .default(0)
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -277,11 +320,15 @@ export const deals = pgTable("deals", {
   hubspotDealId: text("hubspot_deal_id").notNull().unique(),
   dealName: text("deal_name").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  setupFee: decimal("setup_fee", { precision: 10, scale: 2 }).default("0").notNull(),
+  setupFee: decimal("setup_fee", { precision: 10, scale: 2 })
+    .default("0")
+    .notNull(),
   monthlyFee: decimal("monthly_fee", { precision: 10, scale: 2 }).notNull(),
   stage: text("stage").notNull(), // HubSpot deal stage
   status: text("status").notNull().default("open"), // open, closed_won, closed_lost
-  ownerId: integer("owner_id").notNull().references(() => users.id), // Sales rep
+  ownerId: integer("owner_id")
+    .notNull()
+    .references(() => users.id), // Sales rep
   hubspotOwnerId: text("hubspot_owner_id"),
   closedDate: timestamp("closed_date"),
   serviceType: text("service_type").notNull(), // bookkeeping, taas, combined
@@ -308,7 +355,9 @@ export const hubspotInvoices = pgTable("hubspot_invoices", {
   dueDate: timestamp("due_date"),
   paidDate: timestamp("paid_date"),
   companyName: text("company_name"),
-  isProcessedForCommission: boolean("is_processed_for_commission").default(false),
+  isProcessedForCommission: boolean("is_processed_for_commission").default(
+    false,
+  ),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -316,7 +365,9 @@ export const hubspotInvoices = pgTable("hubspot_invoices", {
 // HubSpot invoice line items for detailed commission calculations
 export const hubspotInvoiceLineItems = pgTable("hubspot_invoice_line_items", {
   id: serial("id").primaryKey(),
-  invoiceId: integer("invoice_id").notNull().references(() => hubspotInvoices.id),
+  invoiceId: integer("invoice_id")
+    .notNull()
+    .references(() => hubspotInvoices.id),
   hubspotLineItemId: text("hubspot_line_item_id").unique(),
   name: text("name").notNull(),
   description: text("description"),
@@ -336,7 +387,10 @@ export const hubspotSubscriptions = pgTable("hubspot_subscriptions", {
   hubspotDealId: text("hubspot_deal_id"), // Original deal that created subscription
   salesRepId: integer("sales_rep_id").references(() => salesReps.id),
   status: text("status").notNull(), // active, paused, cancelled, past_due
-  monthlyAmount: decimal("monthly_amount", { precision: 10, scale: 2 }).notNull(),
+  monthlyAmount: decimal("monthly_amount", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date"),
   lastInvoiceDate: timestamp("last_invoice_date"),
@@ -351,11 +405,21 @@ export const commissions = pgTable("commissions", {
   id: serial("id").primaryKey(),
   // Link to either deal, invoice, or subscription depending on commission source
   dealId: integer("deal_id").references(() => deals.id),
-  hubspotInvoiceId: integer("hubspot_invoice_id").references(() => hubspotInvoices.id),
-  hubspotSubscriptionId: integer("hubspot_subscription_id").references(() => hubspotSubscriptions.id),
-  monthlyBonusId: integer("monthly_bonus_id").references(() => monthlyBonuses.id),
-  milestoneBonusId: integer("milestone_bonus_id").references(() => milestoneBonuses.id),
-  salesRepId: integer("sales_rep_id").notNull().references(() => salesReps.id),
+  hubspotInvoiceId: integer("hubspot_invoice_id").references(
+    () => hubspotInvoices.id,
+  ),
+  hubspotSubscriptionId: integer("hubspot_subscription_id").references(
+    () => hubspotSubscriptions.id,
+  ),
+  monthlyBonusId: integer("monthly_bonus_id").references(
+    () => monthlyBonuses.id,
+  ),
+  milestoneBonusId: integer("milestone_bonus_id").references(
+    () => milestoneBonuses.id,
+  ),
+  salesRepId: integer("sales_rep_id")
+    .notNull()
+    .references(() => salesReps.id),
   type: text("type").notNull(), // setup, cleanup, prior_years, month_1, residual, monthly_bonus, milestone_bonus
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default("pending"), // pending, processing, paid
@@ -372,7 +436,9 @@ export const commissions = pgTable("commissions", {
 // Monthly Bonuses
 export const monthlyBonuses = pgTable("monthly_bonuses", {
   id: serial("id").primaryKey(),
-  salesRepId: integer("sales_rep_id").notNull().references(() => salesReps.id),
+  salesRepId: integer("sales_rep_id")
+    .notNull()
+    .references(() => salesReps.id),
   month: text("month").notNull(), // YYYY-MM format
   clientsClosedCount: integer("clients_closed_count").notNull(),
   bonusAmount: decimal("bonus_amount", { precision: 10, scale: 2 }).notNull(),
@@ -388,7 +454,9 @@ export const monthlyBonuses = pgTable("monthly_bonuses", {
 // Milestone Bonuses
 export const milestoneBonuses = pgTable("milestone_bonuses", {
   id: serial("id").primaryKey(),
-  salesRepId: integer("sales_rep_id").notNull().references(() => salesReps.id),
+  salesRepId: integer("sales_rep_id")
+    .notNull()
+    .references(() => salesReps.id),
   milestone: integer("milestone").notNull(), // 25, 40, 60, 100
   bonusAmount: decimal("bonus_amount", { precision: 10, scale: 2 }).notNull(),
   includesEquity: boolean("includes_equity").default(false).notNull(),
@@ -414,18 +482,24 @@ export const insertDealSchema = createInsertSchema(deals).omit({
   lastSyncedAt: true,
 });
 
-export const insertHubspotInvoiceSchema = createInsertSchema(hubspotInvoices).omit({
+export const insertHubspotInvoiceSchema = createInsertSchema(
+  hubspotInvoices,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertHubspotInvoiceLineItemSchema = createInsertSchema(hubspotInvoiceLineItems).omit({
+export const insertHubspotInvoiceLineItemSchema = createInsertSchema(
+  hubspotInvoiceLineItems,
+).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertHubspotSubscriptionSchema = createInsertSchema(hubspotSubscriptions).omit({
+export const insertHubspotSubscriptionSchema = createInsertSchema(
+  hubspotSubscriptions,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -434,11 +508,21 @@ export const insertHubspotSubscriptionSchema = createInsertSchema(hubspotSubscri
 // Commission Adjustments - for tracking changes to commission amounts
 export const commissionAdjustments = pgTable("commission_adjustments", {
   id: serial("id").primaryKey(),
-  commissionId: integer("commission_id").notNull().references(() => commissions.id),
-  requestedBy: integer("requested_by").notNull().references(() => users.id), // User who created the adjustment
+  commissionId: integer("commission_id")
+    .notNull()
+    .references(() => commissions.id),
+  requestedBy: integer("requested_by")
+    .notNull()
+    .references(() => users.id), // User who created the adjustment
   approvedBy: integer("approved_by").references(() => users.id), // Admin who approved/rejected
-  originalAmount: decimal("original_amount", { precision: 10, scale: 2 }).notNull(),
-  requestedAmount: decimal("requested_amount", { precision: 10, scale: 2 }).notNull(),
+  originalAmount: decimal("original_amount", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
+  requestedAmount: decimal("requested_amount", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
   finalAmount: decimal("final_amount", { precision: 10, scale: 2 }), // Amount after approval/modification
   reason: text("reason").notNull(),
   status: text("status").notNull().default("pending"), // pending, approved, rejected
@@ -456,19 +540,25 @@ export const insertCommissionSchema = createInsertSchema(commissions).omit({
   updatedAt: true,
 });
 
-export const insertCommissionAdjustmentSchema = createInsertSchema(commissionAdjustments).omit({
+export const insertCommissionAdjustmentSchema = createInsertSchema(
+  commissionAdjustments,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertMonthlyBonusSchema = createInsertSchema(monthlyBonuses).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertMonthlyBonusSchema = createInsertSchema(monthlyBonuses).omit(
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  },
+);
 
-export const insertMilestoneBonusSchema = createInsertSchema(milestoneBonuses).omit({
+export const insertMilestoneBonusSchema = createInsertSchema(
+  milestoneBonuses,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -480,13 +570,20 @@ export type InsertDeal = z.infer<typeof insertDealSchema>;
 export type Deal = typeof deals.$inferSelect;
 export type InsertHubspotInvoice = z.infer<typeof insertHubspotInvoiceSchema>;
 export type HubspotInvoice = typeof hubspotInvoices.$inferSelect;
-export type InsertHubspotInvoiceLineItem = z.infer<typeof insertHubspotInvoiceLineItemSchema>;
-export type HubspotInvoiceLineItem = typeof hubspotInvoiceLineItems.$inferSelect;
-export type InsertHubspotSubscription = z.infer<typeof insertHubspotSubscriptionSchema>;
+export type InsertHubspotInvoiceLineItem = z.infer<
+  typeof insertHubspotInvoiceLineItemSchema
+>;
+export type HubspotInvoiceLineItem =
+  typeof hubspotInvoiceLineItems.$inferSelect;
+export type InsertHubspotSubscription = z.infer<
+  typeof insertHubspotSubscriptionSchema
+>;
 export type HubspotSubscription = typeof hubspotSubscriptions.$inferSelect;
 export type InsertCommission = z.infer<typeof insertCommissionSchema>;
 export type Commission = typeof commissions.$inferSelect;
-export type InsertCommissionAdjustment = z.infer<typeof insertCommissionAdjustmentSchema>;
+export type InsertCommissionAdjustment = z.infer<
+  typeof insertCommissionAdjustmentSchema
+>;
 export type CommissionAdjustment = typeof commissionAdjustments.$inferSelect;
 
 // Pricing Configuration Tables
@@ -502,39 +599,54 @@ export const pricingBase = pgTable("pricing_base", {
 });
 
 // Industry multipliers for different business types
-export const pricingIndustryMultipliers = pgTable("pricing_industry_multipliers", {
-  id: serial("id").primaryKey(),
-  industry: text("industry").notNull().unique(),
-  monthlyMultiplier: decimal("monthly_multiplier", { precision: 5, scale: 3 }).notNull(),
-  cleanupMultiplier: decimal("cleanup_multiplier", { precision: 5, scale: 3 }).notNull(),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const pricingIndustryMultipliers = pgTable(
+  "pricing_industry_multipliers",
+  {
+    id: serial("id").primaryKey(),
+    industry: text("industry").notNull().unique(),
+    monthlyMultiplier: decimal("monthly_multiplier", {
+      precision: 5,
+      scale: 3,
+    }).notNull(),
+    cleanupMultiplier: decimal("cleanup_multiplier", {
+      precision: 5,
+      scale: 3,
+    }).notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+);
 
 // Revenue range multipliers
-export const pricingRevenueMultipliers = pgTable("pricing_revenue_multipliers", {
-  id: serial("id").primaryKey(),
-  revenueRange: text("revenue_range").notNull().unique(), // '<$10K', '10K-25K', etc.
-  multiplier: decimal("multiplier", { precision: 5, scale: 3 }).notNull(),
-  minRevenue: integer("min_revenue"), // For display purposes
-  maxRevenue: integer("max_revenue"), // For display purposes
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const pricingRevenueMultipliers = pgTable(
+  "pricing_revenue_multipliers",
+  {
+    id: serial("id").primaryKey(),
+    revenueRange: text("revenue_range").notNull().unique(), // '<$10K', '10K-25K', etc.
+    multiplier: decimal("multiplier", { precision: 5, scale: 3 }).notNull(),
+    minRevenue: integer("min_revenue"), // For display purposes
+    maxRevenue: integer("max_revenue"), // For display purposes
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+);
 
 // Transaction volume surcharges
-export const pricingTransactionSurcharges = pgTable("pricing_transaction_surcharges", {
-  id: serial("id").primaryKey(),
-  transactionRange: text("transaction_range").notNull().unique(), // '<100', '100-300', etc.
-  surcharge: decimal("surcharge", { precision: 10, scale: 2 }).notNull(),
-  minTransactions: integer("min_transactions"), // For display purposes
-  maxTransactions: integer("max_transactions"), // For display purposes
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const pricingTransactionSurcharges = pgTable(
+  "pricing_transaction_surcharges",
+  {
+    id: serial("id").primaryKey(),
+    transactionRange: text("transaction_range").notNull().unique(), // '<100', '100-300', etc.
+    surcharge: decimal("surcharge", { precision: 10, scale: 2 }).notNull(),
+    minTransactions: integer("min_transactions"), // For display purposes
+    maxTransactions: integer("max_transactions"), // For display purposes
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+);
 
 // Service-specific pricing settings
 export const pricingServiceSettings = pgTable("pricing_service_settings", {
@@ -556,7 +668,9 @@ export const pricingTiers = pgTable("pricing_tiers", {
   tier: text("tier").notNull(), // 'lite', 'advanced'
   volumeBand: text("volume_band").notNull(), // '0-25', '26-100', etc.
   baseFee: decimal("base_fee", { precision: 10, scale: 2 }).notNull(),
-  tierMultiplier: decimal("tier_multiplier", { precision: 5, scale: 3 }).default("1.0").notNull(),
+  tierMultiplier: decimal("tier_multiplier", { precision: 5, scale: 3 })
+    .default("1.0")
+    .notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -570,7 +684,9 @@ export const pricingHistory = pgTable("pricing_history", {
   fieldChanged: text("field_changed").notNull(), // Which field was modified
   oldValue: text("old_value"), // Previous value (stored as text for flexibility)
   newValue: text("new_value").notNull(), // New value
-  changedBy: integer("changed_by").notNull().references(() => users.id),
+  changedBy: integer("changed_by")
+    .notNull()
+    .references(() => users.id),
   changeReason: text("change_reason"), // Optional reason for the change
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -582,25 +698,33 @@ export const insertPricingBaseSchema = createInsertSchema(pricingBase).omit({
   updatedAt: true,
 });
 
-export const insertPricingIndustryMultiplierSchema = createInsertSchema(pricingIndustryMultipliers).omit({
+export const insertPricingIndustryMultiplierSchema = createInsertSchema(
+  pricingIndustryMultipliers,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertPricingRevenueMultiplierSchema = createInsertSchema(pricingRevenueMultipliers).omit({
+export const insertPricingRevenueMultiplierSchema = createInsertSchema(
+  pricingRevenueMultipliers,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertPricingTransactionSurchargeSchema = createInsertSchema(pricingTransactionSurcharges).omit({
+export const insertPricingTransactionSurchargeSchema = createInsertSchema(
+  pricingTransactionSurcharges,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertPricingServiceSettingSchema = createInsertSchema(pricingServiceSettings).omit({
+export const insertPricingServiceSettingSchema = createInsertSchema(
+  pricingServiceSettings,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -612,7 +736,9 @@ export const insertPricingTierSchema = createInsertSchema(pricingTiers).omit({
   updatedAt: true,
 });
 
-export const insertPricingHistorySchema = createInsertSchema(pricingHistory).omit({
+export const insertPricingHistorySchema = createInsertSchema(
+  pricingHistory,
+).omit({
   id: true,
   createdAt: true,
 });
@@ -620,14 +746,25 @@ export const insertPricingHistorySchema = createInsertSchema(pricingHistory).omi
 // Type exports for pricing tables
 export type PricingBase = typeof pricingBase.$inferSelect;
 export type InsertPricingBase = z.infer<typeof insertPricingBaseSchema>;
-export type PricingIndustryMultiplier = typeof pricingIndustryMultipliers.$inferSelect;
-export type InsertPricingIndustryMultiplier = z.infer<typeof insertPricingIndustryMultiplierSchema>;
-export type PricingRevenueMultiplier = typeof pricingRevenueMultipliers.$inferSelect;
-export type InsertPricingRevenueMultiplier = z.infer<typeof insertPricingRevenueMultiplierSchema>;
-export type PricingTransactionSurcharge = typeof pricingTransactionSurcharges.$inferSelect;
-export type InsertPricingTransactionSurcharge = z.infer<typeof insertPricingTransactionSurchargeSchema>;
+export type PricingIndustryMultiplier =
+  typeof pricingIndustryMultipliers.$inferSelect;
+export type InsertPricingIndustryMultiplier = z.infer<
+  typeof insertPricingIndustryMultiplierSchema
+>;
+export type PricingRevenueMultiplier =
+  typeof pricingRevenueMultipliers.$inferSelect;
+export type InsertPricingRevenueMultiplier = z.infer<
+  typeof insertPricingRevenueMultiplierSchema
+>;
+export type PricingTransactionSurcharge =
+  typeof pricingTransactionSurcharges.$inferSelect;
+export type InsertPricingTransactionSurcharge = z.infer<
+  typeof insertPricingTransactionSurchargeSchema
+>;
 export type PricingServiceSetting = typeof pricingServiceSettings.$inferSelect;
-export type InsertPricingServiceSetting = z.infer<typeof insertPricingServiceSettingSchema>;
+export type InsertPricingServiceSetting = z.infer<
+  typeof insertPricingServiceSettingSchema
+>;
 export type PricingTier = typeof pricingTiers.$inferSelect;
 export type InsertPricingTier = z.infer<typeof insertPricingTierSchema>;
 export type PricingHistory = typeof pricingHistory.$inferSelect;
@@ -650,14 +787,19 @@ export const calculatorServiceContent = pgTable("calculator_service_content", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertCalculatorServiceContentSchema = createInsertSchema(calculatorServiceContent).omit({
+export const insertCalculatorServiceContentSchema = createInsertSchema(
+  calculatorServiceContent,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export type InsertCalculatorServiceContent = z.infer<typeof insertCalculatorServiceContentSchema>;
-export type CalculatorServiceContent = typeof calculatorServiceContent.$inferSelect;
+export type InsertCalculatorServiceContent = z.infer<
+  typeof insertCalculatorServiceContentSchema
+>;
+export type CalculatorServiceContent =
+  typeof calculatorServiceContent.$inferSelect;
 
 // Approval codes for cleanup overrides
 export const approvalCodes = pgTable("approval_codes", {
@@ -700,11 +842,15 @@ export const clientIntelProfiles = pgTable("client_intel_profiles", {
 // Client documents and uploaded files
 export const clientDocuments = pgTable("client_documents", {
   id: serial("id").primaryKey(),
-  clientProfileId: integer("client_profile_id").notNull().references(() => clientIntelProfiles.id),
+  clientProfileId: integer("client_profile_id")
+    .notNull()
+    .references(() => clientIntelProfiles.id),
   fileName: text("file_name").notNull(),
   fileType: text("file_type").notNull(), // pdf, xlsx, docx, etc.
   fileSize: integer("file_size").notNull(), // bytes
-  uploadedBy: integer("uploaded_by").notNull().references(() => users.id),
+  uploadedBy: integer("uploaded_by")
+    .notNull()
+    .references(() => users.id),
   fileUrl: text("file_url"), // Storage URL
   extractedText: text("extracted_text"), // OCR/extracted content for AI analysis
   summary: text("summary"), // AI-generated summary
@@ -714,7 +860,9 @@ export const clientDocuments = pgTable("client_documents", {
 // Client activity log
 export const clientActivities = pgTable("client_activities", {
   id: serial("id").primaryKey(),
-  clientProfileId: integer("client_profile_id").notNull().references(() => clientIntelProfiles.id),
+  clientProfileId: integer("client_profile_id")
+    .notNull()
+    .references(() => clientIntelProfiles.id),
   activityType: text("activity_type").notNull(), // email, call, meeting, quote, document_upload
   description: text("description").notNull(),
   userId: integer("user_id").references(() => users.id), // Who performed the activity
@@ -723,23 +871,31 @@ export const clientActivities = pgTable("client_activities", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertClientIntelProfileSchema = createInsertSchema(clientIntelProfiles).omit({
+export const insertClientIntelProfileSchema = createInsertSchema(
+  clientIntelProfiles,
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertClientDocumentSchema = createInsertSchema(clientDocuments).omit({
+export const insertClientDocumentSchema = createInsertSchema(
+  clientDocuments,
+).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertClientActivitySchema = createInsertSchema(clientActivities).omit({
+export const insertClientActivitySchema = createInsertSchema(
+  clientActivities,
+).omit({
   id: true,
   createdAt: true,
 });
 
-export type InsertClientIntelProfile = z.infer<typeof insertClientIntelProfileSchema>;
+export type InsertClientIntelProfile = z.infer<
+  typeof insertClientIntelProfileSchema
+>;
 export type ClientIntelProfile = typeof clientIntelProfiles.$inferSelect;
 export type InsertClientDocument = z.infer<typeof insertClientDocumentSchema>;
 export type ClientDocument = typeof clientDocuments.$inferSelect;
@@ -767,8 +923,12 @@ export const kbArticles = pgTable("kb_articles", {
   slug: text("slug").notNull().unique(),
   excerpt: text("excerpt"), // Brief summary
   content: text("content").notNull(), // Rich text/markdown content
-  categoryId: integer("category_id").notNull().references(() => kbCategories.id),
-  authorId: integer("author_id").notNull().references(() => users.id),
+  categoryId: integer("category_id")
+    .notNull()
+    .references(() => kbCategories.id),
+  authorId: integer("author_id")
+    .notNull()
+    .references(() => users.id),
   status: text("status").notNull().default("draft"), // draft, published, archived
   featured: boolean("featured").default(false), // Featured articles
   tags: text("tags").array(), // Array of tags for filtering
@@ -784,19 +944,27 @@ export const kbArticles = pgTable("kb_articles", {
 
 export const kbArticleVersions = pgTable("kb_article_versions", {
   id: serial("id").primaryKey(),
-  articleId: integer("article_id").notNull().references(() => kbArticles.id),
+  articleId: integer("article_id")
+    .notNull()
+    .references(() => kbArticles.id),
   version: integer("version").notNull(),
   title: text("title").notNull(),
   content: text("content").notNull(),
-  authorId: integer("author_id").notNull().references(() => users.id),
+  authorId: integer("author_id")
+    .notNull()
+    .references(() => users.id),
   changeNote: text("change_note"), // What changed in this version
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const kbBookmarks = pgTable("kb_bookmarks", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  articleId: integer("article_id").notNull().references(() => kbArticles.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  articleId: integer("article_id")
+    .notNull()
+    .references(() => kbArticles.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -805,7 +973,9 @@ export const kbSearchHistory = pgTable("kb_search_history", {
   userId: integer("user_id").references(() => users.id),
   query: text("query").notNull(),
   resultsCount: integer("results_count").default(0),
-  clickedArticleId: integer("clicked_article_id").references(() => kbArticles.id),
+  clickedArticleId: integer("clicked_article_id").references(
+    () => kbArticles.id,
+  ),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -824,7 +994,9 @@ export const insertKbArticleSchema = createInsertSchema(kbArticles).omit({
   updatedAt: true,
 });
 
-export const insertKbArticleVersionSchema = createInsertSchema(kbArticleVersions).omit({
+export const insertKbArticleVersionSchema = createInsertSchema(
+  kbArticleVersions,
+).omit({
   id: true,
   createdAt: true,
 });
@@ -834,7 +1006,9 @@ export const insertKbBookmarkSchema = createInsertSchema(kbBookmarks).omit({
   createdAt: true,
 });
 
-export const insertKbSearchHistorySchema = createInsertSchema(kbSearchHistory).omit({
+export const insertKbSearchHistorySchema = createInsertSchema(
+  kbSearchHistory,
+).omit({
   id: true,
   createdAt: true,
 });
@@ -843,7 +1017,9 @@ export type InsertKbCategory = z.infer<typeof insertKbCategorySchema>;
 export type KbCategory = typeof kbCategories.$inferSelect;
 export type InsertKbArticle = z.infer<typeof insertKbArticleSchema>;
 export type KbArticle = typeof kbArticles.$inferSelect;
-export type InsertKbArticleVersion = z.infer<typeof insertKbArticleVersionSchema>;
+export type InsertKbArticleVersion = z.infer<
+  typeof insertKbArticleVersionSchema
+>;
 export type KbArticleVersion = typeof kbArticleVersions.$inferSelect;
 export type InsertKbBookmark = z.infer<typeof insertKbBookmarkSchema>;
 export type KbBookmark = typeof kbBookmarks.$inferSelect;

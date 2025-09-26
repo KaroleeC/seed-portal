@@ -2,12 +2,16 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 
 interface FormNavigationProps {
-  activeServices: ('bookkeeping' | 'taas')[];
-  currentFormView: 'bookkeeping' | 'taas';
-  onViewChange: (view: 'bookkeeping' | 'taas') => void;
+  activeServices: ("bookkeeping" | "taas")[];
+  currentFormView: "bookkeeping" | "taas";
+  onViewChange: (view: "bookkeeping" | "taas") => void;
 }
 
-export function FormNavigation({ activeServices, currentFormView, onViewChange }: FormNavigationProps) {
+export function FormNavigation({
+  activeServices,
+  currentFormView,
+  onViewChange,
+}: FormNavigationProps) {
   if (activeServices.length <= 1) return null;
 
   return (
@@ -21,11 +25,11 @@ export function FormNavigation({ activeServices, currentFormView, onViewChange }
               onClick={() => onViewChange(service)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                 currentFormView === service
-                  ? 'bg-white shadow-sm text-[#e24c00] border border-gray-200'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  ? "bg-white shadow-sm text-[#e24c00] border border-gray-200"
+                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
               }`}
             >
-              {service === 'bookkeeping' ? 'Bookkeeping' : 'Tax Service'}
+              {service === "bookkeeping" ? "Bookkeeping" : "Tax Service"}
             </button>
           ))}
         </div>

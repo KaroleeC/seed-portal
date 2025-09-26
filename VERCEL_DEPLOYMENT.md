@@ -95,6 +95,7 @@ The API client (`client/src/lib/queryClient.ts`) now supports:
 ### Cross-Origin Authentication
 
 The API client maintains session-based authentication with:
+
 - `credentials: 'include'` - Sends cookies with cross-origin requests
 - Proper CORS headers for authentication
 
@@ -106,16 +107,25 @@ Ensure your Railway backend is configured for cross-origin requests:
 
 ```javascript
 // Example Express.js CORS configuration
-app.use(cors({
-  origin: [
-    'https://your-vercel-app.vercel.app', // Your Vercel domain
-    'http://localhost:5173', // Local development
-    'http://localhost:3000'  // Alternative local port
-  ],
-  credentials: true, // Allow cookies/session data
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-csrf-token']
-}));
+app.use(
+  cors({
+    origin: [
+      "https://your-vercel-app.vercel.app", // Your Vercel domain
+      "http://localhost:5173", // Local development
+      "http://localhost:3000", // Alternative local port
+    ],
+    credentials: true, // Allow cookies/session data
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+      "x-csrf-token",
+    ],
+  }),
+);
 ```
 
 ### Session Configuration
@@ -124,14 +134,16 @@ Ensure session cookies work across domains:
 
 ```javascript
 // Example Express session configuration
-app.use(session({
-  // ... other config
-  cookie: {
-    secure: true, // HTTPS only in production
-    sameSite: 'none', // Allow cross-origin cookies
-    domain: '.up.railway.app' // Allow cookies across Railway subdomains
-  }
-}));
+app.use(
+  session({
+    // ... other config
+    cookie: {
+      secure: true, // HTTPS only in production
+      sameSite: "none", // Allow cross-origin cookies
+      domain: ".up.railway.app", // Allow cookies across Railway subdomains
+    },
+  }),
+);
 ```
 
 ## Testing the Deployment
@@ -166,29 +178,34 @@ console.log(import.meta.env.VITE_API_URL);
 ### Common Issues
 
 #### CORS Errors
+
 ```
-Access to fetch at 'https://web-production-1fb61.up.railway.app/api/user' 
+Access to fetch at 'https://web-production-1fb61.up.railway.app/api/user'
 from origin 'https://your-app.vercel.app' has been blocked by CORS policy
 ```
 
 **Solution**: Update CORS configuration on Railway backend to include your Vercel domain.
 
 #### Authentication Issues
+
 ```
 401 Unauthorized errors on protected routes
 ```
 
-**Solution**: 
+**Solution**:
+
 1. Verify `credentials: 'include'` is set in API client
 2. Check Railway backend session configuration
 3. Ensure cookies are allowed for cross-origin requests
 
 #### Environment Variables Not Loading
+
 ```
 VITE_API_URL is undefined
 ```
 
 **Solution**:
+
 1. Verify variables are set in Vercel dashboard
 2. Ensure variables start with `VITE_` prefix
 3. Redeploy after adding variables

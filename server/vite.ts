@@ -33,7 +33,17 @@ export async function setupVite(app: Express, server: Server) {
       ...viteLogger,
       error: (msg, options) => {
         viteLogger.error(msg, options);
-        process.exit(1);
+        // In development, do not crash the dev server on client compile errors.
+        // Keep the process alive so Vite's overlay can display the error.
+        if (process.env['NODE_ENV'] === "production") {
+          try {
+            process.exit(1);
+          } catch {}
+        } else {
+          console.warn(
+            "[Vite] Dev compile error - keeping server alive for overlay",
+          );
+        }
       },
     },
     server: serverOptions,

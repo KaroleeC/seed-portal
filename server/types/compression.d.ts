@@ -1,5 +1,5 @@
-declare module 'compression' {
-  import { Request, Response } from 'express';
+declare module "compression" {
+  import { Request, Response } from "express";
   interface CompressionOptions {
     threshold?: number;
     filter?: (req: Request, res: Response) => boolean;

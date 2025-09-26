@@ -1,1 +1,1 @@
-export * from '@shared/deals';
+export * from "@shared/deals";

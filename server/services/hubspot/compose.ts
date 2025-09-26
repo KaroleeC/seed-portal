@@ -1,6 +1,15 @@
-import { calculateCombinedFees, type PricingData, type CombinedFeeResult } from "@shared/pricing";
+import {
+  calculateCombinedFees,
+  type PricingData,
+  type CombinedFeeResult,
+} from "@shared/pricing";
 
-export type ServiceTier = 'Automated' | 'Guided' | 'Concierge' | string | undefined;
+export type ServiceTier =
+  | "Automated"
+  | "Guided"
+  | "Concierge"
+  | string
+  | undefined;
 
 export interface ServiceFlags {
   bookkeeping: boolean;
@@ -45,7 +54,8 @@ export function toPricingDataFromQuote(input: any): PricingData {
   };
 
   return {
-    monthlyRevenueRange: input?.monthlyRevenueRange || input?.revenueBand || undefined,
+    monthlyRevenueRange:
+      input?.monthlyRevenueRange || input?.revenueBand || undefined,
     monthlyTransactions: input?.monthlyTransactions || undefined,
     industry: input?.industry || undefined,
     cleanupMonths: num(input?.cleanupMonths),
@@ -61,7 +71,9 @@ export function toPricingDataFromQuote(input: any): PricingData {
     statesFiled: num(input?.statesFiled ?? input?.customStatesFiled),
     customStatesFiled: num(input?.customStatesFiled) ?? null,
     internationalFiling: input?.internationalFiling ?? undefined,
-    numBusinessOwners: num(input?.numBusinessOwners ?? input?.customNumBusinessOwners),
+    numBusinessOwners: num(
+      input?.numBusinessOwners ?? input?.customNumBusinessOwners,
+    ),
     customNumBusinessOwners: num(input?.customNumBusinessOwners) ?? null,
     include1040s: input?.include1040s ?? undefined,
     priorYearsUnfiled: num(input?.priorYearsUnfiled),
@@ -81,29 +93,57 @@ export function buildServiceConfig(quote: any): ServiceConfig {
   const pricingInput = toPricingDataFromQuote(quote);
   // Also pass through service toggles for backward-compat with the pricing engine
   (pricingInput as any).serviceMonthlyBookkeeping = Boolean(
-    quote?.serviceMonthlyBookkeeping || quote?.serviceBookkeeping || quote?.includesBookkeeping
+    quote?.serviceMonthlyBookkeeping ||
+      quote?.serviceBookkeeping ||
+      quote?.includesBookkeeping,
   );
   (pricingInput as any).serviceTaasMonthly = Boolean(
-    quote?.serviceTaasMonthly || quote?.serviceTaas || quote?.includesTaas
+    quote?.serviceTaasMonthly || quote?.serviceTaas || quote?.includesTaas,
   );
-  (pricingInput as any).servicePayrollService = Boolean(quote?.servicePayrollService || quote?.servicePayroll);
-  (pricingInput as any).serviceApArService = Boolean(quote?.serviceApArService || quote?.serviceApLite || quote?.serviceApAdvanced);
-  (pricingInput as any).serviceArService = Boolean(quote?.serviceArService || quote?.serviceArLite || quote?.serviceArAdvanced);
-  (pricingInput as any).serviceAgentOfService = Boolean(quote?.serviceAgentOfService);
+  (pricingInput as any).servicePayrollService = Boolean(
+    quote?.servicePayrollService || quote?.servicePayroll,
+  );
+  (pricingInput as any).serviceApArService = Boolean(
+    quote?.serviceApArService ||
+      quote?.serviceApLite ||
+      quote?.serviceApAdvanced,
+  );
+  (pricingInput as any).serviceArService = Boolean(
+    quote?.serviceArService || quote?.serviceArLite || quote?.serviceArAdvanced,
+  );
+  (pricingInput as any).serviceAgentOfService = Boolean(
+    quote?.serviceAgentOfService,
+  );
   (pricingInput as any).serviceCfoAdvisory = Boolean(quote?.serviceCfoAdvisory);
 
   const calc: CombinedFeeResult = calculateCombinedFees(pricingInput);
 
   // Derive includes
   const includes: ServiceFlags = {
-    bookkeeping: calc.includesBookkeeping || (calc.bookkeeping.monthlyFee > 0 || calc.bookkeeping.setupFee > 0),
-    taas: calc.includesTaas || calc.taas.monthlyFee > 0 || (calc.priorYearFilingsFee ?? 0) > 0,
-    payroll: (calc.payrollFee ?? 0) > 0 || Boolean((pricingInput as any).servicePayrollService),
-    ap: (calc.apFee ?? 0) > 0 || Boolean((pricingInput as any).serviceApArService),
-    ar: (calc.arFee ?? 0) > 0 || Boolean((pricingInput as any).serviceArService),
-    agentOfService: (calc.agentOfServiceFee ?? 0) > 0 || Boolean((pricingInput as any).serviceAgentOfService),
-    cfoAdvisory: (calc.cfoAdvisoryFee ?? 0) > 0 || Boolean((pricingInput as any).serviceCfoAdvisory),
-    qbo: (calc.qboFee ?? 0) > 0 || Boolean((pricingInput as any).qboSubscription),
+    bookkeeping:
+      calc.includesBookkeeping ||
+      calc.bookkeeping.monthlyFee > 0 ||
+      calc.bookkeeping.setupFee > 0,
+    taas:
+      calc.includesTaas ||
+      calc.taas.monthlyFee > 0 ||
+      (calc.priorYearFilingsFee ?? 0) > 0,
+    payroll:
+      (calc.payrollFee ?? 0) > 0 ||
+      Boolean((pricingInput as any).servicePayrollService),
+    ap:
+      (calc.apFee ?? 0) > 0 ||
+      Boolean((pricingInput as any).serviceApArService),
+    ar:
+      (calc.arFee ?? 0) > 0 || Boolean((pricingInput as any).serviceArService),
+    agentOfService:
+      (calc.agentOfServiceFee ?? 0) > 0 ||
+      Boolean((pricingInput as any).serviceAgentOfService),
+    cfoAdvisory:
+      (calc.cfoAdvisoryFee ?? 0) > 0 ||
+      Boolean((pricingInput as any).serviceCfoAdvisory),
+    qbo:
+      (calc.qboFee ?? 0) > 0 || Boolean((pricingInput as any).qboSubscription),
   };
 
   const fees: ServiceFees = {

@@ -1,16 +1,50 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 dist/
 build/
 coverage/
+
+# Config files
 .eslintrc.cjs
 vite.config.*
+tailwind.config.*
+postcss.config.*
+
+# Auto-generated files
 **/*.d.ts
 **/*.generated.*
+**/*.min.*
+
+# Test files
+**/__tests__/coverage/
+**/__mocks__/
+
+# Uploads and generated content
 uploads/
 scripts/
 server/workers/
+
+# Temporary files
 worker.ts
 temp_*.tsx
-tailwind.config.ts
-shared/pricing.ts
-shared/services.ts
+*.tmp
+.tmp/
+
+# Environment files
+.env*
+!.env.example
+
+# IDE specific files
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

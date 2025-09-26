@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import { Editor } from '@tinymce/tinymce-react';
-import { Button } from '@/components/ui/button';
-import { Save, Eye } from 'lucide-react';
+import React, { useEffect, useRef } from "react";
+import { Editor } from "@tinymce/tinymce-react";
+import { Button } from "@/components/ui/button";
+import { Save, Eye } from "lucide-react";
 
 interface RichTextEditorProps {
   content: string;
@@ -11,12 +11,12 @@ interface RichTextEditorProps {
   height?: number;
 }
 
-export function RichTextEditor({ 
-  content, 
-  onChange, 
-  onSave, 
+export function RichTextEditor({
+  content,
+  onChange,
+  onSave,
   placeholder = "Start writing...",
-  height = 400 
+  height = 400,
 }: RichTextEditorProps) {
   const editorRef = useRef<any>(null);
 
@@ -34,7 +34,7 @@ export function RichTextEditor({
   const handlePreview = () => {
     if (editorRef.current) {
       const content = editorRef.current.getContent();
-      const previewWindow = window.open('', '_blank');
+      const previewWindow = window.open("", "_blank");
       if (previewWindow) {
         previewWindow.document.write(`
           <!DOCTYPE html>
@@ -99,11 +99,7 @@ export function RichTextEditor({
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Rich Text Editor</h3>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePreview}
-          >
+          <Button variant="outline" size="sm" onClick={handlePreview}>
             <Eye className="h-4 w-4 mr-1" />
             Preview
           </Button>
@@ -123,21 +119,37 @@ export function RichTextEditor({
       <div className="border rounded-lg overflow-hidden">
         <Editor
           apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
-          onInit={(evt, editor) => editorRef.current = editor}
+          onInit={(evt, editor) => (editorRef.current = editor)}
           value={content}
           onEditorChange={handleEditorChange}
           init={{
             height: height,
             menubar: false,
             plugins: [
-              'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-              'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-              'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+              "advlist",
+              "autolink",
+              "lists",
+              "link",
+              "image",
+              "charmap",
+              "preview",
+              "anchor",
+              "searchreplace",
+              "visualblocks",
+              "code",
+              "fullscreen",
+              "insertdatetime",
+              "media",
+              "table",
+              "code",
+              "help",
+              "wordcount",
             ],
-            toolbar: 'undo redo | blocks | ' +
-              'bold italic forecolor | alignleft aligncenter ' +
-              'alignright alignjustify | bullist numlist outdent indent | ' +
-              'removeformat | help',
+            toolbar:
+              "undo redo | blocks | " +
+              "bold italic forecolor | alignleft aligncenter " +
+              "alignright alignjustify | bullist numlist outdent indent | " +
+              "removeformat | help",
             content_style: `
               body { 
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
@@ -153,9 +165,9 @@ export function RichTextEditor({
             branding: false,
             resize: false,
             statusbar: false,
-            contextmenu: 'link image table',
-            skin: 'oxide',
-            content_css: 'default'
+            contextmenu: "link image table",
+            skin: "oxide",
+            content_css: "default",
           }}
         />
       </div>

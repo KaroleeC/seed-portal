@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Shared Deal types for BFF and client
 
@@ -20,7 +20,7 @@ export interface Deal {
 
 export interface DealsResult {
   deals: Deal[];
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: "healthy" | "degraded" | "unhealthy";
   message?: string;
 }
 
@@ -43,6 +43,6 @@ export const DealSchema = z.object({
 
 export const DealsResultSchema = z.object({
   deals: z.array(DealSchema),
-  status: z.enum(['healthy', 'degraded', 'unhealthy']),
+  status: z.enum(["healthy", "degraded", "unhealthy"]),
   message: z.string().optional(),
 });

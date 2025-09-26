@@ -1,8 +1,8 @@
-import { ReactNode } from 'react';
-import { usePermissions } from '@/hooks/use-permissions';
-import { type Permission } from '@shared/permissions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Lock } from 'lucide-react';
+import { ReactNode } from "react";
+import { usePermissions } from "@/hooks/use-permissions";
+import { type Permission } from "@shared/permissions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Lock } from "lucide-react";
 
 interface PermissionGuardProps {
   permissions: Permission | Permission[];
@@ -12,19 +12,24 @@ interface PermissionGuardProps {
   showError?: boolean;
 }
 
-export function PermissionGuard({ 
-  permissions, 
-  requireAll = false, 
-  children, 
+export function PermissionGuard({
+  permissions,
+  requireAll = false,
+  children,
   fallback,
-  showError = true 
+  showError = true,
 }: PermissionGuardProps) {
-  const { hasPermission, hasAnyPermission, hasAllPermissions } = usePermissions();
-  
-  const permissionList = Array.isArray(permissions) ? permissions : [permissions];
-  
-  const hasAccess = Array.isArray(permissions) 
-    ? (requireAll ? hasAllPermissions(permissionList) : hasAnyPermission(permissionList))
+  const { hasPermission, hasAnyPermission, hasAllPermissions } =
+    usePermissions();
+
+  const permissionList = Array.isArray(permissions)
+    ? permissions
+    : [permissions];
+
+  const hasAccess = Array.isArray(permissions)
+    ? requireAll
+      ? hasAllPermissions(permissionList)
+      : hasAnyPermission(permissionList)
     : hasPermission(permissions);
 
   if (hasAccess) {
@@ -40,7 +45,8 @@ export function PermissionGuard({
       <Alert variant="destructive" className="m-4">
         <Lock className="h-4 w-4" />
         <AlertDescription>
-          You don't have permission to access this feature. Contact your administrator if you believe this is an error.
+          You don't have permission to access this feature. Contact your
+          administrator if you believe this is an error.
         </AlertDescription>
       </Alert>
     );

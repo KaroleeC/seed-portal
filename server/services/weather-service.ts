@@ -1,13 +1,13 @@
 /**
  * Weather Service (Open-Meteo Implementation)
- * 
+ *
  * This is the "doorway" file for our weather integration.
  * If we ever switch providers, we only need to rewrite this file.
  */
 
-import { cache } from '../cache';
-import { logger } from '../logger';
-import type { ServiceHealthResult } from './index';
+import { cache } from "../cache";
+import { logger } from "../logger";
+import type { ServiceHealthResult } from "./index";
 
 export interface WeatherData {
   temperature: number;
@@ -18,49 +18,55 @@ export interface WeatherData {
 }
 
 export class WeatherService {
-  private readonly baseUrl = 'https://api.open-meteo.com/v1';
+  private readonly baseUrl = "https://api.open-meteo.com/v1";
   private readonly CACHE_TTL = 10 * 60; // 10 minutes
 
   async healthCheck(): Promise<ServiceHealthResult> {
     const startTime = Date.now();
     try {
       // Simple health check - get weather for a known location
-      const response = await fetch(`${this.baseUrl}/forecast?latitude=40.7128&longitude=-74.0060&current=temperature_2m`);
-      
+      const response = await fetch(
+        `${this.baseUrl}/forecast?latitude=40.7128&longitude=-74.0060&current=temperature_2m`,
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
 
       return {
-        status: 'healthy',
-        responseTime: Date.now() - startTime
+        status: "healthy",
+        responseTime: Date.now() - startTime,
       };
     } catch (error: any) {
-      logger.error('Weather health check failed', { error: error.message });
-      
-      return { 
-        status: 'unhealthy', 
+      logger.error("Weather health check failed", { error: error.message });
+
+      return {
+        status: "unhealthy",
         message: error.message,
-        responseTime: Date.now() - startTime
+        responseTime: Date.now() - startTime,
       };
     }
   }
 
-  async getCurrentWeather(latitude: number, longitude: number, location: string): Promise<WeatherData> {
+  async getCurrentWeather(
+    latitude: number,
+    longitude: number,
+    location: string,
+  ): Promise<WeatherData> {
     const cacheKey = `weather:${latitude}:${longitude}`;
-    
+
     try {
       // Check cache first
       const cached = await cache.get<WeatherData>(cacheKey);
       if (cached) {
-        logger.debug('Weather cache hit', { location });
+        logger.debug("Weather cache hit", { location });
         return cached;
       }
 
-      logger.debug('Weather API call', { location, latitude, longitude });
+      logger.debug("Weather API call", { location, latitude, longitude });
 
       const response = await fetch(
-        `${this.baseUrl}/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`
+        `${this.baseUrl}/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`,
       );
 
       if (!response.ok) {
@@ -75,38 +81,38 @@ export class WeatherService {
         description: this.getWeatherDescription(current.weather_code),
         humidity: current.relative_humidity_2m,
         windSpeed: Math.round(current.wind_speed_10m * 10) / 10,
-        location
+        location,
       };
 
       // Cache the result
       await cache.set(cacheKey, JSON.stringify(weatherData), this.CACHE_TTL);
       return weatherData;
     } catch (error: any) {
-      logger.error('Weather lookup failed', { location, error: error.message });
+      logger.error("Weather lookup failed", { location, error: error.message });
       throw new Error(`Weather lookup failed: ${error.message}`);
     }
   }
 
   private getWeatherDescription(code: number): string {
     const descriptions: Record<number, string> = {
-      0: 'Clear sky',
-      1: 'Mainly clear',
-      2: 'Partly cloudy',
-      3: 'Overcast',
-      45: 'Fog',
-      48: 'Depositing rime fog',
-      51: 'Light drizzle',
-      53: 'Moderate drizzle',
-      55: 'Dense drizzle',
-      61: 'Light rain',
-      63: 'Moderate rain',
-      65: 'Heavy rain',
-      71: 'Light snow',
-      73: 'Moderate snow',
-      75: 'Heavy snow',
-      95: 'Thunderstorm',
+      0: "Clear sky",
+      1: "Mainly clear",
+      2: "Partly cloudy",
+      3: "Overcast",
+      45: "Fog",
+      48: "Depositing rime fog",
+      51: "Light drizzle",
+      53: "Moderate drizzle",
+      55: "Dense drizzle",
+      61: "Light rain",
+      63: "Moderate rain",
+      65: "Heavy rain",
+      71: "Light snow",
+      73: "Moderate snow",
+      75: "Heavy snow",
+      95: "Thunderstorm",
     };
 
-    return descriptions[code] || 'Unknown';
+    return descriptions[code] || "Unknown";
   }
 }

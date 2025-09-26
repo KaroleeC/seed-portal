@@ -1,9 +1,9 @@
-import { getRedis } from './redis';
-import { createHash } from 'crypto';
-import { logger } from './logger';
-import { promisify } from 'util';
+import { getRedis } from "./redis";
+import { createHash } from "crypto";
+import { logger } from "./logger";
+import { promisify } from "util";
 
-const cacheLogger = logger.child({ module: 'cache' });
+const cacheLogger = logger.child({ module: "cache" });
 
 export interface CacheOptions {
   ttl?: number; // Time to live in seconds
@@ -36,27 +36,31 @@ export class CacheService {
     try {
       return await cacheRedis.keys(pattern);
     } catch (error) {
-      cacheLogger.error({ error, pattern }, 'Cache keys error');
+      cacheLogger.error({ error, pattern }, "Cache keys error");
       return [];
     }
   }
   private defaultTTL = 300; // 5 minutes default
-  
+
   // Cache metrics tracking
   private stats = {
     hits: 0,
     misses: 0,
     totalOperations: 0,
-    lastReset: new Date().toISOString()
+    lastReset: new Date().toISOString(),
   };
 
   /**
    * Generate a cache key from function name and arguments
    */
   generateKey(prefix: string, identifier: string | object): string {
-    const hash = createHash('md5')
-      .update(typeof identifier === 'string' ? identifier : JSON.stringify(identifier))
-      .digest('hex');
+    const hash = createHash("md5")
+      .update(
+        typeof identifier === "string"
+          ? identifier
+          : JSON.stringify(identifier),
+      )
+      .digest("hex");
     return `${prefix}:${hash}`;
   }
 
@@ -74,17 +78,17 @@ export class CacheService {
       if (cached) {
         this.stats.hits++;
         this.stats.totalOperations++;
-        cacheLogger.debug({ key }, 'Cache hit');
+        cacheLogger.debug({ key }, "Cache hit");
         return JSON.parse(cached);
       }
       this.stats.misses++;
       this.stats.totalOperations++;
-      cacheLogger.debug({ key }, 'Cache miss');
+      cacheLogger.debug({ key }, "Cache miss");
       return null;
     } catch (error) {
       this.stats.misses++;
       this.stats.totalOperations++;
-      cacheLogger.error({ error, key }, 'Cache get error');
+      cacheLogger.error({ error, key }, "Cache get error");
       return null;
     }
   }
@@ -101,11 +105,11 @@ export class CacheService {
     try {
       const serialized = JSON.stringify(value);
       const expiryTime = ttl || this.defaultTTL;
-      
-      await cacheRedis.setAsync(key, serialized, 'EX', expiryTime);
-      cacheLogger.debug({ key, ttl: expiryTime }, 'Cache set');
+
+      await cacheRedis.setAsync(key, serialized, "EX", expiryTime);
+      cacheLogger.debug({ key, ttl: expiryTime }, "Cache set");
     } catch (error) {
-      cacheLogger.error({ error, key }, 'Cache set error');
+      cacheLogger.error({ error, key }, "Cache set error");
     }
   }
 
@@ -125,10 +129,10 @@ export class CacheService {
       if (keys.length > 0) {
         // Delete the keys directly (with their full key names including prefix)
         await cacheRedis.delAsync(...keys);
-        cacheLogger.debug({ pattern, count: keys.length }, 'Cache invalidated');
+        cacheLogger.debug({ pattern, count: keys.length }, "Cache invalidated");
       }
     } catch (error) {
-      cacheLogger.error({ error, pattern }, 'Cache delete error');
+      cacheLogger.error({ error, pattern }, "Cache delete error");
     }
   }
 
@@ -138,7 +142,7 @@ export class CacheService {
   async wrap<T>(
     key: string,
     fn: () => Promise<T>,
-    options: CacheOptions = {}
+    options: CacheOptions = {},
   ): Promise<T> {
     const cacheRedis = this.getCacheRedis();
     // Skip cache if requested or Redis not available
@@ -155,7 +159,7 @@ export class CacheService {
     // Execute function and cache result
     const result = await fn();
     await this.set(key, result, options.ttl);
-    
+
     return result;
   }
 
@@ -165,28 +169,29 @@ export class CacheService {
   async getStats(): Promise<CacheStats> {
     const cacheRedis = this.getCacheRedis();
     let totalKeys = 0;
-    let memoryUsage = '0MB';
+    let memoryUsage = "0MB";
 
     if (cacheRedis) {
       try {
         // Get Redis INFO for memory usage
-        const info = await cacheRedis.info('memory');
+        const info = await cacheRedis.info("memory");
         const memoryMatch = info.match(/used_memory_human:(.*)/);
         if (memoryMatch) {
           memoryUsage = memoryMatch[1].trim();
         }
 
         // Count cache keys (with prefix)
-        const keys = await cacheRedis.keys('cache:*');
+        const keys = await cacheRedis.keys("cache:*");
         totalKeys = keys.length;
       } catch (error) {
-        cacheLogger.error({ error }, 'Failed to get cache stats');
+        cacheLogger.error({ error }, "Failed to get cache stats");
       }
     }
 
-    const hitRate = this.stats.totalOperations > 0 
-      ? (this.stats.hits / this.stats.totalOperations) * 100 
-      : 0;
+    const hitRate =
+      this.stats.totalOperations > 0
+        ? (this.stats.hits / this.stats.totalOperations) * 100
+        : 0;
 
     return {
       hits: this.stats.hits,
@@ -195,7 +200,7 @@ export class CacheService {
       totalKeys,
       memoryUsage,
       totalOperations: this.stats.totalOperations,
-      lastReset: this.stats.lastReset
+      lastReset: this.stats.lastReset,
     };
   }
 
@@ -207,9 +212,9 @@ export class CacheService {
       hits: 0,
       misses: 0,
       totalOperations: 0,
-      lastReset: new Date().toISOString()
+      lastReset: new Date().toISOString(),
     };
-    cacheLogger.info('Cache statistics reset');
+    cacheLogger.info("Cache statistics reset");
   }
 
   /**
@@ -222,13 +227,13 @@ export class CacheService {
     }
 
     try {
-      const keys = await cacheRedis.keys('cache:*');
+      const keys = await cacheRedis.keys("cache:*");
       if (keys.length > 0) {
         await cacheRedis.del(...keys);
-        cacheLogger.info({ count: keys.length }, 'Cache cleared');
+        cacheLogger.info({ count: keys.length }, "Cache cleared");
       }
     } catch (error) {
-      cacheLogger.error({ error }, 'Failed to clear cache');
+      cacheLogger.error({ error }, "Failed to clear cache");
     }
   }
 }
@@ -243,16 +248,16 @@ export const CacheTTL = {
   HUBSPOT_METRICS: 300, // 5 minutes
   HUBSPOT_CONTACT: 900, // 15 minutes
   HUBSPOT_COMPANY: 900, // 15 minutes
-  
+
   // OpenAI cache times
   OPENAI_ANALYSIS: 3600, // 1 hour
   OPENAI_ENRICHMENT: 3600, // 1 hour
-  
+
   // General cache times
   USER_PROFILE: 600, // 10 minutes
   WEATHER_DATA: 1800, // 30 minutes
   GEOCODING: 86400, // 24 hours
-  
+
   // Generic TTLs for convenience
   TEN_MINUTES: 600,
   FIFTEEN_MINUTES: 900,
@@ -262,14 +267,14 @@ export const CacheTTL = {
 
 // Cache key prefixes
 export const CachePrefix = {
-  HUBSPOT_DEAL: 'hs:deal',
-  HUBSPOT_DEALS_LIST: 'hs:deals',
-  HUBSPOT_METRICS: 'hs:metrics',
-  HUBSPOT_CONTACT: 'hs:contact',
-  HUBSPOT_COMPANY: 'hs:company',
-  OPENAI_ANALYSIS: 'ai:analysis',
-  OPENAI_ENRICHMENT: 'ai:enrich',
-  USER_PROFILE: 'user:profile',
-  WEATHER: 'weather',
-  GEOCODING: 'geo',
+  HUBSPOT_DEAL: "hs:deal",
+  HUBSPOT_DEALS_LIST: "hs:deals",
+  HUBSPOT_METRICS: "hs:metrics",
+  HUBSPOT_CONTACT: "hs:contact",
+  HUBSPOT_COMPANY: "hs:company",
+  OPENAI_ANALYSIS: "ai:analysis",
+  OPENAI_ENRICHMENT: "ai:enrich",
+  USER_PROFILE: "user:profile",
+  WEATHER: "weather",
+  GEOCODING: "geo",
 };
