@@ -422,7 +422,9 @@ export function calculateCleanupProjectFees(data: PricingData): {
   cleanupProjectFee: number;
 } {
   const cleanupPeriods = (data as any).cleanupPeriods || [];
-  const cleanupProjectFee = cleanupPeriods.length * 100; // $100 per month
+  const cleanupMonths = Number((data as any).cleanupMonths) || 0;
+  const months = cleanupPeriods.length > 0 ? cleanupPeriods.length : cleanupMonths;
+  const cleanupProjectFee = months * 100; // $100 per month
   return { cleanupProjectFee };
 }
 
@@ -979,7 +981,9 @@ function calculateCombinedFeesWithConfig(
 
   // Additional project fees
   const cleanupPeriods = (data as any).cleanupPeriods || [];
-  const cleanupProjectFee = cleanupPeriods.length * cleanupPerMonth;
+  const cleanupMonths = Number((data as any).cleanupMonths) || 0;
+  const cleanupCount = cleanupPeriods.length > 0 ? cleanupPeriods.length : cleanupMonths;
+  const cleanupProjectFee = cleanupCount * cleanupPerMonth;
 
   const priorYearFilings = (data as any).priorYearFilings || [];
   const priorYearFilingsFee = priorYearFilings.length * priorYearFilingPerYear;
