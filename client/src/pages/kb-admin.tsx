@@ -70,7 +70,7 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import { AIArticleGenerator } from "@/components/AIArticleGenerator";
 import { RichTextEditor } from "@/components/RichTextEditor";
-import { logoLight as logoLightData, logoDark as logoDarkData } from "@/assets/logos";
+import { brand, getThemedLogo } from "@/assets";
 import { useTheme } from "@/theme";
 
 // Types
@@ -134,7 +134,7 @@ export default function KbAdmin() {
   const [showAdvancedDelete, setShowAdvancedDelete] = useState(false);
 
   const { resolvedTheme } = useTheme();
-  const logoSrc = resolvedTheme === "dark" ? logoDarkData : logoLightData;
+  const logoSrc = getThemedLogo(brand, resolvedTheme === 'dark' ? 'dark' : 'light');
 
   // Fetch categories - only when authenticated
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({

@@ -2,6 +2,11 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import dotenv from "dotenv";
+
+// Ensure env vars are available at config time (both root and client/.env)
+dotenv.config({ path: path.resolve(import.meta.dirname, ".env") });
+dotenv.config({ path: path.resolve(import.meta.dirname, "client", ".env") });
 
 export default defineConfig({
   plugins: [
@@ -24,7 +29,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      "@assets": path.resolve(import.meta.dirname, "client", "src", "assets"),
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
@@ -33,9 +38,22 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    port: 3000,
     fs: {
       strict: true,
       deny: ["**/.*"],
+      // Allow reading files from project root (server) and attached_assets outside client root
+      allow: [
+        path.resolve(import.meta.dirname),
+        path.resolve(import.meta.dirname, "attached_assets"),
+      ],
+    },
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:5001",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

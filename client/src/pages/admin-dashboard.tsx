@@ -1,107 +1,46 @@
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
-import { usePermissions } from "@/hooks/use-permissions";
+ 
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { PERMISSIONS } from "@shared/permissions";
-import { useState, useEffect } from "react";
+ 
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
-import { Link, useLocation } from "wouter";
-import { useNavigationHistory } from "@/hooks/use-navigation-history";
+ 
 import {
   BarChart3,
   TrendingUp,
-  Calendar,
-  CreditCard,
-  Globe,
   Shield,
-  Zap,
-  Database,
   Clock,
   Target,
-  PieChart,
   Activity,
-  DollarSign,
   Video,
   Bot,
-  GraduationCap,
-  Megaphone,
-  Slack,
-  Inbox,
-  UserCheck,
-  Menu,
-  ChevronRight,
-  Filter,
-  Cloud,
-  Sun,
-  CloudRain,
-  ChevronDown,
+  Headphones,
+  Users,
+  Monitor,
+  RefreshCw,
+  Bell,
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Users,
-  FileText,
-  Briefcase,
-  Settings,
-  RefreshCw,
-  Search,
-  Bell,
-  Monitor,
-  Server,
-  HardDrive,
-  Home,
-  Building2,
-  Calculator,
-  Banknote,
-  BookOpen,
-  Phone,
-  FolderOpen,
-  CloudCog,
-  Headphones,
-  User,
-  LogOut,
-  ArrowLeft,
-  Mail,
-  MessageSquare,
-  BarChart,
-  Receipt,
-  Coins,
   CreditCard as CreditCardIcon,
-  Laptop,
-  Smartphone,
-  Wifi,
-  Archive,
-  ExternalLink,
-  Layers,
+  Banknote,
+  Receipt,
 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { logoLight as logoLightData, logoDark as logoDarkData } from "@/assets/logos";
-import { useTheme } from "@/theme";
-import { KbCard } from "@/components/seedkb/KbCard";
+ 
+ 
+ 
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { DashboardWelcome } from "@/components/layout/DashboardWelcome";
+import { QuickAction } from "@/components/QuickAction";
+import { apps } from "@/assets";
 
 interface SystemHealth {
   crm: "healthy" | "unhealthy" | "error";
@@ -122,134 +61,11 @@ interface HealthCheckResponse {
   };
 }
 
-interface AdminMetrics {
-  totalUsers: number;
-  activeUsers: number;
-  totalRevenue: number;
-  monthlyRevenue: number;
-  totalLeads: number;
-  conversionRate: number;
-  averageDealSize: number;
-  pendingApprovals: number;
-}
+ 
 
-interface KbAdminStats {
-  totalArticles: number;
-  totalCategories: number;
-  monthlyViews: number;
-  topSearches: string[];
-}
-
-interface CommissionApproval {
-  id: string;
-  userName: string;
-  dealName: string;
-  amount: number;
-  requestDate: string;
-  type: "override" | "adjustment" | "bonus";
-  status: "pending" | "approved" | "rejected";
-}
-
-interface ClickUpTask {
-  id: string;
-  name: string;
-  status: string;
-  assignee: string;
-  priority: "low" | "normal" | "high" | "urgent";
-  dueDate: string;
-  project: string;
-}
-
-interface ClientHealthScore {
-  clientName: string;
-  email: string;
-  healthScore: number;
-  lastContact: string;
-  riskLevel: "low" | "medium" | "high";
-  issues: string[];
-  revenue: number;
-}
-
-// Navigation items for SEEDOS - Updated with CDN Monitoring
-const navigationItems = [
-  {
-    category: "Core",
-    items: [
-      { name: "Dashboard", icon: Home, path: "/admin", active: true },
-      { name: "Analytics", icon: BarChart3, path: "/admin/analytics" },
-      { name: "Revenue", icon: TrendingUp, path: "/admin/revenue" },
-    ],
-  },
-  {
-    category: "Business Operations",
-    items: [
-      { name: "Sales Pipeline", icon: Target, path: "/admin/sales" },
-      { name: "Client Management", icon: Users, path: "/admin/clients" },
-      {
-        name: "Commission Tracking",
-        icon: DollarSign,
-        path: "/admin/commission-tracker",
-      },
-      { name: "Quote Calculator", icon: Calculator, path: "/calculator" },
-    ],
-  },
-  {
-    category: "Financial Integration",
-    items: [
-      { name: "Stripe Dashboard", icon: CreditCardIcon, path: "/admin/stripe" },
-      { name: "Mercury Banking", icon: Banknote, path: "/admin/mercury" },
-      { name: "QuickBooks Sync", icon: Receipt, path: "/admin/quickbooks" },
-      { name: "Tax Planning", icon: FileText, path: "/admin/tax" },
-    ],
-  },
-  {
-    category: "Productivity & Content",
-    items: [
-      { name: "SeedKB Management", icon: BookOpen, path: "/kb-admin" },
-      { name: "Box File Storage", icon: Archive, path: "/admin/box" },
-      { name: "Google Drive", icon: FolderOpen, path: "/admin/drive" },
-      { name: "Email Analytics", icon: Mail, path: "/admin/email" },
-    ],
-  },
-  {
-    category: "Communication & Tools",
-    items: [
-      { name: "Zoom Meetings", icon: Video, path: "/admin/zoom" },
-      { name: "Slack Integration", icon: MessageSquare, path: "/admin/slack" },
-      { name: "ClickUp Projects", icon: Briefcase, path: "/admin/clickup" },
-    ],
-  },
-  {
-    category: "System & Security",
-    items: [
-      { name: "System Health", icon: Monitor, path: "/admin/system" },
-      { name: "User Management", icon: UserCheck, path: "/user-management" },
-      { name: "Pricing Management", icon: Calculator, path: "/admin/pricing" },
-      {
-        name: "Calculator Manager",
-        icon: FileText,
-        path: "/admin/calculator-manager",
-      },
-      { name: "CDN Monitoring", icon: Server, path: "/cdn-monitoring" },
-      { name: "API Integrations", icon: CloudCog, path: "/admin/apis" },
-      { name: "HubSpot Diagnostics", icon: Shield, path: "/admin/hubspot" },
-      { name: "Security Center", icon: Shield, path: "/admin/security" },
-    ],
-  },
-];
+// navigationItems removed (left nav deprecated)
 
 export default function AdminDashboard() {
-  const { user, logoutMutation } = useAuth();
-  const { hasPermission, getAvailableDashboards } = usePermissions();
-  const [, setLocation] = useLocation();
-  const { navigateTo } = useNavigationHistory();
-  const [selectedSection, setSelectedSection] = useState("dashboard");
-  const availableDashboards = getAvailableDashboards();
-  const { resolvedTheme } = useTheme();
-  const logoSrc = resolvedTheme === "dark" ? logoDarkData : logoLightData;
-
-  // Check if user has admin permission
-  const isAdmin = hasPermission(PERMISSIONS.VIEW_ADMIN_DASHBOARD);
 
   // Real-time system health monitoring
   const { data: healthData, isLoading: healthLoading } =
@@ -267,118 +83,7 @@ export default function AdminDashboard() {
     geocoding: healthData?.services.geocoding?.status || "error",
   };
 
-  const [adminMetrics] = useState<AdminMetrics>({
-    totalUsers: 12,
-    activeUsers: 8,
-    totalRevenue: 425000,
-    monthlyRevenue: 89200,
-    totalLeads: 156,
-    conversionRate: 23.5,
-    averageDealSize: 4200,
-    pendingApprovals: 3,
-  });
-
-  const [kbStats] = useState<KbAdminStats>({
-    totalArticles: 89,
-    totalCategories: 9,
-    monthlyViews: 342,
-    topSearches: [
-      "tax planning",
-      "s-corp election",
-      "quickbooks setup",
-      "client onboarding",
-    ],
-  });
-
-  const [commissionApprovals] = useState<CommissionApproval[]>([
-    {
-      id: "1",
-      userName: "Amanda Rodriguez",
-      dealName: "TechFlow Solutions - Bookkeeping",
-      amount: 450,
-      requestDate: "2025-01-29",
-      type: "override",
-      status: "pending",
-    },
-    {
-      id: "2",
-      userName: "Jon Walls",
-      dealName: "Wellness Hub Inc - TaaS",
-      amount: 275,
-      requestDate: "2025-01-28",
-      type: "adjustment",
-      status: "pending",
-    },
-    {
-      id: "3",
-      userName: "Amanda Rodriguez",
-      dealName: "Monthly Bonus - January",
-      amount: 1200,
-      requestDate: "2025-01-27",
-      type: "bonus",
-      status: "approved",
-    },
-  ]);
-
-  const [clickupTasks] = useState<ClickUpTask[]>([
-    {
-      id: "1",
-      name: "Client Onboarding - TechFlow Solutions",
-      status: "in-progress",
-      assignee: "Amanda Rodriguez",
-      priority: "high",
-      dueDate: "2025-01-31",
-      project: "Client Onboarding",
-    },
-    {
-      id: "2",
-      name: "Tax Filing - Q4 2024 - Wellness Hub",
-      status: "review",
-      assignee: "Jon Walls",
-      priority: "urgent",
-      dueDate: "2025-02-15",
-      project: "Tax Services",
-    },
-    {
-      id: "3",
-      name: "QuickBooks Setup - Marina Cafe",
-      status: "open",
-      assignee: "Amanda Rodriguez",
-      priority: "normal",
-      dueDate: "2025-02-05",
-      project: "Bookkeeping Services",
-    },
-  ]);
-
-  const [clientHealth] = useState<ClientHealthScore[]>([
-    {
-      clientName: "TechFlow Solutions",
-      email: "ceo@techflow.com",
-      healthScore: 95,
-      lastContact: "2025-01-28",
-      riskLevel: "low",
-      issues: [],
-      revenue: 12000,
-    },
-    {
-      clientName: "Wellness Hub Inc",
-      email: "admin@wellnesshub.com",
-      healthScore: 78,
-      lastContact: "2025-01-20",
-      riskLevel: "medium",
-      issues: ["Late payment", "Missed last call"],
-      revenue: 8400,
-    },
-    {
-      clientName: "Marina Cafe",
-      email: "owner@marinacafe.com",
-      healthScore: 45,
-      lastContact: "2024-12-15",
-      riskLevel: "high",
-      issues: ["No contact in 45 days", "Overdue invoices", "Unresponsive"],
-      revenue: 3600,
-    },
-  ]);
+  
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -410,40 +115,12 @@ export default function AdminDashboard() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "urgent":
-        return "bg-red-100 text-red-800";
-      case "high":
-        return "bg-orange-100 text-orange-800";
-      case "normal":
-        return "bg-blue-100 text-blue-800";
-      case "low":
-        return "bg-muted text-foreground";
-      default:
-        return "bg-muted text-foreground";
-    }
-  };
-
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case "high":
-        return "text-red-600";
-      case "medium":
-        return "text-yellow-600";
-      case "low":
-        return "text-green-600";
-      default:
-        return "text-muted-foreground";
-    }
-  };
+  
 
   // Debug logging for admin check
-  console.log("Admin Dashboard Debug:", {
-    currentUser: user?.email,
-    currentUserRole: user?.role,
-    isAdmin,
-  });
+  
+
+  // Left navigation removed
 
   // Use PermissionGuard for proper admin access control
   return (
@@ -451,10 +128,7 @@ export default function AdminDashboard() {
       permissions={PERMISSIONS.VIEW_ADMIN_DASHBOARD}
       fallback={
         <div
-          className="min-h-screen theme-seed-dark flex items-center justify-center"
-          style={{
-            background: "linear-gradient(to bottom right, #253e31, #75c29a)",
-          }}
+          className="min-h-screen theme-seed-dark flex items-center justify-center page-bg"
         >
           <Card className="border shadow-xl max-w-md">
             <CardContent className="p-12 text-center">
@@ -466,7 +140,9 @@ export default function AdminDashboard() {
                 You need admin privileges to access SEEDOS.
               </p>
               <Button
-                onClick={() => navigateTo("/")}
+                onClick={() => {
+                  window.location.href = "/";
+                }}
                 className="bg-orange-500 hover:bg-orange-600"
               >
                 Back to Portal
@@ -476,158 +152,81 @@ export default function AdminDashboard() {
         </div>
       }
     >
-      <div
-        className="min-h-screen theme-seed-dark flex"
-        style={{
-          background: "linear-gradient(to bottom right, #253e31, #75c29a)",
-        }}
-      >
-        {/* Sidebar Navigation */}
-        <div className="w-64 bg-sidebar backdrop-blur-md border-r border-sidebar-border shadow-xl fixed h-full overflow-y-auto">
-          {/* SEEDOS Header */}
-          <div className="p-6 border-b border-sidebar-border h-[88px] flex items-center justify-center">
-            <div className="flex items-center gap-3">
-              <img src={logoSrc} alt="Seed Financial" className="h-12" />
-            </div>
-          </div>
-
-          {/* User Profile */}
-          <div className="p-4 border-b border-sidebar-border bg-sidebar">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer">
-                  {user?.profilePhoto ? (
-                    <img
-                      src={user.profilePhoto}
-                      alt="Profile"
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                      {user?.firstName?.charAt(0)?.toUpperCase() ||
-                        user?.email?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {user?.email?.split("@")[0]}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Administrator
-                    </p>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => setLocation("/profile")}>
-                  <User className="mr-2 h-4 w-4" />
-                  My Profile
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => setLocation("/sales-dashboard")}
-                >
-                  <BarChart className="mr-2 h-4 w-4" />
-                  Sales Dashboard
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setLocation("/service-dashboard")}
-                >
-                  <Headphones className="mr-2 h-4 w-4" />
-                  Service Dashboard
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => logoutMutation.mutate()}
-                  className="text-red-600"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Navigation Menu */}
-          <div className="p-4 space-y-6">
-            {navigationItems.map((category) => (
-              <div key={category.category}>
-                <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wide mb-3">
-                  {category.category}
-                </h3>
-                <div className="space-y-1">
-                  {category.items.map((item) => (
-                    <button
-                      key={item.name}
-                      onClick={() => {
-                        // Navigate to specific routes instead of setting sections
-                        if (item.path === "/admin") {
-                          setSelectedSection("dashboard");
-                        } else {
-                          navigateTo(item.path);
-                        }
-                      }}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${
-                        item.active ||
-                        selectedSection === item.name.toLowerCase()
-                          ? "bg-orange-500/20 text-orange-300 border-r-2 border-orange-500"
-                          : "text-foreground/80 hover:bg-accent"
-                      }`}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.name}
-                      {!item.path.startsWith("/admin") && (
-                        <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
+      <DashboardLayout maxWidthClassName="max-w-7xl">
         {/* Main Content Area */}
-        <div className="flex-1 ml-64">
-          {/* Top Header */}
-          <div className="bg-popover backdrop-blur-sm border-b border-border px-6 py-6 h-[88px]">
-            <div className="flex items-center justify-between h-full">
-              <div className="flex items-center gap-4">
-                <h1
-                  className="text-4xl font-bold text-foreground"
-                  style={{ fontFamily: "League Spartan, sans-serif" }}
-                >
-                  SEED<span className="text-orange-500">OS</span>
-                </h1>
-                <p className="text-muted-foreground text-lg">
-                  Executive Dashboard
-                </p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Button variant="outline" size="sm">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Sync All
-                </Button>
-                <Button size="sm" className="bg-orange-500 hover:bg-orange-600">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Configure
-                </Button>
-                <div className="relative">
-                  <Bell className="h-5 w-5 text-white/70" />
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                    3
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div>
+          <DashboardWelcome />
 
           {/* Dashboard Content */}
           <div className="p-6 space-y-6">
+            {/* Quick Actions (standardized) */}
+            <div>
+              <div className="grid gap-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 justify-items-center">
+                <QuickAction
+                  label="Sales Intel"
+                  logoLightSrc={apps.salesiq.light}
+                  logoDarkSrc={apps.salesiq.dark}
+                  gradient="from-blue-500 to-blue-600"
+                  hoverGradient="from-blue-400 to-blue-500"
+                  delay={1}
+                  href="/sales-dashboard"
+                  useRim
+                  accentClass="text-[#bf1b2c]"
+                  watermarkIcon={<TrendingUp />}
+                />
+                <QuickAction
+                  label="Service Intel"
+                  logoLightSrc={apps.serviceiq.light}
+                  logoDarkSrc={apps.serviceiq.dark}
+                  gradient="from-indigo-500 to-indigo-600"
+                  hoverGradient="from-indigo-400 to-indigo-500"
+                  delay={2}
+                  href="/service-dashboard"
+                  useRim
+                  accentClass="text-[#26a69a]"
+                  watermarkIcon={<Headphones />}
+                />
+                <QuickAction
+                  label="SeedKPI"
+                  logoLightSrc={apps.seedkpi.light}
+                  logoDarkSrc={apps.seedkpi.dark}
+                  gradient="from-amber-500 to-amber-600"
+                  hoverGradient="from-amber-400 to-amber-500"
+                  delay={3}
+                  href="/admin"
+                  useRim
+                  accentClass="text-[#e2bd00]"
+                  watermarkIcon={<Target />}
+                />
+                <QuickAction
+                  label="AI Workspace"
+                  logoLightSrc={apps.seedai.light}
+                  logoDarkSrc={apps.seedai.dark}
+                  gradient="from-purple-500 to-purple-600"
+                  hoverGradient="from-purple-400 to-purple-500"
+                  delay={4}
+                  href="/assistant"
+                  useRim
+                  accentClass="text-[#6a1b9a]"
+                  watermarkIcon={<Bot />}
+                />
+                <QuickAction
+                  label="SeedPay"
+                  logoLightSrc={apps.seedpay.light}
+                  logoDarkSrc={apps.seedpay.dark}
+                  gradient="from-emerald-500 to-emerald-600"
+                  hoverGradient="from-emerald-400 to-emerald-500"
+                  delay={5}
+                  href="/apps/seedpay"
+                  useRim
+                  accentClass="text-[#118c4f]"
+                  watermarkIcon={<CreditCardIcon />}
+                />
+              </div>
+            </div>
             {/* Executive Summary Cards */}
             <div className="grid grid-cols-4 gap-6">
-              <KbCard className="col-span-1">
+              <SurfaceCard className="col-span-1">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -646,9 +245,9 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
 
-              <KbCard className="col-span-1 border shadow-lg">
+              <SurfaceCard className="col-span-1 border shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between text-foreground">
                     <div className="flex items-center gap-2">
@@ -673,9 +272,9 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
 
-              <KbCard className="col-span-1 border shadow-lg">
+              <SurfaceCard className="col-span-1 border shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -694,9 +293,9 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
 
-              <KbCard className="col-span-1 border shadow-lg">
+              <SurfaceCard className="col-span-1 border shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -713,13 +312,13 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
             </div>
 
             {/* Main Dashboard Content */}
             <div className="grid grid-cols-3 gap-6">
               {/* Revenue Chart */}
-              <KbCard className="col-span-2">
+              <SurfaceCard className="col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between text-foreground">
                     <span>Revenue Analytics</span>
@@ -742,10 +341,10 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
 
               {/* System Status */}
-              <KbCard>
+              <SurfaceCard>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between text-foreground">
                     <div className="flex items-center gap-2">
@@ -753,9 +352,7 @@ export default function AdminDashboard() {
                       System Status
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        Updates every 60s
-                      </span>
+                      <span className="text-xs text-muted-foreground">Updates every 60s</span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -789,9 +386,7 @@ export default function AdminDashboard() {
                             </span>
                           </div>
                           <Badge
-                            variant={
-                              status === "healthy" ? "default" : "destructive"
-                            }
+                            variant={status === "healthy" ? "default" : "destructive"}
                             className={
                               status === "healthy"
                                 ? "bg-green-500 text-white"
@@ -805,16 +400,17 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
+
+              
             </div>
 
             {/* Integration Status Grid */}
             <div className="grid grid-cols-4 gap-6">
-              <KbCard
+              <SurfaceCard
                 className="hover:shadow-xl transition-shadow cursor-pointer"
                 onClick={() => {
-                  console.log("Stripe card clicked");
-                  setLocation("/stripe-dashboard");
+                  window.location.href = "/stripe-dashboard";
                 }}
               >
                 <CardContent className="p-6 text-center">
@@ -825,35 +421,31 @@ export default function AdminDashboard() {
                   </p>
                   <Badge className="bg-green-500 text-white">Connected</Badge>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
 
-              <KbCard className="hover:shadow-xl transition-shadow">
+              <SurfaceCard className="hover:shadow-xl transition-shadow">
                 <CardContent className="p-6 text-center">
                   <Banknote className="h-12 w-12 text-blue-500 mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2 text-foreground">
-                    Mercury
-                  </h3>
+                  <h3 className="font-semibold mb-2 text-foreground">Mercury</h3>
                   <p className="text-sm text-muted-foreground mb-3">
                     Business banking
                   </p>
                   <Badge variant="secondary">Setup Required</Badge>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
 
-              <KbCard className="hover:shadow-xl transition-shadow">
+              <SurfaceCard className="hover:shadow-xl transition-shadow">
                 <CardContent className="p-6 text-center">
                   <Receipt className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2 text-foreground">
-                    QuickBooks
-                  </h3>
+                  <h3 className="font-semibold mb-2 text-foreground">QuickBooks</h3>
                   <p className="text-sm text-muted-foreground mb-3">
                     Accounting sync
                   </p>
                   <Badge variant="secondary">Setup Required</Badge>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
 
-              <KbCard className="hover:shadow-xl transition-shadow">
+              <SurfaceCard className="hover:shadow-xl transition-shadow">
                 <CardContent className="p-6 text-center">
                   <Video className="h-12 w-12 text-red-500 mx-auto mb-4" />
                   <h3 className="font-semibold mb-2 text-foreground">Zoom</h3>
@@ -862,12 +454,12 @@ export default function AdminDashboard() {
                   </p>
                   <Badge variant="secondary">Setup Required</Badge>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
             </div>
 
             {/* Recent Activity & Alerts */}
             <div className="grid grid-cols-2 gap-6">
-              <KbCard>
+              <SurfaceCard>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
                     <Activity className="h-5 w-5" />
@@ -877,7 +469,7 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2" />
                       <div>
                         <p className="font-medium text-foreground">
                           New client onboarded
@@ -891,7 +483,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2" />
                       <div>
                         <p className="font-medium text-foreground">
                           Commission approved
@@ -905,7 +497,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-2" />
                       <div>
                         <p className="font-medium text-foreground">
                           System backup completed
@@ -920,8 +512,8 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </CardContent>
-              </KbCard>
-              <KbCard>
+              </SurfaceCard>
+              <SurfaceCard>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground">
                     <Bell className="h-5 w-5" />
@@ -965,11 +557,11 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
             </div>
           </div>
         </div>
-      </div>
+      </DashboardLayout>
     </PermissionGuard>
   );
 }

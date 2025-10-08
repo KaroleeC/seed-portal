@@ -11,31 +11,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Wrench,
   Clock,
   CheckCircle,
   AlertTriangle,
   Users,
   FileText,
-  Headphones,
   Settings,
   TrendingUp,
   DollarSign,
   MessageSquare,
   Bot,
   Search,
-  Filter,
   Plus,
-  Bell,
   ExternalLink,
-  RefreshCw,
-  FileDown,
   Upload,
   Folder,
-  ChevronRight,
   Activity,
   Target,
   Zap,
@@ -44,22 +35,9 @@ import {
   BarChart3,
   PieChart,
   Mail,
-  Phone,
   Calendar,
   Video,
   Slack,
-  Box,
-  ArrowUp,
-  ArrowDown,
-  Star,
-  Clock3,
-  AlertCircle,
-  Info,
-  MonitorSpeaker,
-  Database,
-  Cloud,
-  Wifi,
-  Shield,
   Building2,
   Edit,
   Share,
@@ -70,35 +48,20 @@ import {
   Eye,
   Lightbulb,
   GraduationCap,
+  Clock3,
+  CreditCard,
 } from "lucide-react";
-import { logoLight as logoLightData, logoDark as logoDarkData } from "@/assets/logos";
-import { useAuth } from "@/hooks/use-auth";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useLocation } from "wouter";
-import { useNavigationHistory } from "@/hooks/use-navigation-history";
-import { useQuery } from "@tanstack/react-query";
+ 
+ 
 import { useDealsAll } from "@/hooks/useDeals";
-import { useState, useEffect } from "react";
-import { useTheme } from "@/theme";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { useState } from "react";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { DashboardWelcome } from "@/components/layout/DashboardWelcome";
+import { QuickAction } from "@/components/QuickAction";
+import { apps } from "@/assets";
 
 // Interfaces for service dashboard data
-interface HubSpotDeal {
-  id: string;
-  name: string;
-  stage: string;
-  amount: number;
-  closeDate: string;
-  probability: number;
-  priority: "high" | "medium" | "low";
-  entityComplexity: "simple" | "complex" | "very-complex";
-}
 
 interface SlackChannel {
   id: string;
@@ -141,18 +104,12 @@ interface ServiceMetrics {
 }
 
 export default function ServiceDashboard() {
-  const { hasPermission, getAvailableDashboards } = usePermissions();
-  const { user: currentUser, logoutMutation } = useAuth();
-  const [, navigate] = useLocation();
-  const { navigateTo } = useNavigationHistory();
-  const availableDashboards = getAvailableDashboards();
+  const { hasPermission } = usePermissions();
   const [activeModule, setActiveModule] = useState("overview");
-  const [searchTerm, setSearchTerm] = useState("");
-  const { resolvedTheme } = useTheme();
-  const logoSrc = resolvedTheme === "dark" ? logoDarkData : logoLightData;
+  
 
   // Prefetch centralized deals (no UI changes)
-  const { data: dealsResult, isLoading: dealsLoading } = useDealsAll({
+  useDealsAll({
     enabled: true,
     limit: 50,
   });
@@ -369,6 +326,114 @@ export default function ServiceDashboard() {
     }
   };
 
+  // Helpers to replace nested ternaries
+  const taskCardBorderClass = (priority: string) => {
+    switch (priority) {
+      case "urgent":
+        return "border-l-red-500 bg-red-50/80 hover:bg-red-50";
+      case "high":
+        return "border-l-orange-500 bg-orange-50/80 hover:bg-orange-50";
+      default:
+        return "border-l-blue-500 bg-blue-50/80 hover:bg-blue-50";
+    }
+  };
+
+  const channelPriorityDotClass = (priority: string) => {
+    switch (priority) {
+      case "urgent":
+        return "bg-red-500";
+      case "high":
+        return "bg-orange-500";
+      default:
+        return "bg-green-500";
+    }
+  };
+
+  const channelCardBorderClass = (priority: string) => {
+    switch (priority) {
+      case "urgent":
+        return "border-l-red-500 bg-red-50/80 hover:bg-red-50";
+      case "high":
+        return "border-l-orange-500 bg-orange-50/80 hover:bg-orange-50";
+      default:
+        return "border-l-green-500 bg-green-50/80 hover:bg-green-50";
+    }
+  };
+
+  const channelBadgeClass = (priority: string) => {
+    switch (priority) {
+      case "urgent":
+        return "bg-red-500 text-white";
+      case "high":
+        return "bg-orange-500 text-white";
+      default:
+        return "bg-green-500 text-white";
+    }
+  };
+
+  const clickupStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return "border-green-500 text-green-700";
+      case "In Progress":
+        return "border-blue-500 text-blue-700";
+      case "Review":
+        return "border-orange-500 text-orange-700";
+      default:
+        return "border text-foreground";
+    }
+  };
+
+  const documentCardBorderClass = (priority: string) => {
+    switch (priority) {
+      case "urgent":
+        return "border-l-red-500 bg-red-50/80 hover:bg-red-50";
+      case "high":
+        return "border-l-orange-500 bg-orange-50/80 hover:bg-orange-50";
+      default:
+        return "border-l-blue-500 bg-blue-50/80 hover:bg-blue-50";
+    }
+  };
+
+  const requestStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-500/20 text-green-700";
+      case "processing":
+        return "bg-blue-500/20 text-blue-700";
+      case "received":
+        return "bg-orange-500/20 text-orange-700";
+      default:
+        return "bg-yellow-500/20 text-yellow-700";
+    }
+  };
+
+  const aiTaskCardBorderClass = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "border-l-green-500 bg-green-50/80 hover:bg-green-50";
+      case "running":
+        return "border-l-blue-500 bg-blue-50/80 hover:bg-blue-50";
+      case "queued":
+        return "border-l-yellow-500 bg-yellow-50/80 hover:bg-yellow-50";
+      default:
+        return "border-l-red-500 bg-red-50/80 hover:bg-red-50";
+    }
+  };
+
+  const aiTaskStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-500/20 text-green-700";
+      case "running":
+        return "bg-blue-500/20 text-blue-700";
+      case "queued":
+        return "bg-yellow-500/20 text-yellow-700";
+      default:
+        return "bg-red-500/20 text-red-700";
+    }
+  };
+
   if (!hasPermission(PERMISSIONS.VIEW_SERVICE_DASHBOARD)) {
     return (
       <PermissionGuard permissions={PERMISSIONS.VIEW_SERVICE_DASHBOARD}>
@@ -377,209 +442,90 @@ export default function ServiceDashboard() {
     );
   }
 
+  // Remove left navigation: no aside
+
   return (
-    <div
-      className="min-h-screen flex"
-      style={{
-        background: "linear-gradient(to bottom right, #253e31, #75c29a)",
-      }}
-    >
-      {/* Sidebar Navigation */}
-      <div className="w-72 bg-sidebar backdrop-blur-md border-r border-sidebar-border shadow-xl fixed h-full overflow-y-auto">
-        {/* SEEDOS Header */}
-        <div className="p-6 border-b border-sidebar-border h-[88px] flex items-center justify-center">
-          <div className="flex items-center gap-3">
-            <img src={logoSrc} alt="Seed Financial" className="h-12" />
-          </div>
-        </div>
-
-        {/* User Profile */}
-        <div className="p-4 border-b border-sidebar-border bg-sidebar">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={currentUser?.profilePhoto || ""} />
-                  <AvatarFallback className="bg-orange-500 text-white">
-                    {currentUser?.firstName?.[0] ||
-                      currentUser?.email?.[0]?.toUpperCase() ||
-                      "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {currentUser?.firstName
-                      ? `${currentUser.firstName} ${currentUser.lastName}`
-                      : currentUser?.email?.split("@")[0]}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Service Team
-                  </p>
-                </div>
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              {availableDashboards.length > 1 && (
-                <>
-                  {availableDashboards.map((dashboard) => (
-                    <DropdownMenuItem
-                      key={dashboard.route}
-                      onClick={() => navigateTo(dashboard.route)}
-                    >
-                      {dashboard.name}
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuItem
-                    className="border-t mt-2 pt-2"
-                    onClick={() => logoutMutation.mutate()}
-                  >
-                    Sign out
-                  </DropdownMenuItem>
-                </>
-              )}
-              {availableDashboards.length === 1 && (
-                <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
-                  Sign out
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Enhanced Navigation Menu */}
-        <div className="p-4 space-y-6">
-          <div>
-            <p className="text-white/60 text-xs font-semibold mb-3 uppercase tracking-wider">
-              Service Command Center
-            </p>
-            <div className="space-y-1">
-              <Button
-                variant="ghost"
-                className={`w-full justify-start text-white hover:bg-white/10 ${activeModule === "overview" ? "bg-orange-500/20 text-orange-300 border-r-2 border-orange-500" : ""}`}
-                onClick={() => setActiveModule("overview")}
-              >
-                <Activity className="mr-3 h-4 w-4" />
-                Dashboard Overview
-              </Button>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start text-white hover:bg-white/10 ${activeModule === "sales-intelligence" ? "bg-orange-500/20 text-orange-300 border-r-2 border-orange-500" : ""}`}
-                onClick={() => setActiveModule("sales-intelligence")}
-              >
-                <TrendingUp className="mr-3 h-4 w-4" />
-                Sales Intelligence
-              </Button>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start text-white hover:bg-white/10 ${activeModule === "communications" ? "bg-orange-500/20 text-orange-300 border-r-2 border-orange-500" : ""}`}
-                onClick={() => setActiveModule("communications")}
-              >
-                <MessageSquare className="mr-3 h-4 w-4" />
-                Client Communications
-              </Button>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start text-white hover:bg-white/10 ${activeModule === "documents" ? "bg-orange-500/20 text-orange-300 border-r-2 border-orange-500" : ""}`}
-                onClick={() => setActiveModule("documents")}
-              >
-                <Folder className="mr-3 h-4 w-4" />
-                Document Center
-              </Button>
-              <Button
-                variant="ghost"
-                className={`w-full justify-start text-white hover:bg-white/10 ${activeModule === "ai-tools" ? "bg-orange-500/20 text-orange-300 border-r-2 border-orange-500" : ""}`}
-                onClick={() => setActiveModule("ai-tools")}
-              >
-                <Bot className="mr-3 h-4 w-4" />
-                AI Service Tools
-              </Button>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-white/60 text-xs font-semibold mb-3 uppercase tracking-wider">
-              Quick Access
-            </p>
-            <div className="space-y-1">
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-white hover:bg-white/10"
-                onClick={() => navigateTo("/calculator")}
-              >
-                <Calculator className="mr-3 h-4 w-4" />
-                Quote Calculator
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-white hover:bg-white/10"
-                onClick={() => navigateTo("/client-intel")}
-              >
-                <Users className="mr-3 h-4 w-4" />
-                Client Intelligence
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-white hover:bg-white/10"
-                onClick={() => navigateTo("/knowledge-base")}
-              >
-                <FileText className="mr-3 h-4 w-4" />
-                Knowledge Base
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 ml-72">
-        {/* Top Header */}
-        <div className="bg-popover backdrop-blur-sm border-b border-border px-6 py-6 h-[88px]">
-          <div className="flex items-center justify-between h-full">
-            <div className="flex items-center gap-4">
-              <h1
-                className="text-4xl font-bold text-white"
-                style={{ fontFamily: "League Spartan, sans-serif" }}
-              >
-                SEED<span className="text-orange-500">OS</span>
-              </h1>
-              <p className="text-white/70 text-lg">Service Command Center</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-popover backdrop-blur-sm border rounded-lg px-3 py-2">
-                <Search className="h-4 w-4 text-white/70" />
-                <Input
-                  placeholder="Search clients, deals..."
-                  className="bg-transparent border-0 text-white placeholder:text-white/50 focus:ring-0 w-64"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Button variant="outline" className="text-white">
-                <Bell className="mr-2 h-4 w-4" />
-                <span className="bg-red-500 text-xs px-1.5 py-0.5 rounded-full ml-1">
-                  {serviceMetrics.urgentItems}
-                </span>
-              </Button>
-              <Button variant="outline" className="text-white">
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Sync
-              </Button>
-            </div>
-          </div>
-        </div>
+    <DashboardLayout maxWidthClassName="max-w-7xl">
+        <DashboardWelcome />
 
         {/* Dashboard Content */}
         <div className="p-6">
           {activeModule === "overview" && (
             <>
+              {/* Quick Actions (standardized) */}
+              <div className="mb-8">
+                <div className="grid gap-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 justify-items-center">
+                  <QuickAction
+                    label="Client Profiles"
+                    logoLightSrc={apps.clientiq.light}
+                    logoDarkSrc={apps.clientiq.dark}
+                    gradient="from-blue-500 to-blue-600"
+                    hoverGradient="from-blue-400 to-blue-500"
+                    delay={1}
+                    href="/client-profiles"
+                    useRim
+                    accentClass="text-[#0096e2]"
+                    watermarkIcon={<Users />}
+                  />
+                  <QuickAction
+                    label="Client Comms"
+                    logoLightSrc={apps.commshub.light}
+                    logoDarkSrc={apps.commshub.dark}
+                    gradient="from-indigo-500 to-indigo-600"
+                    hoverGradient="from-indigo-400 to-indigo-500"
+                    delay={2}
+                    onClick={() => setActiveModule("communications")}
+                    useRim
+                    accentClass="text-[#a2bfff]"
+                    watermarkIcon={<MessageSquare />}
+                  />
+                  <QuickAction
+                    label="Document Center"
+                    logoLightSrc={apps.seeddrive.light}
+                    logoDarkSrc={apps.seeddrive.dark}
+                    gradient="from-emerald-500 to-emerald-600"
+                    hoverGradient="from-emerald-400 to-emerald-500"
+                    delay={3}
+                    onClick={() => setActiveModule("documents")}
+                    useRim
+                    accentClass="text-[#e24c00]"
+                    watermarkIcon={<Folder />}
+                  />
+                  <QuickAction
+                    label="AI Workspace"
+                    logoLightSrc={apps.seedai.light}
+                    logoDarkSrc={apps.seedai.dark}
+                    gradient="from-purple-500 to-purple-600"
+                    hoverGradient="from-purple-400 to-purple-500"
+                    delay={4}
+                    href="/assistant"
+                    useRim
+                    accentClass="text-[#6a1b9a]"
+                    watermarkIcon={<Bot />}
+                  />
+                  <QuickAction
+                    label="SeedPay"
+                    logoLightSrc={apps.seedpay.light}
+                    logoDarkSrc={apps.seedpay.dark}
+                    gradient="from-teal-500 to-teal-600"
+                    hoverGradient="from-teal-400 to-teal-500"
+                    delay={5}
+                    href="/apps/seedpay"
+                    useRim
+                    accentClass="text-[#118c4f]"
+                    watermarkIcon={<CreditCard />}
+                  />
+                </div>
+              </div>
+
               {/* Task-Focused Header */}
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-3xl font-bold text-white mb-2">
+                    <h2 className="text-3xl font-bold text-foreground mb-2">
                       Today's Focus
                     </h2>
-                    <p className="text-white/70">
+                    <p className="text-muted-foreground">
                       Your personal task workspace for client service excellence
                     </p>
                   </div>
@@ -592,35 +538,35 @@ export default function ServiceDashboard() {
                 {/* Quick Stats Bar */}
                 <div className="grid grid-cols-4 gap-4">
                   <div className="bg-muted rounded-xl p-4 text-center border">
-                    <p className="text-2xl font-bold text-white">
+                    <p className="text-2xl font-bold text-foreground">
                       {currentTasks.length}
                     </p>
-                    <p className="text-white/70 text-sm">Active Tasks</p>
+                    <p className="text-muted-foreground text-sm">Active Tasks</p>
                   </div>
                   <div className="bg-muted rounded-xl p-4 text-center border">
-                    <p className="text-2xl font-bold text-white">
+                    <p className="text-2xl font-bold text-foreground">
                       {
                         currentTasks.filter((t) => t.priority === "urgent")
                           .length
                       }
                     </p>
-                    <p className="text-white/70 text-sm">Urgent</p>
+                    <p className="text-muted-foreground text-sm">Urgent</p>
                   </div>
                   <div className="bg-muted rounded-xl p-4 text-center border">
-                    <p className="text-2xl font-bold text-white">
+                    <p className="text-2xl font-bold text-foreground">
                       {Math.round(
                         currentTasks.reduce((acc, t) => acc + t.progress, 0) /
                           currentTasks.length,
                       )}
                       %
                     </p>
-                    <p className="text-white/70 text-sm">Avg Progress</p>
+                    <p className="text-muted-foreground text-sm">Avg Progress</p>
                   </div>
                   <div className="bg-muted rounded-xl p-4 text-center border">
-                    <p className="text-2xl font-bold text-white">
+                    <p className="text-2xl font-bold text-foreground">
                       {serviceMetrics.activeClients}
                     </p>
-                    <p className="text-white/70 text-sm">Active Clients</p>
+                    <p className="text-muted-foreground text-sm">Active Clients</p>
                   </div>
                 </div>
               </div>
@@ -629,7 +575,7 @@ export default function ServiceDashboard() {
               <div className="grid grid-cols-12 gap-6 mb-8">
                 {/* Current Tasks - Main Real Estate */}
                 <div className="col-span-8">
-                  <KbCard className="h-full">
+                  <SurfaceCard className="h-full">
                     <CardHeader className="bg-slate-700 text-white rounded-t-lg">
                       <CardTitle className="flex items-center gap-2">
                         <Target className="h-6 w-6" />
@@ -644,13 +590,7 @@ export default function ServiceDashboard() {
                         {currentTasks.map((task) => (
                           <div key={task.id} className="group relative">
                             <div
-                              className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg ${
-                                task.priority === "urgent"
-                                  ? "border-l-red-500 bg-red-50/80 hover:bg-red-50"
-                                  : task.priority === "high"
-                                    ? "border-l-orange-500 bg-orange-50/80 hover:bg-orange-50"
-                                    : "border-l-blue-500 bg-blue-50/80 hover:bg-blue-50"
-                              }`}
+                              className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg ${taskCardBorderClass(task.priority)}`}
                             >
                               <div className="flex items-start justify-between mb-3">
                                 <div className="flex-1">
@@ -726,12 +666,12 @@ export default function ServiceDashboard() {
                         ))}
                       </div>
                     </CardContent>
-                  </KbCard>
+                  </SurfaceCard>
                 </div>
 
                 {/* Client Communication Hub */}
                 <div className="col-span-4">
-                  <KbCard className="h-full">
+                  <SurfaceCard className="h-full">
                     <CardHeader className="bg-slate-600 text-white rounded-t-lg">
                       <CardTitle className="flex items-center gap-2">
                         <MessageSquare className="h-6 w-6" />
@@ -755,14 +695,8 @@ export default function ServiceDashboard() {
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                   <div
-                                    className={`w-2 h-2 rounded-full ${
-                                      channel.priority === "urgent"
-                                        ? "bg-red-500"
-                                        : channel.priority === "high"
-                                          ? "bg-orange-500"
-                                          : "bg-green-500"
-                                    }`}
-                                  ></div>
+                                    className={`w-2 h-2 rounded-full ${channelPriorityDotClass(channel.priority)}`}
+                                   />
                                   <span className="font-medium text-foreground text-sm">
                                     {channel.clientName}
                                   </span>
@@ -793,14 +727,14 @@ export default function ServiceDashboard() {
                         ))}
                       </div>
                     </CardContent>
-                  </KbCard>
+                  </SurfaceCard>
                 </div>
               </div>
 
               {/* ClickUp Integration & AI Tools */}
               <div className="grid grid-cols-2 gap-6">
                 {/* ClickUp Task Monitor */}
-                <KbCard className="shadow-xl">
+                <SurfaceCard className="shadow-xl">
                   <CardHeader className="bg-slate-600 text-white rounded-t-lg">
                     <CardTitle className="flex items-center gap-2">
                       <Activity className="h-5 w-5" />
@@ -827,15 +761,7 @@ export default function ServiceDashboard() {
                               </span>
                               <Badge
                                 variant="outline"
-                                className={
-                                  task.status === "Completed"
-                                    ? "border-green-500 text-green-700"
-                                    : task.status === "In Progress"
-                                      ? "border-blue-500 text-blue-700"
-                                      : task.status === "Review"
-                                        ? "border-orange-500 text-orange-700"
-                                        : "border text-foreground"
-                                }
+                                className={clickupStatusBadgeClass(task.status)}
                               >
                                 {task.status}
                               </Badge>
@@ -851,10 +777,10 @@ export default function ServiceDashboard() {
                       ))}
                     </div>
                   </CardContent>
-                </KbCard>
+                </SurfaceCard>
 
                 {/* AI Assistant Panel */}
-                <KbCard className="shadow-xl">
+                <SurfaceCard className="shadow-xl">
                   <CardHeader className="bg-slate-700 text-white rounded-t-lg">
                     <CardTitle className="flex items-center gap-2">
                       <Bot className="h-5 w-5" />
@@ -896,7 +822,7 @@ export default function ServiceDashboard() {
                       ))}
                     </div>
                   </CardContent>
-                </KbCard>
+                </SurfaceCard>
               </div>
             </>
           )}
@@ -1316,13 +1242,7 @@ export default function ServiceDashboard() {
                       {slackChannels.map((channel) => (
                         <div key={channel.id} className="group">
                           <div
-                            className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg cursor-pointer ${
-                              channel.priority === "urgent"
-                                ? "border-l-red-500 bg-red-50/80 hover:bg-red-50"
-                                : channel.priority === "high"
-                                  ? "border-l-orange-500 bg-orange-50/80 hover:bg-orange-50"
-                                  : "border-l-green-500 bg-green-50/80 hover:bg-green-50"
-                            }`}
+                            className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg cursor-pointer ${channelCardBorderClass(channel.priority)}`}
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
@@ -1333,15 +1253,7 @@ export default function ServiceDashboard() {
                                   {channel.name}
                                 </p>
                                 <div className="flex items-center gap-3">
-                                  <Badge
-                                    className={
-                                      channel.priority === "urgent"
-                                        ? "bg-red-500 text-white"
-                                        : channel.priority === "high"
-                                          ? "bg-orange-500 text-white"
-                                          : "bg-green-500 text-white"
-                                    }
-                                  >
+                                  <Badge className={channelBadgeClass(channel.priority)}>
                                     {channel.priority}
                                   </Badge>
                                   <span className="text-sm text-muted-foreground">
@@ -1655,13 +1567,7 @@ export default function ServiceDashboard() {
                       {documentRequests.map((request) => (
                         <div key={request.id} className="group">
                           <div
-                            className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg cursor-pointer ${
-                              request.priority === "urgent"
-                                ? "border-l-red-500 bg-red-50/80 hover:bg-red-50"
-                                : request.priority === "high"
-                                  ? "border-l-orange-500 bg-orange-50/80 hover:bg-orange-50"
-                                  : "border-l-blue-500 bg-blue-50/80 hover:bg-blue-50"
-                            }`}
+                            className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg cursor-pointer ${documentCardBorderClass(request.priority)}`}
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
@@ -1673,15 +1579,7 @@ export default function ServiceDashboard() {
                                 </p>
                                 <div className="flex items-center gap-3">
                                   <Badge
-                                    className={
-                                      request.status === "completed"
-                                        ? "bg-green-500/20 text-green-700"
-                                        : request.status === "processing"
-                                          ? "bg-blue-500/20 text-blue-700"
-                                          : request.status === "received"
-                                            ? "bg-orange-500/20 text-orange-700"
-                                            : "bg-yellow-500/20 text-yellow-700"
-                                    }
+                                    className={requestStatusBadgeClass(request.status)}
                                   >
                                     {request.status.replace("-", " ")}
                                   </Badge>
@@ -2038,15 +1936,7 @@ export default function ServiceDashboard() {
                       {aiTasks.map((task) => (
                         <div key={task.id} className="group">
                           <div
-                            className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg ${
-                              task.status === "completed"
-                                ? "border-l-green-500 bg-green-50/80 hover:bg-green-50"
-                                : task.status === "running"
-                                  ? "border-l-blue-500 bg-blue-50/80 hover:bg-blue-50"
-                                  : task.status === "queued"
-                                    ? "border-l-yellow-500 bg-yellow-50/80 hover:bg-yellow-50"
-                                    : "border-l-red-500 bg-red-50/80 hover:bg-red-50"
-                            }`}
+                            className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg ${aiTaskCardBorderClass(task.status)}`}
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
@@ -2060,15 +1950,7 @@ export default function ServiceDashboard() {
                                 </p>
                                 <div className="flex items-center gap-3">
                                   <Badge
-                                    className={
-                                      task.status === "completed"
-                                        ? "bg-green-500/20 text-green-700"
-                                        : task.status === "running"
-                                          ? "bg-blue-500/20 text-blue-700"
-                                          : task.status === "queued"
-                                            ? "bg-yellow-500/20 text-yellow-700"
-                                            : "bg-red-500/20 text-red-700"
-                                    }
+                                    className={aiTaskStatusBadgeClass(task.status)}
                                   >
                                     {task.status}
                                   </Badge>
@@ -2279,7 +2161,6 @@ export default function ServiceDashboard() {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }

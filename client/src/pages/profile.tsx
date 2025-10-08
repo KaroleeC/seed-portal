@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabaseClient";
 import { Link } from "wouter";
 import {
   ArrowLeft,
@@ -59,7 +60,7 @@ import {
   Lock,
   Shield,
 } from "lucide-react";
-import { logoLight as logoLightData, logoDark as logoDarkData } from "@/assets/logos";
+import { brand, getThemedLogo } from "@/assets";
 import { useTheme } from "@/theme";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -99,7 +100,7 @@ export default function Profile() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { resolvedTheme } = useTheme();
-  const logoSrc = resolvedTheme === "dark" ? logoDarkData : logoLightData;
+  const logoSrc = getThemedLogo(brand, resolvedTheme === 'dark' ? 'dark' : 'light');
 
   // Password change modal state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -369,17 +370,20 @@ export default function Profile() {
     formData.append("photo", file);
 
     try {
-      // Get auth token for the request
-      const token = localStorage.getItem("google_access_token");
-      const headers: HeadersInit = {};
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      // Get Supabase access token for Authorization header
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      // Get CSRF token
+      const csrfRes = await fetch("/api/csrf-token", { credentials: "include" });
+      const { csrfToken } = await csrfRes.json();
 
       const response = await fetch("/api/user/upload-photo", {
         method: "POST",
         body: formData,
-        headers,
+        headers: {
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
+        },
         credentials: "include",
       });
 
@@ -740,7 +744,7 @@ export default function Profile() {
             </div>
 
             {/* Spacer for balance */}
-            <div className="w-32"></div>
+            <div className="w-32" />
           </div>
         </div>
       </header>
@@ -757,7 +761,7 @@ export default function Profile() {
         <div className="grid md:grid-cols-3 gap-6">
           {/* Profile Information Card */}
           <div className="md:col-span-2">
-            <KbCard>
+            <SurfaceCard>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl text-foreground">
                   <User className="h-5 w-5 text-orange-500" />
@@ -1063,12 +1067,12 @@ export default function Profile() {
                   </form>
                 </Form>
               </CardContent>
-            </KbCard>
+            </SurfaceCard>
           </div>
 
           {/* Weather Preview Card */}
-          <div className="space-y-6">
-            <KbCard>
+          <div id="weather" className="space-y-6" tabIndex={-1}>
+            <SurfaceCard>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg text-foreground">
                   <Cloud className="h-5 w-5 text-blue-500" />
@@ -1104,10 +1108,10 @@ export default function Profile() {
                   </div>
                 )}
               </CardContent>
-            </KbCard>
+            </SurfaceCard>
 
             {/* Profile Photo */}
-            <KbCard>
+            <SurfaceCard>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg text-foreground">
                   <Camera className="h-5 w-5 text-muted-foreground" />
@@ -1152,10 +1156,10 @@ export default function Profile() {
                   </div>
                 </div>
               </CardContent>
-            </KbCard>
+            </SurfaceCard>
 
             {/* Password Change Card */}
-            <KbCard>
+            <SurfaceCard>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg text-foreground">
                   <Shield className="h-5 w-5 text-green-600" />
@@ -1284,7 +1288,7 @@ export default function Profile() {
                   </DialogContent>
                 </Dialog>
               </CardContent>
-            </KbCard>
+            </SurfaceCard>
           </div>
         </div>
       </main>

@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { UniversalNavbar } from "@/components/UniversalNavbar";
 import { apiRequest } from "@/lib/queryClient";
-import { logoLight as logoLightData, logoDark as logoDarkData } from "@/assets/logos";
+import { brand, getThemedLogo } from "@/assets";
 import { useTheme } from "@/theme";
 
 // Types
@@ -102,7 +102,7 @@ export default function KnowledgeBase() {
   const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
   const { resolvedTheme } = useTheme();
-  const logoSrc = resolvedTheme === "dark" ? logoDarkData : logoLightData;
+  const logoSrc = getThemedLogo(brand, resolvedTheme === 'dark' ? 'dark' : 'light');
 
   const handleLogout = async () => {
     await logoutMutation.mutateAsync();

@@ -13,13 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { logoLight as logoLightData, logoDark as logoDarkData } from "@/assets/logos";
+import { brand, getThemedLogo } from "@/assets";
 import { useTheme } from "@/theme";
 
 export default function AuthPage() {
-  const { user, loginMutation } = useAuth();
+  const { user, loginMutation, googleSignIn } = useAuth();
   const { resolvedTheme } = useTheme();
-  const logoSrc = resolvedTheme === "dark" ? logoDarkData : logoLightData;
+  const logoSrc = getThemedLogo(brand, resolvedTheme === 'dark' ? 'dark' : 'light');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -138,6 +138,18 @@ export default function AuthPage() {
                 <li>• Use your @seedfinancial.io email address</li>
                 <li>• Contact your administrator for password setup</li>
               </ul>
+            </div>
+
+            <div className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={googleSignIn}
+                data-testid="button-sign-in-google"
+              >
+                Sign in with Google
+              </Button>
             </div>
           </CardContent>
         </Card>
