@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+dist
+build
+.next
+
+# Build outputs
+*.min.js
+*.min.css
+bundle.js
+
+# Logs
+*.log
+npm-debug.log*
+
+# Database
+*.sql
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment
+.env
+.env.*
+
+# Generated files
+coverage
+.cache
+
+# Misc
+.DS_Store
