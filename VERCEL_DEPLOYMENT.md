@@ -124,7 +124,7 @@ app.use(
       "Authorization",
       "x-csrf-token",
     ],
-  }),
+  })
 );
 ```
 
@@ -142,7 +142,7 @@ app.use(
       sameSite: "none", // Allow cross-origin cookies
       domain: ".up.railway.app", // Allow cookies across Railway subdomains
     },
-  }),
+  })
 );
 ```
 

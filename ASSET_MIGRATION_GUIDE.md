@@ -30,6 +30,7 @@ npx tsx scripts/upload-assets-to-supabase.ts
 ```
 
 Expected output:
+
 ```
 ✅ Uploaded 37 assets
 📝 Next steps: Add env var to Doppler
@@ -41,16 +42,19 @@ Expected output:
 **Config:** `dev` (and later `stg`, `prd`)
 
 Add this variable:
+
 ```
 VITE_SUPABASE_STORAGE_URL=https://pacowjgyxbhgyrfrkmxf.supabase.co/storage/v1/object/public/seed-portal-assets
 ```
 
 **How to add via CLI:**
+
 ```bash
 doppler secrets set VITE_SUPABASE_STORAGE_URL="https://pacowjgyxbhgyrfrkmxf.supabase.co/storage/v1/object/public/seed-portal-assets" --project seed-portal-web --config dev
 ```
 
 **How to add via dashboard:**
+
 1. Go to: https://dashboard.doppler.com/workplace/[your-workspace]/projects/seed-portal-web/configs/dev
 2. Click **"Add Secret"**
 3. Name: `VITE_SUPABASE_STORAGE_URL`
@@ -75,6 +79,7 @@ The app will now load logos from Supabase CDN! 🎉
 ### Step 6: Migrate Other Components (Optional)
 
 Other files still using old imports:
+
 - `client/src/pages/auth-page.tsx`
 - `client/src/pages/login.tsx`
 - `client/src/pages/kb-admin.tsx`
@@ -82,6 +87,7 @@ Other files still using old imports:
 - `client/src/pages/profile.tsx`
 
 **Migration pattern:**
+
 ```typescript
 // Before:
 import { logoLight, logoDark } from "@/assets/logos";
@@ -89,7 +95,7 @@ const logoSrc = resolvedTheme === "dark" ? logoDark : logoLight;
 
 // After:
 import { brand, getThemedLogo } from "@/assets";
-const logoSrc = getThemedLogo(brand, resolvedTheme === 'dark' ? 'dark' : 'light');
+const logoSrc = getThemedLogo(brand, resolvedTheme === "dark" ? "dark" : "light");
 ```
 
 ### Step 7: Clean Up Local Assets (After Testing)
@@ -115,7 +121,7 @@ git commit -m "feat: migrate assets to Supabase CDN"
 ✅ **Instant updates** - Change logos without deployments  
 ✅ **Browser caching** - CDN serves cached images  
 ✅ **Cleaner imports** - 1 registry vs 14+ imports  
-✅ **Dev/prod parity** - Same CDN URLs everywhere  
+✅ **Dev/prod parity** - Same CDN URLs everywhere
 
 ## Rollback Plan
 
