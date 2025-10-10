@@ -1,4 +1,4 @@
-import { Job } from "bullmq";
+import type { Job } from "bullmq";
 import { GoogleAdminService } from "../google-admin";
 import { storage } from "../storage";
 import type { InsertWorkspaceUser } from "@shared/schema";
@@ -52,9 +52,7 @@ export async function workspaceSyncJob(job: Job<WorkspaceSyncJobData>) {
     await job.updateProgress(75);
 
     // Sync with database
-    console.log(
-      `[WorkspaceSync] Syncing ${workspaceUsers.length} users with database...`,
-    );
+    console.log(`[WorkspaceSync] Syncing ${workspaceUsers.length} users with database...`);
     const syncResult = await storage.syncWorkspaceUsers(workspaceUsers);
 
     await job.updateProgress(100);

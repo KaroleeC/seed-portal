@@ -5,16 +5,13 @@ import * as schema from "@shared/schema";
 // Allow development to boot without a database (degraded mode)
 const isProd = (process.env.NODE_ENV || "").toLowerCase() === "production";
 if (!process.env.DATABASE_URL && isProd) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+  throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
 }
 
 // Enhanced pool configuration with better error handling
 const connectionString = process.env.DATABASE_URL;
 const sslRequired = connectionString
-  ? /sslmode=require|ssl=true/i.test(connectionString) ||
-    process.env.PGSSLMODE === "require"
+  ? /sslmode=require|ssl=true/i.test(connectionString) || process.env.PGSSLMODE === "require"
   : false;
 
 export let pool: Pool | undefined;
@@ -43,7 +40,7 @@ if (connectionString) {
   });
 } else {
   console.warn(
-    "DATABASE_URL not set - starting without a database (degraded mode). Some features will be unavailable.",
+    "DATABASE_URL not set - starting without a database (degraded mode). Some features will be unavailable."
   );
 }
 

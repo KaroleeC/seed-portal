@@ -1,5 +1,5 @@
 import csrf from "csurf";
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 // CSRF protection middleware
 export const csrfProtection = csrf({
@@ -17,11 +17,7 @@ export const csrfProtection = csrf({
 });
 
 // Middleware to skip CSRF for API routes that use session-based authentication
-export function conditionalCsrf(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export function conditionalCsrf(req: Request, res: Response, next: NextFunction) {
   // Skip CSRF for preflight requests
   if (req.method === "OPTIONS") {
     return next();
@@ -30,9 +26,7 @@ export function conditionalCsrf(
   // Skip CSRF for all API routes - they are protected by requireAuth middleware and session-based auth
   // This provides equivalent security through SameSite cookies without CSRF token complexity
   if (req.path.startsWith("/api/")) {
-    console.log(
-      `🔓 CSRF SKIPPED for API route: ${req.path} (session-based auth)`,
-    );
+    console.log(`🔓 CSRF SKIPPED for API route: ${req.path} (session-based auth)`);
     return next();
   }
 
@@ -42,16 +36,20 @@ export function conditionalCsrf(
 }
 
 // Middleware to provide CSRF token to the frontend
-export function provideCsrfToken(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  if (req.csrfToken) {
-    res.locals.csrfToken = req.csrfToken();
+export function provideCsrfToken(req: Request, res: Response, next: NextFunction) {
+  // Skip for API routes (already handled by conditionalCsrf)
+  if (req.path.startsWith("/api/")) {
+    return next();
+  }
 
-    // Also set it as a response header for SPA usage
-    res.setHeader("X-CSRF-Token", res.locals.csrfToken);
+  if (req.csrfToken) {
+    try {
+      res.locals.csrfToken = req.csrfToken();
+      // Also set it as a response header for SPA usage
+      res.setHeader("X-CSRF-Token", res.locals.csrfToken);
+    } catch (err) {
+      console.warn(`⚠️ Could not generate CSRF token for ${req.path}:`, err);
+    }
   }
   next();
 }

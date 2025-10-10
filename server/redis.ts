@@ -14,10 +14,7 @@ export interface RedisConfig {
 async function createRedisConnections(): Promise<RedisConfig | null> {
   console.log("[createRedisConnections] Starting...");
   const redisUrl = process.env.REDIS_URL;
-  console.log(
-    "[createRedisConnections] REDIS_URL:",
-    redisUrl ? "Found" : "Missing",
-  );
+  console.log("[createRedisConnections] REDIS_URL:", redisUrl ? "Found" : "Missing");
 
   // If no Redis URL provided, return null
   if (!redisUrl) {
@@ -30,8 +27,7 @@ async function createRedisConnections(): Promise<RedisConfig | null> {
 
     // Determine key prefix
     const derivedPrefix =
-      process.env.REDIS_KEY_PREFIX ??
-      (process.env.NODE_ENV === "development" ? "oseed:dev:" : "");
+      process.env.REDIS_KEY_PREFIX ?? (process.env.NODE_ENV === "development" ? "oseed:dev:" : "");
 
     // Create ioredis instances with more aggressive connection settings for production
     const baseOptions = {
@@ -95,9 +91,7 @@ async function createRedisConnections(): Promise<RedisConfig | null> {
       keyPrefix: "", // BullMQ doesn't support keyPrefix in ioredis instances
     });
 
-    console.log(
-      "[createRedisConnections] Waiting for Redis connections to be ready...",
-    );
+    console.log("[createRedisConnections] Waiting for Redis connections to be ready...");
 
     // Wait for all connections to be ready
     await Promise.all([
@@ -142,7 +136,7 @@ async function createRedisConnections(): Promise<RedisConfig | null> {
             const usagePercent = (used / max) * 100;
             if (usagePercent > 60) {
               console.warn(
-                `⚠️ Redis memory usage at ${usagePercent.toFixed(1)}% - consider increasing memory or evicting keys`,
+                `⚠️ Redis memory usage at ${usagePercent.toFixed(1)}% - consider increasing memory or evicting keys`
               );
             }
           }
@@ -183,15 +177,8 @@ async function createRedisConnections(): Promise<RedisConfig | null> {
     console.log("[createRedisConnections] All Redis clients created");
     return { sessionRedis, cacheRedis, queueRedis };
   } catch (error: any) {
-    console.error(
-      "[createRedisConnections] Failed to create Redis connections:",
-      error,
-    );
-    console.error(
-      "[createRedisConnections] Error details:",
-      error.message,
-      error.stack,
-    );
+    console.error("[createRedisConnections] Failed to create Redis connections:", error);
+    console.error("[createRedisConnections] Error details:", error.message, error.stack);
     return null;
   }
 }
@@ -232,10 +219,7 @@ async function initializeRedis() {
   initPromise = (async () => {
     console.log("[Redis] About to create connections...");
     redisConnections = await createRedisConnections();
-    console.log(
-      "[Redis] Connections created:",
-      redisConnections ? "Success" : "Failed",
-    );
+    console.log("[Redis] Connections created:", redisConnections ? "Success" : "Failed");
   })();
 
   return initPromise;

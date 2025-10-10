@@ -10,16 +10,12 @@ import {
 } from "@/components/ui/table";
 // Badge component not available in current setup, using inline styles instead
 import { Archive, Edit, ArrowUpDown } from "lucide-react";
-import { Quote } from "@shared/schema";
+import type { Quote } from "@shared/schema";
 
 interface QuoteTableProps {
   quotes: Quote[];
   onEditQuote: (quote: Quote) => void;
-  onArchiveQuote: (
-    quoteId: number,
-    contactEmail: string,
-    e: React.MouseEvent,
-  ) => void;
+  onArchiveQuote: (quoteId: number, contactEmail: string, e: React.MouseEvent) => void;
   searchTerm: string;
   sortField: string;
   sortOrder: "asc" | "desc";
@@ -107,8 +103,7 @@ export function QuoteTable({
     const searchLower = searchTerm.toLowerCase();
     return (
       quote.contactEmail.toLowerCase().includes(searchLower) ||
-      (quote.companyName &&
-        quote.companyName.toLowerCase().includes(searchLower)) ||
+      (quote.companyName && quote.companyName.toLowerCase().includes(searchLower)) ||
       quote.industry.toLowerCase().includes(searchLower)
     );
   });
@@ -186,19 +181,13 @@ export function QuoteTable({
               >
                 <TableCell>
                   <div>
-                    <div className="font-medium text-gray-900">
-                      {quote.contactEmail}
-                    </div>
+                    <div className="font-medium text-gray-900">{quote.contactEmail}</div>
                     {quote.companyName && (
-                      <div className="text-sm text-gray-500">
-                        {quote.companyName}
-                      </div>
+                      <div className="text-sm text-gray-500">{quote.companyName}</div>
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-gray-700">
-                  {quote.industry}
-                </TableCell>
+                <TableCell className="text-gray-700">{quote.industry}</TableCell>
                 <TableCell className="font-semibold text-green-600">
                   {formatCurrency(quote.monthlyFee)}
                 </TableCell>
@@ -228,9 +217,7 @@ export function QuoteTable({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={(e) =>
-                        onArchiveQuote(quote.id, quote.contactEmail, e)
-                      }
+                      onClick={(e) => onArchiveQuote(quote.id, quote.contactEmail, e)}
                       className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       <Archive className="w-4 h-4" />

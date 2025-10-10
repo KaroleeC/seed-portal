@@ -35,10 +35,7 @@ async function testOAuthFlow() {
       // Now test session persistence
       const sessionCookie = response.headers.raw()["set-cookie"]?.[0];
       if (sessionCookie) {
-        console.log(
-          "🍪 Testing session with cookie:",
-          sessionCookie.split(";")[0],
-        );
+        console.log("🍪 Testing session with cookie:", sessionCookie.split(";")[0]);
 
         const sessionTest = await fetch("http://localhost:5000/api/user", {
           headers: {

@@ -40,6 +40,10 @@
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+
+  /* Universal page background tokens (Light default) */
+  --page-bg-start: #75c29a; /* teal */
+  --page-bg-end: #f4f4f4; /* light */
 }
 
 .dark {
@@ -73,6 +77,49 @@
   --sidebar-accent-foreground: hsl(210, 40%, 96%);
   --sidebar-border: hsla(210, 40%, 98%, 0.12);
   --sidebar-ring: hsla(210, 40%, 98%, 0.35);
+
+  /* Universal page background tokens (Dark) */
+  --page-bg-start: #253e31; /* slate-green */
+  --page-bg-end: #75c29a; /* teal */
+}
+
+/* Container-scoped Light theme preview
+   Allows pages/components to opt into light tokens even when the app
+   is running in dark mode globally. Used by SettingsLayout's toggle. */
+[data-theme="light"] {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+
+  /* Sidebar tokens (light) */
+  --sidebar-background: hsl(0, 0%, 100%);
+  --sidebar-foreground: hsl(20, 14.3%, 4.1%);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+
+  /* Universal page background tokens (Light) */
+  --page-bg-start: #75c29a; /* teal */
+  --page-bg-end: #f4f4f4; /* light */
 }
 
 /* Theme Variants (dark mode)
@@ -108,6 +155,10 @@
   --sidebar-accent-foreground: hsl(210, 40%, 96%);
   --sidebar-border: hsla(210, 40%, 98%, 0.12);
   --sidebar-ring: hsla(210, 40%, 98%, 0.35);
+
+  /* Universal page background tokens (Dark variant) */
+  --page-bg-start: #253e31; /* slate-green */
+  --page-bg-end: #75c29a; /* teal */
 
   /* Hero surface custom props for reusable utilities */
   --card-hero-start: hsla(217, 33%, 17%, 0.9); /* slate-800/90 */
@@ -170,9 +221,13 @@
 }
 
 @layer components {
-  /* Reuse the exact KB category card surface */
+  /* Reuse the exact KB category card surface
+     Neutralized utility: .surface-glass (alias of .kb-surface)
+     DEPRECATED: .kb-surface — use .surface-glass. This alias will be removed after migration. */
   .theme-seedkb .kb-surface,
-  .theme-seed-dark .kb-surface {
+  .theme-seed-dark .kb-surface,
+  .theme-seedkb .surface-glass,
+  .theme-seed-dark .surface-glass {
     position: relative;
     background-image: linear-gradient(
       135deg,
@@ -180,16 +235,24 @@
       rgba(15, 23, 42, 0.9)
     ); /* slate-800/90 -> slate-900/90 */
     border: 2px solid rgba(71, 85, 105, 0.5); /* slate-600/50 */
-    border-radius: 1rem; /* ~rounded-2xl */
+    border-radius: var(--radius, 0.5rem); /* default rounding; utilities may refine */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    overflow: hidden;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
     transition: all 500ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
+  /* Honor circular intent explicitly to beat base surface rounding */
+  .theme-seedkb .surface-glass.rounded-full,
+  .theme-seed-dark .surface-glass.rounded-full {
+    border-radius: 9999px;
+  }
+
+  /* DEPRECATED: .kb-surface:hover — use .surface-glass:hover. */
   .theme-seedkb .kb-surface:hover,
-  .theme-seed-dark .kb-surface:hover {
+  .theme-seed-dark .kb-surface:hover,
+  .theme-seedkb .surface-glass:hover,
+  .theme-seed-dark .surface-glass:hover {
     background-image: linear-gradient(
       135deg,
       rgba(51, 65, 85, 0.9),
@@ -203,18 +266,17 @@
       0 10px 20px -10px rgba(0, 0, 0, 0.4);
   }
 
-  /* Optional overlay to mimic the KB hover glaze */
+  /* Optional overlay to mimic the KB hover glaze
+     DEPRECATED: .kb-surface::after — use .surface-glass::after. */
   .theme-seedkb .kb-surface::after,
-  .theme-seed-dark .kb-surface::after {
+  .theme-seed-dark .kb-surface::after,
+  .theme-seedkb .surface-glass::after,
+  .theme-seed-dark .surface-glass::after {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background-image: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.1),
-      rgba(0, 0, 0, 0.2)
-    );
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.2));
     opacity: 0;
     transition: opacity 500ms;
     border-radius: inherit;
@@ -224,18 +286,27 @@
     opacity: 1;
   }
 
-  /* SeedKB variant: circular quick action cards blend with navy glass */
+  /* SeedKB variant: circular quick action cards blend with navy glass
+     Neutralized utility: .quick-action-surface (alias of .kb-quick-action)
+     DEPRECATED: .kb-quick-action — use .quick-action-surface. */
   .theme-seedkb .kb-quick-action,
-  .theme-seed-dark .kb-quick-action {
+  .theme-seed-dark .kb-quick-action,
+  .theme-seedkb .quick-action-surface,
+  .theme-seed-dark .quick-action-surface {
     @apply bg-gradient-to-br from-slate-800/90 to-slate-900/90 border-2 border-slate-600/50 backdrop-blur-xl;
   }
   .theme-seedkb .kb-quick-action:hover,
-  .theme-seed-dark .kb-quick-action:hover {
+  .theme-seed-dark .kb-quick-action:hover,
+  .theme-seedkb .quick-action-surface:hover,
+  .theme-seed-dark .quick-action-surface:hover {
     @apply from-slate-700/90 to-slate-800/90 border-orange-400/70;
   }
 
-  /* Shared motion utility for KB surfaces */
-  .kb-hover-motion {
+  /* Shared motion utility for DS surfaces
+     Neutralized utility: .surface-motion (alias of .kb-hover-motion)
+     DEPRECATED: .kb-hover-motion — use .surface-motion. */
+  .kb-hover-motion,
+  .surface-motion {
     transition:
       transform 500ms,
       box-shadow 500ms,
@@ -243,7 +314,8 @@
       border-color 500ms;
     transform: translateY(0) scale(1);
   }
-  .kb-hover-motion:hover {
+  .kb-hover-motion:hover,
+  .surface-motion:hover {
     /* Reduce hover lift/zoom intensity by ~75% */
     transform: translateY(-0.125rem) scale(1.012);
     box-shadow:
@@ -280,11 +352,7 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background-image: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.1),
-      rgba(0, 0, 0, 0.2)
-    );
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.2));
     opacity: 0;
     transition: opacity 500ms;
     border-radius: inherit;
@@ -294,8 +362,11 @@
     opacity: 1;
   }
 
-  /* SeedKB hero utilities (reusable) */
-  .seedkb-hero {
+  /* DS hero surface (reusable)
+     Neutralized utility: .surface-hero (alias of .seedkb-hero)
+     DEPRECATED: .seedkb-hero — use .surface-hero. */
+  .seedkb-hero,
+  .surface-hero {
     background: linear-gradient(
       135deg,
       var(--card-hero-start, hsla(217, 33%, 17%, 0.9)),
@@ -308,7 +379,11 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
   }
 
-  .seedkb-band {
+  /* DS band surface (reusable)
+     Neutralized utility: .surface-band (alias of .seedkb-band)
+     DEPRECATED: .seedkb-band — use .surface-band. */
+  .seedkb-band,
+  .surface-band {
     background: linear-gradient(
       90deg,
       var(--band-start, hsla(215, 28%, 27%, 0.5)),
@@ -358,11 +433,7 @@
   .dark.theme-seed-dark [class*="bg-white/"],
   .dark.theme-seed-dark [class*="bg-gray-100/"],
   .dark.theme-seed-dark [class*="bg-gray-50/"] {
-    background-color: color-mix(
-      in srgb,
-      var(--card) 90%,
-      #ffffff 10%
-    ) !important;
+    background-color: color-mix(in srgb, var(--card) 90%, #ffffff 10%) !important;
   }
 
   /* Subtle card entrance animations */
@@ -448,6 +519,11 @@
     @apply bg-gradient-to-r from-[#253e31] to-[#75c29a] bg-clip-text text-transparent;
   }
 
+  /* Universal page background utility */
+  .page-bg {
+    background-image: linear-gradient(to bottom right, var(--page-bg-start), var(--page-bg-end));
+  }
+
   /* Enhanced button styles */
   .button-shimmer {
     @apply relative overflow-hidden;
@@ -460,6 +536,20 @@
 
   .button-shimmer:hover::before {
     @apply translate-x-[200%];
+  }
+
+  /* Leads table row hover (seed orange tint) */
+  .lead-row-hover {
+    transition:
+      background-color 180ms ease,
+      box-shadow 200ms ease,
+      transform 200ms ease;
+  }
+  .lead-row-hover:hover {
+    /* tint with seed orange without overpowering text */
+    background-color: color-mix(in srgb, var(--seed-orange) 12%, transparent) !important;
+    box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
   }
 
   /* Pulse animation for status indicators */
@@ -605,5 +695,226 @@
     border-radius: 4px !important;
     font-weight: 600 !important;
     color: #1e40af !important;
+  }
+}
+
+@layer utilities {
+  /* Line clamp utilities (fallback if Tailwind plugin is not present) */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Disable hover lift/zoom for specific surfaces */
+  .no-surface-lift,
+  .no-surface-lift:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  /* Hide scrollbars but allow scrolling */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  /* Reserve scrollbar gutter to avoid layout shifts */
+  .scrollbar-stable {
+    scrollbar-gutter: stable both-edges;
+  }
+
+  /* Fade the top and bottom edges for scrollable containers */
+  .scroll-fade-edges {
+    --fade-size: 14px;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      black var(--fade-size),
+      black calc(100% - var(--fade-size)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      black var(--fade-size),
+      black calc(100% - var(--fade-size)),
+      transparent 100%
+    );
+  }
+
+  /* Overlay-based fade (fallback for cases where mask-image isn't effective) */
+  .scroll-fade-overlay {
+    position: relative;
+  }
+  .scroll-fade-overlay::before,
+  .scroll-fade-overlay::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 18px;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .scroll-fade-overlay::before {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0));
+  }
+  .scroll-fade-overlay::after {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0));
+  }
+
+  /* Subtle inner bottom and right gradient for Kanban column container */
+  .column-soft-fade {
+    position: relative;
+  }
+  .column-soft-fade::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 22px;
+    pointer-events: none;
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.28));
+  }
+  .column-soft-fade::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 14px;
+    height: 100%;
+    pointer-events: none;
+    border-top-right-radius: inherit;
+    border-bottom-right-radius: inherit;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.18));
+  }
+
+  /* Softer external shadow for Kanban columns */
+  .column-shadow-soft {
+    box-shadow: none !important; /* neutralize .surface-glass shadow */
+    /* multiple drop-shadows produce a smoother falloff without a hard edge */
+    filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.25)) drop-shadow(0 8px 14px rgba(0, 0, 0, 0.2));
+  }
+
+  /* Tiptap Rich Text Editor Styles */
+  .ProseMirror {
+    outline: none;
+  }
+
+  .ProseMirror p {
+    margin: 0.5em 0;
+  }
+
+  .ProseMirror p:first-child {
+    margin-top: 0;
+  }
+
+  .ProseMirror p:last-child {
+    margin-bottom: 0;
+  }
+
+  .ProseMirror h1,
+  .ProseMirror h2,
+  .ProseMirror h3 {
+    font-weight: 600;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+  }
+
+  .ProseMirror h1 {
+    font-size: 1.5em;
+  }
+
+  .ProseMirror h2 {
+    font-size: 1.25em;
+  }
+
+  .ProseMirror h3 {
+    font-size: 1.1em;
+  }
+
+  .ProseMirror ul,
+  .ProseMirror ol {
+    padding-left: 1.5em;
+    margin: 0.5em 0;
+  }
+
+  .ProseMirror li {
+    margin: 0.25em 0;
+  }
+
+  .ProseMirror code {
+    background-color: hsl(var(--muted));
+    padding: 0.2em 0.4em;
+    border-radius: 0.25em;
+    font-size: 0.9em;
+    font-family: monospace;
+  }
+
+  .ProseMirror pre {
+    background-color: hsl(var(--muted));
+    padding: 0.75em 1em;
+    border-radius: 0.5em;
+    overflow-x: auto;
+    margin: 0.5em 0;
+  }
+
+  .ProseMirror pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.875em;
+  }
+
+  .ProseMirror blockquote {
+    border-left: 3px solid hsl(var(--border));
+    padding-left: 1em;
+    margin: 0.5em 0;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .ProseMirror a {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .ProseMirror a:hover {
+    opacity: 0.8;
+  }
+
+  .ProseMirror img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5em;
+    margin: 0.5em 0;
+  }
+
+  .ProseMirror hr {
+    border: none;
+    border-top: 2px solid hsl(var(--border));
+    margin: 1em 0;
+  }
+
+  .ProseMirror p.is-editor-empty:first-child::before {
+    color: hsl(var(--muted-foreground));
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
   }
 }

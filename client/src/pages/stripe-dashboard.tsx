@@ -1,11 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -125,8 +119,8 @@ export default function StripeDashboard() {
             {error?.message?.includes("not configured") && (
               <div className="mt-2">
                 <p>
-                  Please ensure your Stripe API keys are properly configured in
-                  the environment variables.
+                  Please ensure your Stripe API keys are properly configured in the environment
+                  variables.
                 </p>
               </div>
             )}
@@ -162,9 +156,7 @@ export default function StripeDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {revenueLoading
-                ? "..."
-                : formatCurrency(revenueData?.currentMonth.revenue || 0)}
+              {revenueLoading ? "..." : formatCurrency(revenueData?.currentMonth.revenue || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               {revenueData?.currentMonth.transactions || 0} transactions
@@ -179,9 +171,7 @@ export default function StripeDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {revenueLoading
-                ? "..."
-                : formatCurrency(revenueData?.lastMonth.revenue || 0)}
+              {revenueLoading ? "..." : formatCurrency(revenueData?.lastMonth.revenue || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               {revenueData?.lastMonth.transactions || 0} transactions
@@ -196,9 +186,7 @@ export default function StripeDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {revenueLoading
-                ? "..."
-                : formatCurrency(revenueData?.yearToDate.revenue || 0)}
+              {revenueLoading ? "..." : formatCurrency(revenueData?.yearToDate.revenue || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               {revenueData?.yearToDate.transactions || 0} transactions
@@ -218,14 +206,10 @@ export default function StripeDashboard() {
           <CardContent>
             <div
               className={`text-2xl font-bold ${
-                (revenueData?.growth.monthOverMonth || 0) >= 0
-                  ? "text-green-600"
-                  : "text-red-600"
+                (revenueData?.growth.monthOverMonth || 0) >= 0 ? "text-green-600" : "text-red-600"
               }`}
             >
-              {revenueLoading
-                ? "..."
-                : `${(revenueData?.growth.monthOverMonth || 0).toFixed(1)}%`}
+              {revenueLoading ? "..." : `${(revenueData?.growth.monthOverMonth || 0).toFixed(1)}%`}
             </div>
             <p className="text-xs text-muted-foreground">vs previous month</p>
           </CardContent>
@@ -239,24 +223,19 @@ export default function StripeDashboard() {
             <Receipt className="h-5 w-5" />
             Recent Transactions
           </CardTitle>
-          <CardDescription>
-            Latest payment activity from your Stripe account
-          </CardDescription>
+          <CardDescription>Latest payment activity from your Stripe account</CardDescription>
         </CardHeader>
         <CardContent>
           {transactionsLoading ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  className="flex items-center space-x-4 animate-pulse"
-                >
-                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                <div key={i} className="flex items-center space-x-4 animate-pulse">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    <div className="h-3 bg-gray-200 rounded w-1/2" />
                   </div>
-                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <div className="h-4 bg-gray-200 rounded w-20" />
                 </div>
               ))}
             </div>
@@ -274,15 +253,12 @@ export default function StripeDashboard() {
                     <div>
                       <p className="font-medium">{transaction.description}</p>
                       <p className="text-sm text-gray-600">
-                        {transaction.customer} •{" "}
-                        {formatDate(transaction.created)}
+                        {transaction.customer} • {formatDate(transaction.created)}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">
-                      {formatCurrency(transaction.amount)}
-                    </p>
+                    <p className="font-semibold">{formatCurrency(transaction.amount)}</p>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}
                     >

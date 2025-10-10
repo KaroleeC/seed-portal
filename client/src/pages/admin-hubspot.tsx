@@ -1,24 +1,11 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  AlertTriangle,
-  CheckCircle,
-  Info,
-  ListFilter,
-  RefreshCw,
-  RotateCcw,
-} from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, ListFilter, RefreshCw, RotateCcw } from "lucide-react";
 import { seedpayKeys } from "@/lib/queryKeys";
 
 interface SmokeResult {
@@ -37,9 +24,7 @@ interface SmokeResult {
 
 export default function AdminHubspotPage() {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<
-    "diagnostics" | "metrics" | "logs" | "actions"
-  >("diagnostics");
+  const [tab, setTab] = useState<"diagnostics" | "metrics" | "logs" | "actions">("diagnostics");
 
   // Diagnostics state
   const [includeConnectivity, setIncludeConnectivity] = useState(true);
@@ -57,8 +42,7 @@ export default function AdminHubspotPage() {
   // Logs
   const logsQuery = useQuery<{ module: string; logs: any[] }>({
     queryKey: ["/api/admin/logs", "hubspot"],
-    queryFn: async () =>
-      await apiRequest("GET", "/api/admin/logs?module=hubspot&limit=200"),
+    queryFn: async () => await apiRequest("GET", "/api/admin/logs?module=hubspot&limit=200"),
     enabled: tab === "logs",
     refetchInterval: 20000,
   });
@@ -75,11 +59,9 @@ export default function AdminHubspotPage() {
   async function runSmokeTest() {
     setDiagLoading(true);
     try {
-      const res = await apiRequest<SmokeResult>(
-        "POST",
-        "/api/admin/diagnostics/hubspot/smoke",
-        { includeConnectivity },
-      );
+      const res = await apiRequest<SmokeResult>("POST", "/api/admin/diagnostics/hubspot/smoke", {
+        includeConnectivity,
+      });
       setDiagResult(res);
     } catch (e: any) {
       setDiagResult({
@@ -97,26 +79,12 @@ export default function AdminHubspotPage() {
   async function handleClearSeedPayCache() {
     setClearCacheLoading(true);
     try {
-      // CSRF token
-      const csrfResponse = await fetch("/api/csrf-token");
-      const { csrfToken } = await csrfResponse.json();
-      // Clear cache via app-namespaced admin alias
-      const resp = await fetch("/api/admin/apps/seedpay/cache/clear", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-csrf-token": csrfToken,
-        },
-      });
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err?.message || "Failed to clear cache");
-      }
+      await apiRequest("POST", "/api/admin/apps/seedpay/cache/clear", {});
       // Invalidate client queries that depend on deals
       queryClient.invalidateQueries({ queryKey: seedpayKeys.deals.root() });
       alert("SeedPay deals cache cleared.");
     } catch (e: any) {
-      alert("Failed to clear cache: " + (e?.message || String(e)));
+      alert(`Failed to clear cache: ${e?.message || String(e)}`);
     } finally {
       setClearCacheLoading(false);
     }
@@ -170,9 +138,7 @@ export default function AdminHubspotPage() {
         {tab === "diagnostics" && (
           <Card className="bg-white/95">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Smoke Test
-              </CardTitle>
+              <CardTitle className="flex items-center gap-2">Smoke Test</CardTitle>
               <CardDescription>
                 Non-destructive checks.{" "}
                 <span title="Performs safe, read‑only calls to HubSpot (pipelines/products) when enabled. No data is created or modified.">
@@ -211,13 +177,9 @@ export default function AdminHubspotPage() {
                       <AlertTriangle className="h-5 w-5 text-red-600" />
                     )}
                     <span className="font-medium">
-                      {diagResult.success
-                        ? "All checks passed"
-                        : "Some checks failed"}
+                      {diagResult.success ? "All checks passed" : "Some checks failed"}
                     </span>
-                    <Badge
-                      variant={diagResult.success ? "default" : "destructive"}
-                    >
+                    <Badge variant={diagResult.success ? "default" : "destructive"}>
                       {diagResult.success ? "PASS" : "FAIL"}
                     </Badge>
                   </div>
@@ -234,19 +196,13 @@ export default function AdminHubspotPage() {
                             <AlertTriangle className="h-4 w-4 text-red-600" />
                           )}
                           <span>{c.label}</span>
-                          {c.note && (
-                            <span className="text-xs text-gray-500">
-                              ({c.note})
-                            </span>
-                          )}
+                          {c.note && <span className="text-xs text-gray-500">({c.note})</span>}
                         </div>
                         <div className="text-sm text-gray-600">{c.error}</div>
                       </div>
                     ))}
                   </div>
-                  <div className="text-xs text-gray-500 mt-3">
-                    {diagResult.disclaimer}
-                  </div>
+                  <div className="text-xs text-gray-500 mt-3">{diagResult.disclaimer}</div>
                   {diagResult.detail?.hubspot && (
                     <pre className="mt-3 p-3 bg-gray-50 rounded text-xs overflow-auto max-h-56">
                       {JSON.stringify(diagResult.detail.hubspot, null, 2)}
@@ -278,28 +234,20 @@ export default function AdminHubspotPage() {
                 <div className="grid grid-cols-4 gap-4">
                   <div className="p-3 border rounded">
                     <div className="text-sm text-gray-500">Successes</div>
-                    <div className="text-2xl font-bold">
-                      {metricsQuery.data.successCount}
-                    </div>
+                    <div className="text-2xl font-bold">{metricsQuery.data.successCount}</div>
                   </div>
                   <div className="p-3 border rounded">
                     <div className="text-sm text-gray-500">Failures</div>
-                    <div className="text-2xl font-bold">
-                      {metricsQuery.data.failureCount}
-                    </div>
+                    <div className="text-2xl font-bold">{metricsQuery.data.failureCount}</div>
                   </div>
                   <div className="p-3 border rounded">
-                    <div className="text-sm text-gray-500">
-                      Avg Duration (ms)
-                    </div>
+                    <div className="text-sm text-gray-500">Avg Duration (ms)</div>
                     <div className="text-2xl font-bold">
                       {metricsQuery.data.durations?.avgMs || 0}
                     </div>
                   </div>
                   <div className="p-3 border rounded">
-                    <div className="text-sm text-gray-500">
-                      P95 Duration (ms)
-                    </div>
+                    <div className="text-sm text-gray-500">P95 Duration (ms)</div>
                     <div className="text-2xl font-bold">
                       {metricsQuery.data.durations?.p95Ms || 0}
                     </div>
@@ -308,9 +256,7 @@ export default function AdminHubspotPage() {
               )}
               {metricsQuery.data?.lastFailure && (
                 <div className="mt-4">
-                  <div className="text-sm font-medium">
-                    Last Failure Details
-                  </div>
+                  <div className="text-sm font-medium">Last Failure Details</div>
                   <pre className="mt-1 p-3 bg-gray-50 rounded text-xs overflow-auto">
                     {JSON.stringify(metricsQuery.data.lastFailure, null, 2)}
                   </pre>
@@ -342,11 +288,7 @@ export default function AdminHubspotPage() {
                     <div key={idx} className="p-2 border rounded">
                       <div className="flex items-center justify-between">
                         <div className="text-xs text-gray-500">{l.ts}</div>
-                        <Badge
-                          variant={
-                            l.level === "error" ? "destructive" : "secondary"
-                          }
-                        >
+                        <Badge variant={l.level === "error" ? "destructive" : "secondary"}>
                           {l.level}
                         </Badge>
                       </div>
@@ -420,10 +362,7 @@ export default function AdminHubspotPage() {
                   <span>Include connectivity checks</span>
                   <Info className="h-4 w-4 text-gray-500" />
                 </label>
-                <Button
-                  onClick={runSync}
-                  disabled={syncLoading || !quoteId.trim()}
-                >
+                <Button onClick={runSync} disabled={syncLoading || !quoteId.trim()}>
                   {syncLoading ? (
                     <span className="flex items-center gap-2">
                       <RefreshCw className="h-4 w-4 animate-spin" /> Running…
@@ -454,13 +393,11 @@ export default function AdminHubspotPage() {
                     >
                       {clearCacheLoading ? (
                         <span className="flex items-center gap-2">
-                          <RefreshCw className="h-4 w-4 animate-spin" />{" "}
-                          Clearing…
+                          <RefreshCw className="h-4 w-4 animate-spin" /> Clearing…
                         </span>
                       ) : (
                         <span className="flex items-center gap-2">
-                          <RotateCcw className="h-4 w-4" /> Clear SeedPay Deals
-                          Cache
+                          <RotateCcw className="h-4 w-4" /> Clear SeedPay Deals Cache
                         </span>
                       )}
                     </Button>

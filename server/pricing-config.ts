@@ -61,10 +61,7 @@ class PricingConfigService {
         pricingTiers,
       };
     } catch (error) {
-      console.error(
-        "[PricingConfig] Failed to load pricing configuration:",
-        error,
-      );
+      console.error("[PricingConfig] Failed to load pricing configuration:", error);
       // Return fallback hardcoded values if database fails
       return this.getFallbackConfig();
     }
@@ -174,9 +171,7 @@ class PricingConfigService {
   }
 
   // Get industry multipliers
-  async getIndustryMultipliers(): Promise<
-    Record<string, { monthly: number; cleanup: number }>
-  > {
+  async getIndustryMultipliers(): Promise<Record<string, { monthly: number; cleanup: number }>> {
     const cacheKey = CACHE_KEYS.INDUSTRY_MULTIPLIERS;
 
     let cached = this.cache.get(cacheKey);
@@ -234,8 +229,7 @@ class PricingConfigService {
 
     settings.forEach((item) => {
       // Use local alias pattern to satisfy strict noUncheckedIndexedAccess
-      const serviceMap =
-        result[item.service] ?? (result[item.service] = {});
+      const serviceMap = result[item.service] ?? (result[item.service] = {});
       serviceMap[item.settingKey] = parseFloat(item.settingValue);
     });
 
@@ -249,10 +243,7 @@ class PricingConfigService {
 
   // Get pricing tiers
   async getPricingTiers(): Promise<
-    Record<
-      string,
-      Record<string, Record<string, { baseFee: number; multiplier: number }>>
-    >
+    Record<string, Record<string, Record<string, { baseFee: number; multiplier: number }>>>
   > {
     const cacheKey = CACHE_KEYS.PRICING_TIERS;
 
@@ -278,8 +269,7 @@ class PricingConfigService {
 
     tiers.forEach((item) => {
       // Use local alias pattern to satisfy strict noUncheckedIndexedAccess
-      const serviceMap =
-        result[item.service] ?? (result[item.service] = {});
+      const serviceMap = result[item.service] ?? (result[item.service] = {});
       const tierMap = serviceMap[item.tier] ?? (serviceMap[item.tier] = {});
       tierMap[item.volumeBand] = {
         baseFee: parseFloat(item.baseFee),

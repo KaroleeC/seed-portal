@@ -7,7 +7,7 @@ import { storage } from "./storage";
 import { logger } from "./logger";
 import { boxService } from "./box-integration";
 import { msaGenerator } from "./msa-generator";
-import { requireAuth } from "./auth";
+import { requireAuth } from "./middleware/supabase-auth";
 import { sendOk, sendError } from "./utils/responses";
 import { doesHubSpotQuoteExist } from "./hubspot";
 
@@ -24,10 +24,8 @@ function getErrorMessage(err: unknown): string {
 
 // Helper to verify HubSpot quote existence for an array of quotes with hubspotQuoteId
 async function verifyHubSpotQuotes(
-  items: Array<{ id: number; hubspotQuoteId?: string | null }>,
-): Promise<
-  Array<{ id: number; hubspotQuoteId: string | null; existsInHubSpot: boolean }>
-> {
+  items: Array<{ id: number; hubspotQuoteId?: string | null }>
+): Promise<Array<{ id: number; hubspotQuoteId: string | null; existsInHubSpot: boolean }>> {
   return await Promise.all(
     items.map(async ({ id, hubspotQuoteId }) => {
       let existsInHubSpot = false;
@@ -39,7 +37,7 @@ async function verifyHubSpotQuotes(
         }
       }
       return { id, hubspotQuoteId: hubspotQuoteId || null, existsInHubSpot };
-    }),
+    })
   );
 }
 
@@ -71,7 +69,7 @@ router.post("/quotes/:id/generate-documents", requireAuth, async (req, res) => {
     // Create Box folder structure
     const boxResult = await boxService.createClientFolder(
       quote.companyName || quote.contactEmail,
-      process.env.BOX_TEMPLATE_FOLDER_ID,
+      process.env.BOX_TEMPLATE_FOLDER_ID
     );
 
     // Generate MSA document
@@ -100,17 +98,10 @@ router.post("/quotes/:id/generate-documents", requireAuth, async (req, res) => {
 
     // Upload MSA to Box
     const msaFileName = `${quote.companyName || "Client"}_Master_Services_Agreement.docx`;
-    const msaUploadResult = await boxService.uploadMSA(
-      boxResult.folderId,
-      msaBuffer,
-      msaFileName,
-    );
+    const msaUploadResult = await boxService.uploadMSA(boxResult.folderId, msaBuffer, msaFileName);
 
     // Upload SOW documents for selected services
-    const sowResults = await boxService.uploadSOWDocuments(
-      boxResult.folderId,
-      selectedServices,
-    );
+    const sowResults = await boxService.uploadSOWDocuments(boxResult.folderId, selectedServices);
 
     // Update quote with Box information
     await storage.updateQuote({
@@ -135,7 +126,7 @@ router.post("/quotes/:id/generate-documents", requireAuth, async (req, res) => {
         msaDocument: msaUploadResult,
         sowDocuments: sowResults,
         documentsGenerated: selectedServices.length + 1,
-      },
+      }
     );
 
     logger.info("[Quote] Documents generated successfully", {
@@ -147,16 +138,10 @@ router.post("/quotes/:id/generate-documents", requireAuth, async (req, res) => {
     logger.error("[Quote] Error generating documents", {
       error: getErrorMessage(error),
     });
-    return sendError(
-      res,
-      "GENERATE_DOCS_FAILED",
-      "Failed to generate documents",
-      500,
-      {
-        error: "Failed to generate documents",
-        message: getErrorMessage(error),
-      },
-    );
+    return sendError(res, "GENERATE_DOCS_FAILED", "Failed to generate documents", 500, {
+      error: "Failed to generate documents",
+      message: getErrorMessage(error),
+    });
   }
 });
 
@@ -208,18 +193,11 @@ router.post("/quotes/:id/sync-hubspot", requireAuth, async (req, res) => {
     const { hubSpotService } = await import("./hubspot");
 
     if (!hubSpotService) {
-      return sendError(
-        res,
-        "HUBSPOT_NOT_CONFIGURED",
-        "HubSpot service not available",
-        500,
-      );
+      return sendError(res, "HUBSPOT_NOT_CONFIGURED", "HubSpot service not available", 500);
     }
 
     // First, verify the contact exists in HubSpot
-    const contactVerification = await hubSpotService.verifyContactByEmail(
-      quote.contactEmail,
-    );
+    const contactVerification = await hubSpotService.verifyContactByEmail(quote.contactEmail);
 
     if (!contactVerification.verified || !contactVerification.contact) {
       return sendError(res, "NOT_FOUND", "Contact not found in HubSpot", 404, {
@@ -235,12 +213,9 @@ router.post("/quotes/:id/sync-hubspot", requireAuth, async (req, res) => {
     const contactProperties: any = {};
 
     // Basic contact fields - 2-way sync
-    if (quote.contactFirstName)
-      contactProperties.firstname = quote.contactFirstName;
-    if (quote.contactLastName)
-      contactProperties.lastname = quote.contactLastName;
-    if ((quote as any).contactPhone)
-      contactProperties.phone = (quote as any).contactPhone;
+    if (quote.contactFirstName) contactProperties.firstname = quote.contactFirstName;
+    if (quote.contactLastName) contactProperties.lastname = quote.contactLastName;
+    if ((quote as any).contactPhone) contactProperties.phone = (quote as any).contactPhone;
 
     // Business fields for contacts
     if (quote.industry) contactProperties.industry = quote.industry;
@@ -274,10 +249,7 @@ router.post("/quotes/:id/sync-hubspot", requireAuth, async (req, res) => {
 
     // Update contact if we have properties to sync
     if (Object.keys(contactProperties).length > 0) {
-      const contactResult = await hubSpotService.updateContact(
-        contactId,
-        contactProperties,
-      );
+      const contactResult = await hubSpotService.updateContact(contactId, contactProperties);
       syncResults.contact = !!contactResult;
       logger.info("[Quote] Contact sync result", {
         contactId,
@@ -328,19 +300,16 @@ router.post("/quotes/:id/sync-hubspot", requireAuth, async (req, res) => {
           company: syncResults.company,
           contactPropertiesUpdated: Object.keys(contactProperties).length,
         },
-      },
+      }
     );
   } catch (error) {
     logger.error("[Quote] Error syncing to HubSpot", {
       error: getErrorMessage(error),
     });
-    return sendError(
-      res,
-      "SYNC_HUBSPOT_FAILED",
-      "Failed to sync to HubSpot",
-      500,
-      { error: "Failed to sync to HubSpot", message: getErrorMessage(error) },
-    );
+    return sendError(res, "SYNC_HUBSPOT_FAILED", "Failed to sync to HubSpot", 500, {
+      error: "Failed to sync to HubSpot",
+      message: getErrorMessage(error),
+    });
   }
 });
 
@@ -352,12 +321,7 @@ router.get("/address/autocomplete", requireAuth, async (req, res) => {
     const { query } = req.query;
 
     if (!query || typeof query !== "string") {
-      return sendError(
-        res,
-        "INVALID_REQUEST",
-        "Query parameter is required",
-        400,
-      );
+      return sendError(res, "INVALID_REQUEST", "Query parameter is required", 400);
     }
 
     // Use Nominatim API for address autocomplete (as already used in the project)
@@ -375,24 +339,15 @@ router.get("/address/autocomplete", requireAuth, async (req, res) => {
       description: result.display_name,
       place_id: result.place_id,
       structured_formatting: {
-        main_text:
-          result.address?.road || result.address?.house_number || result.name,
-        secondary_text: [
-          result.address?.city,
-          result.address?.state,
-          result.address?.country,
-        ]
+        main_text: result.address?.road || result.address?.house_number || result.name,
+        secondary_text: [result.address?.city, result.address?.state, result.address?.country]
           .filter(Boolean)
           .join(", "),
       },
       address_components: {
         street_number: result.address?.house_number || "",
         route: result.address?.road || "",
-        locality:
-          result.address?.city ||
-          result.address?.town ||
-          result.address?.village ||
-          "",
+        locality: result.address?.city || result.address?.town || result.address?.village || "",
         administrative_area_level_1: result.address?.state || "",
         postal_code: result.address?.postcode || "",
         country: result.address?.country || "",
@@ -411,7 +366,7 @@ router.get("/address/autocomplete", requireAuth, async (req, res) => {
       "ADDRESS_AUTOCOMPLETE_FAILED",
       "Failed to fetch address suggestions",
       500,
-      { error: "Failed to fetch address suggestions" },
+      { error: "Failed to fetch address suggestions" }
     );
   }
 });
@@ -429,9 +384,7 @@ router.post("/quotes/check-existing", requireAuth, async (req, res) => {
     const allQuotes = await storage.getQuotesByEmail(email);
     // Filter to quotes owned by the current user to preserve existing behavior
     const userId = (req as any).user?.id;
-    const quotes = userId
-      ? allQuotes.filter((q) => (q as any).ownerId === userId)
-      : allQuotes;
+    const quotes = userId ? allQuotes.filter((q) => (q as any).ownerId === userId) : allQuotes;
 
     const input = quotes.map((q: any) => ({
       id: q.id,
@@ -453,12 +406,7 @@ router.post("/quotes/check-existing", requireAuth, async (req, res) => {
     logger.error("[Quote] Error checking existing quotes", {
       error: getErrorMessage(error),
     });
-    return sendError(
-      res,
-      "CHECK_EXISTING_QUOTES_FAILED",
-      "Failed to check existing quotes",
-      500,
-    );
+    return sendError(res, "CHECK_EXISTING_QUOTES_FAILED", "Failed to check existing quotes", 500);
   }
 });
 

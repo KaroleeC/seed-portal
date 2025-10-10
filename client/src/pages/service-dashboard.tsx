@@ -1,13 +1,7 @@
 import { usePermissions } from "@/hooks/use-permissions";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { PERMISSIONS } from "@shared/permissions";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -51,8 +45,7 @@ import {
   Clock3,
   CreditCard,
 } from "lucide-react";
- 
- 
+
 import { useDealsAll } from "@/hooks/useDeals";
 import { useState } from "react";
 import { SurfaceCard } from "@/components/ds/SurfaceCard";
@@ -83,11 +76,7 @@ interface DocumentRequest {
 
 interface AITask {
   id: string;
-  type:
-    | "coa_analysis"
-    | "period_report"
-    | "entity_optimization"
-    | "deduction_scan";
+  type: "coa_analysis" | "period_report" | "entity_optimization" | "deduction_scan";
   clientName: string;
   progress: number;
   status: "running" | "completed" | "failed" | "queued";
@@ -106,7 +95,6 @@ interface ServiceMetrics {
 export default function ServiceDashboard() {
   const { hasPermission } = usePermissions();
   const [activeModule, setActiveModule] = useState("overview");
-  
 
   // Prefetch centralized deals (no UI changes)
   useDealsAll({
@@ -446,1516 +434,161 @@ export default function ServiceDashboard() {
 
   return (
     <DashboardLayout maxWidthClassName="max-w-7xl">
-        <DashboardWelcome />
+      <DashboardWelcome />
 
-        {/* Dashboard Content */}
-        <div className="p-6">
-          {activeModule === "overview" && (
-            <>
-              {/* Quick Actions (standardized) */}
-              <div className="mb-8">
-                <div className="grid gap-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 justify-items-center">
-                  <QuickAction
-                    label="Client Profiles"
-                    logoLightSrc={apps.clientiq.light}
-                    logoDarkSrc={apps.clientiq.dark}
-                    gradient="from-blue-500 to-blue-600"
-                    hoverGradient="from-blue-400 to-blue-500"
-                    delay={1}
-                    href="/client-profiles"
-                    useRim
-                    accentClass="text-[#0096e2]"
-                    watermarkIcon={<Users />}
-                  />
-                  <QuickAction
-                    label="Client Comms"
-                    logoLightSrc={apps.commshub.light}
-                    logoDarkSrc={apps.commshub.dark}
-                    gradient="from-indigo-500 to-indigo-600"
-                    hoverGradient="from-indigo-400 to-indigo-500"
-                    delay={2}
-                    onClick={() => setActiveModule("communications")}
-                    useRim
-                    accentClass="text-[#a2bfff]"
-                    watermarkIcon={<MessageSquare />}
-                  />
-                  <QuickAction
-                    label="Document Center"
-                    logoLightSrc={apps.seeddrive.light}
-                    logoDarkSrc={apps.seeddrive.dark}
-                    gradient="from-emerald-500 to-emerald-600"
-                    hoverGradient="from-emerald-400 to-emerald-500"
-                    delay={3}
-                    onClick={() => setActiveModule("documents")}
-                    useRim
-                    accentClass="text-[#e24c00]"
-                    watermarkIcon={<Folder />}
-                  />
-                  <QuickAction
-                    label="AI Workspace"
-                    logoLightSrc={apps.seedai.light}
-                    logoDarkSrc={apps.seedai.dark}
-                    gradient="from-purple-500 to-purple-600"
-                    hoverGradient="from-purple-400 to-purple-500"
-                    delay={4}
-                    href="/assistant"
-                    useRim
-                    accentClass="text-[#6a1b9a]"
-                    watermarkIcon={<Bot />}
-                  />
-                  <QuickAction
-                    label="SeedPay"
-                    logoLightSrc={apps.seedpay.light}
-                    logoDarkSrc={apps.seedpay.dark}
-                    gradient="from-teal-500 to-teal-600"
-                    hoverGradient="from-teal-400 to-teal-500"
-                    delay={5}
-                    href="/apps/seedpay"
-                    useRim
-                    accentClass="text-[#118c4f]"
-                    watermarkIcon={<CreditCard />}
-                  />
-                </div>
+      {/* Dashboard Content */}
+      <div className="p-6">
+        {activeModule === "overview" && (
+          <>
+            {/* Quick Actions (standardized) */}
+            <div className="mb-8">
+              <div className="grid gap-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 justify-items-center">
+                <QuickAction
+                  label="Client Profiles"
+                  logoLightSrc={apps.clientiq.light}
+                  logoDarkSrc={apps.clientiq.dark}
+                  gradient="from-blue-500 to-blue-600"
+                  hoverGradient="from-blue-400 to-blue-500"
+                  delay={1}
+                  href="/client-profiles"
+                  useRim
+                  accentClass="text-[#0096e2]"
+                  watermarkIcon={<Users />}
+                />
+                <QuickAction
+                  label="Client Comms"
+                  logoLightSrc={apps.commshub.light}
+                  logoDarkSrc={apps.commshub.dark}
+                  gradient="from-indigo-500 to-indigo-600"
+                  hoverGradient="from-indigo-400 to-indigo-500"
+                  delay={2}
+                  onClick={() => setActiveModule("communications")}
+                  useRim
+                  accentClass="text-[#a2bfff]"
+                  watermarkIcon={<MessageSquare />}
+                />
+                <QuickAction
+                  label="Document Center"
+                  logoLightSrc={apps.seeddrive.light}
+                  logoDarkSrc={apps.seeddrive.dark}
+                  gradient="from-emerald-500 to-emerald-600"
+                  hoverGradient="from-emerald-400 to-emerald-500"
+                  delay={3}
+                  onClick={() => setActiveModule("documents")}
+                  useRim
+                  accentClass="text-[#e24c00]"
+                  watermarkIcon={<Folder />}
+                />
+                <QuickAction
+                  label="AI Workspace"
+                  logoLightSrc={apps.seedai.light}
+                  logoDarkSrc={apps.seedai.dark}
+                  gradient="from-purple-500 to-purple-600"
+                  hoverGradient="from-purple-400 to-purple-500"
+                  delay={4}
+                  href="/assistant"
+                  useRim
+                  accentClass="text-[#6a1b9a]"
+                  watermarkIcon={<Bot />}
+                />
+                <QuickAction
+                  label="SeedPay"
+                  logoLightSrc={apps.seedpay.light}
+                  logoDarkSrc={apps.seedpay.dark}
+                  gradient="from-teal-500 to-teal-600"
+                  hoverGradient="from-teal-400 to-teal-500"
+                  delay={5}
+                  href="/apps/seedpay"
+                  useRim
+                  accentClass="text-[#118c4f]"
+                  watermarkIcon={<CreditCard />}
+                />
               </div>
-
-              {/* Task-Focused Header */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-3xl font-bold text-foreground mb-2">
-                      Today's Focus
-                    </h2>
-                    <p className="text-muted-foreground">
-                      Your personal task workspace for client service excellence
-                    </p>
-                  </div>
-                  <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Task
-                  </Button>
-                </div>
-
-                {/* Quick Stats Bar */}
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="bg-muted rounded-xl p-4 text-center border">
-                    <p className="text-2xl font-bold text-foreground">
-                      {currentTasks.length}
-                    </p>
-                    <p className="text-muted-foreground text-sm">Active Tasks</p>
-                  </div>
-                  <div className="bg-muted rounded-xl p-4 text-center border">
-                    <p className="text-2xl font-bold text-foreground">
-                      {
-                        currentTasks.filter((t) => t.priority === "urgent")
-                          .length
-                      }
-                    </p>
-                    <p className="text-muted-foreground text-sm">Urgent</p>
-                  </div>
-                  <div className="bg-muted rounded-xl p-4 text-center border">
-                    <p className="text-2xl font-bold text-foreground">
-                      {Math.round(
-                        currentTasks.reduce((acc, t) => acc + t.progress, 0) /
-                          currentTasks.length,
-                      )}
-                      %
-                    </p>
-                    <p className="text-muted-foreground text-sm">Avg Progress</p>
-                  </div>
-                  <div className="bg-muted rounded-xl p-4 text-center border">
-                    <p className="text-2xl font-bold text-foreground">
-                      {serviceMetrics.activeClients}
-                    </p>
-                    <p className="text-muted-foreground text-sm">Active Clients</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Main Task Workspace - Central Focus */}
-              <div className="grid grid-cols-12 gap-6 mb-8">
-                {/* Current Tasks - Main Real Estate */}
-                <div className="col-span-8">
-                  <SurfaceCard className="h-full">
-                    <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                      <CardTitle className="flex items-center gap-2">
-                        <Target className="h-6 w-6" />
-                        My Current Tasks
-                      </CardTitle>
-                      <CardDescription className="text-blue-100">
-                        Your personal task management center
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                      <div className="space-y-4">
-                        {currentTasks.map((task) => (
-                          <div key={task.id} className="group relative">
-                            <div
-                              className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg ${taskCardBorderClass(task.priority)}`}
-                            >
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="flex-1">
-                                  <h4 className="font-semibold text-foreground mb-1">
-                                    {task.title}
-                                  </h4>
-                                  <p className="text-sm text-muted-foreground mb-2">
-                                    {task.client}
-                                  </p>
-                                  <div className="flex items-center gap-3">
-                                    <Badge
-                                      className={getPriorityColor(
-                                        task.priority,
-                                      )}
-                                      variant="outline"
-                                    >
-                                      {task.priority}
-                                    </Badge>
-                                    <Badge
-                                      variant="secondary"
-                                      className="bg-muted text-foreground"
-                                    >
-                                      {task.type.replace("-", " ")}
-                                    </Badge>
-                                    <span className="text-sm text-muted-foreground flex items-center gap-1">
-                                      <Clock className="h-3 w-3" />
-                                      {task.dueTime}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <div className="text-lg font-bold text-foreground mb-1">
-                                    {task.progress}%
-                                  </div>
-                                  <div className="w-16">
-                                    <Progress
-                                      value={task.progress}
-                                      className="h-2"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Action Buttons - Appear on Hover */}
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs"
-                                >
-                                  <Activity className="h-3 w-3 mr-1" />
-                                  Update
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs"
-                                >
-                                  <MessageSquare className="h-3 w-3 mr-1" />
-                                  Message Client
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs"
-                                >
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  Complete
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </SurfaceCard>
-                </div>
-
-                {/* Client Communication Hub */}
-                <div className="col-span-4">
-                  <SurfaceCard className="h-full">
-                    <CardHeader className="bg-slate-600 text-white rounded-t-lg">
-                      <CardTitle className="flex items-center gap-2">
-                        <MessageSquare className="h-6 w-6" />
-                        Client Communications
-                      </CardTitle>
-                      <CardDescription className="text-green-100">
-                        Active Slack channels & messages
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                      <div className="space-y-3">
-                        {slackChannels.map((channel) => (
-                          <div key={channel.id} className="group">
-                            <div
-                              className={`p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${
-                                channel.unreadCount > 0
-                                  ? "bg-green-50 border-green-200"
-                                  : "bg-muted border"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  <div
-                                    className={`w-2 h-2 rounded-full ${channelPriorityDotClass(channel.priority)}`}
-                                   />
-                                  <span className="font-medium text-foreground text-sm">
-                                    {channel.clientName}
-                                  </span>
-                                </div>
-                                {channel.unreadCount > 0 && (
-                                  <Badge className="bg-red-500 text-white text-xs">
-                                    {channel.unreadCount}
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-xs text-muted-foreground mb-2">
-                                {channel.name}
-                              </p>
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs text-muted-foreground">
-                                  {channel.lastActivity}
-                                </span>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity text-xs"
-                                >
-                                  <ExternalLink className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </SurfaceCard>
-                </div>
-              </div>
-
-              {/* ClickUp Integration & AI Tools */}
-              <div className="grid grid-cols-2 gap-6">
-                {/* ClickUp Task Monitor */}
-                <SurfaceCard className="shadow-xl">
-                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
-                    <CardTitle className="flex items-center gap-2">
-                      <Activity className="h-5 w-5" />
-                      ClickUp Task Monitor
-                    </CardTitle>
-                    <CardDescription className="text-purple-100">
-                      Live project management integration
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-3">
-                      {clickupTasks.map((task) => (
-                        <div
-                          key={task.id}
-                          className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/70 transition-colors"
-                        >
-                          <div className="flex-1">
-                            <h4 className="font-medium text-foreground text-sm">
-                              {task.name}
-                            </h4>
-                            <div className="flex items-center gap-3 mt-1">
-                              <span className="text-xs text-muted-foreground">
-                                {task.assignee}
-                              </span>
-                              <Badge
-                                variant="outline"
-                                className={clickupStatusBadgeClass(task.status)}
-                              >
-                                {task.status}
-                              </Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {task.dueDate}
-                              </span>
-                            </div>
-                          </div>
-                          <Button size="sm" variant="ghost">
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </SurfaceCard>
-
-                {/* AI Assistant Panel */}
-                <SurfaceCard className="shadow-xl">
-                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                    <CardTitle className="flex items-center gap-2">
-                      <Bot className="h-5 w-5" />
-                      AI Assistant
-                    </CardTitle>
-                    <CardDescription className="text-indigo-100">
-                      Intelligent automation status
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {aiTasks.map((task) => (
-                        <div key={task.id} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-foreground">
-                              {task.type
-                                .replace("_", " ")
-                                .replace(/\b\w/g, (l) => l.toUpperCase())}
-                            </p>
-                            <span
-                              className={`text-xs ${getStatusColor(task.status)}`}
-                            >
-                              {task.status}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Progress
-                              value={task.progress}
-                              className="flex-1"
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              {task.progress}%
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {task.clientName} • ETA: {task.estimatedCompletion}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </SurfaceCard>
-              </div>
-            </>
-          )}
-
-          {activeModule === "sales-intelligence" && (
-            <div className="space-y-8">
-              {/* Intelligence Command Header */}
-              <div className="text-center">
-                <h2 className="text-4xl font-bold text-white mb-4">
-                  Sales Intelligence Command
-                </h2>
-                <p className="text-white/70 text-lg mb-6">
-                  Prepare for incoming complexity before it arrives
-                </p>
-                <div className="flex items-center justify-center gap-4">
-                  <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
-                    <TrendingUp className="mr-2 h-4 w-4" />
-                    Live Pipeline
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-white/20 border-white/30 text-white hover:bg-white/30"
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Open HubSpot
-                  </Button>
-                </div>
-              </div>
-
-              {/* Preparation Urgency Matrix */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Critical Preparation */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-800 text-white rounded-t-lg">
-                    <CardTitle className="flex items-center gap-2">
-                      <AlertTriangle className="h-6 w-6" />
-                      Critical Prep Needed
-                    </CardTitle>
-                    <CardDescription className="text-red-100">
-                      Immediate action required
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="group border-l-4 border-l-red-500 bg-red-50/80 p-4 rounded-r-lg hover:bg-red-50 transition-all duration-200">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-bold text-red-900">
-                              TechFlow Multi-Entity
-                            </h4>
-                            <p className="text-sm text-red-700">
-                              Complex structure, multiple states
-                            </p>
-                          </div>
-                          <Badge className="bg-red-500 text-white">$75K</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-red-600">
-                            Closes: Jan 15
-                          </span>
-                          <Button
-                            size="sm"
-                            className="bg-red-600 hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            Prep Now
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="group border-l-4 border-l-orange-500 bg-orange-50/80 p-4 rounded-r-lg hover:bg-orange-50 transition-all duration-200">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-bold text-orange-900">
-                              Volume Surge Alert
-                            </h4>
-                            <p className="text-sm text-orange-700">
-                              5 clients closing this week
-                            </p>
-                          </div>
-                          <Badge className="bg-orange-500 text-white">
-                            Capacity
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-orange-600">
-                            This Week
-                          </span>
-                          <Button
-                            size="sm"
-                            className="bg-orange-600 hover:bg-orange-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            Plan Resources
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Standard Preparation */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                    <CardTitle className="flex items-center gap-2">
-                      <Clock3 className="h-6 w-6" />
-                      Standard Prep Queue
-                    </CardTitle>
-                    <CardDescription className="text-yellow-100">
-                      Normal complexity pipeline
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="group border-l-4 border-l-blue-500 bg-blue-50/80 p-4 rounded-r-lg hover:bg-blue-50 transition-all duration-200">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-bold text-blue-900">
-                              Wellness Hub Package
-                            </h4>
-                            <p className="text-sm text-blue-700">
-                              Full service integration
-                            </p>
-                          </div>
-                          <Badge className="bg-blue-500 text-white">$45K</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-blue-600">
-                            Closes: Jan 20
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-blue-500 text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            Queue Setup
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="group border-l-4 border-l-green-500 bg-green-50/80 p-4 rounded-r-lg hover:bg-green-50 transition-all duration-200">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h4 className="font-bold text-green-900">
-                              Marina Cafe Standard
-                            </h4>
-                            <p className="text-sm text-green-700">
-                              Basic bookkeeping setup
-                            </p>
-                          </div>
-                          <Badge className="bg-green-500 text-white">
-                            $18K
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-green-600">
-                            Closes: Jan 25
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-green-500 text-green-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            Standard Prep
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Intelligence Insights */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
-                    <CardTitle className="flex items-center gap-2">
-                      <Brain className="h-6 w-6" />
-                      AI Insights
-                    </CardTitle>
-                    <CardDescription className="text-purple-100">
-                      Predictive preparation guidance
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="p-4 bg-slate-100 rounded-lg border border-purple-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Zap className="h-4 w-4 text-purple-600" />
-                          <span className="font-semibold text-purple-900">
-                            Pattern Alert
-                          </span>
-                        </div>
-                        <p className="text-sm text-purple-800 mb-3">
-                          TechFlow deal type is 40% more likely to require
-                          additional compliance documentation
-                        </p>
-                        <Button
-                          size="sm"
-                          className="bg-purple-600 hover:bg-purple-700 text-white"
-                        >
-                          Review Requirements
-                        </Button>
-                      </div>
-
-                      <div className="p-4 bg-slate-100 rounded-lg border border-blue-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Target className="h-4 w-4 text-blue-600" />
-                          <span className="font-semibold text-blue-900">
-                            Resource Prediction
-                          </span>
-                        </div>
-                        <p className="text-sm text-blue-800 mb-3">
-                          Based on current pipeline, expect 30% capacity
-                          increase in Q1
-                        </p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-blue-600 text-blue-700"
-                        >
-                          Capacity Planning
-                        </Button>
-                      </div>
-
-                      <div className="p-4 bg-slate-100 rounded-lg border border-green-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                          <span className="font-semibold text-green-900">
-                            Success Pattern
-                          </span>
-                        </div>
-                        <p className="text-sm text-green-800 mb-3">
-                          Similar wellness industry setups have 95% success rate
-                          with current team
-                        </p>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-green-600 text-green-700"
-                        >
-                          Use Template
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Preparation Timeline */}
-              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-6 w-6" />
-                    Service Preparation Timeline
-                  </CardTitle>
-                  <CardDescription className="text-indigo-100">
-                    Strategic preparation schedule for optimal readiness
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">3</span>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Critical (3 days)
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Immediate preparation required for complex entities
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">7</span>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Standard (1 week)
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Normal preparation timeline for standard setups
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">14</span>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Optimal (2 weeks)
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Ideal preparation window for perfect execution
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
-          )}
 
-          {activeModule === "communications" && (
-            <div className="space-y-8">
-              {/* Communication Command Center */}
-              <div className="text-center">
-                <h2 className="text-4xl font-bold text-white mb-4">
-                  Client Communication Central
-                </h2>
-                <p className="text-white/70 text-lg mb-6">
-                  Real-time client relationship management
-                </p>
-                <div className="flex items-center justify-center gap-4">
-                  <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Active Conversations
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-white/20 border-white/30 text-white hover:bg-white/30"
-                  >
-                    <Slack className="mr-2 h-4 w-4" />
-                    Open Slack
-                  </Button>
+            {/* Task-Focused Header */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-3xl font-bold text-foreground mb-2">Today's Focus</h2>
+                  <p className="text-muted-foreground">
+                    Your personal task workspace for client service excellence
+                  </p>
+                </div>
+                <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Task
+                </Button>
+              </div>
+
+              {/* Quick Stats Bar */}
+              <div className="grid grid-cols-4 gap-4">
+                <div className="bg-muted rounded-xl p-4 text-center border">
+                  <p className="text-2xl font-bold text-foreground">{currentTasks.length}</p>
+                  <p className="text-muted-foreground text-sm">Active Tasks</p>
+                </div>
+                <div className="bg-muted rounded-xl p-4 text-center border">
+                  <p className="text-2xl font-bold text-foreground">
+                    {currentTasks.filter((t) => t.priority === "urgent").length}
+                  </p>
+                  <p className="text-muted-foreground text-sm">Urgent</p>
+                </div>
+                <div className="bg-muted rounded-xl p-4 text-center border">
+                  <p className="text-2xl font-bold text-foreground">
+                    {Math.round(
+                      currentTasks.reduce((acc, t) => acc + t.progress, 0) / currentTasks.length
+                    )}
+                    %
+                  </p>
+                  <p className="text-muted-foreground text-sm">Avg Progress</p>
+                </div>
+                <div className="bg-muted rounded-xl p-4 text-center border">
+                  <p className="text-2xl font-bold text-foreground">
+                    {serviceMetrics.activeClients}
+                  </p>
+                  <p className="text-muted-foreground text-sm">Active Clients</p>
                 </div>
               </div>
+            </div>
 
-              {/* Communication Status Board */}
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-800 text-white rounded-t-lg">
-                    <CardTitle className="text-center">
-                      <AlertTriangle className="h-6 w-6 mx-auto mb-2" />
-                      Urgent
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-red-600 mb-2">
-                        2
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Needs immediate response
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                    <CardTitle className="text-center">
-                      <Clock className="h-6 w-6 mx-auto mb-2" />
-                      Priority
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-orange-600 mb-2">
-                        5
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        High priority responses
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
-                    <CardTitle className="text-center">
-                      <CheckCircle className="h-6 w-6 mx-auto mb-2" />
-                      Active
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-600 mb-2">
-                        12
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Ongoing conversations
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                    <CardTitle className="text-center">
-                      <Users className="h-6 w-6 mx-auto mb-2" />
-                      Total
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-blue-600 mb-2">
-                        19
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Connected clients
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Live Communication Feed */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Active Conversations */}
-                <Card className="lg:col-span-2 bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+            {/* Main Task Workspace - Central Focus */}
+            <div className="grid grid-cols-12 gap-6 mb-8">
+              {/* Current Tasks - Main Real Estate */}
+              <div className="col-span-8">
+                <SurfaceCard className="h-full">
                   <CardHeader className="bg-slate-700 text-white rounded-t-lg">
                     <CardTitle className="flex items-center gap-2">
-                      <MessageSquare className="h-6 w-6" />
-                      Live Conversation Feed
-                    </CardTitle>
-                    <CardDescription className="text-green-100">
-                      Real-time client communications requiring attention
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {slackChannels.map((channel) => (
-                        <div key={channel.id} className="group">
-                          <div
-                            className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg cursor-pointer ${channelCardBorderClass(channel.priority)}`}
-                          >
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1">
-                                <h4 className="font-bold text-foreground">
-                                  {channel.clientName}
-                                </h4>
-                                <p className="text-sm text-muted-foreground">
-                                  {channel.name}
-                                </p>
-                                <div className="flex items-center gap-3">
-                                  <Badge className={channelBadgeClass(channel.priority)}>
-                                    {channel.priority}
-                                  </Badge>
-                                  <span className="text-sm text-muted-foreground">
-                                    Last activity: {channel.lastActivity}
-                                  </span>
-                                </div>
-                              </div>
-                              {channel.unreadCount > 0 && (
-                                <Badge className="bg-red-500 text-white animate-pulse">
-                                  {channel.unreadCount} new
-                                </Badge>
-                              )}
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-muted-foreground">
-                                Last activity: {channel.lastActivity}
-                              </span>
-                              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  size="sm"
-                                  className="bg-green-600 hover:bg-green-700 text-white"
-                                >
-                                  <MessageSquare className="h-3 w-3 mr-1" />
-                                  Open Chat
-                                </Button>
-                                <Button size="sm" variant="outline">
-                                  <Video className="h-3 w-3 mr-1" />
-                                  Call
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Quick Action Panel */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                    <CardTitle className="flex items-center gap-2">
-                      <Zap className="h-6 w-6" />
-                      Quick Actions
+                      <Target className="h-6 w-6" />
+                      My Current Tasks
                     </CardTitle>
                     <CardDescription className="text-blue-100">
-                      Instant communication tools
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-4">
-                    <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
-                      <MessageSquare className="mr-2 h-5 w-5" />
-                      New Client Message
-                    </Button>
-
-                    <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
-                      <Video className="mr-2 h-5 w-5" />
-                      Start Video Call
-                    </Button>
-
-                    <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
-                      <Calendar className="mr-2 h-5 w-5" />
-                      Schedule Meeting
-                    </Button>
-
-                    <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
-                      <Mail className="mr-2 h-5 w-5" />
-                      Send Email Update
-                    </Button>
-
-                    <div className="pt-4 border-t border-border">
-                      <h4 className="font-semibold text-foreground mb-3">
-                        Smart Templates
-                      </h4>
-                      <div className="space-y-2">
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-sm"
-                        >
-                          <FileText className="mr-2 h-3 w-3" />
-                          Weekly Status Update
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-sm"
-                        >
-                          <AlertTriangle className="mr-2 h-3 w-3" />
-                          Issue Resolution
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-sm"
-                        >
-                          <CheckCircle className="mr-2 h-3 w-3" />
-                          Task Completion
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Communication Analytics */}
-              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-6 w-6" />
-                    Communication Performance
-                  </CardTitle>
-                  <CardDescription className="text-indigo-100">
-                    Real-time response metrics and client satisfaction tracking
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">
-                          2.4h
-                        </span>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Avg Response Time
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        15% faster than target
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">
-                          94%
-                        </span>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Satisfaction Rate
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        +2% this month
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">
-                          156
-                        </span>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Messages Today
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        12% above average
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">8</span>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Video Calls
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Scheduled this week
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {activeModule === "documents" && (
-            <div className="space-y-8">
-              {/* Document Command Center */}
-              <div className="text-center">
-                <h2 className="text-4xl font-bold text-white mb-4">
-                  Document Command Center
-                </h2>
-                <p className="text-white/70 text-lg mb-6">
-                  Intelligent document workflows for seamless client service
-                </p>
-                <div className="flex items-center justify-center gap-4">
-                  <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Smart Documents
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-white/20 border-white/30 text-white hover:bg-white/30"
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload File
-                  </Button>
-                </div>
-              </div>
-
-              {/* Document Status Overview */}
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                    <CardTitle className="text-center text-sm">
-                      <FileText className="h-5 w-5 mx-auto mb-1" />
-                      Active
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600 mb-1">
-                        24
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Documents in progress
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
-                    <CardTitle className="text-center text-sm">
-                      <Clock className="h-5 w-5 mx-auto mb-1" />
-                      Review
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-orange-600 mb-1">
-                        8
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Awaiting review
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
-                    <CardTitle className="text-center text-sm">
-                      <Edit className="h-5 w-5 mx-auto mb-1" />
-                      Draft
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600 mb-1">
-                        6
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        In draft mode
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
-                    <CardTitle className="text-center text-sm">
-                      <CheckCircle className="h-5 w-5 mx-auto mb-1" />
-                      Complete
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600 mb-1">
-                        156
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Completed documents
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
-                    <CardTitle className="text-center text-sm">
-                      <Zap className="h-5 w-5 mx-auto mb-1" />
-                      AI-Gen
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600 mb-1">
-                        12
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        AI-generated today
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Document Workspace */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Recent & Active Documents */}
-                <Card className="lg:col-span-2 bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-6 w-6" />
-                      Active Document Flow
-                    </CardTitle>
-                    <CardDescription className="text-indigo-100">
-                      Current documents requiring attention
+                      Your personal task management center
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6">
                     <div className="space-y-4">
-                      {documentRequests.map((request) => (
-                        <div key={request.id} className="group">
+                      {currentTasks.map((task) => (
+                        <div key={task.id} className="group relative">
                           <div
-                            className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg cursor-pointer ${documentCardBorderClass(request.priority)}`}
+                            className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg ${taskCardBorderClass(task.priority)}`}
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex-1">
-                                <h4 className="font-bold text-foreground mb-1">
-                                  {request.clientName}
-                                </h4>
-                                <p className="text-sm text-muted-foreground mb-2">
-                                  {request.type}
-                                </p>
+                                <h4 className="font-semibold text-foreground mb-1">{task.title}</h4>
+                                <p className="text-sm text-muted-foreground mb-2">{task.client}</p>
                                 <div className="flex items-center gap-3">
                                   <Badge
-                                    className={requestStatusBadgeClass(request.status)}
-                                  >
-                                    {request.status.replace("-", " ")}
-                                  </Badge>
-                                  <Badge
-                                    className={getPriorityColor(
-                                      request.priority,
-                                    )}
+                                    className={getPriorityColor(task.priority)}
                                     variant="outline"
                                   >
-                                    {request.priority}
+                                    {task.priority}
                                   </Badge>
-                                  <span className="text-sm text-muted-foreground">
-                                    Due: {request.dueDate}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
-                              <Button
-                                size="sm"
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                              >
-                                <Edit className="h-3 w-3 mr-1" />
-                                Edit
-                              </Button>
-                              <Button size="sm" variant="outline">
-                                <Share className="h-3 w-3 mr-1" />
-                                Share
-                              </Button>
-                              <Button size="sm" variant="outline">
-                                <Download className="h-3 w-3 mr-1" />
-                                Export
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Smart Templates & Tools */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-600 text-white rounded-t-lg">
-                    <CardTitle className="flex items-center gap-2">
-                      <Sparkles className="h-6 w-6" />
-                      Smart Templates
-                    </CardTitle>
-                    <CardDescription className="text-emerald-100">
-                      AI-powered document generation
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 gap-3">
-                        <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
-                          <FileText className="mr-3 h-5 w-5" />
-                          <div className="text-left">
-                            <div className="font-semibold">
-                              Client Onboarding
-                            </div>
-                            <div className="text-xs text-orange-100">
-                              Auto-generate welcome docs
-                            </div>
-                          </div>
-                        </Button>
-
-                        <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
-                          <Calculator className="mr-3 h-5 w-5" />
-                          <div className="text-left">
-                            <div className="font-semibold">
-                              Tax Prep Package
-                            </div>
-                            <div className="text-xs text-orange-100">
-                              Complete tax documentation
-                            </div>
-                          </div>
-                        </Button>
-
-                        <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
-                          <Settings className="mr-3 h-5 w-5" />
-                          <div className="text-left">
-                            <div className="font-semibold">QBO Setup Guide</div>
-                            <div className="text-xs text-orange-100">
-                              Step-by-step configuration
-                            </div>
-                          </div>
-                        </Button>
-
-                        <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
-                          <Building className="mr-3 h-5 w-5" />
-                          <div className="text-left">
-                            <div className="font-semibold">
-                              Entity Formation
-                            </div>
-                            <div className="text-xs text-orange-100">
-                              Legal structure documents
-                            </div>
-                          </div>
-                        </Button>
-                      </div>
-
-                      <div className="pt-4 border-t border-border">
-                        <h4 className="font-semibold text-foreground mb-3">
-                          AI Document Tools
-                        </h4>
-                        <div className="space-y-2">
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start"
-                          >
-                            <Brain className="mr-2 h-4 w-4 text-purple-600" />
-                            Generate from Context
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start"
-                          >
-                            <Wand2 className="mr-2 h-4 w-4 text-blue-600" />
-                            Smart Form Builder
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start"
-                          >
-                            <Zap className="mr-2 h-4 w-4 text-orange-600" />
-                            Auto-Complete Draft
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Document Analytics & Insights */}
-              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-6 w-6" />
-                    Document Performance Analytics
-                  </CardTitle>
-                  <CardDescription className="text-cyan-100">
-                    Intelligent insights on document workflows and efficiency
-                    metrics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">
-                          85%
-                        </span>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Completion Rate
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Documents completed on time
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">
-                          3.2d
-                        </span>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Avg Cycle Time
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        From draft to completion
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">
-                          92%
-                        </span>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        AI Accuracy
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Generated content quality
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">
-                          34h
-                        </span>
-                      </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Time Saved
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        This month via automation
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {activeModule === "ai-tools" && (
-            <div className="space-y-8">
-              {/* AI Command Center */}
-              <div className="text-center">
-                <h2 className="text-4xl font-bold text-white mb-4">
-                  AI Service Intelligence
-                </h2>
-                <p className="text-white/70 text-lg mb-6">
-                  Advanced automation transforming accounting workflows
-                </p>
-                <div className="flex items-center justify-center gap-4">
-                  <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
-                    <Brain className="mr-2 h-4 w-4" />
-                    Launch AI Assistant
-                  </Button>
-                  <Badge className="bg-slate-500/20 text-slate-200 border-slate-400/30 text-lg px-4 py-2">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    AI Powered
-                  </Badge>
-                </div>
-              </div>
-
-              {/* AI Tool Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Financial Analysis */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
-                  <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
-                    <CardTitle className="text-center">
-                      <BarChart3 className="h-8 w-8 mx-auto mb-2" />
-                      Financial Analysis
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-3">
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <PieChart className="mr-2 h-5 w-5" />
-                        COA Analysis
-                      </Button>
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <TrendingUp className="mr-2 h-5 w-5" />
-                        Trend Analysis
-                      </Button>
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <Calculator className="mr-2 h-5 w-5" />
-                        Ratio Reports
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Tax Optimization */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
-                  <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
-                    <CardTitle className="text-center">
-                      <DollarSign className="h-8 w-8 mx-auto mb-2" />
-                      Tax Optimization
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-3">
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <Search className="mr-2 h-5 w-5" />
-                        Deduction Scan
-                      </Button>
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <Target className="mr-2 h-5 w-5" />
-                        Tax Planning
-                      </Button>
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <Zap className="mr-2 h-5 w-5" />
-                        Quick Optimize
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Entity Management */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
-                  <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
-                    <CardTitle className="text-center">
-                      <Building2 className="h-8 w-8 mx-auto mb-2" />
-                      Entity Management
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-3">
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <Building className="mr-2 h-5 w-5" />
-                        Structure Analysis
-                      </Button>
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <Settings className="mr-2 h-5 w-5" />
-                        Optimization
-                      </Button>
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <FileText className="mr-2 h-5 w-5" />
-                        Compliance Check
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Smart Automation */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
-                  <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
-                    <CardTitle className="text-center">
-                      <Wand2 className="h-8 w-8 mx-auto mb-2" />
-                      Smart Automation
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-3">
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <Bot className="mr-2 h-5 w-5" />
-                        Auto-Categorize
-                      </Button>
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <Sparkles className="mr-2 h-5 w-5" />
-                        Smart Reconcile
-                      </Button>
-                      <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
-                        <Zap className="mr-2 h-5 w-5" />
-                        Workflow AI
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* AI Processing Status */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Active AI Tasks */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                  <CardHeader className="bg-slate-700 text-white rounded-t-lg">
-                    <CardTitle className="flex items-center gap-2">
-                      <Activity className="h-6 w-6" />
-                      AI Processing Queue
-                    </CardTitle>
-                    <CardDescription className="text-indigo-100">
-                      Real-time intelligent task execution
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {aiTasks.map((task) => (
-                        <div key={task.id} className="group">
-                          <div
-                            className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg ${aiTaskCardBorderClass(task.status)}`}
-                          >
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1">
-                                <h4 className="font-bold text-foreground mb-1">
-                                  {task.type
-                                    .replace("_", " ")
-                                    .replace(/\b\w/g, (l) => l.toUpperCase())}
-                                </h4>
-                                <p className="text-sm text-muted-foreground mb-2">
-                                  {task.clientName}
-                                </p>
-                                <div className="flex items-center gap-3">
-                                  <Badge
-                                    className={aiTaskStatusBadgeClass(task.status)}
-                                  >
-                                    {task.status}
+                                  <Badge variant="secondary" className="bg-muted text-foreground">
+                                    {task.type.replace("-", " ")}
                                   </Badge>
-                                  <span className="text-sm text-muted-foreground">
-                                    ETA: {task.estimatedCompletion}
+                                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {task.dueTime}
                                   </span>
                                 </div>
                               </div>
@@ -1964,26 +597,24 @@ export default function ServiceDashboard() {
                                   {task.progress}%
                                 </div>
                                 <div className="w-16">
-                                  <Progress
-                                    value={task.progress}
-                                    className="h-2"
-                                  />
+                                  <Progress value={task.progress} className="h-2" />
                                 </div>
                               </div>
                             </div>
 
-                            {/* Action Buttons */}
+                            {/* Action Buttons - Appear on Hover */}
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
-                              <Button
-                                size="sm"
-                                className="bg-purple-600 hover:bg-purple-700 text-white"
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
-                                View Details
+                              <Button size="sm" variant="outline" className="text-xs">
+                                <Activity className="h-3 w-3 mr-1" />
+                                Update
                               </Button>
-                              <Button size="sm" variant="outline">
-                                <Download className="h-3 w-3 mr-1" />
-                                Export Results
+                              <Button size="sm" variant="outline" className="text-xs">
+                                <MessageSquare className="h-3 w-3 mr-1" />
+                                Message Client
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-xs">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Complete
                               </Button>
                             </div>
                           </div>
@@ -1991,176 +622,1253 @@ export default function ServiceDashboard() {
                       ))}
                     </div>
                   </CardContent>
-                </Card>
+                </SurfaceCard>
+              </div>
 
-                {/* AI Insights & Performance */}
-                <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+              {/* Client Communication Hub */}
+              <div className="col-span-4">
+                <SurfaceCard className="h-full">
                   <CardHeader className="bg-slate-600 text-white rounded-t-lg">
                     <CardTitle className="flex items-center gap-2">
-                      <Brain className="h-6 w-6" />
-                      AI Performance Insights
+                      <MessageSquare className="h-6 w-6" />
+                      Client Communications
                     </CardTitle>
-                    <CardDescription className="text-pink-100">
-                      Intelligence metrics and optimization suggestions
+                    <CardDescription className="text-green-100">
+                      Active Slack channels & messages
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-6">
-                    <div className="space-y-6">
-                      {/* Performance Metrics */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span className="text-white font-bold text-sm">
-                              94%
-                            </span>
-                          </div>
-                          <h4 className="font-semibold text-foreground text-sm">
-                            Accuracy Rate
-                          </h4>
-                          <p className="text-xs text-muted-foreground">
-                            AI prediction accuracy
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span className="text-white font-bold text-sm">
-                              127h
-                            </span>
-                          </div>
-                          <h4 className="font-semibold text-foreground text-sm">
-                            Time Saved
-                          </h4>
-                          <p className="text-xs text-muted-foreground">
-                            This month via AI
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Smart Recommendations */}
-                      <div className="space-y-3">
-                        <h4 className="font-semibold text-foreground">
-                          Smart Recommendations
-                        </h4>
-
-                        <div className="p-3 bg-slate-100 rounded-lg border border-blue-200">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Lightbulb className="h-4 w-4 text-blue-600" />
-                            <span className="font-semibold text-blue-900 text-sm">
-                              Process Optimization
-                            </span>
-                          </div>
-                          <p className="text-xs text-blue-800 mb-2">
-                            Consider automating TechFlow's recurring journal
-                            entries - 85% confidence improvement
-                          </p>
-                          <Button
-                            size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                    <div className="space-y-3">
+                      {slackChannels.map((channel) => (
+                        <div key={channel.id} className="group">
+                          <div
+                            className={`p-3 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer ${
+                              channel.unreadCount > 0
+                                ? "bg-green-50 border-green-200"
+                                : "bg-muted border"
+                            }`}
                           >
-                            Implement
-                          </Button>
-                        </div>
-
-                        <div className="p-3 bg-slate-100 rounded-lg border border-green-200">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Target className="h-4 w-4 text-green-600" />
-                            <span className="font-semibold text-green-900 text-sm">
-                              Deduction Discovery
-                            </span>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={`w-2 h-2 rounded-full ${channelPriorityDotClass(channel.priority)}`}
+                                />
+                                <span className="font-medium text-foreground text-sm">
+                                  {channel.clientName}
+                                </span>
+                              </div>
+                              {channel.unreadCount > 0 && (
+                                <Badge className="bg-red-500 text-white text-xs">
+                                  {channel.unreadCount}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-2">{channel.name}</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground">
+                                {channel.lastActivity}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
-                          <p className="text-xs text-green-800 mb-2">
-                            Wellness Hub: $2,400 in unclaimed home office
-                            deductions detected
-                          </p>
-                          <Button
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            Review
-                          </Button>
                         </div>
-
-                        <div className="p-3 bg-slate-600 from-purple-50 to-violet-50 rounded-lg border border-purple-200">
-                          <div className="flex items-center gap-2 mb-2">
-                            <AlertTriangle className="h-4 w-4 text-purple-600" />
-                            <span className="font-semibold text-purple-900 text-sm">
-                              Risk Alert
-                            </span>
-                          </div>
-                          <p className="text-xs text-purple-800 mb-2">
-                            Marina Cafe: Unusual expense patterns suggest review
-                            needed
-                          </p>
-                          <Button
-                            size="sm"
-                            className="bg-purple-600 hover:bg-purple-700 text-white"
-                          >
-                            Investigate
-                          </Button>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </CardContent>
-                </Card>
+                </SurfaceCard>
               </div>
+            </div>
 
-              {/* AI Learning & Training Center */}
-              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
-                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+            {/* ClickUp Integration & AI Tools */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* ClickUp Task Monitor */}
+              <SurfaceCard className="shadow-xl">
+                <CardHeader className="bg-slate-600 text-white rounded-t-lg">
                   <CardTitle className="flex items-center gap-2">
-                    <GraduationCap className="h-6 w-6" />
-                    AI Learning & Training Center
+                    <Activity className="h-5 w-5" />
+                    ClickUp Task Monitor
                   </CardTitle>
-                  <CardDescription className="text-gradient-100">
-                    Continuous learning and model improvement for enhanced
-                    performance
+                  <CardDescription className="text-purple-100">
+                    Live project management integration
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">
-                          1.2k
-                        </span>
+                  <div className="space-y-3">
+                    {clickupTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="flex items-center justify-between p-3 bg-muted rounded-lg hover:bg-muted/70 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium text-foreground text-sm">{task.name}</h4>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-xs text-muted-foreground">{task.assignee}</span>
+                            <Badge
+                              variant="outline"
+                              className={clickupStatusBadgeClass(task.status)}
+                            >
+                              {task.status}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{task.dueDate}</span>
+                          </div>
+                        </div>
+                        <Button size="sm" variant="ghost">
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Training Data Points
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Added this month for improved accuracy
-                      </p>
+                    ))}
+                  </div>
+                </CardContent>
+              </SurfaceCard>
+
+              {/* AI Assistant Panel */}
+              <SurfaceCard className="shadow-xl">
+                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <Bot className="h-5 w-5" />
+                    AI Assistant
+                  </CardTitle>
+                  <CardDescription className="text-indigo-100">
+                    Intelligent automation status
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {aiTasks.map((task) => (
+                      <div key={task.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-foreground">
+                            {task.type.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                          </p>
+                          <span className={`text-xs ${getStatusColor(task.status)}`}>
+                            {task.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Progress value={task.progress} className="flex-1" />
+                          <span className="text-xs text-muted-foreground">{task.progress}%</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {task.clientName} • ETA: {task.estimatedCompletion}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </SurfaceCard>
+            </div>
+          </>
+        )}
+
+        {activeModule === "sales-intelligence" && (
+          <div className="space-y-8">
+            {/* Intelligence Command Header */}
+            <div className="text-center">
+              <h2 className="text-4xl font-bold text-white mb-4">Sales Intelligence Command</h2>
+              <p className="text-white/70 text-lg mb-6">
+                Prepare for incoming complexity before it arrives
+              </p>
+              <div className="flex items-center justify-center gap-4">
+                <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Live Pipeline
+                </Button>
+                <Button
+                  variant="outline"
+                  className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Open HubSpot
+                </Button>
+              </div>
+            </div>
+
+            {/* Preparation Urgency Matrix */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Critical Preparation */}
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-800 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-6 w-6" />
+                    Critical Prep Needed
+                  </CardTitle>
+                  <CardDescription className="text-red-100">
+                    Immediate action required
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="group border-l-4 border-l-red-500 bg-red-50/80 p-4 rounded-r-lg hover:bg-red-50 transition-all duration-200">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-bold text-red-900">TechFlow Multi-Entity</h4>
+                          <p className="text-sm text-red-700">Complex structure, multiple states</p>
+                        </div>
+                        <Badge className="bg-red-500 text-white">$75K</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-red-600">Closes: Jan 15</span>
+                        <Button
+                          size="sm"
+                          className="bg-red-600 hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          Prep Now
+                        </Button>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">
-                          v2.4
-                        </span>
+
+                    <div className="group border-l-4 border-l-orange-500 bg-orange-50/80 p-4 rounded-r-lg hover:bg-orange-50 transition-all duration-200">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-bold text-orange-900">Volume Surge Alert</h4>
+                          <p className="text-sm text-orange-700">5 clients closing this week</p>
+                        </div>
+                        <Badge className="bg-orange-500 text-white">Capacity</Badge>
                       </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        Model Version
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Latest AI model with enhanced capabilities
-                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-orange-600">This Week</span>
+                        <Button
+                          size="sm"
+                          className="bg-orange-600 hover:bg-orange-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          Plan Resources
+                        </Button>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-white font-bold text-lg">3</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Standard Preparation */}
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock3 className="h-6 w-6" />
+                    Standard Prep Queue
+                  </CardTitle>
+                  <CardDescription className="text-yellow-100">
+                    Normal complexity pipeline
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="group border-l-4 border-l-blue-500 bg-blue-50/80 p-4 rounded-r-lg hover:bg-blue-50 transition-all duration-200">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-bold text-blue-900">Wellness Hub Package</h4>
+                          <p className="text-sm text-blue-700">Full service integration</p>
+                        </div>
+                        <Badge className="bg-blue-500 text-white">$45K</Badge>
                       </div>
-                      <h4 className="font-semibold text-foreground mb-2">
-                        New Features
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Advanced capabilities released this week
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-blue-600">Closes: Jan 20</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-blue-500 text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          Queue Setup
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="group border-l-4 border-l-green-500 bg-green-50/80 p-4 rounded-r-lg hover:bg-green-50 transition-all duration-200">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-bold text-green-900">Marina Cafe Standard</h4>
+                          <p className="text-sm text-green-700">Basic bookkeeping setup</p>
+                        </div>
+                        <Badge className="bg-green-500 text-white">$18K</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-green-600">Closes: Jan 25</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-green-500 text-green-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          Standard Prep
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Intelligence Insights */}
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-6 w-6" />
+                    AI Insights
+                  </CardTitle>
+                  <CardDescription className="text-purple-100">
+                    Predictive preparation guidance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="p-4 bg-slate-100 rounded-lg border border-purple-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Zap className="h-4 w-4 text-purple-600" />
+                        <span className="font-semibold text-purple-900">Pattern Alert</span>
+                      </div>
+                      <p className="text-sm text-purple-800 mb-3">
+                        TechFlow deal type is 40% more likely to require additional compliance
+                        documentation
                       </p>
+                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
+                        Review Requirements
+                      </Button>
+                    </div>
+
+                    <div className="p-4 bg-slate-100 rounded-lg border border-blue-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Target className="h-4 w-4 text-blue-600" />
+                        <span className="font-semibold text-blue-900">Resource Prediction</span>
+                      </div>
+                      <p className="text-sm text-blue-800 mb-3">
+                        Based on current pipeline, expect 30% capacity increase in Q1
+                      </p>
+                      <Button size="sm" variant="outline" className="border-blue-600 text-blue-700">
+                        Capacity Planning
+                      </Button>
+                    </div>
+
+                    <div className="p-4 bg-slate-100 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span className="font-semibold text-green-900">Success Pattern</span>
+                      </div>
+                      <p className="text-sm text-green-800 mb-3">
+                        Similar wellness industry setups have 95% success rate with current team
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-green-600 text-green-700"
+                      >
+                        Use Template
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
-          )}
-        </div>
+
+            {/* Preparation Timeline */}
+            <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+              <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-6 w-6" />
+                  Service Preparation Timeline
+                </CardTitle>
+                <CardDescription className="text-indigo-100">
+                  Strategic preparation schedule for optimal readiness
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">3</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Critical (3 days)</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Immediate preparation required for complex entities
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">7</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Standard (1 week)</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Normal preparation timeline for standard setups
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">14</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Optimal (2 weeks)</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Ideal preparation window for perfect execution
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeModule === "communications" && (
+          <div className="space-y-8">
+            {/* Communication Command Center */}
+            <div className="text-center">
+              <h2 className="text-4xl font-bold text-white mb-4">Client Communication Central</h2>
+              <p className="text-white/70 text-lg mb-6">Real-time client relationship management</p>
+              <div className="flex items-center justify-center gap-4">
+                <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Active Conversations
+                </Button>
+                <Button
+                  variant="outline"
+                  className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                >
+                  <Slack className="mr-2 h-4 w-4" />
+                  Open Slack
+                </Button>
+              </div>
+            </div>
+
+            {/* Communication Status Board */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-800 text-white rounded-t-lg">
+                  <CardTitle className="text-center">
+                    <AlertTriangle className="h-6 w-6 mx-auto mb-2" />
+                    Urgent
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-red-600 mb-2">2</div>
+                    <p className="text-sm text-muted-foreground">Needs immediate response</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                  <CardTitle className="text-center">
+                    <Clock className="h-6 w-6 mx-auto mb-2" />
+                    Priority
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-orange-600 mb-2">5</div>
+                    <p className="text-sm text-muted-foreground">High priority responses</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-600 text-white rounded-t-lg">
+                  <CardTitle className="text-center">
+                    <CheckCircle className="h-6 w-6 mx-auto mb-2" />
+                    Active
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-green-600 mb-2">12</div>
+                    <p className="text-sm text-muted-foreground">Ongoing conversations</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                  <CardTitle className="text-center">
+                    <Users className="h-6 w-6 mx-auto mb-2" />
+                    Total
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600 mb-2">19</div>
+                    <p className="text-sm text-muted-foreground">Connected clients</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Live Communication Feed */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Active Conversations */}
+              <Card className="lg:col-span-2 bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-6 w-6" />
+                    Live Conversation Feed
+                  </CardTitle>
+                  <CardDescription className="text-green-100">
+                    Real-time client communications requiring attention
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {slackChannels.map((channel) => (
+                      <div key={channel.id} className="group">
+                        <div
+                          className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg cursor-pointer ${channelCardBorderClass(channel.priority)}`}
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h4 className="font-bold text-foreground">{channel.clientName}</h4>
+                              <p className="text-sm text-muted-foreground">{channel.name}</p>
+                              <div className="flex items-center gap-3">
+                                <Badge className={channelBadgeClass(channel.priority)}>
+                                  {channel.priority}
+                                </Badge>
+                                <span className="text-sm text-muted-foreground">
+                                  Last activity: {channel.lastActivity}
+                                </span>
+                              </div>
+                            </div>
+                            {channel.unreadCount > 0 && (
+                              <Badge className="bg-red-500 text-white animate-pulse">
+                                {channel.unreadCount} new
+                              </Badge>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">
+                              Last activity: {channel.lastActivity}
+                            </span>
+                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <MessageSquare className="h-3 w-3 mr-1" />
+                                Open Chat
+                              </Button>
+                              <Button size="sm" variant="outline">
+                                <Video className="h-3 w-3 mr-1" />
+                                Call
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Action Panel */}
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-6 w-6" />
+                    Quick Actions
+                  </CardTitle>
+                  <CardDescription className="text-blue-100">
+                    Instant communication tools
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
+                    <MessageSquare className="mr-2 h-5 w-5" />
+                    New Client Message
+                  </Button>
+
+                  <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
+                    <Video className="mr-2 h-5 w-5" />
+                    Start Video Call
+                  </Button>
+
+                  <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
+                    <Calendar className="mr-2 h-5 w-5" />
+                    Schedule Meeting
+                  </Button>
+
+                  <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
+                    <Mail className="mr-2 h-5 w-5" />
+                    Send Email Update
+                  </Button>
+
+                  <div className="pt-4 border-t border-border">
+                    <h4 className="font-semibold text-foreground mb-3">Smart Templates</h4>
+                    <div className="space-y-2">
+                      <Button variant="outline" className="w-full justify-start text-sm">
+                        <FileText className="mr-2 h-3 w-3" />
+                        Weekly Status Update
+                      </Button>
+                      <Button variant="outline" className="w-full justify-start text-sm">
+                        <AlertTriangle className="mr-2 h-3 w-3" />
+                        Issue Resolution
+                      </Button>
+                      <Button variant="outline" className="w-full justify-start text-sm">
+                        <CheckCircle className="mr-2 h-3 w-3" />
+                        Task Completion
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Communication Analytics */}
+            <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+              <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-6 w-6" />
+                  Communication Performance
+                </CardTitle>
+                <CardDescription className="text-indigo-100">
+                  Real-time response metrics and client satisfaction tracking
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">2.4h</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Avg Response Time</h4>
+                    <p className="text-sm text-muted-foreground">15% faster than target</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">94%</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Satisfaction Rate</h4>
+                    <p className="text-sm text-muted-foreground">+2% this month</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">156</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Messages Today</h4>
+                    <p className="text-sm text-muted-foreground">12% above average</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">8</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Video Calls</h4>
+                    <p className="text-sm text-muted-foreground">Scheduled this week</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeModule === "documents" && (
+          <div className="space-y-8">
+            {/* Document Command Center */}
+            <div className="text-center">
+              <h2 className="text-4xl font-bold text-white mb-4">Document Command Center</h2>
+              <p className="text-white/70 text-lg mb-6">
+                Intelligent document workflows for seamless client service
+              </p>
+              <div className="flex items-center justify-center gap-4">
+                <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Smart Documents
+                </Button>
+                <Button
+                  variant="outline"
+                  className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload File
+                </Button>
+              </div>
+            </div>
+
+            {/* Document Status Overview */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                  <CardTitle className="text-center text-sm">
+                    <FileText className="h-5 w-5 mx-auto mb-1" />
+                    Active
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600 mb-1">24</div>
+                    <p className="text-xs text-muted-foreground">Documents in progress</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-600 text-white rounded-t-lg">
+                  <CardTitle className="text-center text-sm">
+                    <Clock className="h-5 w-5 mx-auto mb-1" />
+                    Review
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600 mb-1">8</div>
+                    <p className="text-xs text-muted-foreground">Awaiting review</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-600 text-white rounded-t-lg">
+                  <CardTitle className="text-center text-sm">
+                    <Edit className="h-5 w-5 mx-auto mb-1" />
+                    Draft
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-yellow-600 mb-1">6</div>
+                    <p className="text-xs text-muted-foreground">In draft mode</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-600 text-white rounded-t-lg">
+                  <CardTitle className="text-center text-sm">
+                    <CheckCircle className="h-5 w-5 mx-auto mb-1" />
+                    Complete
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600 mb-1">156</div>
+                    <p className="text-xs text-muted-foreground">Completed documents</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-600 text-white rounded-t-lg">
+                  <CardTitle className="text-center text-sm">
+                    <Zap className="h-5 w-5 mx-auto mb-1" />
+                    AI-Gen
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600 mb-1">12</div>
+                    <p className="text-xs text-muted-foreground">AI-generated today</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Document Workspace */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Recent & Active Documents */}
+              <Card className="lg:col-span-2 bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-6 w-6" />
+                    Active Document Flow
+                  </CardTitle>
+                  <CardDescription className="text-indigo-100">
+                    Current documents requiring attention
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {documentRequests.map((request) => (
+                      <div key={request.id} className="group">
+                        <div
+                          className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg cursor-pointer ${documentCardBorderClass(request.priority)}`}
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h4 className="font-bold text-foreground mb-1">
+                                {request.clientName}
+                              </h4>
+                              <p className="text-sm text-muted-foreground mb-2">{request.type}</p>
+                              <div className="flex items-center gap-3">
+                                <Badge className={requestStatusBadgeClass(request.status)}>
+                                  {request.status.replace("-", " ")}
+                                </Badge>
+                                <Badge
+                                  className={getPriorityColor(request.priority)}
+                                  variant="outline"
+                                >
+                                  {request.priority}
+                                </Badge>
+                                <span className="text-sm text-muted-foreground">
+                                  Due: {request.dueDate}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Share className="h-3 w-3 mr-1" />
+                              Share
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Download className="h-3 w-3 mr-1" />
+                              Export
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Smart Templates & Tools */}
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-6 w-6" />
+                    Smart Templates
+                  </CardTitle>
+                  <CardDescription className="text-emerald-100">
+                    AI-powered document generation
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-3">
+                      <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
+                        <FileText className="mr-3 h-5 w-5" />
+                        <div className="text-left">
+                          <div className="font-semibold">Client Onboarding</div>
+                          <div className="text-xs text-orange-100">Auto-generate welcome docs</div>
+                        </div>
+                      </Button>
+
+                      <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
+                        <Calculator className="mr-3 h-5 w-5" />
+                        <div className="text-left">
+                          <div className="font-semibold">Tax Prep Package</div>
+                          <div className="text-xs text-orange-100">Complete tax documentation</div>
+                        </div>
+                      </Button>
+
+                      <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
+                        <Settings className="mr-3 h-5 w-5" />
+                        <div className="text-left">
+                          <div className="font-semibold">QBO Setup Guide</div>
+                          <div className="text-xs text-orange-100">Step-by-step configuration</div>
+                        </div>
+                      </Button>
+
+                      <Button className="w-full h-12 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg justify-start">
+                        <Building className="mr-3 h-5 w-5" />
+                        <div className="text-left">
+                          <div className="font-semibold">Entity Formation</div>
+                          <div className="text-xs text-orange-100">Legal structure documents</div>
+                        </div>
+                      </Button>
+                    </div>
+
+                    <div className="pt-4 border-t border-border">
+                      <h4 className="font-semibold text-foreground mb-3">AI Document Tools</h4>
+                      <div className="space-y-2">
+                        <Button variant="outline" className="w-full justify-start">
+                          <Brain className="mr-2 h-4 w-4 text-purple-600" />
+                          Generate from Context
+                        </Button>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Wand2 className="mr-2 h-4 w-4 text-blue-600" />
+                          Smart Form Builder
+                        </Button>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Zap className="mr-2 h-4 w-4 text-orange-600" />
+                          Auto-Complete Draft
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Document Analytics & Insights */}
+            <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+              <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-6 w-6" />
+                  Document Performance Analytics
+                </CardTitle>
+                <CardDescription className="text-cyan-100">
+                  Intelligent insights on document workflows and efficiency metrics
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">85%</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Completion Rate</h4>
+                    <p className="text-sm text-muted-foreground">Documents completed on time</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">3.2d</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Avg Cycle Time</h4>
+                    <p className="text-sm text-muted-foreground">From draft to completion</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">92%</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">AI Accuracy</h4>
+                    <p className="text-sm text-muted-foreground">Generated content quality</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">34h</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Time Saved</h4>
+                    <p className="text-sm text-muted-foreground">This month via automation</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeModule === "ai-tools" && (
+          <div className="space-y-8">
+            {/* AI Command Center */}
+            <div className="text-center">
+              <h2 className="text-4xl font-bold text-white mb-4">AI Service Intelligence</h2>
+              <p className="text-white/70 text-lg mb-6">
+                Advanced automation transforming accounting workflows
+              </p>
+              <div className="flex items-center justify-center gap-4">
+                <Button className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-lg">
+                  <Brain className="mr-2 h-4 w-4" />
+                  Launch AI Assistant
+                </Button>
+                <Badge className="bg-slate-500/20 text-slate-200 border-slate-400/30 text-lg px-4 py-2">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  AI Powered
+                </Badge>
+              </div>
+            </div>
+
+            {/* AI Tool Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Financial Analysis */}
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
+                <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
+                  <CardTitle className="text-center">
+                    <BarChart3 className="h-8 w-8 mx-auto mb-2" />
+                    Financial Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-3">
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <PieChart className="mr-2 h-5 w-5" />
+                      COA Analysis
+                    </Button>
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <TrendingUp className="mr-2 h-5 w-5" />
+                      Trend Analysis
+                    </Button>
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <Calculator className="mr-2 h-5 w-5" />
+                      Ratio Reports
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tax Optimization */}
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
+                <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
+                  <CardTitle className="text-center">
+                    <DollarSign className="h-8 w-8 mx-auto mb-2" />
+                    Tax Optimization
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-3">
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <Search className="mr-2 h-5 w-5" />
+                      Deduction Scan
+                    </Button>
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <Target className="mr-2 h-5 w-5" />
+                      Tax Planning
+                    </Button>
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <Zap className="mr-2 h-5 w-5" />
+                      Quick Optimize
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Entity Management */}
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
+                <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
+                  <CardTitle className="text-center">
+                    <Building2 className="h-8 w-8 mx-auto mb-2" />
+                    Entity Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-3">
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <Building className="mr-2 h-5 w-5" />
+                      Structure Analysis
+                    </Button>
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <Settings className="mr-2 h-5 w-5" />
+                      Optimization
+                    </Button>
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <FileText className="mr-2 h-5 w-5" />
+                      Compliance Check
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Smart Automation */}
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl group hover:scale-105 transition-transform duration-200">
+                <CardHeader className="bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-t-lg">
+                  <CardTitle className="text-center">
+                    <Wand2 className="h-8 w-8 mx-auto mb-2" />
+                    Smart Automation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-3">
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <Bot className="mr-2 h-5 w-5" />
+                      Auto-Categorize
+                    </Button>
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Smart Reconcile
+                    </Button>
+                    <Button className="w-full h-12 bg-slate-600 hover:bg-slate-700 text-white shadow-lg">
+                      <Zap className="mr-2 h-5 w-5" />
+                      Workflow AI
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* AI Processing Status */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Active AI Tasks */}
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-6 w-6" />
+                    AI Processing Queue
+                  </CardTitle>
+                  <CardDescription className="text-indigo-100">
+                    Real-time intelligent task execution
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    {aiTasks.map((task) => (
+                      <div key={task.id} className="group">
+                        <div
+                          className={`p-4 rounded-xl border-l-4 transition-all duration-200 hover:shadow-lg ${aiTaskCardBorderClass(task.status)}`}
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h4 className="font-bold text-foreground mb-1">
+                                {task.type
+                                  .replace("_", " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase())}
+                              </h4>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {task.clientName}
+                              </p>
+                              <div className="flex items-center gap-3">
+                                <Badge className={aiTaskStatusBadgeClass(task.status)}>
+                                  {task.status}
+                                </Badge>
+                                <span className="text-sm text-muted-foreground">
+                                  ETA: {task.estimatedCompletion}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-bold text-foreground mb-1">
+                                {task.progress}%
+                              </div>
+                              <div className="w-16">
+                                <Progress value={task.progress} className="h-2" />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-purple-600 hover:bg-purple-700 text-white"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              View Details
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Download className="h-3 w-3 mr-1" />
+                              Export Results
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* AI Insights & Performance */}
+              <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardHeader className="bg-slate-600 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-6 w-6" />
+                    AI Performance Insights
+                  </CardTitle>
+                  <CardDescription className="text-pink-100">
+                    Intelligence metrics and optimization suggestions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-6">
+                    {/* Performance Metrics */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <span className="text-white font-bold text-sm">94%</span>
+                        </div>
+                        <h4 className="font-semibold text-foreground text-sm">Accuracy Rate</h4>
+                        <p className="text-xs text-muted-foreground">AI prediction accuracy</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <span className="text-white font-bold text-sm">127h</span>
+                        </div>
+                        <h4 className="font-semibold text-foreground text-sm">Time Saved</h4>
+                        <p className="text-xs text-muted-foreground">This month via AI</p>
+                      </div>
+                    </div>
+
+                    {/* Smart Recommendations */}
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-foreground">Smart Recommendations</h4>
+
+                      <div className="p-3 bg-slate-100 rounded-lg border border-blue-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Lightbulb className="h-4 w-4 text-blue-600" />
+                          <span className="font-semibold text-blue-900 text-sm">
+                            Process Optimization
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-800 mb-2">
+                          Consider automating TechFlow's recurring journal entries - 85% confidence
+                          improvement
+                        </p>
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                          Implement
+                        </Button>
+                      </div>
+
+                      <div className="p-3 bg-slate-100 rounded-lg border border-green-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Target className="h-4 w-4 text-green-600" />
+                          <span className="font-semibold text-green-900 text-sm">
+                            Deduction Discovery
+                          </span>
+                        </div>
+                        <p className="text-xs text-green-800 mb-2">
+                          Wellness Hub: $2,400 in unclaimed home office deductions detected
+                        </p>
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                          Review
+                        </Button>
+                      </div>
+
+                      <div className="p-3 bg-slate-600 from-purple-50 to-violet-50 rounded-lg border border-purple-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="h-4 w-4 text-purple-600" />
+                          <span className="font-semibold text-purple-900 text-sm">Risk Alert</span>
+                        </div>
+                        <p className="text-xs text-purple-800 mb-2">
+                          Marina Cafe: Unusual expense patterns suggest review needed
+                        </p>
+                        <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
+                          Investigate
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* AI Learning & Training Center */}
+            <Card className="bg-white/95 backdrop-blur-sm border-white/30 shadow-2xl">
+              <CardHeader className="bg-slate-700 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  <GraduationCap className="h-6 w-6" />
+                  AI Learning & Training Center
+                </CardTitle>
+                <CardDescription className="text-gradient-100">
+                  Continuous learning and model improvement for enhanced performance
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">1.2k</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Training Data Points</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Added this month for improved accuracy
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">v2.4</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">Model Version</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Latest AI model with enhanced capabilities
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-white font-bold text-lg">3</span>
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-2">New Features</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Advanced capabilities released this week
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     </DashboardLayout>
   );
 }

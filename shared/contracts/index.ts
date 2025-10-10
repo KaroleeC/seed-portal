@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DealsResultSchema } from "../deals";
+import type { DealsResultSchema } from "../deals";
 
 // Re-export existing shared contracts
 export { DealSchema, DealsResultSchema } from "../deals";
@@ -35,25 +35,19 @@ export const CalculatorServiceContentItemSchema = z.object({
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
-export type CalculatorServiceContentItem = z.infer<
-  typeof CalculatorServiceContentItemSchema
->;
+export type CalculatorServiceContentItem = z.infer<typeof CalculatorServiceContentItemSchema>;
 
 export const CalculatorContentResponseSchema = z.object({
   items: z.array(CalculatorServiceContentItemSchema),
   msaLink: z.string().optional(),
 });
-export type CalculatorContentResponse = z.infer<
-  typeof CalculatorContentResponseSchema
->;
+export type CalculatorContentResponse = z.infer<typeof CalculatorContentResponseSchema>;
 
 export const CalculatorContentItemResponseSchema = z.object({
   item: CalculatorServiceContentItemSchema,
   msaLink: z.string().optional(),
 });
-export type CalculatorContentItemResponse = z.infer<
-  typeof CalculatorContentItemResponseSchema
->;
+export type CalculatorContentItemResponse = z.infer<typeof CalculatorContentItemResponseSchema>;
 
 // Standard error envelope for consistency on failure paths
 export const ErrorEnvelopeSchema = z.object({
@@ -61,3 +55,98 @@ export const ErrorEnvelopeSchema = z.object({
   message: z.string(),
 });
 export type ErrorEnvelope = z.infer<typeof ErrorEnvelopeSchema>;
+
+// CRM contracts (Client Profiles v2)
+export {
+  ContactSummarySchema,
+  ContactDetailsSchema,
+  CRMDealSchema,
+  CRMQuoteSchema,
+  CRMLeadSchema,
+  CRMNoteSchema,
+  CreateNoteSchema,
+  CRMTaskSchema,
+  CreateTaskSchema,
+  CRMMessageSchema,
+  SendMessageSchema,
+  IntakeWebhookSchema,
+  ContactSearchResultSchema,
+  LeadsListResultSchema,
+} from "./crm";
+export type {
+  ContactSummary,
+  ContactDetails,
+  CRMDeal,
+  CRMQuote,
+  CRMLead,
+  CRMNote,
+  CreateNote,
+  CRMTask,
+  CreateTask,
+  CRMMessage,
+  SendMessage,
+  IntakeWebhook,
+  ContactSearchResult,
+  LeadsListResult,
+} from "./crm";
+
+// Scheduler contracts (Phase 4A)
+export {
+  AvailabilityRequestSchema,
+  AvailabilityResponseSchema,
+  SetAvailabilitySchema,
+  BookEventRequestSchema,
+  BookEventResponseSchema,
+  EventSchema,
+  MeetingModeSchema,
+  CreateOverrideSchema,
+  DeleteOverrideSchema,
+  CancelEventRequestSchema,
+  RescheduleEventRequestSchema,
+  CreateShareLinkRequestSchema,
+  CreateShareLinkResponseSchema,
+  ResolveShareLinkResponseSchema,
+  BookFromLinkRequestSchema,
+  BookFromLinkResponseSchema,
+} from "./scheduler";
+export type {
+  AvailabilityRequest,
+  AvailabilityResponse,
+  SetAvailability,
+  BookEventRequest,
+  BookEventResponse,
+  Event,
+  MeetingMode,
+  CreateOverride,
+  DeleteOverride,
+  CancelEventRequest,
+  RescheduleEventRequest,
+  CreateShareLinkRequest,
+  CreateShareLinkResponse,
+  ResolveShareLinkResponse,
+  BookFromLinkRequest,
+  BookFromLinkResponse,
+} from "./scheduler";
+
+// Sales Cadence contracts
+export {
+  ScheduleRuleSchema,
+  SmsConfigSchema,
+  EmailConfigSchema,
+  CallTaskConfigSchema,
+  CadenceActionSchema,
+  CadenceDaySchema,
+  CadenceTriggerSchema,
+  CadenceSchema,
+  CadenceSummarySchema,
+  UpsertCadenceRequestSchema,
+} from "./cadence";
+export type {
+  ScheduleRule,
+  CadenceAction,
+  CadenceDay,
+  CadenceTrigger,
+  Cadence,
+  CadenceSummary,
+  UpsertCadenceRequest,
+} from "./cadence";

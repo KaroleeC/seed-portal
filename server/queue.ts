@@ -7,6 +7,8 @@ import { sendJobFailureAlert } from "./slack";
 let queueRedis: Redis | null = null;
 let aiInsightsQueue: Queue | null = null;
 let aiInsightsQueueEvents: QueueEvents | null = null;
+let aiIndexQueue: Queue | null = null;
+let aiIndexQueueEvents: QueueEvents | null = null;
 
 export async function initializeQueue(): Promise<void> {
   if (!process.env.REDIS_URL) {
@@ -22,7 +24,7 @@ export async function initializeQueue(): Promise<void> {
         enableReadyCheck: true,
         lazyConnect: false,
         connectTimeout: 15000,
-      } as any,
+      } as any
     );
 
     await queueRedis.ping();
@@ -47,6 +49,24 @@ export async function initializeQueue(): Promise<void> {
       connection: queueRedis,
     });
 
+    // AI Index Queue for document indexing
+    aiIndexQueue = new Queue("ai-index", {
+      connection: queueRedis,
+      defaultJobOptions: {
+        removeOnComplete: { count: 50 },
+        removeOnFail: { count: 100 },
+        attempts: 2,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+      },
+    });
+
+    aiIndexQueueEvents = new QueueEvents("ai-index", {
+      connection: queueRedis,
+    });
+
     // Set up failure monitoring
     setupFailureMonitoring();
 
@@ -68,6 +88,14 @@ export function getAIInsightsQueueEvents(): QueueEvents | null {
   return aiInsightsQueueEvents;
 }
 
+export function getAIIndexQueue(): Queue | null {
+  return aiIndexQueue;
+}
+
+export function getAIIndexQueueEvents(): QueueEvents | null {
+  return aiIndexQueueEvents;
+}
+
 // Failure tracking for alerts
 const failureTracking = {
   recentFailures: [] as Array<{
@@ -86,6 +114,12 @@ export interface AIInsightsJobData {
   timestamp: number;
 }
 
+export interface AIIndexJobData {
+  fileIds: string[];
+  userId: number;
+  timestamp: number;
+}
+
 export interface JobResult {
   painPoints: any[];
   upsellOpportunities: string[];
@@ -95,7 +129,7 @@ export interface JobResult {
 }
 
 // Queue metrics
-let queueMetrics = {
+const queueMetrics = {
   jobsProcessed: 0,
   jobsFailed: 0,
   averageProcessingTime: 0,
@@ -113,8 +147,7 @@ export function updateQueueMetrics(processingTime?: number, failed = false) {
     queueMetrics.jobsProcessed++;
     if (processingTime) {
       queueMetrics.averageProcessingTime =
-        (queueMetrics.averageProcessingTime * (queueMetrics.jobsProcessed - 1) +
-          processingTime) /
+        (queueMetrics.averageProcessingTime * (queueMetrics.jobsProcessed - 1) + processingTime) /
         queueMetrics.jobsProcessed;
     }
   }
@@ -132,13 +165,13 @@ function setupFailureMonitoring(): void {
     failureTracking.recentFailures.push({
       timestamp: now,
       error: failedReason || "Unknown error",
-      jobId: jobId,
+      jobId,
     });
 
     // Remove failures older than 5 minutes
     const fiveMinutesAgo = now - 5 * 60 * 1000;
     failureTracking.recentFailures = failureTracking.recentFailures.filter(
-      (f) => f.timestamp > fiveMinutesAgo,
+      (f) => f.timestamp > fiveMinutesAgo
     );
 
     // Check if we should send an alert (>3 failures in 5 minutes, max 1 alert per 10 minutes)
@@ -148,21 +181,13 @@ function setupFailureMonitoring(): void {
     if (failureCount >= 3 && failureTracking.lastAlertSent < tenMinutesAgo) {
       try {
         const errors = failureTracking.recentFailures.map(
-          (f) =>
-            `${f.error.substring(0, 100)}${f.error.length > 100 ? "..." : ""}`,
+          (f) => `${f.error.substring(0, 100)}${f.error.length > 100 ? "..." : ""}`
         );
 
-        await sendJobFailureAlert(
-          "ai-insights",
-          failureCount,
-          "last 5 minutes",
-          errors,
-        );
+        await sendJobFailureAlert("ai-insights", failureCount, "last 5 minutes", errors);
 
         failureTracking.lastAlertSent = now;
-        console.log(
-          `[Queue] 🚨 Sent failure alert: ${failureCount} failures in 5 minutes`,
-        );
+        console.log(`[Queue] 🚨 Sent failure alert: ${failureCount} failures in 5 minutes`);
       } catch (error) {
         console.error("[Queue] Failed to send failure alert:", error);
       }

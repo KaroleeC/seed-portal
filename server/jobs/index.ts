@@ -1,4 +1,5 @@
-import { Queue, Worker, Job } from "bullmq";
+import type { Job } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import { getRedisAsync } from "../redis";
 import { workspaceSyncJob, type WorkspaceSyncJobData } from "./workspace-sync";
 
@@ -11,9 +12,7 @@ async function initializeJobSystem() {
     // Wait for Redis to be available
     const redis = await getRedisAsync();
     if (!redis) {
-      console.log(
-        "[Jobs] Redis not available, skipping job system initialization",
-      );
+      console.log("[Jobs] Redis not available, skipping job system initialization");
       return;
     }
 
@@ -47,7 +46,7 @@ async function initializeJobSystem() {
       {
         connection: jobRedis.duplicate(), // Each worker needs its own connection
         concurrency: 1, // Process one sync job at a time
-      },
+      }
     );
 
     console.log("[Jobs] Workspace sync job system initialized");
@@ -62,7 +61,7 @@ async function initializeJobSystem() {
 // Utility functions for scheduling jobs
 export async function scheduleWorkspaceSync(
   triggeredBy: "cron" | "manual" = "manual",
-  userId?: number,
+  userId?: number
 ) {
   try {
     if (!workspaceQueue) {
@@ -77,12 +76,10 @@ export async function scheduleWorkspaceSync(
       },
       {
         priority: triggeredBy === "manual" ? 1 : 10, // Higher priority for manual triggers
-      },
+      }
     );
 
-    console.log(
-      `[Jobs] Scheduled workspace sync job ${job.id} (${triggeredBy})`,
-    );
+    console.log(`[Jobs] Scheduled workspace sync job ${job.id} (${triggeredBy})`);
     return job;
   } catch (error) {
     console.error("[Jobs] Failed to schedule workspace sync:", error);
@@ -94,9 +91,7 @@ export async function scheduleWorkspaceSync(
 export async function setupCronJobs() {
   try {
     if (!workspaceQueue) {
-      console.log(
-        "[Jobs] Workspace queue not available, skipping cron job setup",
-      );
+      console.log("[Jobs] Workspace queue not available, skipping cron job setup");
       return;
     }
 
@@ -117,7 +112,7 @@ export async function setupCronJobs() {
           pattern: "0 2 * * *", // Every day at 2 AM UTC
         },
         jobId: "nightly-workspace-sync", // Unique ID to prevent duplicates
-      },
+      }
     );
 
     console.log("[Jobs] Nightly workspace sync scheduled for 2 AM UTC");
@@ -150,9 +145,7 @@ initializeJobSystem()
       // Set up error handling
       if (worker) {
         worker.on("completed", (job) => {
-          console.log(
-            `[Jobs] Workspace sync job ${job.id} completed successfully`,
-          );
+          console.log(`[Jobs] Workspace sync job ${job.id} completed successfully`);
         });
 
         worker.on("failed", (job, err) => {

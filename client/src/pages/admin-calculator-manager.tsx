@@ -6,13 +6,7 @@ import { PERMISSIONS } from "@shared/permissions";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { seedqcKeys } from "@/lib/queryKeys";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,7 +67,7 @@ function defaultSowTemplate(serviceKey: string): string {
     agent_of_service: `Additional States: {{agentOfService.additionalStates}}\nComplex Case: {{agentOfService.complexCase}}\n`,
     cfo_advisory: `Hours Bundle: {{cfo.bundleHours}}\n`,
   };
-  return `# ${title}\n` + common + (details[serviceKey] || "");
+  return `# ${title}\n${common}${details[serviceKey] || ""}`;
 }
 
 // Provide sensible defaults for Included Fields so the UI shows expected items even without prior data
@@ -146,26 +140,20 @@ function stringifyIncluded(obj: any): string {
 
 function tokenReplace(template: string, tokens: Record<string, any>): string {
   // Very safe, minimal token replacement: {{token}}
-  return (template || "").replace(
-    /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g,
-    (_: string, key: string) => {
-      const value = key
-        .split(".")
-        .reduce<any>(
-          (acc: any, k: string) =>
-            acc && acc[k] !== undefined ? acc[k] : undefined,
-          tokens,
-        );
-      return value !== undefined && value !== null ? String(value) : "";
-    },
-  );
+  return (template || "").replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_: string, key: string) => {
+    const value = key
+      .split(".")
+      .reduce<any>(
+        (acc: any, k: string) => (acc && acc[k] !== undefined ? acc[k] : undefined),
+        tokens
+      );
+    return value !== undefined && value !== null ? String(value) : "";
+  });
 }
 
 export default function AdminCalculatorManager() {
   const { toast } = useToast();
-  const [activeService, setActiveService] = useState<string>(
-    SERVICES[0]?.key ?? "bookkeeping",
-  );
+  const [activeService, setActiveService] = useState<string>(SERVICES[0]?.key ?? "bookkeeping");
   const templateRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Load admin content (authoritative for editing)
@@ -175,8 +163,7 @@ export default function AdminCalculatorManager() {
     refetch: refetchAdmin,
   } = useQuery<{ items: ServiceContentItem[]; msaLink?: string }>({
     queryKey: seedqcKeys.adminContent(),
-    queryFn: async () =>
-      await apiRequest("GET", "/api/admin/apps/seedqc/content"),
+    queryFn: async () => await apiRequest("GET", "/api/admin/apps/seedqc/content"),
   });
 
   // Fallback: load public calculator content (no admin requirement)
@@ -211,9 +198,7 @@ export default function AdminCalculatorManager() {
 
   useEffect(() => {
     const sourceItems =
-      adminData?.items && adminData.items.length > 0
-        ? adminData.items
-        : publicData?.items || [];
+      adminData?.items && adminData.items.length > 0 ? adminData.items : publicData?.items || [];
     const nextLocal: Record<string, ServiceContentItem> = {};
     const nextIncluded: Record<string, any> = {};
     for (const svc of SERVICES) {
@@ -222,8 +207,7 @@ export default function AdminCalculatorManager() {
       // Fallback defaults for title/template if missing from server (keeps UI usable without DB rows)
       if (!base.sowTitle) base.sowTitle = defaultSowTitle(svc.key);
       if (!base.sowTemplate) base.sowTemplate = defaultSowTemplate(svc.key);
-      if (!base.agreementLink)
-        base.agreementLink = defaultAgreementLink(svc.key);
+      if (!base.agreementLink) base.agreementLink = defaultAgreementLink(svc.key);
       nextLocal[svc.key] = base;
       nextIncluded[svc.key] = parseIncluded(found?.includedFieldsJson);
     }
@@ -239,13 +223,10 @@ export default function AdminCalculatorManager() {
       agreementLink?: string | null;
       includedFieldsJson?: string;
     }) => {
-      return await apiRequest(
-        `/api/admin/calculator/content/${payload.service}`,
-        {
-          method: "PUT",
-          body: payload,
-        },
-      );
+      return await apiRequest(`/api/admin/calculator/content/${payload.service}`, {
+        method: "PUT",
+        body: payload,
+      });
     },
     onSuccess: async () => {
       await Promise.all([
@@ -277,12 +258,12 @@ export default function AdminCalculatorManager() {
       ap: { serviceTier: "advanced", vendorBillsBand: "26-100" },
       ar: { serviceTier: "lite", customerInvoicesBand: "0-25" },
     }),
-    [],
+    []
   );
 
   const renderedPreview = useMemo(
     () => tokenReplace(current.sowTemplate || "", exampleTokens),
-    [current.sowTemplate, exampleTokens],
+    [current.sowTemplate, exampleTokens]
   );
 
   const onSave = () => {
@@ -326,7 +307,7 @@ export default function AdminCalculatorManager() {
 
   const msaLink = useMemo(
     () => adminData?.msaLink || publicData?.msaLink || "",
-    [adminData, publicData],
+    [adminData, publicData]
   );
 
   const TOKENS: string[] = useMemo(
@@ -351,7 +332,7 @@ export default function AdminCalculatorManager() {
       "{{agentOfService.additionalStates}}",
       "{{agentOfService.complexCase}}",
     ],
-    [],
+    []
   );
 
   const insertToken = (token: string) => {
@@ -376,10 +357,7 @@ export default function AdminCalculatorManager() {
   };
 
   return (
-    <PermissionGuard
-      permissions={PERMISSIONS.MANAGE_PRICING}
-      fallback={<div>Access denied</div>}
-    >
+    <PermissionGuard permissions={PERMISSIONS.MANAGE_PRICING} fallback={<div>Access denied</div>}>
       <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
         <UniversalNavbar />
         <main className="flex-1 p-6">
@@ -391,8 +369,7 @@ export default function AdminCalculatorManager() {
                   Calculator Manager
                 </h1>
                 <p className="mt-2 text-muted-foreground">
-                  Manage service agreement links and SOW templates for each
-                  service.
+                  Manage service agreement links and SOW templates for each service.
                 </p>
               </div>
               <div className="flex gap-3">
@@ -404,9 +381,7 @@ export default function AdminCalculatorManager() {
                   }}
                   className="flex items-center gap-2"
                 >
-                  <RefreshCw
-                    className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
-                  />
+                  <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
                   Refresh
                 </Button>
                 <Button
@@ -414,19 +389,13 @@ export default function AdminCalculatorManager() {
                   disabled={updateMutation.isPending}
                   className="flex items-center gap-2"
                 >
-                  <Save
-                    className={`w-4 h-4 ${updateMutation.isPending ? "animate-pulse" : ""}`}
-                  />
+                  <Save className={`w-4 h-4 ${updateMutation.isPending ? "animate-pulse" : ""}`} />
                   Save
                 </Button>
               </div>
             </div>
 
-            <Tabs
-              value={activeService}
-              onValueChange={setActiveService}
-              className="space-y-6"
-            >
+            <Tabs value={activeService} onValueChange={setActiveService} className="space-y-6">
               <TabsList className="flex w-full overflow-x-auto gap-2 no-scrollbar">
                 {SERVICES.map((s) => (
                   <TabsTrigger key={s.key} value={s.key} className="shrink-0">
@@ -451,24 +420,17 @@ export default function AdminCalculatorManager() {
                           <Input
                             id="sowTitle"
                             value={local[svc.key]?.sowTitle || ""}
-                            onChange={(e) =>
-                              setField("sowTitle", e.target.value)
-                            }
+                            onChange={(e) => setField("sowTitle", e.target.value)}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label
-                            htmlFor="agreementLink"
-                            className="flex items-center gap-2"
-                          >
+                          <Label htmlFor="agreementLink" className="flex items-center gap-2">
                             <LinkIcon className="w-4 h-4" /> Agreement Link
                           </Label>
                           <Input
                             id="agreementLink"
                             value={local[svc.key]?.agreementLink || ""}
-                            onChange={(e) =>
-                              setField("agreementLink", e.target.value)
-                            }
+                            onChange={(e) => setField("agreementLink", e.target.value)}
                             placeholder="https://..."
                           />
                           {msaLink && (
@@ -486,24 +448,14 @@ export default function AdminCalculatorManager() {
                           )}
                         </div>
                         <div className="space-y-2">
-                          <Label
-                            htmlFor="sowTemplate"
-                            className="flex items-center gap-2"
-                          >
-                            <FileText className="w-4 h-4" /> SOW Template
-                            (Markdown)
+                          <Label htmlFor="sowTemplate" className="flex items-center gap-2">
+                            <FileText className="w-4 h-4" /> SOW Template (Markdown)
                           </Label>
                           <Textarea
                             id="sowTemplate"
-                            ref={
-                              svc.key === activeService
-                                ? templateRef
-                                : undefined
-                            }
+                            ref={svc.key === activeService ? templateRef : undefined}
                             value={local[svc.key]?.sowTemplate || ""}
-                            onChange={(e) =>
-                              setField("sowTemplate", e.target.value)
-                            }
+                            onChange={(e) => setField("sowTemplate", e.target.value)}
                             rows={16}
                           />
                           <div className="flex flex-wrap gap-2">
@@ -520,10 +472,9 @@ export default function AdminCalculatorManager() {
                           </div>
                           <p className="text-xs text-muted-foreground">
                             Use tokens like <code>{"{{companyName}}"}</code>,{" "}
-                            <code>{"{{monthlyFee}}"}</code>,{" "}
-                            <code>{"{{setupFee}}"}</code>,{" "}
-                            <code>{"{{cleanupMonths}}"}</code>. Tokens are
-                            safely replaced when rendering.
+                            <code>{"{{monthlyFee}}"}</code>, <code>{"{{setupFee}}"}</code>,{" "}
+                            <code>{"{{cleanupMonths}}"}</code>. Tokens are safely replaced when
+                            rendering.
                           </p>
                         </div>
                       </CardContent>
@@ -533,9 +484,7 @@ export default function AdminCalculatorManager() {
                       <Card>
                         <CardHeader>
                           <CardTitle>Included Fields</CardTitle>
-                          <CardDescription>
-                            Choose which data appears in the SOW
-                          </CardDescription>
+                          <CardDescription>Choose which data appears in the SOW</CardDescription>
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-4">
                           {/* Bookkeeping group */}
@@ -544,36 +493,25 @@ export default function AdminCalculatorManager() {
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.bookkeeping
-                                      ?.includeIndustry
-                                  }
-                                  onCheckedChange={toggleIncluded(
-                                    "bookkeeping.includeIndustry",
-                                  )}
+                                  checked={!!currentIncluded.bookkeeping?.includeIndustry}
+                                  onCheckedChange={toggleIncluded("bookkeeping.includeIndustry")}
                                 />{" "}
                                 <Label>Industry</Label>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.bookkeeping
-                                      ?.includeTransactions
-                                  }
+                                  checked={!!currentIncluded.bookkeeping?.includeTransactions}
                                   onCheckedChange={toggleIncluded(
-                                    "bookkeeping.includeTransactions",
+                                    "bookkeeping.includeTransactions"
                                   )}
                                 />{" "}
                                 <Label>Transactions</Label>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.bookkeeping
-                                      ?.includeCleanupMonths
-                                  }
+                                  checked={!!currentIncluded.bookkeeping?.includeCleanupMonths}
                                   onCheckedChange={toggleIncluded(
-                                    "bookkeeping.includeCleanupMonths",
+                                    "bookkeeping.includeCleanupMonths"
                                   )}
                                 />{" "}
                                 <Label>Cleanup Months</Label>
@@ -586,45 +524,29 @@ export default function AdminCalculatorManager() {
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.taas?.includeEntities
-                                  }
-                                  onCheckedChange={toggleIncluded(
-                                    "taas.includeEntities",
-                                  )}
+                                  checked={!!currentIncluded.taas?.includeEntities}
+                                  onCheckedChange={toggleIncluded("taas.includeEntities")}
                                 />{" "}
                                 <Label>Entities</Label>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.taas?.includeStatesFiled
-                                  }
-                                  onCheckedChange={toggleIncluded(
-                                    "taas.includeStatesFiled",
-                                  )}
+                                  checked={!!currentIncluded.taas?.includeStatesFiled}
+                                  onCheckedChange={toggleIncluded("taas.includeStatesFiled")}
                                 />{" "}
                                 <Label>States Filed</Label>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.taas?.includeInternational
-                                  }
-                                  onCheckedChange={toggleIncluded(
-                                    "taas.includeInternational",
-                                  )}
+                                  checked={!!currentIncluded.taas?.includeInternational}
+                                  onCheckedChange={toggleIncluded("taas.includeInternational")}
                                 />{" "}
                                 <Label>International Filing</Label>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.taas?.includeOwners
-                                  }
-                                  onCheckedChange={toggleIncluded(
-                                    "taas.includeOwners",
-                                  )}
+                                  checked={!!currentIncluded.taas?.includeOwners}
+                                  onCheckedChange={toggleIncluded("taas.includeOwners")}
                                 />{" "}
                                 <Label>Business Owners</Label>
                               </div>
@@ -637,31 +559,21 @@ export default function AdminCalculatorManager() {
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={!!currentIncluded.ap?.includeTier}
-                                  onCheckedChange={toggleIncluded(
-                                    "ap.includeTier",
-                                  )}
+                                  onCheckedChange={toggleIncluded("ap.includeTier")}
                                 />{" "}
                                 <Label>Tier</Label>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.ap?.includeVolumeBand
-                                  }
-                                  onCheckedChange={toggleIncluded(
-                                    "ap.includeVolumeBand",
-                                  )}
+                                  checked={!!currentIncluded.ap?.includeVolumeBand}
+                                  onCheckedChange={toggleIncluded("ap.includeVolumeBand")}
                                 />{" "}
                                 <Label>Volume Band</Label>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.ap?.includeVendorCount
-                                  }
-                                  onCheckedChange={toggleIncluded(
-                                    "ap.includeVendorCount",
-                                  )}
+                                  checked={!!currentIncluded.ap?.includeVendorCount}
+                                  onCheckedChange={toggleIncluded("ap.includeVendorCount")}
                                 />{" "}
                                 <Label>Vendor Count</Label>
                               </div>
@@ -674,31 +586,21 @@ export default function AdminCalculatorManager() {
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={!!currentIncluded.ar?.includeTier}
-                                  onCheckedChange={toggleIncluded(
-                                    "ar.includeTier",
-                                  )}
+                                  onCheckedChange={toggleIncluded("ar.includeTier")}
                                 />{" "}
                                 <Label>Tier</Label>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.ar?.includeInvoicesBand
-                                  }
-                                  onCheckedChange={toggleIncluded(
-                                    "ar.includeInvoicesBand",
-                                  )}
+                                  checked={!!currentIncluded.ar?.includeInvoicesBand}
+                                  onCheckedChange={toggleIncluded("ar.includeInvoicesBand")}
                                 />{" "}
                                 <Label>Invoices Band</Label>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.ar?.includeCustomerCount
-                                  }
-                                  onCheckedChange={toggleIncluded(
-                                    "ar.includeCustomerCount",
-                                  )}
+                                  checked={!!currentIncluded.ar?.includeCustomerCount}
+                                  onCheckedChange={toggleIncluded("ar.includeCustomerCount")}
                                 />{" "}
                                 <Label>Customer Count</Label>
                               </div>
@@ -710,24 +612,15 @@ export default function AdminCalculatorManager() {
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.payroll
-                                      ?.includeEmployeeCount
-                                  }
-                                  onCheckedChange={toggleIncluded(
-                                    "payroll.includeEmployeeCount",
-                                  )}
+                                  checked={!!currentIncluded.payroll?.includeEmployeeCount}
+                                  onCheckedChange={toggleIncluded("payroll.includeEmployeeCount")}
                                 />{" "}
                                 <Label>Employee Count</Label>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.payroll?.includeStateCount
-                                  }
-                                  onCheckedChange={toggleIncluded(
-                                    "payroll.includeStateCount",
-                                  )}
+                                  checked={!!currentIncluded.payroll?.includeStateCount}
+                                  onCheckedChange={toggleIncluded("payroll.includeStateCount")}
                                 />{" "}
                                 <Label>State Count</Label>
                               </div>
@@ -735,30 +628,24 @@ export default function AdminCalculatorManager() {
                           </div>
                           {/* Agent of Service group */}
                           <div>
-                            <div className="font-medium mb-2">
-                              Agent of Service
-                            </div>
+                            <div className="font-medium mb-2">Agent of Service</div>
                             <div className="space-y-2">
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={
-                                    !!currentIncluded.agentOfService
-                                      ?.includeAdditionalStates
+                                    !!currentIncluded.agentOfService?.includeAdditionalStates
                                   }
                                   onCheckedChange={toggleIncluded(
-                                    "agentOfService.includeAdditionalStates",
+                                    "agentOfService.includeAdditionalStates"
                                   )}
                                 />{" "}
                                 <Label>Additional States</Label>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
-                                  checked={
-                                    !!currentIncluded.agentOfService
-                                      ?.includeComplexCase
-                                  }
+                                  checked={!!currentIncluded.agentOfService?.includeComplexCase}
                                   onCheckedChange={toggleIncluded(
-                                    "agentOfService.includeComplexCase",
+                                    "agentOfService.includeComplexCase"
                                   )}
                                 />{" "}
                                 <Label>Complex Case</Label>
@@ -773,14 +660,11 @@ export default function AdminCalculatorManager() {
                           <CardTitle className="flex items-center gap-2">
                             <Eye className="w-4 h-4" /> Live Preview
                           </CardTitle>
-                          <CardDescription>
-                            Simple token preview with example data
-                          </CardDescription>
+                          <CardDescription>Simple token preview with example data</CardDescription>
                         </CardHeader>
                         <CardContent>
                           <pre className="whitespace-pre-wrap text-sm bg-muted rounded-md p-4 border min-h-[200px]">
-                            {renderedPreview ||
-                              "Type in the template to preview..."}
+                            {renderedPreview || "Type in the template to preview..."}
                           </pre>
                         </CardContent>
                       </Card>

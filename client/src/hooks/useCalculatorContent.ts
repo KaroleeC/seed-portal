@@ -41,10 +41,7 @@ export function useCalculatorContent(service?: string) {
           })),
         } as CalculatorContentResult;
       } catch (err) {
-        console.error(
-          "[useCalculatorContent] content fetch failed, using empty fallback:",
-          err,
-        );
+        console.error("[useCalculatorContent] content fetch failed, using empty fallback:", err);
         return { items: [] } as CalculatorContentResult;
       }
     },

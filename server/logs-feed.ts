@@ -20,7 +20,7 @@ export async function appendModuleLog(
   moduleName: string,
   level: LogLevel,
   message: string,
-  context?: any,
+  context?: any
 ) {
   const entry: ModuleLog = {
     ts: new Date().toISOString(),
@@ -45,10 +45,7 @@ export async function appendModuleLog(
   memBuffers.set(moduleName, list);
 }
 
-export async function getModuleLogs(
-  moduleName: string,
-  limit = 100,
-): Promise<ModuleLog[]> {
+export async function getModuleLogs(moduleName: string, limit = 100): Promise<ModuleLog[]> {
   const redis = await getRedisAsync();
   const key = `logs:module:${moduleName}`;
   try {
@@ -56,7 +53,7 @@ export async function getModuleLogs(
       const raw = await redis.cacheRedis.lrange(
         key,
         0,
-        Math.max(0, Math.min(MAX_LOGS - 1, limit - 1)),
+        Math.max(0, Math.min(MAX_LOGS - 1, limit - 1))
       );
       return (raw || [])
         .map((s: string) => {

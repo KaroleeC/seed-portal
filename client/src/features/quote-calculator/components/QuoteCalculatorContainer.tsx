@@ -14,11 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { calculatePricingDisplay } from "@shared/pricing";
 
 // Import our new strongly-typed interfaces
-import {
-  QuoteFormData,
-  PricingCalculationResult,
-  HubSpotContact,
-} from "../types/QuoteTypes";
+import type { QuoteFormData, PricingCalculationResult, HubSpotContact } from "../types/QuoteTypes";
 import { VALIDATION } from "../constants/PricingConstants";
 import { insertQuoteSchema } from "@shared/schema";
 
@@ -36,9 +32,9 @@ interface QuoteCalculatorContainerProps {
   className?: string;
 }
 
-export const QuoteCalculatorContainer: React.FC<
-  QuoteCalculatorContainerProps
-> = ({ className }) => {
+export const QuoteCalculatorContainer: React.FC<QuoteCalculatorContainerProps> = ({
+  className,
+}) => {
   const { toast } = useToast();
 
   // Form management with proper TypeScript typing
@@ -53,7 +49,7 @@ export const QuoteCalculatorContainer: React.FC<
         hubspotDealId: true,
         hubspotQuoteId: true,
         hubspotContactVerified: true,
-      }),
+      })
     ),
     defaultValues: {
       // Contact Information
@@ -96,9 +92,7 @@ export const QuoteCalculatorContainer: React.FC<
 
   // Component state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<HubSpotContact | null>(
-    null,
-  );
+  const [selectedContact, setSelectedContact] = useState<HubSpotContact | null>(null);
   const [showApprovalWorkflow, setShowApprovalWorkflow] = useState(false);
 
   // Watch form values for reactive calculations
@@ -108,9 +102,7 @@ export const QuoteCalculatorContainer: React.FC<
   const pricingCalculation: PricingCalculationResult = React.useMemo(() => {
     try {
       // Use shared adapter to get top-level totals and accurate discount info
-      return calculatePricingDisplay(
-        formData,
-      ) as unknown as PricingCalculationResult;
+      return calculatePricingDisplay(formData) as unknown as PricingCalculationResult;
     } catch (error) {
       console.error("Pricing calculation error:", error);
       // Return safe fallback values
@@ -168,8 +160,7 @@ export const QuoteCalculatorContainer: React.FC<
       } else {
         toast({
           title: "Quote Creation Failed",
-          description:
-            error?.message || "An error occurred while creating the quote.",
+          description: error?.message || "An error occurred while creating the quote.",
           variant: "destructive",
         });
       }
@@ -204,9 +195,7 @@ export const QuoteCalculatorContainer: React.FC<
           {/* Left Column: Form and Service Selection */}
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-6">
-                Quote Calculator
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-6">Quote Calculator</h1>
 
               <QuoteFormCore
                 form={form}
@@ -215,18 +204,12 @@ export const QuoteCalculatorContainer: React.FC<
               />
             </div>
 
-            <ServiceSelectionCards
-              form={form}
-              calculation={pricingCalculation}
-            />
+            <ServiceSelectionCards form={form} calculation={pricingCalculation} />
           </div>
 
           {/* Right Column: Pricing Display */}
           <div className="space-y-6">
-            <PricingDisplayPanel
-              calculation={pricingCalculation}
-              formData={formData}
-            />
+            <PricingDisplayPanel calculation={pricingCalculation} formData={formData} />
 
             <QuoteSubmissionFlow
               form={form}

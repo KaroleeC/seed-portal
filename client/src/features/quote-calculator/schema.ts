@@ -62,10 +62,7 @@ export const quoteFormSchema = insertQuoteSchema
     monthlyRevenueRange: z.string().optional(),
     // TaaS fields
     numEntities: z.number().min(1, "Must have at least 1 entity").optional(),
-    customNumEntities: z
-      .number()
-      .min(6, "Custom entities must be at least 6")
-      .optional(),
+    customNumEntities: z.number().min(6, "Custom entities must be at least 6").optional(),
     statesFiled: z.number().min(1, "Must file in at least 1 state").optional(),
     customStatesFiled: z
       .number()
@@ -73,21 +70,11 @@ export const quoteFormSchema = insertQuoteSchema
       .max(50, "Maximum 50 states")
       .optional(),
     internationalFiling: z.boolean().optional(),
-    numBusinessOwners: z
-      .number()
-      .min(1, "Must have at least 1 business owner")
-      .optional(),
-    customNumBusinessOwners: z
-      .number()
-      .min(6, "Custom owners must be at least 6")
-      .optional(),
+    numBusinessOwners: z.number().min(1, "Must have at least 1 business owner").optional(),
+    customNumBusinessOwners: z.number().min(6, "Custom owners must be at least 6").optional(),
     bookkeepingQuality: z.string().optional(),
     include1040s: z.boolean().optional(),
-    priorYearsUnfiled: z
-      .number()
-      .min(0, "Cannot be negative")
-      .max(5, "Maximum 5 years")
-      .optional(),
+    priorYearsUnfiled: z.number().min(0, "Cannot be negative").max(5, "Maximum 5 years").optional(),
     priorYearFilings: z.array(z.number()).optional(),
     qboSubscription: z.boolean().optional(),
     serviceTier: z.string().optional(),
@@ -128,10 +115,7 @@ export const quoteFormSchema = insertQuoteSchema
   })
   .superRefine((data, ctx) => {
     // Enforce minimum initial cleanup months for bookkeeping quotes
-    if (
-      (data as any).quoteType === "bookkeeping" &&
-      data.cleanupMonths < currentMonth
-    ) {
+    if ((data as any).quoteType === "bookkeeping" && data.cleanupMonths < currentMonth) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `Minimum ${currentMonth} months required (current calendar year)`,
@@ -163,10 +147,7 @@ export const quoteFormSchema = insertQuoteSchema
         });
       }
       // Bookkeeping quality is only required if bookkeeping service is NOT selected
-      if (
-        !(data as any).serviceMonthlyBookkeeping &&
-        !(data as any).bookkeepingQuality
-      ) {
+      if (!(data as any).serviceMonthlyBookkeeping && !(data as any).bookkeepingQuality) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message:

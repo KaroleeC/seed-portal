@@ -22,11 +22,7 @@ export function ThemeToggle({ className }: { className?: string }) {
           className={className}
           title={`Theme: ${theme} (resolved: ${resolvedTheme})`}
         >
-          {resolvedTheme === "dark" ? (
-            <Moon className="h-4 w-4" />
-          ) : (
-            <Sun className="h-4 w-4" />
-          )}
+          {resolvedTheme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -36,10 +32,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         <DropdownMenuItem className="text-sm" onClick={() => setTheme("dark")}>
           <Moon className="mr-2 h-4 w-4" /> Dark
         </DropdownMenuItem>
-        <DropdownMenuItem
-          className="text-sm"
-          onClick={() => setTheme("system")}
-        >
+        <DropdownMenuItem className="text-sm" onClick={() => setTheme("system")}>
           <Laptop className="mr-2 h-4 w-4" /> System
         </DropdownMenuItem>
       </DropdownMenuContent>

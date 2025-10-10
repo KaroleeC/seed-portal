@@ -8,18 +8,9 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import {
-  TrendingUp,
-  Calendar,
-  DollarSign,
-  Calculator,
-  CheckCircle2,
-} from "lucide-react";
+import { TrendingUp, Calendar, DollarSign, Calculator, CheckCircle2 } from "lucide-react";
 
-import {
-  PricingCalculationResult,
-  QuoteFormData,
-} from "../../types/QuoteTypes";
+import type { PricingCalculationResult, QuoteFormData } from "../../types/QuoteTypes";
 
 interface PricingDisplayPanelProps {
   calculation: PricingCalculationResult;
@@ -41,18 +32,11 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
   const computedDiscount =
     typeof bk?.breakdown?.monthlyFeeBeforeDiscount === "number" &&
     typeof bk?.breakdown?.monthlyFeeAfterDiscount === "number"
-      ? Math.max(
-          0,
-          bk.breakdown.monthlyFeeBeforeDiscount -
-            bk.breakdown.monthlyFeeAfterDiscount,
-        )
+      ? Math.max(0, bk.breakdown.monthlyFeeBeforeDiscount - bk.breakdown.monthlyFeeAfterDiscount)
       : 0;
-  const packageDiscountMonthly =
-    (calculation as any).packageDiscountMonthly ?? computedDiscount;
+  const packageDiscountMonthly = (calculation as any).packageDiscountMonthly ?? computedDiscount;
   const bookkeepingPackageDiscount =
-    calculation.includesBookkeeping && calculation.includesTaas
-      ? packageDiscountMonthly
-      : 0;
+    calculation.includesBookkeeping && calculation.includesTaas ? packageDiscountMonthly : 0;
 
   return (
     <div className="space-y-6">
@@ -71,9 +55,7 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
               <TrendingUp className="w-5 h-5 text-green-600" />
               <div>
                 <div className="font-semibold text-gray-900">Monthly Total</div>
-                <div className="text-sm text-gray-600">
-                  Recurring monthly fees
-                </div>
+                <div className="text-sm text-gray-600">Recurring monthly fees</div>
               </div>
             </div>
             <div className="text-right">
@@ -90,9 +72,7 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
               <Calendar className="w-5 h-5 text-blue-600" />
               <div>
                 <div className="font-semibold text-gray-900">Setup Total</div>
-                <div className="text-sm text-gray-600">
-                  One-time implementation
-                </div>
+                <div className="text-sm text-gray-600">One-time implementation</div>
               </div>
             </div>
             <div className="text-right">
@@ -111,10 +91,7 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
                 <span className="text-sm font-medium text-green-800">
                   Bookkeeping Package Savings
                 </span>
-                <Badge
-                  variant="secondary"
-                  className="bg-green-100 text-green-800"
-                >
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
                   -{formatCurrency(bookkeepingPackageDiscount)}/month
                 </Badge>
               </div>
@@ -136,7 +113,7 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
           {calculation.includesBookkeeping && (
             <div className="flex justify-between items-center py-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full" />
                 <span className="text-sm">Monthly Bookkeeping</span>
                 {bookkeepingPackageDiscount > 0 && (
                   <Badge variant="outline" className="text-xs">
@@ -153,12 +130,10 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
           {calculation.includesTaas && (
             <div className="flex justify-between items-center py-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full" />
                 <span className="text-sm">Tax as a Service</span>
               </div>
-              <div className="font-medium">
-                {formatCurrency(calculation.taas.monthlyFee)}/mo
-              </div>
+              <div className="font-medium">{formatCurrency(calculation.taas.monthlyFee)}/mo</div>
             </div>
           )}
 
@@ -166,14 +141,10 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
           {calculation.serviceTierFee > 0 && (
             <div className="flex justify-between items-center py-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <span className="text-sm">
-                  Service Tier ({formData.serviceTier})
-                </span>
+                <div className="w-2 h-2 bg-purple-500 rounded-full" />
+                <span className="text-sm">Service Tier ({formData.serviceTier})</span>
               </div>
-              <div className="font-medium">
-                {formatCurrency(calculation.serviceTierFee)}/mo
-              </div>
+              <div className="font-medium">{formatCurrency(calculation.serviceTierFee)}/mo</div>
             </div>
           )}
 
@@ -181,48 +152,40 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
           {calculation.payrollFee > 0 && (
             <div className="flex justify-between items-center py-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-indigo-500 rounded-full" />
                 <span className="text-sm">Payroll Service</span>
               </div>
-              <div className="font-medium">
-                {formatCurrency(calculation.payrollFee)}/mo
-              </div>
+              <div className="font-medium">{formatCurrency(calculation.payrollFee)}/mo</div>
             </div>
           )}
 
           {calculation.apFee > 0 && (
             <div className="flex justify-between items-center py-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-pink-500 rounded-full" />
                 <span className="text-sm">Accounts Payable</span>
               </div>
-              <div className="font-medium">
-                {formatCurrency(calculation.apFee)}/mo
-              </div>
+              <div className="font-medium">{formatCurrency(calculation.apFee)}/mo</div>
             </div>
           )}
 
           {calculation.arFee > 0 && (
             <div className="flex justify-between items-center py-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-cyan-500 rounded-full" />
                 <span className="text-sm">Accounts Receivable</span>
               </div>
-              <div className="font-medium">
-                {formatCurrency(calculation.arFee)}/mo
-              </div>
+              <div className="font-medium">{formatCurrency(calculation.arFee)}/mo</div>
             </div>
           )}
 
           {calculation.agentOfServiceFee > 0 && (
             <div className="flex justify-between items-center py-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-gray-500 rounded-full" />
                 <span className="text-sm">Agent of Service</span>
               </div>
-              <div className="font-medium">
-                {formatCurrency(calculation.agentOfServiceFee)}/mo
-              </div>
+              <div className="font-medium">{formatCurrency(calculation.agentOfServiceFee)}/mo</div>
             </div>
           )}
 
@@ -232,26 +195,22 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
             calculation.cfoAdvisoryFee > 0) && (
             <>
               <Separator className="my-3" />
-              <div className="text-sm font-medium text-gray-700 mb-2">
-                One-Time Services
-              </div>
+              <div className="text-sm font-medium text-gray-700 mb-2">One-Time Services</div>
 
               {calculation.cleanupProjectFee > 0 && (
                 <div className="flex justify-between items-center py-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-500 rounded-full" />
                     <span className="text-sm">Cleanup Project</span>
                   </div>
-                  <div className="font-medium">
-                    {formatCurrency(calculation.cleanupProjectFee)}
-                  </div>
+                  <div className="font-medium">{formatCurrency(calculation.cleanupProjectFee)}</div>
                 </div>
               )}
 
               {calculation.priorYearFilingsFee > 0 && (
                 <div className="flex justify-between items-center py-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-amber-500 rounded-full" />
                     <span className="text-sm">Prior Year Filings</span>
                   </div>
                   <div className="font-medium">
@@ -263,12 +222,10 @@ export const PricingDisplayPanel: React.FC<PricingDisplayPanelProps> = ({
               {calculation.cfoAdvisoryFee > 0 && (
                 <div className="flex justify-between items-center py-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-teal-500 rounded-full" />
                     <span className="text-sm">CFO Advisory</span>
                   </div>
-                  <div className="font-medium">
-                    {formatCurrency(calculation.cfoAdvisoryFee)}
-                  </div>
+                  <div className="font-medium">{formatCurrency(calculation.cfoAdvisoryFee)}</div>
                 </div>
               )}
             </>

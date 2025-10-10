@@ -1,4 +1,5 @@
 import type { HubSpotRequestFn } from "./http.js";
+import { mapFeesToLineItems, validateLineItems } from "./fee-mapper.js";
 
 type ProductIds = {
   MONTHLY_BOOKKEEPING: string;
@@ -7,8 +8,7 @@ type ProductIds = {
   TAAS: string;
   MANAGED_QBO_SUBSCRIPTION: string;
   PRIOR_YEAR_FILINGS: string;
-  GUIDED_SERVICE_TIER: string;
-  CONCIERGE_SERVICE_TIER: string;
+  // Service tier product IDs removed - no longer used for pricing
   CFO_ADVISORY_DEPOSIT: string;
   PAYROLL_SERVICE: string;
   AP_LITE_SERVICE: string;
@@ -17,6 +17,68 @@ type ProductIds = {
   AR_ADVANCED_SERVICE: string;
   AGENT_OF_SERVICE: string;
 };
+
+/**
+ * Configuration for creating or updating a HubSpot quote
+ * Replaces the fragile 33-parameter function signature
+ */
+export interface QuoteConfig {
+  // Core identifiers
+  dealId: string;
+  companyName: string;
+
+  // Totals
+  monthlyFee: number;
+  oneTimeFees: number; // Renamed from setupFee for clarity
+
+  // User/owner info
+  userEmail: string;
+  firstName: string;
+  lastName: string;
+
+  // Service flags
+  includesBookkeeping?: boolean;
+  includesTaas?: boolean;
+  includesPayroll?: boolean;
+  includesAP?: boolean;
+  includesAR?: boolean;
+  includesAgentOfService?: boolean;
+  includesCfoAdvisory?: boolean;
+  includesFpaBuild?: boolean;
+
+  // Service fees (individual line items)
+  taasMonthlyFee?: number;
+  bookkeepingMonthlyFee?: number;
+  bookkeepingSetupFee?: number;
+  payrollFee?: number;
+  apFee?: number;
+  arFee?: number;
+  agentOfServiceFee?: number;
+  cfoAdvisoryFee?: number;
+  cleanupProjectFee?: number;
+  priorYearFilingsFee?: number;
+  fpaServiceFee?: number;
+
+  // Calculated fees (for display/breakdown)
+  calculatedBookkeepingMonthlyFee?: number;
+  calculatedTaasMonthlyFee?: number;
+  calculatedServiceTierFee?: number;
+
+  // Quote data (full quote object for assumptions/terms generation)
+  quoteData?: any;
+
+  // Service tier
+  serviceTier?: string;
+}
+
+/**
+ * Configuration for updating an existing HubSpot quote
+ * Extends QuoteConfig with quote ID and makes dealId optional
+ */
+export interface UpdateQuoteConfig extends Omit<QuoteConfig, "dealId"> {
+  quoteId: string;
+  dealId?: string; // Optional for updates
+}
 
 export function createQuotesService(
   request: HubSpotRequestFn,
@@ -41,10 +103,10 @@ export function createQuotesService(
       includesBookkeeping?: boolean,
       includesTaas?: boolean,
       serviceTier?: string,
-      quoteData?: any,
+      quoteData?: any
     ) => Promise<any | null>;
     HUBSPOT_PRODUCT_IDS: ProductIds;
-  },
+  }
 ) {
   const PRODUCT = deps.HUBSPOT_PRODUCT_IDS;
 
@@ -64,7 +126,7 @@ export function createQuotesService(
     productId: string,
     price: number,
     quantity: number,
-    customName?: string,
+    customName?: string
   ): Promise<void> {
     const product = await request(`/crm/v3/objects/products/${productId}`);
     const nativeName = product?.properties?.name || "Service";
@@ -91,9 +153,7 @@ export function createQuotesService(
         {
           from: { id: quoteId },
           to: { id: lineItemResult.id },
-          types: [
-            { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 67 },
-          ],
+          types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 67 }],
         },
       ],
     };
@@ -104,122 +164,65 @@ export function createQuotesService(
     });
   }
 
-  async function createInitialServiceLineItems(
-    quoteId: string,
-    serviceConfig: any,
-  ): Promise<void> {
-    // Optional verification and diagnostics of product presence
-    try {
-      const products = await deps.getProductsCached();
-      const taasFromCache = products.find((p: any) => p.id === PRODUCT.TAAS);
-      if (!taasFromCache) {
-        try {
-          await request(`/crm/v3/objects/products/${PRODUCT.TAAS}`);
-        } catch {
-          // no-op; continue anyway
-        }
-      }
-    } catch {
-      // ignore cache issues
+  /**
+   * Create initial line items for a quote using the fee mapping layer
+   *
+   * @param quoteId - HubSpot quote ID
+   * @param serviceConfig - Service configuration (legacy format for backward compatibility)
+   */
+  async function createInitialServiceLineItems(quoteId: string, serviceConfig: any): Promise<void> {
+    // Convert legacy serviceConfig to QuoteConfig format
+    const quoteConfig: QuoteConfig = {
+      dealId: "", // Not needed for line items
+      companyName: "", // Not needed for line items
+      monthlyFee: serviceConfig.monthlyFee || 0,
+      oneTimeFees: serviceConfig.setupFee || 0,
+      userEmail: "", // Not needed for line items
+      firstName: "", // Not needed for line items
+      lastName: "", // Not needed for line items
+      includesBookkeeping: serviceConfig.includesBookkeeping,
+      includesTaas: serviceConfig.includesTaas,
+      taasMonthlyFee: serviceConfig.taasMonthlyFee,
+      bookkeepingMonthlyFee: serviceConfig.bookkeepingMonthlyFee,
+      bookkeepingSetupFee: serviceConfig.bookkeepingSetupFee,
+      quoteData: {
+        apServiceTier: serviceConfig.apServiceTier,
+        arServiceTier: serviceConfig.arServiceTier,
+        qboSubscription: serviceConfig.qboSubscription,
+        qboFee: serviceConfig.qboFee,
+      },
+      includesPayroll: serviceConfig.includesPayroll,
+      payrollFee: serviceConfig.payrollFee,
+      includesAP: serviceConfig.includesAP,
+      apFee: serviceConfig.apFee,
+      includesAR: serviceConfig.includesAR,
+      arFee: serviceConfig.arFee,
+      includesAgentOfService: serviceConfig.includesAgentOfService,
+      agentOfServiceFee: serviceConfig.agentOfServiceFee,
+      includesCfoAdvisory: serviceConfig.includesCfoAdvisory,
+      cfoAdvisoryFee: serviceConfig.cfoAdvisoryFee,
+      cleanupProjectFee: serviceConfig.cleanupProjectFee,
+      priorYearFilingsFee: serviceConfig.priorYearFilingsFee,
+      includesFpaBuild: serviceConfig.includesFpaBuild,
+      fpaServiceFee: serviceConfig.fpaServiceFee,
+    };
+
+    // Use the fee mapping layer to generate line items
+    const lineItems = mapFeesToLineItems(quoteConfig, PRODUCT);
+
+    // Validate line items before creating
+    const validation = validateLineItems(quoteConfig, lineItems);
+    if (!validation.valid) {
+      console.warn("[HubSpot] Line item validation warnings:", validation.warnings);
     }
 
-    const services: Array<{ price: number; productId: string }> = [];
-
-    if (serviceConfig.includesBookkeeping) {
-      const bookkeepingPrice = serviceConfig.bookkeepingMonthlyFee;
-      if (bookkeepingPrice > 0) {
-        services.push({
-          price: bookkeepingPrice,
-          productId: PRODUCT.MONTHLY_BOOKKEEPING,
-        });
-      }
-      const bookkeepingSetupFee = serviceConfig.bookkeepingSetupFee || 0;
-      if (bookkeepingSetupFee > 0) {
-        services.push({
-          price: bookkeepingSetupFee,
-          productId: PRODUCT.MONTHLY_BOOKKEEPING_SETUP,
-        });
-      }
-    }
-
-    if (serviceConfig.includesTaas) {
-      const taasPrice = serviceConfig.taasMonthlyFee;
-      if (taasPrice > 0) {
-        services.push({ price: taasPrice, productId: PRODUCT.TAAS });
-      }
-    }
-
-    if (serviceConfig.cleanupProjectFee > 0) {
-      services.push({
-        price: serviceConfig.cleanupProjectFee,
-        productId: PRODUCT.CLEANUP_PROJECT,
-      });
-    }
-
-    if (serviceConfig.priorYearFilingsFee > 0) {
-      services.push({
-        price: serviceConfig.priorYearFilingsFee,
-        productId: PRODUCT.PRIOR_YEAR_FILINGS,
-      });
-    }
-
-    if (serviceConfig.includesPayroll && serviceConfig.payrollFee > 0) {
-      services.push({
-        price: serviceConfig.payrollFee,
-        productId: PRODUCT.PAYROLL_SERVICE,
-      });
-    }
-
-    if (serviceConfig.includesAP) {
-      const apProductId =
-        serviceConfig.apServiceTier === "advanced"
-          ? PRODUCT.AP_ADVANCED_SERVICE
-          : PRODUCT.AP_LITE_SERVICE;
-      if (serviceConfig.apFee > 0)
-        services.push({ price: serviceConfig.apFee, productId: apProductId });
-    }
-
-    if (serviceConfig.includesAR) {
-      const arProductId =
-        serviceConfig.arServiceTier === "advanced"
-          ? PRODUCT.AR_ADVANCED_SERVICE
-          : PRODUCT.AR_LITE_SERVICE;
-      if (serviceConfig.arFee > 0)
-        services.push({ price: serviceConfig.arFee, productId: arProductId });
-    }
-
-    if (
-      serviceConfig.includesAgentOfService &&
-      serviceConfig.agentOfServiceFee > 0
-    ) {
-      services.push({
-        price: serviceConfig.agentOfServiceFee,
-        productId: PRODUCT.AGENT_OF_SERVICE,
-      });
-    }
-
-    if (serviceConfig.qboSubscription) {
-      const qboPrice = serviceConfig.qboFee || 60;
-      services.push({
-        price: qboPrice,
-        productId: PRODUCT.MANAGED_QBO_SUBSCRIPTION,
-      });
-    }
-
-    for (const s of services) {
-      await associateProductWithQuote(
-        quoteId,
-        s.productId,
-        s.price,
-        1,
-        null as any,
-      );
+    // Create line items in HubSpot
+    for (const item of lineItems) {
+      await associateProductWithQuote(quoteId, item.productId, item.price, 1, null as any);
     }
   }
 
-  async function fetchExistingLineItems(
-    quoteId: string,
-  ): Promise<
+  async function fetchExistingLineItems(quoteId: string): Promise<
     Array<{
       id: string;
       productId: string;
@@ -230,14 +233,14 @@ export function createQuotesService(
   > {
     const associations = await request(
       `/crm/v4/objects/quotes/${quoteId}/associations/line_items`,
-      { method: "GET" },
+      { method: "GET" }
     );
     if (!associations?.results?.length) return [];
     const lineItems = await Promise.all(
       associations.results.map(async (association: any) => {
         try {
           const lineItem = await request(
-            `/crm/v3/objects/line_items/${association.toObjectId}?properties=name,price,quantity,hs_product_id,hs_sku`,
+            `/crm/v3/objects/line_items/${association.toObjectId}?properties=name,price,quantity,hs_product_id,hs_sku`
           );
           return {
             id: lineItem.id,
@@ -249,7 +252,7 @@ export function createQuotesService(
         } catch {
           return null;
         }
-      }),
+      })
     );
     return lineItems.filter((x) => x !== null) as any[];
   }
@@ -262,7 +265,7 @@ export function createQuotesService(
       quantity: number;
       name: string;
     }>,
-    requiredServices: Array<{ price: number; productId: string }>,
+    requiredServices: Array<{ price: number; productId: string }>
   ) {
     const toUpdate: Array<{
       id: string;
@@ -273,12 +276,8 @@ export function createQuotesService(
     const toDelete: Array<{ id: string; productId: string; name: string }> = [];
     const toAdd: Array<{ price: number; productId: string }> = [];
 
-    const existingByProductId = new Map(
-      existingItems.map((i) => [i.productId, i]),
-    );
-    const requiredByProductId = new Map(
-      requiredServices.map((s) => [s.productId, s]),
-    );
+    const existingByProductId = new Map(existingItems.map((i) => [i.productId, i]));
+    const requiredByProductId = new Map(requiredServices.map((s) => [s.productId, s]));
 
     for (const existingItem of existingItems) {
       const requiredService = requiredByProductId.get(existingItem.productId);
@@ -299,8 +298,7 @@ export function createQuotesService(
     }
 
     for (const requiredService of requiredServices) {
-      if (!existingByProductId.has(requiredService.productId))
-        toAdd.push(requiredService);
+      if (!existingByProductId.has(requiredService.productId)) toAdd.push(requiredService);
     }
 
     return { toUpdate, toDelete, toAdd };
@@ -317,7 +315,7 @@ export function createQuotesService(
       }>;
       toDelete: Array<{ id: string; productId: string; name: string }>;
       toAdd: Array<{ price: number; productId: string }>;
-    },
+    }
   ): Promise<boolean> {
     for (const update of changes.toUpdate) {
       try {
@@ -349,7 +347,7 @@ export function createQuotesService(
           addition.productId,
           addition.price,
           1,
-          null as any,
+          null as any
         );
       } catch {
         // continue other adds
@@ -369,7 +367,7 @@ export function createQuotesService(
     includesCfoAdvisory?: boolean,
     includesCleanup?: boolean,
     includesPriorYears?: boolean,
-    includesFpaBuild?: boolean,
+    includesFpaBuild?: boolean
   ): string {
     const baseTerms = `This Quote is the Order Form under Seed's MSA and the selected Service Schedule(s), which are incorporated by reference. By signing and paying, Client agrees to those documents. Pricing is based on the Assumptions listed above; material changes may adjust Bookkeeping fees prospectively per our right-sizing rule. Order of precedence: Quote → Schedule(s) → MSA. Governing law: California.
 
@@ -380,60 +378,58 @@ export function createQuotesService(
 
     if (includesBookkeeping && !added.has("A")) {
       schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
+        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>'
       );
       added.add("A");
     }
     if (includesTaas && !added.has("B")) {
       schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssb-v-2025-09-01">SCHEDULE B - TAX AS A SERVICE v2025.09.01</a>',
+        '<a href="https://seedfinancial.io/legal/ssb-v-2025-09-01">SCHEDULE B - TAX AS A SERVICE v2025.09.01</a>'
       );
       added.add("B");
     }
     if (includesPayroll)
       schedules.push(
-        '<a href="https://www.seedfinancial.io/legal/ssc-v-2025-09-01">SCHEDULE C - PAYROLL v2025.09.01</a>',
+        '<a href="https://www.seedfinancial.io/legal/ssc-v-2025-09-01">SCHEDULE C - PAYROLL v2025.09.01</a>'
       );
     if (includesAP)
       schedules.push(
-        '<a href="https://www.seedfinancial.io/legal/ssd-v-2025-09-01">SCHEDULE D - ACCOUNTS PAYABLE v2025.09.01</a>',
+        '<a href="https://www.seedfinancial.io/legal/ssd-v-2025-09-01">SCHEDULE D - ACCOUNTS PAYABLE v2025.09.01</a>'
       );
     if (includesAR)
       schedules.push(
-        '<a href="https://www.seedfinancial.io/legal/sse-v-2025-09-01">SCHEDULE E - ACCOUNTS RECEIVABLE v2025.09.01</a>',
+        '<a href="https://www.seedfinancial.io/legal/sse-v-2025-09-01">SCHEDULE E - ACCOUNTS RECEIVABLE v2025.09.01</a>'
       );
     if (includesAgentOfService)
       schedules.push(
-        '<a href="https://www.seedfinancial.io/legal/ssf-v-2025-09-01">SCHEDULE F - AGENT OF SERVICE v2025.09.01</a>',
+        '<a href="https://www.seedfinancial.io/legal/ssf-v-2025-09-01">SCHEDULE F - AGENT OF SERVICE v2025.09.01</a>'
       );
     if (includesCfoAdvisory && !added.has("A")) {
       schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
+        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>'
       );
       added.add("A");
     }
     if (includesCleanup && !added.has("A")) {
       schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
+        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>'
       );
       added.add("A");
     }
     if (includesPriorYears && !added.has("B")) {
       schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssb-v-2025-09-01">SCHEDULE B - TAX AS A SERVICE v2025.09.01</a>',
+        '<a href="https://seedfinancial.io/legal/ssb-v-2025-09-01">SCHEDULE B - TAX AS A SERVICE v2025.09.01</a>'
       );
       added.add("B");
     }
     if (includesFpaBuild && !added.has("A")) {
       schedules.push(
-        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>',
+        '<a href="https://seedfinancial.io/legal/ssa-v-2025-09-01">SCHEDULE A - BOOKKEEPING v2025.09.01</a>'
       );
       added.add("A");
     }
 
-    return schedules.length > 0
-      ? `${baseTerms}\n${schedules.join("\n")}`
-      : baseTerms;
+    return schedules.length > 0 ? `${baseTerms}\n${schedules.join("\n")}` : baseTerms;
   }
 
   function generateScopeAssumptions(quoteData: any): string {
@@ -448,28 +444,18 @@ export function createQuotesService(
     ) {
       assumptions.push("");
       assumptions.push("BOOKKEEPING SERVICE:");
+      assumptions.push(`• Entity Type: ${quoteData.entityType || "Not specified"}`);
       assumptions.push(
-        `• Entity Type: ${quoteData.entityType || "Not specified"}`,
+        `• Monthly Transactions: ${quoteData.monthlyTransactions || "Not specified"}`
       );
+      assumptions.push(`• Months of Initial Cleanup Required: ${quoteData.cleanupMonths || 0}`);
+      assumptions.push(`• Accounting Basis: ${quoteData.accountingBasis || "Not specified"}`);
       assumptions.push(
-        `• Monthly Transactions: ${quoteData.monthlyTransactions || "Not specified"}`,
-      );
-      assumptions.push(
-        `• Months of Initial Cleanup Required: ${quoteData.cleanupMonths || 0}`,
-      );
-      assumptions.push(
-        `• Accounting Basis: ${quoteData.accountingBasis || "Not specified"}`,
-      );
-      assumptions.push(
-        `• QuickBooks Subscription Needed: ${quoteData.qboSubscription ? "Yes" : "No"}`,
+        `• QuickBooks Subscription Needed: ${quoteData.qboSubscription ? "Yes" : "No"}`
       );
     }
 
-    if (
-      quoteData.serviceTaas ||
-      quoteData.includesTaas ||
-      quoteData.serviceTaasMonthly
-    ) {
+    if (quoteData.serviceTaas || quoteData.includesTaas || quoteData.serviceTaasMonthly) {
       assumptions.push("");
       assumptions.push("TAX AS A SERVICE (TaaS):");
       const numEntitiesText =
@@ -479,12 +465,11 @@ export function createQuotesService(
         quoteData.customStatesFiled ?? quoteData.statesFiled ?? "Not specified";
       assumptions.push(`• States Filed: ${statesFiledText}`);
       assumptions.push(
-        `• International Filing Required: ${quoteData.internationalFiling ? "Yes" : "No"}`,
+        `• International Filing Required: ${quoteData.internationalFiling ? "Yes" : "No"}`
       );
       let personal1040sText = "Not included";
       if (quoteData.include1040s) {
-        const owners =
-          quoteData.customNumBusinessOwners ?? quoteData.numBusinessOwners ?? 0;
+        const owners = quoteData.customNumBusinessOwners ?? quoteData.numBusinessOwners ?? 0;
         personal1040sText = String(owners);
       }
       assumptions.push(`• Number of Personal 1040s: ${personal1040sText}`);
@@ -493,69 +478,41 @@ export function createQuotesService(
     if (quoteData.servicePayroll || quoteData.servicePayrollService) {
       assumptions.push("");
       assumptions.push("PAYROLL SERVICE:");
-      assumptions.push(
-        `• Employee Count: ${quoteData.payrollEmployeeCount || "Not specified"}`,
-      );
-      assumptions.push(
-        `• States Count: ${quoteData.payrollStateCount || "Not specified"}`,
-      );
+      assumptions.push(`• Employee Count: ${quoteData.payrollEmployeeCount || "Not specified"}`);
+      assumptions.push(`• States Count: ${quoteData.payrollStateCount || "Not specified"}`);
     }
 
     if (quoteData.serviceAgentOfService) {
       assumptions.push("");
       assumptions.push("AGENT OF SERVICE:");
-      assumptions.push(
-        `• Additional States: ${quoteData.agentOfServiceAdditionalStates || 0}`,
-      );
-      assumptions.push(
-        `• Complex Case: ${quoteData.agentOfServiceComplexCase ? "Yes" : "No"}`,
-      );
+      assumptions.push(`• Additional States: ${quoteData.agentOfServiceAdditionalStates || 0}`);
+      assumptions.push(`• Complex Case: ${quoteData.agentOfServiceComplexCase ? "Yes" : "No"}`);
     }
 
     if (quoteData.serviceCfoAdvisory) {
       assumptions.push("");
       assumptions.push("CFO ADVISORY SERVICE:");
-      assumptions.push(
-        `• Type: ${quoteData.cfoAdvisoryType || "Not specified"}`,
-      );
+      assumptions.push(`• Type: ${quoteData.cfoAdvisoryType || "Not specified"}`);
       if (quoteData.cfoAdvisoryBundleHours)
         assumptions.push(`• Bundle Hours: ${quoteData.cfoAdvisoryBundleHours}`);
     }
 
-    if (
-      quoteData.serviceApLite ||
-      quoteData.serviceApAdvanced ||
-      quoteData.serviceApArService
-    ) {
+    if (quoteData.serviceApLite || quoteData.serviceApAdvanced || quoteData.serviceApArService) {
       assumptions.push("");
       assumptions.push("ACCOUNTS PAYABLE SERVICE:");
-      assumptions.push(
-        `• Vendor Bills Band: ${quoteData.apVendorBillsBand || "Not specified"}`,
-      );
-      assumptions.push(
-        `• Vendor Count: ${quoteData.apVendorCount || "Not specified"}`,
-      );
-      assumptions.push(
-        `• Service Tier: ${quoteData.apServiceTier || "Not specified"}`,
-      );
+      assumptions.push(`• Vendor Bills Band: ${quoteData.apVendorBillsBand || "Not specified"}`);
+      assumptions.push(`• Vendor Count: ${quoteData.apVendorCount || "Not specified"}`);
+      assumptions.push(`• Service Tier: ${quoteData.apServiceTier || "Not specified"}`);
     }
 
-    if (
-      quoteData.serviceArLite ||
-      quoteData.serviceArAdvanced ||
-      quoteData.serviceArService
-    ) {
+    if (quoteData.serviceArLite || quoteData.serviceArAdvanced || quoteData.serviceArService) {
       assumptions.push("");
       assumptions.push("ACCOUNTS RECEIVABLE SERVICE:");
       assumptions.push(
-        `• Customer Invoices Band: ${quoteData.arCustomerInvoicesBand || "Not specified"}`,
+        `• Customer Invoices Band: ${quoteData.arCustomerInvoicesBand || "Not specified"}`
       );
-      assumptions.push(
-        `• Customer Count: ${quoteData.arCustomerCount || "Not specified"}`,
-      );
-      assumptions.push(
-        `• Service Tier: ${quoteData.arServiceTier || "Not specified"}`,
-      );
+      assumptions.push(`• Customer Count: ${quoteData.arCustomerCount || "Not specified"}`);
+      assumptions.push(`• Service Tier: ${quoteData.arServiceTier || "Not specified"}`);
     }
 
     const priorYearFilings = quoteData.priorYearFilings || [];
@@ -570,13 +527,8 @@ export function createQuotesService(
       assumptions.push("");
       assumptions.push("CLEANUP/CATCH-UP PROJECT:");
       assumptions.push(`• Cleanup Months Required: ${quoteData.cleanupMonths}`);
-      assumptions.push(
-        `• Cleanup Periods: ${(quoteData.cleanupPeriods || []).join(", ")}`,
-      );
-      if (
-        quoteData.cleanupComplexity &&
-        quoteData.cleanupComplexity !== "0.00"
-      ) {
+      assumptions.push(`• Cleanup Periods: ${(quoteData.cleanupPeriods || []).join(", ")}`);
+      if (quoteData.cleanupComplexity && quoteData.cleanupComplexity !== "0.00") {
         assumptions.push(`• Complexity Factor: ${quoteData.cleanupComplexity}`);
       }
     }
@@ -584,98 +536,72 @@ export function createQuotesService(
     return assumptions.join("\n");
   }
 
-  async function createQuote(
-    dealId: string,
-    companyName: string,
-    monthlyFee: number,
-    setupFee: number,
-    userEmail: string,
-    firstName: string,
-    lastName: string,
-    includesBookkeeping?: boolean,
-    includesTaas?: boolean,
-    taasMonthlyFee?: number,
-    taasPriorYearsFee?: number,
-    bookkeepingMonthlyFee?: number,
-    bookkeepingSetupFee?: number,
-    quoteData?: any,
-    serviceTier?: string,
-    includesPayroll?: boolean,
-    payrollFee?: number,
-    includesAP?: boolean,
-    apFee?: number,
-    includesAR?: boolean,
-    arFee?: number,
-    includesAgentOfService?: boolean,
-    agentOfServiceFee?: number,
-    includesCfoAdvisory?: boolean,
-    cfoAdvisoryFee?: number,
-    cleanupProjectFee?: number,
-    priorYearFilingsFee?: number,
-    includesFpaBuild?: boolean,
-    fpaServiceFee?: number,
-    calculatedBookkeepingMonthlyFee?: number,
-    calculatedTaasMonthlyFee?: number,
-    calculatedServiceTierFee?: number,
-  ): Promise<{ id: string; title: string } | null> {
-    const userProfile = await deps.getUserProfile(userEmail);
+  /**
+   * Create a new HubSpot quote using typed configuration
+   * @param config - Quote configuration object
+   * @returns Quote ID and title, or null if creation fails
+   */
+  async function createQuote(config: QuoteConfig): Promise<{ id: string; title: string } | null> {
+    const userProfile = await deps.getUserProfile(config.userEmail);
 
     const services: string[] = [];
     if (
-      includesBookkeeping ||
-      quoteData?.serviceBookkeeping ||
-      quoteData?.serviceMonthlyBookkeeping
+      config.includesBookkeeping ||
+      config.quoteData?.serviceBookkeeping ||
+      config.quoteData?.serviceMonthlyBookkeeping
     )
       services.push("Bookkeeping");
-    if (includesTaas || quoteData?.serviceTaas || quoteData?.serviceTaasMonthly)
+    if (
+      config.includesTaas ||
+      config.quoteData?.serviceTaas ||
+      config.quoteData?.serviceTaasMonthly
+    )
       services.push("TaaS");
-    if (quoteData?.servicePayroll || quoteData?.servicePayrollService)
+    if (config.quoteData?.servicePayroll || config.quoteData?.servicePayrollService)
       services.push("Payroll");
     if (
-      quoteData?.serviceApArLite ||
-      quoteData?.serviceApArService ||
-      quoteData?.serviceApLite ||
-      quoteData?.serviceApAdvanced
+      config.quoteData?.serviceApArLite ||
+      config.quoteData?.serviceApArService ||
+      config.quoteData?.serviceApLite ||
+      config.quoteData?.serviceApAdvanced
     )
       services.push("AP");
     if (
-      quoteData?.serviceArService ||
-      quoteData?.serviceArLite ||
-      quoteData?.serviceArAdvanced
+      config.quoteData?.serviceArService ||
+      config.quoteData?.serviceArLite ||
+      config.quoteData?.serviceArAdvanced
     )
       services.push("AR");
-    if (quoteData?.serviceAgentOfService) services.push("Agent of Service");
-    if (quoteData?.serviceCfoAdvisory) services.push("CFO Advisory");
+    if (config.quoteData?.serviceAgentOfService) services.push("Agent of Service");
+    if (config.quoteData?.serviceCfoAdvisory) services.push("CFO Advisory");
     if (
-      quoteData?.serviceFpaLite ||
-      quoteData?.serviceFpaBuild ||
-      quoteData?.serviceFpaSupport
+      config.quoteData?.serviceFpaLite ||
+      config.quoteData?.serviceFpaBuild ||
+      config.quoteData?.serviceFpaSupport
     )
       services.push("FP&A");
-    if (quoteData?.serviceCleanupProjects) services.push("Cleanup");
-    if (quoteData?.servicePriorYearFilings) services.push("Prior Year Filings");
+    if (config.quoteData?.serviceCleanupProjects) services.push("Cleanup");
+    if (config.quoteData?.servicePriorYearFilings) services.push("Prior Year Filings");
     if (services.length === 0) services.push("Services");
 
-    const serviceName = `${services.join(" + ")  } Services`;
-    const quoteName = `${companyName} - ${serviceName} Quote`;
+    const serviceName = `${services.join(" + ")} Services`;
+    const quoteName = `${config.companyName} - ${serviceName} Quote`;
 
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 30);
 
-    const scopeAssumptions = quoteData
-      ? generateScopeAssumptions(quoteData)
-      : "";
+    const scopeAssumptions = config.quoteData ? generateScopeAssumptions(config.quoteData) : "";
     const paymentTerms = generatePaymentTerms(
-      !!includesBookkeeping,
-      !!includesTaas,
-      !!includesPayroll,
-      !!includesAP,
-      !!includesAR,
-      !!includesAgentOfService,
-      !!includesCfoAdvisory,
-      (cleanupProjectFee || 0) > 0,
-      (priorYearFilingsFee || 0) > 0,
-      !!includesFpaBuild,
+      !!config.includesBookkeeping,
+      !!config.includesTaas,
+      !!config.includesPayroll,
+      !!config.includesAP,
+      !!config.includesAR,
+      !!config.includesAgentOfService,
+      !!config.includesCfoAdvisory,
+      (config.cleanupProjectFee || 0) > 0,
+      (config.priorYearFilingsFee || 0) > 0,
+      !!config.includesFpaBuild
     );
 
     const quoteBody = {
@@ -686,21 +612,18 @@ export function createQuotesService(
         hs_language: "en",
         hs_sender_company_name: userProfile?.companyName || "Seed Financial",
         hs_sender_company_address:
-          userProfile?.companyAddress ||
-          "4136 Del Rey Ave, Ste 521, Marina Del Rey, CA 90292",
-        hs_sender_firstname: userProfile?.firstName || firstName || "Jon",
-        hs_sender_lastname: userProfile?.lastName || lastName || "Wells",
-        hs_sender_email: userEmail,
+          userProfile?.companyAddress || "4136 Del Rey Ave, Ste 521, Marina Del Rey, CA 90292",
+        hs_sender_firstname: userProfile?.firstName || config.firstName || "Jon",
+        hs_sender_lastname: userProfile?.lastName || config.lastName || "Wells",
+        hs_sender_email: config.userEmail,
         hs_esign_enabled: true,
         hs_comments: scopeAssumptions,
         hs_terms: paymentTerms,
       },
       associations: [
         {
-          to: { id: dealId },
-          types: [
-            { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 64 },
-          ],
+          to: { id: config.dealId },
+          types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 64 }],
         },
       ],
     };
@@ -712,33 +635,33 @@ export function createQuotesService(
 
     try {
       await createInitialServiceLineItems(result.id, {
-        includesBookkeeping: includesBookkeeping ?? true,
-        includesTaas: includesTaas ?? false,
-        includesPayroll: includesPayroll ?? false,
-        includesAP: includesAP ?? false,
-        includesAR: includesAR ?? false,
-        includesAgentOfService: includesAgentOfService ?? false,
-        includesCfoAdvisory: includesCfoAdvisory ?? false,
-        cleanupProjectFee: cleanupProjectFee || 0,
-        priorYearFilingsFee: priorYearFilingsFee || 0,
-        includesFpaBuild: includesFpaBuild ?? false,
-        fpaServiceFee: fpaServiceFee || 0,
-        payrollFee: payrollFee || 0,
-        apFee: apFee || 0,
-        arFee: arFee || 0,
-        agentOfServiceFee: agentOfServiceFee || 0,
-        cfoAdvisoryFee: cfoAdvisoryFee || 0,
-        apServiceTier: quoteData?.apServiceTier,
-        arServiceTier: quoteData?.arServiceTier,
-        serviceTier: quoteData?.serviceTier,
-        serviceTierFee: calculatedServiceTierFee || 0,
-        qboSubscription: quoteData?.qboSubscription ?? false,
-        qboFee: quoteData?.qboFee || (quoteData?.qboSubscription ? 60 : 0),
-        bookkeepingMonthlyFee: calculatedBookkeepingMonthlyFee || 0,
-        taasMonthlyFee: calculatedTaasMonthlyFee || 0,
-        monthlyFee,
-        setupFee,
-        bookkeepingSetupFee,
+        includesBookkeeping: config.includesBookkeeping ?? true,
+        includesTaas: config.includesTaas ?? false,
+        includesPayroll: config.includesPayroll ?? false,
+        includesAP: config.includesAP ?? false,
+        includesAR: config.includesAR ?? false,
+        includesAgentOfService: config.includesAgentOfService ?? false,
+        includesCfoAdvisory: config.includesCfoAdvisory ?? false,
+        cleanupProjectFee: config.cleanupProjectFee || 0,
+        priorYearFilingsFee: config.priorYearFilingsFee || 0,
+        includesFpaBuild: config.includesFpaBuild ?? false,
+        fpaServiceFee: config.fpaServiceFee || 0,
+        payrollFee: config.payrollFee || 0,
+        apFee: config.apFee || 0,
+        arFee: config.arFee || 0,
+        agentOfServiceFee: config.agentOfServiceFee || 0,
+        cfoAdvisoryFee: config.cfoAdvisoryFee || 0,
+        apServiceTier: config.quoteData?.apServiceTier,
+        arServiceTier: config.quoteData?.arServiceTier,
+        serviceTier: config.quoteData?.serviceTier,
+        serviceTierFee: config.calculatedServiceTierFee || 0,
+        qboSubscription: config.quoteData?.qboSubscription ?? false,
+        qboFee: config.quoteData?.qboFee || (config.quoteData?.qboSubscription ? 60 : 0),
+        bookkeepingMonthlyFee: config.calculatedBookkeepingMonthlyFee || 0,
+        taasMonthlyFee: config.calculatedTaasMonthlyFee || 0,
+        monthlyFee: config.monthlyFee,
+        setupFee: config.oneTimeFees,
+        bookkeepingSetupFee: config.bookkeepingSetupFee,
       });
     } catch {
       // quote created without line items is acceptable
@@ -747,149 +670,57 @@ export function createQuotesService(
     return { id: result.id, title: quoteName };
   }
 
-  async function updateQuote(
-    quoteId: string,
-    dealId: string | undefined,
-    companyName: string,
-    monthlyFee: number,
-    setupFee: number,
-    userEmail: string,
-    firstName: string,
-    lastName: string,
-    includesBookkeeping?: boolean,
-    includesTaas?: boolean,
-    taasMonthlyFee?: number,
-    taasPriorYearsFee?: number,
-    bookkeepingMonthlyFee?: number,
-    bookkeepingSetupFee?: number,
-    quoteData?: any,
-    serviceTier?: string,
-    includesPayroll?: boolean,
-    payrollFee?: number,
-    includesAP?: boolean,
-    apFee?: number,
-    includesAR?: boolean,
-    arFee?: number,
-    includesAgentOfService?: boolean,
-    agentOfServiceFee?: number,
-    includesCfoAdvisory?: boolean,
-    cfoAdvisoryFee?: number,
-    cleanupProjectFee?: number,
-    priorYearFilingsFee?: number,
-    includesFpaBuild?: boolean,
-    fpaServiceFee?: number,
-    calculatedBookkeepingMonthlyFee?: number,
-    calculatedTaasMonthlyFee?: number,
-    calculatedServiceTierFee?: number,
-  ): Promise<boolean> {
-    const check = await request(`/crm/v3/objects/quotes/${quoteId}`, {
+  /**
+   * Update an existing HubSpot quote using typed configuration
+   * @param config - Update quote configuration object
+   * @returns True if update succeeded, false if quote is expired
+   */
+  async function updateQuote(config: UpdateQuoteConfig): Promise<boolean> {
+    const check = await request(`/crm/v3/objects/quotes/${config.quoteId}`, {
       method: "GET",
     });
     if (!check || check.properties?.hs_status === "EXPIRED") return false;
 
-    const existingItems = await fetchExistingLineItems(quoteId);
-    const requiredServices: Array<{ price: number; productId: string }> = [];
+    const existingItems = await fetchExistingLineItems(config.quoteId);
 
-    if (
-      includesBookkeeping &&
-      bookkeepingMonthlyFee &&
-      bookkeepingMonthlyFee > 0
-    ) {
-      requiredServices.push({
-        price: bookkeepingMonthlyFee,
-        productId: PRODUCT.MONTHLY_BOOKKEEPING,
-      });
-    }
-    if (includesBookkeeping && bookkeepingSetupFee && bookkeepingSetupFee > 0) {
-      requiredServices.push({
-        price: bookkeepingSetupFee,
-        productId: PRODUCT.MONTHLY_BOOKKEEPING_SETUP,
-      });
-    }
-    if (includesTaas && taasMonthlyFee && taasMonthlyFee > 0) {
-      requiredServices.push({ price: taasMonthlyFee, productId: PRODUCT.TAAS });
-    }
-    if (taasPriorYearsFee && taasPriorYearsFee > 0) {
-      requiredServices.push({
-        price: taasPriorYearsFee,
-        productId: PRODUCT.PRIOR_YEAR_FILINGS,
-      });
-    }
-    if (cleanupProjectFee && cleanupProjectFee > 0) {
-      requiredServices.push({
-        price: cleanupProjectFee,
-        productId: PRODUCT.CLEANUP_PROJECT,
-      });
-    }
-    if (includesPayroll && payrollFee && payrollFee > 0) {
-      requiredServices.push({
-        price: payrollFee,
-        productId: PRODUCT.PAYROLL_SERVICE,
-      });
-    }
-    if (includesAP && apFee && apFee > 0) {
-      const apProductId =
-        quoteData?.apServiceTier === "advanced"
-          ? PRODUCT.AP_ADVANCED_SERVICE
-          : PRODUCT.AP_LITE_SERVICE;
-      requiredServices.push({ price: apFee, productId: apProductId });
-    }
-    if (includesAR && arFee && arFee > 0) {
-      const arProductId =
-        quoteData?.arServiceTier === "advanced"
-          ? PRODUCT.AR_ADVANCED_SERVICE
-          : PRODUCT.AR_LITE_SERVICE;
-      requiredServices.push({ price: arFee, productId: arProductId });
-    }
-    if (includesAgentOfService && agentOfServiceFee && agentOfServiceFee > 0) {
-      requiredServices.push({
-        price: agentOfServiceFee,
-        productId: PRODUCT.AGENT_OF_SERVICE,
-      });
-    }
-    if (includesCfoAdvisory && cfoAdvisoryFee && cfoAdvisoryFee > 0) {
-      requiredServices.push({
-        price: cfoAdvisoryFee,
-        productId: PRODUCT.CFO_ADVISORY_DEPOSIT,
-      });
-    }
-    // Note: No FPA Build product in HUBSPOT_PRODUCT_IDS; omit line item and keep terms/assumptions only
+    // Use the fee mapping layer to generate required line items
+    const lineItems = mapFeesToLineItems(config, PRODUCT);
 
-    // Service tier products disabled
-
-    if (quoteData?.qboSubscription) {
-      const qboPrice = quoteData?.qboFee || 60;
-      requiredServices.push({
-        price: qboPrice,
-        productId: PRODUCT.MANAGED_QBO_SUBSCRIPTION,
-      });
+    // Validate line items
+    const validation = validateLineItems(config, lineItems);
+    if (!validation.valid) {
+      console.warn("[HubSpot] Line item validation warnings:", validation.warnings);
     }
+
+    // Convert to the format expected by analyzeLineItemChanges
+    const requiredServices = lineItems.map((item) => ({
+      price: item.price,
+      productId: item.productId,
+    }));
 
     const changes = analyzeLineItemChanges(existingItems, requiredServices);
-    const updateSuccess = await executeLineItemChanges(quoteId, changes);
+    const updateSuccess = await executeLineItemChanges(config.quoteId, changes);
     if (!updateSuccess) return false;
 
     let serviceType = "Services";
-    if (includesBookkeeping && includesTaas) serviceType = "Bookkeeping + TaaS";
-    else if (includesTaas) serviceType = "TaaS";
+    if (config.includesBookkeeping && config.includesTaas) serviceType = "Bookkeeping + TaaS";
+    else if (config.includesTaas) serviceType = "TaaS";
     else serviceType = "Bookkeeping Services";
 
-    const updatedTitle = `${companyName} - ${serviceType} Quote`;
+    const updatedTitle = `${config.companyName} - ${serviceType} Quote`;
 
-    const scopeAssumptions = quoteData
-      ? generateScopeAssumptions(quoteData)
-      : "";
+    const scopeAssumptions = config.quoteData ? generateScopeAssumptions(config.quoteData) : "";
     const paymentTerms = generatePaymentTerms(
-      !!includesBookkeeping,
-      !!includesTaas,
-      !!quoteData?.includesPayroll,
-      !!quoteData?.includesAP,
-      !!quoteData?.includesAR,
-      !!quoteData?.includesAgentOfService,
-      !!quoteData?.includesCfoAdvisory,
-      (quoteData?.cleanupProjectFee || 0) > 0,
-      (quoteData?.priorYearFilingsFee || 0) > 0,
-      !!quoteData?.includesFpaBuild,
+      !!config.includesBookkeeping,
+      !!config.includesTaas,
+      !!config.quoteData?.includesPayroll,
+      !!config.quoteData?.includesAP,
+      !!config.quoteData?.includesAR,
+      !!config.quoteData?.includesAgentOfService,
+      !!config.quoteData?.includesCfoAdvisory,
+      (config.quoteData?.cleanupProjectFee || 0) > 0,
+      (config.quoteData?.priorYearFilingsFee || 0) > 0,
+      !!config.quoteData?.includesFpaBuild
     );
 
     const updateBody = {
@@ -900,22 +731,22 @@ export function createQuotesService(
       },
     };
 
-    await request(`/crm/v3/objects/quotes/${quoteId}`, {
+    await request(`/crm/v3/objects/quotes/${config.quoteId}`, {
       method: "PATCH",
       body: JSON.stringify(updateBody),
     });
 
-    if (dealId && updateSuccess) {
+    if (config.dealId && updateSuccess) {
       try {
         await deps.updateDeal(
-          dealId,
-          monthlyFee,
-          setupFee,
+          config.dealId,
+          config.monthlyFee,
+          config.oneTimeFees,
           undefined,
-          includesBookkeeping,
-          includesTaas,
-          serviceTier,
-          quoteData,
+          config.includesBookkeeping,
+          config.includesTaas,
+          config.serviceTier,
+          config.quoteData
         );
       } catch {
         // ignore deal update failure

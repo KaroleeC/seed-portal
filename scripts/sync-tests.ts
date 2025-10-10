@@ -58,12 +58,7 @@ async function testCreatePath() {
     title: "Test Quote",
   });
 
-  const result = await syncQuoteToHubSpot(
-    101,
-    "create",
-    "owner@example.com",
-    svc as any,
-  );
+  const result = await syncQuoteToHubSpot(101, "create", "owner@example.com", svc as any);
   console.log("Result:", result);
 
   assert(result.success === true, "create should succeed");
@@ -71,7 +66,7 @@ async function testCreatePath() {
   assert(result.hubspotQuoteId === "quote-1", "quote id should be quote-1");
   assert(
     updatedPayload && updatedPayload.hubspotQuoteId === "quote-1",
-    "storage.updateQuote should persist IDs",
+    "storage.updateQuote should persist IDs"
   );
 
   // restore
@@ -123,12 +118,7 @@ async function testUpdatePath() {
   });
   (svc as any).updateQuote = async () => true;
 
-  const result = await syncQuoteToHubSpot(
-    202,
-    "update",
-    "owner@example.com",
-    svc as any,
-  );
+  const result = await syncQuoteToHubSpot(202, "update", "owner@example.com", svc as any);
   console.log("Result:", result);
 
   assert(result.success === true, "update should succeed");

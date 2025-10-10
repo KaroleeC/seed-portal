@@ -23,8 +23,8 @@ export class ErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="p-4 rounded-md border bg-destructive/10 text-destructive text-sm">
-          Something went wrong in this section. Please try a different selection
-          or refresh. The error was logged to console.
+          Something went wrong in this section. Please try a different selection or refresh. The
+          error was logged to console.
         </div>
       );
     }

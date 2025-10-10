@@ -5,7 +5,7 @@
  */
 
 import React from "react";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -21,7 +21,7 @@ import {
   Scale,
 } from "lucide-react";
 
-import {
+import type {
   QuoteFormData,
   PricingCalculationResult,
   ServiceCardProps,
@@ -64,15 +64,9 @@ const ServiceCard: React.FC<
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Checkbox
-              checked={isSelected}
-              onCheckedChange={onToggle}
-              className="mt-1"
-            />
+            <Checkbox checked={isSelected} onCheckedChange={onToggle} className="mt-1" />
             <div className="flex items-center gap-2">
-              {IconComponent && (
-                <IconComponent className="w-5 h-5 text-blue-600" />
-              )}
+              {IconComponent && <IconComponent className="w-5 h-5 text-blue-600" />}
               <CardTitle className="text-lg">{title}</CardTitle>
             </div>
           </div>
@@ -80,9 +74,7 @@ const ServiceCard: React.FC<
             <div className="font-bold text-lg text-blue-700">
               {fee > 0 ? `$${fee.toLocaleString()}` : "Included"}
             </div>
-            <div className="text-xs text-gray-500">
-              {isMonthly ? "per month" : "one-time"}
-            </div>
+            <div className="text-xs text-gray-500">{isMonthly ? "per month" : "one-time"}</div>
           </div>
         </div>
         <p className="text-sm text-gray-600 ml-6">{description}</p>
@@ -90,9 +82,7 @@ const ServiceCard: React.FC<
 
       {children && isSelected && (
         <CardContent className="pt-0">
-          <div className="ml-6 p-4 bg-white/50 rounded-lg border border-gray-100">
-            {children}
-          </div>
+          <div className="ml-6 p-4 bg-white/50 rounded-lg border border-gray-100">{children}</div>
         </CardContent>
       )}
     </Card>
@@ -124,9 +114,7 @@ export const ServiceSelectionCards: React.FC<ServiceSelectionCardsProps> = ({
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">
-        Service Selection
-      </h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-6">Service Selection</h2>
 
       <div className="space-y-4">
         {/* Monthly Bookkeeping */}
@@ -139,9 +127,7 @@ export const ServiceSelectionCards: React.FC<ServiceSelectionCardsProps> = ({
           gradient="from-green-50 to-emerald-50"
           borderColor="border-green-200"
           isSelected={!!watchedValues.serviceMonthlyBookkeeping}
-          onToggle={(checked) =>
-            form.setValue("serviceMonthlyBookkeeping", checked)
-          }
+          onToggle={(checked) => form.setValue("serviceMonthlyBookkeeping", checked)}
         />
 
         {/* TaaS Monthly */}
@@ -167,9 +153,7 @@ export const ServiceSelectionCards: React.FC<ServiceSelectionCardsProps> = ({
           gradient="from-purple-50 to-violet-50"
           borderColor="border-purple-200"
           isSelected={!!watchedValues.serviceCleanupProjects}
-          onToggle={(checked) =>
-            form.setValue("serviceCleanupProjects", checked)
-          }
+          onToggle={(checked) => form.setValue("serviceCleanupProjects", checked)}
         />
 
         {/* Prior Year Filings */}
@@ -182,9 +166,7 @@ export const ServiceSelectionCards: React.FC<ServiceSelectionCardsProps> = ({
           gradient="from-amber-50 to-orange-50"
           borderColor="border-amber-200"
           isSelected={!!watchedValues.servicePriorYearFilings}
-          onToggle={(checked) =>
-            form.setValue("servicePriorYearFilings", checked)
-          }
+          onToggle={(checked) => form.setValue("servicePriorYearFilings", checked)}
         />
 
         {/* CFO Advisory */}
@@ -210,9 +192,7 @@ export const ServiceSelectionCards: React.FC<ServiceSelectionCardsProps> = ({
           gradient="from-blue-50 to-green-50"
           borderColor="border-blue-200"
           isSelected={!!watchedValues.servicePayrollService}
-          onToggle={(checked) =>
-            form.setValue("servicePayrollService", checked)
-          }
+          onToggle={(checked) => form.setValue("servicePayrollService", checked)}
         />
 
         {/* AP Service */}
@@ -251,9 +231,7 @@ export const ServiceSelectionCards: React.FC<ServiceSelectionCardsProps> = ({
           gradient="from-gray-50 to-slate-50"
           borderColor="border-gray-200"
           isSelected={!!watchedValues.serviceAgentOfService}
-          onToggle={(checked) =>
-            form.setValue("serviceAgentOfService", checked)
-          }
+          onToggle={(checked) => form.setValue("serviceAgentOfService", checked)}
         />
       </div>
     </div>

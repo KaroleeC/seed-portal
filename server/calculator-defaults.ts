@@ -76,14 +76,12 @@ export const DEFAULT_AGREEMENT_LINKS: Record<DbServiceKey, string | null> = {
   payroll: envLink("payroll") ?? STATIC_AGREEMENT_LINKS.payroll,
   ap: envLink("ap") ?? STATIC_AGREEMENT_LINKS.ap,
   ar: envLink("ar") ?? STATIC_AGREEMENT_LINKS.ar,
-  agent_of_service:
-    envLink("agent_of_service") ?? STATIC_AGREEMENT_LINKS.agent_of_service,
+  agent_of_service: envLink("agent_of_service") ?? STATIC_AGREEMENT_LINKS.agent_of_service,
   cfo_advisory: envLink("cfo_advisory") ?? STATIC_AGREEMENT_LINKS.cfo_advisory,
 };
 
 // Single, global MSA link used across all services in payment terms
-export const DEFAULT_MSA_LINK =
-  "https://seedfinancial.io/legal/msa-v-2025-07-01";
+export const DEFAULT_MSA_LINK = "https://seedfinancial.io/legal/msa-v-2025-07-01";
 
 function toTitle(dbKey: DbServiceKey): string {
   switch (dbKey) {
@@ -133,9 +131,7 @@ export function getDefaultSowTemplate(service: DbServiceKey): string {
   return header + common + (details[service] || "");
 }
 
-export function computeDefaultItem(
-  service: DbServiceKey,
-): CalculatorServiceContent {
+export function computeDefaultItem(service: DbServiceKey): CalculatorServiceContent {
   return {
     id: 0 as any,
     service,

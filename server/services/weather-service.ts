@@ -26,7 +26,7 @@ export class WeatherService {
     try {
       // Simple health check - get weather for a known location
       const response = await fetch(
-        `${this.baseUrl}/forecast?latitude=40.7128&longitude=-74.0060&current=temperature_2m`,
+        `${this.baseUrl}/forecast?latitude=40.7128&longitude=-74.0060&current=temperature_2m`
       );
 
       if (!response.ok) {
@@ -51,7 +51,7 @@ export class WeatherService {
   async getCurrentWeather(
     latitude: number,
     longitude: number,
-    location: string,
+    location: string
   ): Promise<WeatherData> {
     const cacheKey = `weather:${latitude}:${longitude}`;
 
@@ -66,7 +66,7 @@ export class WeatherService {
       logger.debug("Weather API call", { location, latitude, longitude });
 
       const response = await fetch(
-        `${this.baseUrl}/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`,
+        `${this.baseUrl}/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`
       );
 
       if (!response.ok) {

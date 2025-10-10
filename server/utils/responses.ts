@@ -5,12 +5,7 @@ export interface ErrorEnvelope {
   message: string;
 }
 
-export function sendOk<T = any>(
-  res: Response,
-  data?: T,
-  meta?: any,
-  legacy?: Record<string, any>,
-) {
+export function sendOk<T = any>(res: Response, data?: T, meta?: any, legacy?: Record<string, any>) {
   const body: any = { success: true };
   if (typeof data !== "undefined") body.data = data;
   if (typeof meta !== "undefined") body.meta = meta;
@@ -23,7 +18,7 @@ export function sendError(
   code: string | undefined,
   message: string,
   status = 500,
-  legacy?: Record<string, any>,
+  legacy?: Record<string, any>
 ) {
   const body: any = { success: false, error: { message } as ErrorEnvelope };
   if (code) body.error.code = code;

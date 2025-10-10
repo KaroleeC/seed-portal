@@ -1,0 +1,39 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  resource: "commission"
+  rules:
+    # Admin can do everything with commissions
+    - actions: ["*"]
+      effect: EFFECT_ALLOW
+      roles: ["admin"]
+
+    # Sales managers can sync and view commissions for their department
+    - actions: ["sync", "view", "approve"]
+      effect: EFFECT_ALLOW
+      roles: ["sales_manager"]
+      condition:
+        match:
+          any:
+            of:
+              - expr: 'has(resource.attr.departmentId) && resource.attr.departmentId in principal.attr.managerOfDepartmentIds'
+              - expr: 'has(resource.attr.ownerId) && string(resource.attr.ownerId) == principal.id'
+
+    # Finance can view and approve commissions and payouts
+    - actions: ["view", "approve"]
+      effect: EFFECT_ALLOW
+      roles: ["finance"]
+
+    # Sales reps can only view their own commissions
+    - actions: ["view"]
+      effect: EFFECT_ALLOW
+      roles: ["sales_rep"]
+      condition:
+        match:
+          expr: 'has(resource.attr.ownerId) && string(resource.attr.ownerId) == principal.id'
+
+    # Service roles have no commission access by default
+    - actions: ["*"]
+      effect: EFFECT_DENY
+      roles: ["service_manager", "service_rep", "viewer"]

@@ -1,4 +1,6 @@
-import { Request, Response, NextFunction } from "express";
+/* eslint-disable no-param-reassign */
+// Middleware intentionally mutates req/res objects
+import type { Request, Response, NextFunction } from "express";
 import compression from "compression";
 import { promises as fs } from "fs";
 import path from "path";
@@ -113,17 +115,11 @@ class AssetOptimizationService {
 }
 
 // Middleware for setting optimal cache headers
-export function setCacheHeaders(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export function setCacheHeaders(req: Request, res: Response, next: NextFunction) {
   const url = req.url;
 
   // Static assets with hash in filename - cache aggressively
-  if (
-    url.match(/\.[a-f0-9]{8,}\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/)
-  ) {
+  if (url.match(/\.[a-f0-9]{8,}\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/)) {
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
   }
   // Regular static assets - cache for 1 day
@@ -147,11 +143,7 @@ export function setCacheHeaders(
 }
 
 // Middleware for serving pre-compressed assets
-export function servePrecompressed(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export function servePrecompressed(req: Request, res: Response, next: NextFunction) {
   const acceptEncoding = req.headers["accept-encoding"] || "";
   const url = req.url;
 
@@ -164,18 +156,13 @@ export function servePrecompressed(
 
   // Try brotli first if supported
   if (acceptEncoding.includes("br")) {
-    const brPath = path.join(
-      process.cwd(),
-      "client",
-      "dist",
-      originalUrl + ".br",
-    );
+    const brPath = path.join(process.cwd(), "client", "dist", `${originalUrl}.br`);
 
     fs.access(brPath)
       .then(() => {
         res.setHeader("Content-Encoding", "br");
         res.setHeader("Content-Type", getContentType(originalUrl));
-        req.url = originalUrl + ".br";
+        req.url = `${originalUrl}.br`;
         next();
       })
       .catch(() => {
@@ -189,18 +176,13 @@ export function servePrecompressed(
   }
 
   function tryGzip() {
-    const gzPath = path.join(
-      process.cwd(),
-      "client",
-      "dist",
-      originalUrl + ".gz",
-    );
+    const gzPath = path.join(process.cwd(), "client", "dist", `${originalUrl}.gz`);
 
     fs.access(gzPath)
       .then(() => {
         res.setHeader("Content-Encoding", "gzip");
         res.setHeader("Content-Type", getContentType(originalUrl));
-        req.url = originalUrl + ".gz";
+        req.url = `${originalUrl}.gz`;
         next();
       })
       .catch(() => {

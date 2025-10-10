@@ -1,37 +1,23 @@
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import {
-  FileText,
-  Users,
-  CreditCard,
-  CheckCircle,
-  Clock,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { FileText, Users, CreditCard, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 
 interface ARSectionProps {
   form: UseFormReturn<QuoteFormFields>;
 }
 
 export default function ARSection({ form }: ARSectionProps) {
-  // Only show if AR service is selected
-  if (!form.watch("serviceArService")) return null;
-
   const [showCustomCustomerCount, setShowCustomCustomerCount] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
+
+  // Only show if AR service is selected
+  if (!form.watch("serviceArService")) return null;
 
   const customerInvoicesBands = [
     { value: "0-25", label: "0-25 invoices", description: "Small volume" },
@@ -90,10 +76,18 @@ export default function ARSection({ form }: ARSectionProps) {
   };
 
   return (
-    <KbCard className="p-6 mb-8">
+    <SurfaceCard className="p-6 mb-8">
       <div
+        role="button"
+        tabIndex={0}
         className="cursor-pointer select-none"
         onClick={() => setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
       >
         <div className="flex items-center justify-between group p-3 -m-3 rounded-lg transition-colors">
           <h3 className="text-xl font-semibold text-foreground">AR Service Details</h3>
@@ -111,195 +105,189 @@ export default function ARSection({ form }: ARSectionProps) {
 
       {isExpanded && (
         <div className="space-y-8 animate-in slide-in-from-top-2 duration-300">
-      {/* Customer Invoices Per Month */}
-      <div>
-        <FormField
-          control={form.control}
-          name="arCustomerInvoicesBand"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                Number of Customer Invoices Per Month
-              </FormLabel>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-                {customerInvoicesBands.map((band) => (
-                  <Card
-                    key={band.value}
-                    className={`cursor-pointer transition-all duration-200 border-2 shadow-sm ${
-                      field.value === band.value
-                        ? "kb-select kb-select-active"
-                        : "kb-select kb-select-hover"
-                    }`}
-                    onClick={() => field.onChange(band.value)}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <div className="text-xl font-semibold text-foreground mb-1">
-                        {band.label}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {band.description}
-                      </div>
-                      {field.value === band.value && (
-                        <Badge variant="default" className="mt-2">
-                          Selected
-                        </Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+          {/* Customer Invoices Per Month */}
+          <div>
+            <FormField
+              control={form.control}
+              name="arCustomerInvoicesBand"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    Number of Customer Invoices Per Month
+                  </FormLabel>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                    {customerInvoicesBands.map((band) => (
+                      <Card
+                        key={band.value}
+                        className={`cursor-pointer transition-all duration-200 border-2 shadow-sm ${
+                          field.value === band.value
+                            ? "kb-select kb-select-active"
+                            : "kb-select kb-select-hover"
+                        }`}
+                        onClick={() => field.onChange(band.value)}
+                      >
+                        <CardContent className="p-4 text-center">
+                          <div className="text-xl font-semibold text-foreground mb-1">
+                            {band.label}
+                          </div>
+                          <div className="text-sm text-muted-foreground">{band.description}</div>
+                          {field.value === band.value && (
+                            <Badge variant="default" className="mt-2">
+                              Selected
+                            </Badge>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-      {/* Number of Customers/Clients */}
-      <div>
-        <FormField
-          control={form.control}
-          name="arCustomerCount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Users className="w-5 h-5 text-purple-600" />
-                Number of Customers / Clients
-                <span className="text-sm font-normal text-muted-foreground">
-                  (unique customers, not invoices)
-                </span>
-              </FormLabel>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mt-4">
-                {customerCounts.map((count) => (
-                  <Card
-                    key={count.value}
-                    className={`cursor-pointer transition-all duration-200 border-2 shadow-sm ${
-                      field.value === count.value
-                        ? "kb-select kb-select-active"
-                        : "kb-select kb-select-hover"
-                    }`}
-                    onClick={() => handleCustomerCountChange(count.value)}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-foreground mb-1">
-                        {count.label}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {count.description}
-                      </div>
-                      {field.value === count.value && (
-                        <Badge variant="default" className="mt-2">
-                          Selected
-                        </Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          {/* Number of Customers/Clients */}
+          <div>
+            <FormField
+              control={form.control}
+              name="arCustomerCount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <Users className="w-5 h-5 text-purple-600" />
+                    Number of Customers / Clients
+                    <span className="text-sm font-normal text-muted-foreground">
+                      (unique customers, not invoices)
+                    </span>
+                  </FormLabel>
+                  <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mt-4">
+                    {customerCounts.map((count) => (
+                      <Card
+                        key={count.value}
+                        className={`cursor-pointer transition-all duration-200 border-2 shadow-sm ${
+                          field.value === count.value
+                            ? "kb-select kb-select-active"
+                            : "kb-select kb-select-hover"
+                        }`}
+                        onClick={() => handleCustomerCountChange(count.value)}
+                      >
+                        <CardContent className="p-4 text-center">
+                          <div className="text-2xl font-bold text-foreground mb-1">
+                            {count.label}
+                          </div>
+                          <div className="text-xs text-muted-foreground">{count.description}</div>
+                          {field.value === count.value && (
+                            <Badge variant="default" className="mt-2">
+                              Selected
+                            </Badge>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        {/* Custom Customer Count Input */}
-        {showCustomCustomerCount && (
-          <FormField
-            control={form.control}
-            name="customArCustomerCount"
-            render={({ field }) => (
-              <FormItem className="mt-4">
-                <FormLabel className="text-sm font-medium text-gray-700">
-                  Exact Number of Customers/Clients
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="Enter exact number of customers"
-                    min="10"
-                    className="max-w-xs"
-                    {...field}
-                    value={field.value || ""}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value ? parseInt(e.target.value) : null,
-                      )
-                    }
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            {/* Custom Customer Count Input */}
+            {showCustomCustomerCount && (
+              <FormField
+                control={form.control}
+                name="customArCustomerCount"
+                render={({ field }) => (
+                  <FormItem className="mt-4">
+                    <FormLabel className="text-sm font-medium text-gray-700">
+                      Exact Number of Customers/Clients
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Enter exact number of customers"
+                        min="10"
+                        className="max-w-xs"
+                        {...field}
+                        value={field.value || ""}
+                        onChange={(e) =>
+                          field.onChange(e.target.value ? parseInt(e.target.value) : null)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
-          />
-        )}
-      </div>
+          </div>
 
-      {/* Service Tier Selection */}
-      <div>
-        <FormField
-          control={form.control}
-          name="arServiceTier"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-indigo-600" />
-                Select AR Service Level
-              </FormLabel>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
-                {serviceTiers.map((tier) => {
-                  const IconComponent = tier.icon;
-                  return (
-                    <Card
-                      key={tier.value}
-                      className={`cursor-pointer transition-all duration-200 border-2 shadow-sm ${
-                        field.value === tier.value
-                          ? "kb-select kb-select-active"
-                          : "kb-select kb-select-hover"
-                      }`}
-                      onClick={() => field.onChange(tier.value)}
-                    >
-                      <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2">
-                          <IconComponent className="w-6 h-6" />
-                          <span className="text-lg">{tier.title}</span>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <ul className="space-y-2">
-                          {tier.features.map((feature, index) => (
-                            <li
-                              key={index}
-                              className="flex items-start gap-2 text-sm text-muted-foreground"
-                            >
-                              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                              <span
-                                className={
-                                  feature.startsWith("Everything in Lite")
-                                    ? "font-semibold"
-                                    : ""
-                                }
-                              >
-                                {feature}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                        {field.value === tier.value && (
-                          <Badge variant="default" className="mt-4">
-                            Selected
-                          </Badge>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+          {/* Service Tier Selection */}
+          <div>
+            <FormField
+              control={form.control}
+              name="arServiceTier"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-indigo-600" />
+                    Select AR Service Level
+                  </FormLabel>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+                    {serviceTiers.map((tier) => {
+                      const IconComponent = tier.icon;
+                      return (
+                        <Card
+                          key={tier.value}
+                          className={`cursor-pointer transition-all duration-200 border-2 shadow-sm ${
+                            field.value === tier.value
+                              ? "kb-select kb-select-active"
+                              : "kb-select kb-select-hover"
+                          }`}
+                          onClick={() => field.onChange(tier.value)}
+                        >
+                          <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2">
+                              <IconComponent className="w-6 h-6" />
+                              <span className="text-lg">{tier.title}</span>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <ul className="space-y-2">
+                              {tier.features.map((feature, index) => (
+                                <li
+                                  key={index}
+                                  className="flex items-start gap-2 text-sm text-muted-foreground"
+                                >
+                                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                  <span
+                                    className={
+                                      feature.startsWith("Everything in Lite")
+                                        ? "font-semibold"
+                                        : ""
+                                    }
+                                  >
+                                    {feature}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                            {field.value === tier.value && (
+                              <Badge variant="default" className="mt-4">
+                                Selected
+                              </Badge>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
       )}
-    </KbCard>
+    </SurfaceCard>
   );
 }

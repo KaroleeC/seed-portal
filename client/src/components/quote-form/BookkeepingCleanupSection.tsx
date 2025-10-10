@@ -1,33 +1,23 @@
-import { Control, UseFormReturn } from "react-hook-form";
+import type { Control, UseFormReturn } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-} from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 
 interface BookkeepingCleanupSectionProps {
   control: Control<QuoteFormFields>;
   form: UseFormReturn<QuoteFormFields>;
 }
 
-export function BookkeepingCleanupSection({
-  control,
-  form,
-}: BookkeepingCleanupSectionProps) {
+export function BookkeepingCleanupSection({ control, form }: BookkeepingCleanupSectionProps) {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth(); // 0-11
 
   // Hide current year (2025) if both monthly bookkeeping and cleanup projects are selected
   // because current year cleanup is covered in the setup fee for monthly bookkeeping
   const isMonthlyBookkeepingSelected = form.watch("serviceMonthlyBookkeeping");
-  const startYear = isMonthlyBookkeepingSelected
-    ? currentYear - 1
-    : currentYear;
+  const startYear = isMonthlyBookkeepingSelected ? currentYear - 1 : currentYear;
   const years = Array.from({ length: 5 }, (_, i) => startYear - i); // Conditional year range
 
   const months = [
@@ -71,13 +61,10 @@ export function BookkeepingCleanupSection({
     if (currentSelected.includes(periodString)) {
       form.setValue(
         "cleanupPeriods",
-        currentSelected.filter((p: string) => p !== periodString),
+        currentSelected.filter((p: string) => p !== periodString)
       );
     } else {
-      form.setValue(
-        "cleanupPeriods",
-        [...currentSelected, periodString].sort(),
-      );
+      form.setValue("cleanupPeriods", [...currentSelected, periodString].sort());
     }
 
     // Update cleanupMonths count for pricing calculations
@@ -99,9 +86,7 @@ export function BookkeepingCleanupSection({
       .map((month) => `${year}-${String(month.value + 1).padStart(2, "0")}`);
 
     // Remove existing periods for this year and add all new ones
-    const otherYearPeriods = currentSelected.filter(
-      (p: string) => !p.startsWith(`${year}-`),
-    );
+    const otherYearPeriods = currentSelected.filter((p: string) => !p.startsWith(`${year}-`));
     const newSelected = [...otherYearPeriods, ...yearPeriods].sort();
 
     form.setValue("cleanupPeriods", newSelected);
@@ -111,9 +96,7 @@ export function BookkeepingCleanupSection({
 
   const deselectAllMonthsForYear = (year: number) => {
     const currentSelected = form.getValues("cleanupPeriods") || [];
-    const newSelected = currentSelected.filter(
-      (p: string) => !p.startsWith(`${year}-`),
-    );
+    const newSelected = currentSelected.filter((p: string) => !p.startsWith(`${year}-`));
 
     form.setValue("cleanupPeriods", newSelected);
     form.setValue("cleanupMonths", newSelected.length);
@@ -126,8 +109,7 @@ export function BookkeepingCleanupSection({
   };
 
   const getSelectedMonthsForYear = (year: number) => {
-    return selectedPeriods.filter((p: string) => p.startsWith(`${year}-`))
-      .length;
+    return selectedPeriods.filter((p: string) => p.startsWith(`${year}-`)).length;
   };
 
   const isMonthSelectable = (year: number, month: number) => {
@@ -144,19 +126,14 @@ export function BookkeepingCleanupSection({
   }
 
   return (
-    <KbCard className="p-6 mb-8">
-      <div
-        className="cursor-pointer select-none"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
+    <SurfaceCard className="p-6 mb-8">
+      <div className="cursor-pointer select-none" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-center justify-between group p-3 -m-3 rounded-lg transition-colors">
           <h3 className="text-xl font-semibold text-foreground">
             Bookkeeping Cleanup Project Details
           </h3>
           <div className="flex items-center gap-2 text-muted-foreground">
-            <span className="text-sm font-medium">
-              {isExpanded ? "Collapse" : "Expand"}
-            </span>
+            <span className="text-sm font-medium">{isExpanded ? "Collapse" : "Expand"}</span>
             {isExpanded ? (
               <ChevronUp className="h-5 w-5 transition-transform" />
             ) : (
@@ -178,13 +155,11 @@ export function BookkeepingCleanupSection({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base font-medium text-gray-700">
-                    Select Cleanup Periods{" "}
-                    <span className="text-red-500">*</span>
+                    Select Cleanup Periods <span className="text-red-500">*</span>
                   </FormLabel>
                   {isMonthlyBookkeepingSelected && (
                     <p className="text-sm text-blue-600 font-medium mb-6">
-                      Note: {currentYear} cleanup is included in your monthly
-                      bookkeeping setup fee.
+                      Note: {currentYear} cleanup is included in your monthly bookkeeping setup fee.
                     </p>
                   )}
 
@@ -192,19 +167,14 @@ export function BookkeepingCleanupSection({
                     <div className="space-y-6">
                       {years.map((year) => {
                         const isYearExpanded = expandedYears[String(year)] === true; // Only expanded if explicitly set to true
-                        const selectedMonthsCount =
-                          getSelectedMonthsForYear(year);
+                        const selectedMonthsCount = getSelectedMonthsForYear(year);
                         const availableMonths = months.filter((month) =>
-                          isMonthSelectable(year, month.value),
+                          isMonthSelectable(year, month.value)
                         );
-                        const allMonthsSelected =
-                          selectedMonthsCount === availableMonths.length;
+                        const allMonthsSelected = selectedMonthsCount === availableMonths.length;
 
                         return (
-                          <div
-                            key={year}
-                            className="border rounded-lg overflow-hidden"
-                          >
+                          <div key={year} className="border rounded-lg overflow-hidden">
                             {/* Year Header */}
                             <div className="bg-muted p-4 border-b border">
                               <div className="flex items-center justify-between">
@@ -224,20 +194,17 @@ export function BookkeepingCleanupSection({
                                   {selectedMonthsCount > 0 && (
                                     <span className="bg-muted text-foreground px-2 py-1 rounded-full text-xs font-medium">
                                       {selectedMonthsCount} month
-                                      {selectedMonthsCount !== 1 ? "s" : ""} {""}
+                                      {selectedMonthsCount !== 1 ? "s" : ""}
                                       selected
                                     </span>
                                   )}
                                 </div>
                                 <div className="flex gap-2">
                                   {!allMonthsSelected &&
-                                    selectedMonthsCount <
-                                      availableMonths.length && (
+                                    selectedMonthsCount < availableMonths.length && (
                                       <button
                                         type="button"
-                                        onClick={() =>
-                                          selectAllMonthsForYear(year)
-                                        }
+                                        onClick={() => selectAllMonthsForYear(year)}
                                         className="text-sm text-primary hover:opacity-90 font-medium"
                                       >
                                         Select All
@@ -246,9 +213,7 @@ export function BookkeepingCleanupSection({
                                   {selectedMonthsCount > 0 && (
                                     <button
                                       type="button"
-                                      onClick={() =>
-                                        deselectAllMonthsForYear(year)
-                                      }
+                                      onClick={() => deselectAllMonthsForYear(year)}
                                       className="text-sm text-muted-foreground hover:text-foreground font-medium"
                                     >
                                       Clear All
@@ -263,22 +228,15 @@ export function BookkeepingCleanupSection({
                               <div className="p-4">
                                 <div className="grid grid-cols-6 gap-2">
                                   {months.map((month) => {
-                                    const isSelected = isPeriodSelected(
-                                      year,
-                                      month.value,
-                                    );
-                                    const isSelectable = isMonthSelectable(
-                                      year,
-                                      month.value,
-                                    );
+                                    const isSelected = isPeriodSelected(year, month.value);
+                                    const isSelectable = isMonthSelectable(year, month.value);
 
                                     return (
                                       <button
                                         key={month.value}
                                         type="button"
                                         onClick={() =>
-                                          isSelectable &&
-                                          togglePeriod(year, month.value)
+                                          isSelectable && togglePeriod(year, month.value)
                                         }
                                         disabled={!isSelectable}
                                         className={`p-3 border-2 rounded-lg text-center font-medium transition-all text-sm ${
@@ -289,14 +247,9 @@ export function BookkeepingCleanupSection({
                                               : "kb-select kb-select-hover text-muted-foreground"
                                         }`}
                                       >
-                                        <div className="font-bold">
-                                          {month.short}
-                                        </div>
+                                        <div className="font-bold">{month.short}</div>
                                         <div className="text-xs text-muted-foreground mt-1">
-                                          {String(month.value + 1).padStart(
-                                            2,
-                                            "0",
-                                          )}
+                                          {String(month.value + 1).padStart(2, "0")}
                                         </div>
                                       </button>
                                     );
@@ -305,8 +258,7 @@ export function BookkeepingCleanupSection({
 
                                 {year === currentYear && (
                                   <p className="text-xs text-gray-500 mt-3">
-                                    * Future months in {currentYear} are not
-                                    available for selection
+                                    * Future months in {currentYear} are not available for selection
                                   </p>
                                 )}
                               </div>
@@ -320,8 +272,7 @@ export function BookkeepingCleanupSection({
                         <div className="bg-blue-50 p-4 rounded-lg">
                           <div className="flex items-center justify-between">
                             <span className="font-medium text-blue-800">
-                              Total cleanup periods selected:{" "}
-                              {selectedPeriods.length}
+                              Total cleanup periods selected: {selectedPeriods.length}
                             </span>
                             <span className="text-sm text-blue-600">
                               This will determine your project scope and pricing
@@ -337,6 +288,6 @@ export function BookkeepingCleanupSection({
           </div>
         </div>
       )}
-    </KbCard>
+    </SurfaceCard>
   );
 }

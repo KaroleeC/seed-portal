@@ -1,0 +1,25 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  resource: "system"
+  rules:
+    # Admin can access all diagnostic endpoints
+    - actions: ["diagnostics.view", "diagnostics.manage"]
+      effect: EFFECT_ALLOW
+      roles: ["admin"]
+
+    # Finance can view diagnostics for financial oversight
+    - actions: ["diagnostics.view"]
+      effect: EFFECT_ALLOW
+      roles: ["finance"]
+
+    # Sales and service managers can view basic diagnostics
+    - actions: ["diagnostics.view"]
+      effect: EFFECT_ALLOW
+      roles: ["sales_manager", "service_manager"]
+
+    # All other roles denied diagnostic access
+    - actions: ["*"]
+      effect: EFFECT_DENY
+      roles: ["sales_rep", "service_rep", "viewer"]

@@ -28,14 +28,11 @@ export class GeocodingService {
     const startTime = Date.now();
     try {
       // Simple health check - geocode a known address
-      const response = await fetch(
-        `${this.baseUrl}/search?q=New York&format=json&limit=1`,
-        {
-          headers: {
-            "User-Agent": this.userAgent,
-          },
+      const response = await fetch(`${this.baseUrl}/search?q=New York&format=json&limit=1`, {
+        headers: {
+          "User-Agent": this.userAgent,
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -75,7 +72,7 @@ export class GeocodingService {
           headers: {
             "User-Agent": this.userAgent,
           },
-        },
+        }
       );
 
       if (!response.ok) {
@@ -103,10 +100,7 @@ export class GeocodingService {
     }
   }
 
-  async reverseGeocode(
-    latitude: number,
-    longitude: number,
-  ): Promise<GeocodingResult | null> {
+  async reverseGeocode(latitude: number, longitude: number): Promise<GeocodingResult | null> {
     const cacheKey = `geocoding:reverse:${latitude}:${longitude}`;
 
     try {
@@ -125,7 +119,7 @@ export class GeocodingService {
           headers: {
             "User-Agent": this.userAgent,
           },
-        },
+        }
       );
 
       if (!response.ok) {

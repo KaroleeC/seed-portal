@@ -15,10 +15,7 @@ export default function AssistantPage() {
     return user?.role === "admin" ? ("admin" as const) : ("sales" as const);
   }, [user?.defaultDashboard, user?.role]);
 
-  const initialMode =
-    persona === "service" || persona === "admin"
-      ? "support"
-      : ("sell" as const);
+  const initialMode = persona === "service" || persona === "admin" ? "support" : ("sell" as const);
   const allowBox = persona === "service" || persona === "admin";
 
   return (

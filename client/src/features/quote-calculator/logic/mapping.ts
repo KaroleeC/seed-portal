@@ -66,9 +66,7 @@ export function mapFormToQuotePayload(data: any, feeCalculation: any) {
     include1040s: data.include1040s ?? null,
     bookkeepingQuality: data.bookkeepingQuality || undefined,
     priorYearsUnfiled: data.priorYearsUnfiled ?? 0,
-    priorYearFilings: Array.isArray(data.priorYearFilings)
-      ? data.priorYearFilings
-      : [],
+    priorYearFilings: Array.isArray(data.priorYearFilings) ? data.priorYearFilings : [],
     qboSubscription: Boolean(data.qboSubscription),
 
     // Cleanup-related fields (used by pricing for bookkeeping projects)

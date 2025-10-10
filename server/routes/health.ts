@@ -19,17 +19,15 @@ router.get("/health", async (req, res) => {
     const status = healthResult.healthy ? 200 : 503;
 
     // Log unhealthy services to Sentry
-    Object.entries(healthResult.services).forEach(
-      ([serviceName, serviceHealth]) => {
-        if (serviceHealth.status !== "healthy") {
-          logger.error("Service unhealthy", {
-            service: serviceName,
-            status: serviceHealth.status,
-            message: serviceHealth.message,
-          });
-        }
-      },
-    );
+    Object.entries(healthResult.services).forEach(([serviceName, serviceHealth]) => {
+      if (serviceHealth.status !== "healthy") {
+        logger.error("Service unhealthy", {
+          service: serviceName,
+          status: serviceHealth.status,
+          message: serviceHealth.message,
+        });
+      }
+    });
 
     res.status(status).json({
       status: healthResult.healthy ? "healthy" : "unhealthy",

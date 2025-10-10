@@ -1,15 +1,11 @@
-import { createContext, ReactNode, useContext } from "react";
-import {
-  useQuery,
-  useMutation,
-  UseMutationResult,
-} from "@tanstack/react-query";
-import {
-  insertUserSchema,
-  User as SelectUser,
-  InsertUser,
-} from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import type { ReactNode } from "react";
+import { createContext, useContext, useEffect } from "react";
+import type { UseMutationResult } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import type { User as SelectUser } from "@shared/schema";
+import { getQueryFn, queryClient } from "../lib/queryClient";
+import { supabase } from "@/lib/supabaseClient";
+import { apiFetch } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 type AuthContextType = {
@@ -19,6 +15,7 @@ type AuthContextType = {
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
+  googleSignIn: () => Promise<void>;
 };
 
 type LoginData = {
@@ -44,6 +41,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
+  // Google OAuth sign-in via Supabase
+  const googleSignIn = async () => {
+    try {
+      const redirectTo = window.location.origin;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          queryParams: { hd: "seedfinancial.io" },
+        },
+      });
+      if (error) throw error;
+      // Supabase will redirect; onAuthStateChange will sync user on return
+    } catch (err: any) {
+      toast({
+        title: "Google sign-in failed",
+        description: err?.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Keep user state in sync with Supabase session changes
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (
+        event === "SIGNED_IN" ||
+        event === "SIGNED_OUT" ||
+        event === "TOKEN_REFRESHED" ||
+        event === "USER_UPDATED"
+      ) {
+        // Revalidate only the user endpoint to avoid excessive network churn
+        queryClient.invalidateQueries({ queryKey: ["/api/user"], exact: true });
+      }
+    });
+    return () => {
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       console.log("[useAuth] 🚀 Login mutation started with:", {
@@ -54,16 +91,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         timestamp: new Date().toISOString(),
       });
 
-      const result = await apiRequest("/api/login", {
-        method: "POST",
-        body: JSON.stringify(credentials),
-      });
+      // Handle email/password login via Supabase
+      if (credentials.email && credentials.password) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: credentials.email,
+          password: credentials.password,
+        });
 
-      console.log("[useAuth] ✅ Login mutation successful:", {
-        result,
-        timestamp: new Date().toISOString(),
-      });
-      return result;
+        if (error) {
+          console.error("[useAuth] ❌ Supabase login error:", error);
+          throw new Error(error.message || "Login failed");
+        }
+
+        if (!data.user) {
+          throw new Error("No user returned from Supabase");
+        }
+
+        console.log("[useAuth] ✅ Supabase authentication successful:", {
+          userId: data.user.id,
+          email: data.user.email,
+          timestamp: new Date().toISOString(),
+        });
+
+        // Fetch our app user data (middleware will create/link user if needed)
+        const appUser = await apiFetch<SelectUser>("GET", "/api/user");
+
+        console.log("[useAuth] ✅ App user fetched:", {
+          appUserId: appUser.id,
+          email: appUser.email,
+          timestamp: new Date().toISOString(),
+        });
+
+        return appUser;
+      }
+
+      // Handle Google OAuth credential (legacy - should use Supabase OAuth instead)
+      if (credentials.googleCredential) {
+        throw new Error(
+          "Google login is not supported in this flow. Please use the Google Sign-In button."
+        );
+      }
+
+      throw new Error("Please provide email and password");
     },
     onSuccess: async (user: SelectUser) => {
       console.log("[useAuth] 🎉 Login success callback triggered:", {
@@ -101,10 +170,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let description = errorMessage;
 
       // Provide specific error messages for common cases
-      if (errorMessage.includes("Invalid email or password")) {
+      if (
+        errorMessage.includes("Invalid login credentials") ||
+        errorMessage.includes("Invalid email or password")
+      ) {
         title = "Incorrect Password";
         description =
           "The password you entered is incorrect. If you don't know your password or need to reset it, please reach out to your administrator.";
+      } else if (errorMessage.includes("Email not confirmed")) {
+        title = "Email Not Verified";
+        description = "Please check your email and click the verification link before logging in.";
+      } else if (errorMessage.includes("@seedfinancial.io")) {
+        title = "Access Restricted";
+        description = "Only @seedfinancial.io email addresses are allowed.";
       }
 
       toast({
@@ -117,16 +195,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterData) => {
-      return await apiRequest("/api/register", {
-        method: "POST",
-        body: JSON.stringify(credentials),
+      console.log("[useAuth] 🚀 Registration started for:", credentials.email);
+
+      // Validate email domain
+      if (!credentials.email.endsWith("@seedfinancial.io")) {
+        throw new Error("Only @seedfinancial.io email addresses are allowed");
+      }
+
+      // Sign up with Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email: credentials.email,
+        password: credentials.password || "SeedAdmin1!", // Default password if not provided
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+          data: {
+            // Any additional user metadata
+          },
+        },
       });
+
+      if (error) {
+        console.error("[useAuth] ❌ Supabase registration error:", error);
+        throw new Error(error.message || "Registration failed");
+      }
+
+      if (!data.user) {
+        throw new Error("No user returned from Supabase");
+      }
+
+      console.log("[useAuth] ✅ Supabase user created:", {
+        userId: data.user.id,
+        email: data.user.email,
+        needsConfirmation: !data.user.email_confirmed_at,
+        timestamp: new Date().toISOString(),
+      });
+
+      // If email confirmation is required, user won't be logged in yet
+      if (!data.session) {
+        console.log("[useAuth] 📧 Email confirmation required");
+        // Return a placeholder user object
+        return {
+          email: credentials.email,
+          needsEmailConfirmation: true,
+        } as any;
+      }
+
+      // Fetch our app user data (middleware will create user on first request)
+      const appUser = await apiFetch<SelectUser>("GET", "/api/user");
+
+      console.log("[useAuth] ✅ App user created:", {
+        appUserId: appUser.id,
+        email: appUser.email,
+        timestamp: new Date().toISOString(),
+      });
+
+      return appUser;
     },
-    onSuccess: (user: SelectUser) => {
+    onSuccess: (user: SelectUser | any) => {
+      // Check if email confirmation is needed
+      if (user.needsEmailConfirmation) {
+        toast({
+          title: "Check your email",
+          description:
+            "We've sent you a confirmation email. Please click the link to verify your account.",
+          duration: 5000,
+        });
+        return;
+      }
+
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Account created!",
-        description: "Welcome to Seed Financial Quote Calculator.",
+        description: "Welcome to Seed Financial.",
       });
     },
     onError: (error: Error) => {
@@ -140,9 +280,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("/api/logout", {
-        method: "POST",
-      });
+      console.log("[useAuth] 🚪 Logout started");
+
+      // Sign out from Supabase (clears tokens client-side)
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("[useAuth] ❌ Supabase logout error:", error);
+        throw error;
+      }
+
+      console.log("[useAuth] ✅ Supabase logout successful");
     },
     onSuccess: () => {
       // Clear user-specific cached data on logout to prevent any cross-user data leakage
@@ -184,6 +332,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        googleSignIn,
       }}
     >
       {children}

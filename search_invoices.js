@@ -80,7 +80,7 @@ async function findInvoices() {
 
           if (response.results.length >= 3) {
             console.log(
-              `🎯 Found your data! ${search.name} appears to contain your invoice information.`,
+              `🎯 Found your data! ${search.name} appears to contain your invoice information.`
             );
 
             // Show the amounts for the first 3

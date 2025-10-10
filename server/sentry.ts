@@ -1,5 +1,7 @@
+/* eslint-disable no-param-reassign */
+// Sentry hooks intentionally mutate event/breadcrumb objects
 import * as Sentry from "@sentry/node";
-import { Express } from "express";
+import type { Express } from "express";
 import { logger } from "./logger";
 
 export function initializeSentry(app: Express): boolean {
@@ -44,10 +46,7 @@ export function initializeSentry(app: Express): boolean {
           }
 
           // Skip authentication failures (expected behavior)
-          if (
-            error instanceof Error &&
-            error.message?.includes("authentication failed")
-          ) {
+          if (error instanceof Error && error.message?.includes("authentication failed")) {
             return null;
           }
         }
@@ -112,11 +111,7 @@ export function sentryUserContext() {
 }
 
 // Helper to capture custom events
-export function captureMessage(
-  message: string,
-  level: Sentry.SeverityLevel = "info",
-  extra?: any,
-) {
+export function captureMessage(message: string, level: Sentry.SeverityLevel = "info", extra?: any) {
   logger.info({ extra }, `Sentry: ${message}`);
   Sentry.captureMessage(message, {
     level,

@@ -22,9 +22,9 @@ export function createBillingService(request: HubSpotRequestFn) {
               "hs_company_name",
               "recipient_company_name",
               "billing_contact_name",
-            ].join(","),
+            ].join(",")
           )}` +
-          `&associations=${encodeURIComponent(["line_items", "deals", "companies", "contacts"].join(","))}`,
+          `&associations=${encodeURIComponent(["line_items", "deals", "companies", "contacts"].join(","))}`
       );
       return Array.isArray(resp?.results) ? resp.results : [];
     } catch (error) {
@@ -36,7 +36,7 @@ export function createBillingService(request: HubSpotRequestFn) {
   async function getPaidInvoicesInPeriod(
     startDate: string,
     endDate: string,
-    salesRepHubspotId?: string,
+    salesRepHubspotId?: string
   ): Promise<any[]> {
     const cacheKey = `hs:invoices:paid:${startDate}:${endDate}:${salesRepHubspotId ?? "all"}`;
     return await cache.wrap(
@@ -90,7 +90,7 @@ export function createBillingService(request: HubSpotRequestFn) {
         });
         return searchResult?.results || [];
       },
-      { ttl: CacheTTL.FIFTEEN_MINUTES },
+      { ttl: CacheTTL.FIFTEEN_MINUTES }
     );
   }
 
@@ -101,34 +101,30 @@ export function createBillingService(request: HubSpotRequestFn) {
       cacheKey,
       async () => {
         const lineItemsResponse = await request(
-          `/crm/v4/objects/invoices/${invoiceId}/associations/line_items`,
+          `/crm/v4/objects/invoices/${invoiceId}/associations/line_items`
         );
         if (!lineItemsResponse?.results?.length) return [];
 
-        const lineItemIds = lineItemsResponse.results.map(
-          (assoc: any) => assoc.toObjectId,
-        );
+        const lineItemIds = lineItemsResponse.results.map((assoc: any) => assoc.toObjectId);
         const lineItemDetails = await Promise.all(
           lineItemIds.map(async (lineItemId: string) => {
             try {
               return await request(
-                `/crm/v3/objects/line_items/${lineItemId}?properties=name,description,price,quantity,amount,hs_recurring_billing_period,hs_product_id`,
+                `/crm/v3/objects/line_items/${lineItemId}?properties=name,description,price,quantity,amount,hs_recurring_billing_period,hs_product_id`
               );
             } catch {
               return null;
             }
-          }),
+          })
         );
         return lineItemDetails.filter((x) => x !== null);
       },
-      { ttl: CacheTTL.TEN_MINUTES },
+      { ttl: CacheTTL.TEN_MINUTES }
     );
   }
 
   // Active subscriptions
-  async function getActiveSubscriptions(
-    salesRepHubspotId?: string,
-  ): Promise<any[]> {
+  async function getActiveSubscriptions(salesRepHubspotId?: string): Promise<any[]> {
     const cacheKey = `hs:subscriptions:active:${salesRepHubspotId ?? "all"}`;
     return await cache.wrap(
       cacheKey,
@@ -164,16 +160,13 @@ export function createBillingService(request: HubSpotRequestFn) {
           });
         }
 
-        const searchResult = await request(
-          "/crm/v3/objects/subscriptions/search",
-          {
-            method: "POST",
-            body: JSON.stringify(searchBody),
-          },
-        );
+        const searchResult = await request("/crm/v3/objects/subscriptions/search", {
+          method: "POST",
+          body: JSON.stringify(searchBody),
+        });
         return searchResult?.results || [];
       },
-      { ttl: CacheTTL.FIFTEEN_MINUTES },
+      { ttl: CacheTTL.FIFTEEN_MINUTES }
     );
   }
 
@@ -181,7 +174,7 @@ export function createBillingService(request: HubSpotRequestFn) {
   async function getSubscriptionPaymentsInPeriod(
     subscriptionId: string,
     startDate: string,
-    endDate: string,
+    endDate: string
   ): Promise<any[]> {
     const cacheKey = `hs:subscription:${subscriptionId}:payments:${startDate}:${endDate}`;
     return await cache.wrap(
@@ -228,7 +221,7 @@ export function createBillingService(request: HubSpotRequestFn) {
         });
         return searchResult?.results || [];
       },
-      { ttl: CacheTTL.FIFTEEN_MINUTES },
+      { ttl: CacheTTL.FIFTEEN_MINUTES }
     );
   }
 

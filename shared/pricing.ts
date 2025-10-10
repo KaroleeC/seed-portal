@@ -1,6 +1,9 @@
 // Shared pricing calculation logic
 // This ensures consistency between frontend and backend calculations
 
+// Import centralized pricing constants
+import * as PricingConstants from "./pricing-constants.js";
+
 export interface PricingData {
   monthlyRevenueRange?: string;
   monthlyTransactions?: string;
@@ -185,27 +188,19 @@ export const PRICING_CONSTANTS = {
     "Multi-entity/Holding Companies": { monthly: 1.35, cleanup: 1.25 },
     Other: { monthly: 1.2, cleanup: 1.15 },
   },
-} as const;
+};
 
-export function roundToNearest25(num: number): number {
-  return Math.ceil(num / 25) * 25;
-}
-
-// Configurable rounding helper (defaults to 25 if invalid step provided)
-function roundToStep(num: number, step?: number): number {
-  const s = typeof step === "number" && step > 0 ? step : 25;
-  return Math.ceil(num / s) * s;
-}
+// Re-export rounding functions from centralized constants
+export const roundToStep = PricingConstants.roundToStep;
+export const roundToNearest5 = PricingConstants.roundToNearest5;
+export const roundToNearest25 = PricingConstants.roundToNearest25;
+export const roundToNearest50 = PricingConstants.roundToNearest50;
 
 export function calculateBookkeepingFees(data: PricingData): FeeResult {
-  if (
-    !data.monthlyRevenueRange ||
-    !data.monthlyTransactions ||
-    !data.industry
-  ) {
+  // Require core fields for calculation
+  if (!data.monthlyRevenueRange || !data.monthlyTransactions || !data.industry) {
     return { monthlyFee: 0, setupFee: 0 };
   }
-
   // Base fee
   const baseFee = PRICING_CONSTANTS.baseMonthlyFee;
 
@@ -229,19 +224,19 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
   const industryMultiplier = industryData.monthly;
 
   // After multipliers total (this is the core monthly fee that gets discounted)
-  const afterMultipliers = Math.round(
-    beforeMultipliers * revenueMultiplier * industryMultiplier,
-  );
+  const afterMultipliers = Math.round(beforeMultipliers * revenueMultiplier * industryMultiplier);
 
   // Monthly fee (excludes QBO - QBO is separate line item)
   const monthlyFee = afterMultipliers;
 
   // QBO subscription (separate line item, not part of discountable monthly fee)
-  const qboFee = data.qboSubscription ? 60 : 0;
+  const qboFee = data.qboSubscription ? PricingConstants.QBO_MONTHLY_FEE : 0;
 
-  // Calculate setup fee: After multipliers total × current month × 0.25
+  // Calculate setup fee: After multipliers total × current month × setup multiplier
   const currentMonth = new Date().getMonth() + 1; // Get current month (1-12)
-  const setupFee = Math.round(afterMultipliers * currentMonth * 0.25);
+  const setupFee = Math.round(
+    afterMultipliers * currentMonth * PricingConstants.BOOKKEEPING_SETUP_MULTIPLIER
+  );
 
   // Create standardized breakdown object for UI display
   const breakdown = {
@@ -269,7 +264,7 @@ export function calculateBookkeepingFees(data: PricingData): FeeResult {
 
     // Setup fee calculation details
     currentMonth,
-    setupFeeCalculation: `${afterMultipliers} × ${currentMonth} × 0.25`,
+    setupFeeCalculation: `${afterMultipliers} × ${currentMonth} × ${PricingConstants.BOOKKEEPING_SETUP_MULTIPLIER}`,
   };
 
   return { monthlyFee, setupFee, breakdown };
@@ -281,7 +276,7 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
     data.includesTaas ||
       (data as any).serviceTaas ||
       (data as any).serviceTaasMonthly ||
-      (data as any).servicePriorYearFilings,
+      (data as any).servicePriorYearFilings
   );
 
   // Require core fields for calculation
@@ -298,41 +293,50 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
     return { monthlyFee: 0, setupFee: 0 };
   }
 
-  const base = 150;
+  const base = PricingConstants.TAAS_BASE_FEE;
 
   // Get effective numbers (use custom values if "more" is selected)
   const effectiveNumEntities = data.customNumEntities || data.numEntities;
   const effectiveStatesFiled = data.customStatesFiled || data.statesFiled;
-  const effectiveNumBusinessOwners =
-    data.customNumBusinessOwners || data.numBusinessOwners;
+  const effectiveNumBusinessOwners = data.customNumBusinessOwners || data.numBusinessOwners;
 
-  // Entity upcharge: Every entity above 5 adds $75/mo
+  // Entity upcharge
   let entityUpcharge = 0;
-  if (effectiveNumEntities > 5) {
-    entityUpcharge = (effectiveNumEntities - 5) * 75;
+  if (effectiveNumEntities > PricingConstants.TAAS_ENTITY_THRESHOLD) {
+    entityUpcharge =
+      (effectiveNumEntities - PricingConstants.TAAS_ENTITY_THRESHOLD) *
+      PricingConstants.TAAS_ENTITY_UPCHARGE_PER_ENTITY;
   }
 
-  // State upcharge: $50 per state above 1, up to 50 states
+  // State upcharge
   let stateUpcharge = 0;
   if (effectiveStatesFiled > 1) {
-    const additionalStates = Math.min(effectiveStatesFiled - 1, 49); // Cap at 49 additional states (50 total)
-    stateUpcharge = additionalStates * 50;
+    const additionalStates = Math.min(
+      effectiveStatesFiled - 1,
+      PricingConstants.TAAS_MAX_STATES - 1
+    );
+    stateUpcharge = additionalStates * PricingConstants.TAAS_STATE_UPCHARGE_PER_STATE;
   }
 
   // International filing upcharge
-  const intlUpcharge = data.internationalFiling ? 200 : 0;
+  const intlUpcharge = data.internationalFiling ? PricingConstants.TAAS_INTERNATIONAL_UPCHARGE : 0;
 
-  // Owner upcharge: Every owner above 5 is $25/mo per owner
+  // Owner upcharge
   let ownerUpcharge = 0;
-  if (effectiveNumBusinessOwners > 5) {
-    ownerUpcharge = (effectiveNumBusinessOwners - 5) * 25;
+  if (effectiveNumBusinessOwners > PricingConstants.TAAS_OWNER_THRESHOLD) {
+    ownerUpcharge =
+      (effectiveNumBusinessOwners - PricingConstants.TAAS_OWNER_THRESHOLD) *
+      PricingConstants.TAAS_OWNER_UPCHARGE_PER_OWNER;
   }
 
   // Bookkeeping quality upcharge
-  const bookUpcharge = data.bookkeepingQuality === "Messy" ? 25 : 0;
+  const bookUpcharge =
+    data.bookkeepingQuality === "Messy" ? PricingConstants.TAAS_MESSY_BOOKKEEPING_UPCHARGE : 0;
 
   // Personal 1040s
-  const personal1040 = data.include1040s ? effectiveNumBusinessOwners * 25 : 0;
+  const personal1040 = data.include1040s
+    ? effectiveNumBusinessOwners * PricingConstants.TAAS_PERSONAL_1040_PER_OWNER
+    : 0;
 
   // Use the same comprehensive industry multipliers as bookkeeping (monthly values)
   const industryData = PRICING_CONSTANTS.industryMultipliers[
@@ -384,8 +388,10 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
   // No discount applied here - will be handled in calculateCombinedFees for bundle scenarios
   const monthlyFee = roundToNearest25(rawFee);
 
-  // Setup fee: prior years unfiled * $2100 per year
-  const setupFee = (data.priorYearsUnfiled || 0) * 2100;
+  // TaaS has no setup fee - it's a monthly recurring service only
+  // Note: "Prior years unfiled" is a TaaS input field but doesn't create a setup fee
+  // The Prior Year Filings SERVICE (separate) has its own fee calculation
+  const setupFee = 0;
 
   // Create standardized breakdown object for UI display
   const breakdown = {
@@ -417,14 +423,14 @@ export function calculateTaaSFees(data: PricingData): FeeResult {
   return { monthlyFee, setupFee, breakdown };
 }
 
-// Calculate Bookkeeping Cleanup Project fees ($100 per month selected)
+// Calculate Bookkeeping Cleanup Project fees
 export function calculateCleanupProjectFees(data: PricingData): {
   cleanupProjectFee: number;
 } {
   const cleanupPeriods = (data as any).cleanupPeriods || [];
   const cleanupMonths = Number((data as any).cleanupMonths) || 0;
   const months = cleanupPeriods.length > 0 ? cleanupPeriods.length : cleanupMonths;
-  const cleanupProjectFee = months * 100; // $100 per month
+  const cleanupProjectFee = months * PricingConstants.CLEANUP_FEE_PER_MONTH;
   return { cleanupProjectFee };
 }
 
@@ -480,8 +486,7 @@ export function calculatePayrollFees(data: PricingData): {
   let payrollFee = baseFee;
 
   // Additional employee fees: $12/mo per employee above 3
-  const additionalEmployeeFee =
-    employeeCount > 3 ? (employeeCount - 3) * 12 : 0;
+  const additionalEmployeeFee = employeeCount > 3 ? (employeeCount - 3) * 12 : 0;
   payrollFee += additionalEmployeeFee;
 
   // Additional state fees: $25/mo per state above 1
@@ -514,8 +519,7 @@ export function calculateAPFees(data: PricingData): {
 } {
   const apServiceTier = (data as any).apServiceTier;
   const apVendorBillsBand = (data as any).apVendorBillsBand || "0-25";
-  const apVendorCount =
-    (data as any).customApVendorCount || (data as any).apVendorCount || 1;
+  const apVendorCount = (data as any).customApVendorCount || (data as any).apVendorCount || 1;
 
   if (!apServiceTier) {
     return { apFee: 0 };
@@ -553,8 +557,7 @@ export function calculateAPFees(data: PricingData): {
   const beforeMultiplier = apLiteFee + vendorCountSurcharge;
 
   // Apply 2.5x multiplier for AP Advanced tier
-  const totalApFee =
-    apServiceTier === "advanced" ? beforeMultiplier * 2.5 : beforeMultiplier;
+  const totalApFee = apServiceTier === "advanced" ? beforeMultiplier * 2.5 : beforeMultiplier;
 
   return {
     apFee: totalApFee,
@@ -584,8 +587,7 @@ export function calculateARFees(data: PricingData): {
 } {
   const arServiceTier = (data as any).arServiceTier;
   const arCustomerInvoicesBand = (data as any).arCustomerInvoicesBand || "0-25";
-  const arCustomerCount =
-    (data as any).customArCustomerCount || (data as any).arCustomerCount || 1;
+  const arCustomerCount = (data as any).customArCustomerCount || (data as any).arCustomerCount || 1;
 
   if (!arServiceTier) {
     return { arFee: 0 };
@@ -618,14 +620,12 @@ export function calculateARFees(data: PricingData): {
   }
 
   // Add customer count surcharge (first 5 are free, then $12/month per customer above 5)
-  const customerCountSurcharge =
-    arCustomerCount > 5 ? (arCustomerCount - 5) * 12 : 0;
+  const customerCountSurcharge = arCustomerCount > 5 ? (arCustomerCount - 5) * 12 : 0;
 
   const beforeMultiplier = arLiteFee + customerCountSurcharge;
 
   // Apply 2.5x multiplier for AR Advanced tier
-  const totalArFee =
-    arServiceTier === "advanced" ? beforeMultiplier * 2.5 : beforeMultiplier;
+  const totalArFee = arServiceTier === "advanced" ? beforeMultiplier * 2.5 : beforeMultiplier;
 
   return {
     arFee: totalArFee,
@@ -652,11 +652,8 @@ export function calculateAgentOfServiceFees(data: PricingData): {
     totalFee: number;
   };
 } {
-  const agentOfServiceAdditionalStates =
-    (data as any).agentOfServiceAdditionalStates || 0;
-  const agentOfServiceComplexCase = Boolean(
-    (data as any).agentOfServiceComplexCase,
-  );
+  const agentOfServiceAdditionalStates = (data as any).agentOfServiceAdditionalStates || 0;
+  const agentOfServiceComplexCase = Boolean((data as any).agentOfServiceComplexCase);
 
   // Base fee is $150
   const baseFee = 150;
@@ -697,10 +694,10 @@ function getDefaultPricingConfig(): PricingConfig {
     },
     fees: {
       baseMonthlyFee: PRICING_CONSTANTS.baseMonthlyFee,
-      qboMonthly: 60,
-      priorYearFilingPerYear: 1500,
-      cleanupPerMonth: 100,
-      serviceTierFees: { Automated: 0, Guided: 79, Concierge: 249 },
+      qboMonthly: PricingConstants.QBO_MONTHLY_FEE,
+      priorYearFilingPerYear: PricingConstants.PRIOR_YEAR_FILING_FEE_PER_YEAR,
+      cleanupPerMonth: PricingConstants.CLEANUP_FEE_PER_MONTH,
+      // Service tier fees removed - no longer used for pricing
     },
     discounts: { bookkeepingWithTaasPct: 0.5 },
     rounding: { monthlyStep: 25 },
@@ -716,7 +713,7 @@ export function calculateCombinedFees(data: PricingData): CombinedFeeResult {
 // Currently delegates to calculateCombinedFees; config reserved for future use.
 export function calculateQuotePricing(
   input: QuotePricingInput,
-  _config?: PricingConfig,
+  _config?: PricingConfig
 ): CombinedFeeResult {
   // Always use the canonical config-aware implementation; supply defaults when none provided
   const config = _config ?? getDefaultPricingConfig();
@@ -729,7 +726,7 @@ export function calculateQuotePricing(
 // Canonical combined calculator (config-aware). All callers flow through this path.
 function calculateCombinedFeesWithConfig(
   data: PricingData,
-  config: PricingConfig,
+  config: PricingConfig
 ): CombinedFeeResult {
   // Service enablement flags (default true)
   const svcEnabled = {
@@ -744,16 +741,12 @@ function calculateCombinedFeesWithConfig(
   };
 
   // Fees and options
-  const baseMonthlyFee =
-    config.fees?.baseMonthlyFee ?? PRICING_CONSTANTS.baseMonthlyFee;
-  const qboMonthly = config.fees?.qboMonthly ?? 60;
-  const priorYearFilingPerYear = config.fees?.priorYearFilingPerYear ?? 1500;
-  const cleanupPerMonth = config.fees?.cleanupPerMonth ?? 100;
-  const tierFees = config.fees?.serviceTierFees ?? {
-    Automated: 0,
-    Guided: 79,
-    Concierge: 249,
-  };
+  const baseMonthlyFee = config.fees?.baseMonthlyFee ?? PRICING_CONSTANTS.baseMonthlyFee;
+  const qboMonthly = config.fees?.qboMonthly ?? PricingConstants.QBO_MONTHLY_FEE;
+  const priorYearFilingPerYear =
+    config.fees?.priorYearFilingPerYear ?? PricingConstants.PRIOR_YEAR_FILING_FEE_PER_YEAR;
+  const cleanupPerMonth = config.fees?.cleanupPerMonth ?? PricingConstants.CLEANUP_FEE_PER_MONTH;
+  // Service tier fees removed - no longer used for pricing
   const discountPct = config.discounts?.bookkeepingWithTaasPct ?? 0.5;
   const step = config.rounding?.monthlyStep ?? 25;
 
@@ -761,20 +754,19 @@ function calculateCombinedFeesWithConfig(
   const includesMonthlyBookkeeping = Boolean(
     (data as any).serviceBookkeeping ||
       (data as any).includesBookkeeping ||
-      (data as any).serviceMonthlyBookkeeping,
+      (data as any).serviceMonthlyBookkeeping
   );
   const includesBookkeepingCleanupOnly = Boolean(
-    (data as any).serviceCleanupProjects && !includesMonthlyBookkeeping,
+    (data as any).serviceCleanupProjects && !includesMonthlyBookkeeping
   );
-  const rawIncludesBookkeeping =
-    includesMonthlyBookkeeping || includesBookkeepingCleanupOnly;
+  const rawIncludesBookkeeping = includesMonthlyBookkeeping || includesBookkeepingCleanupOnly;
   const includesBookkeeping = rawIncludesBookkeeping && svcEnabled.bookkeeping;
 
   const rawIncludesTaas = Boolean(
     (data as any).serviceTaas ||
       (data as any).includesTaas === true ||
       (data as any).serviceTaasMonthly ||
-      (data as any).servicePriorYearFilings,
+      (data as any).servicePriorYearFilings
   );
   const includesTaas = rawIncludesTaas && svcEnabled.taas;
 
@@ -790,17 +782,12 @@ function calculateCombinedFeesWithConfig(
   const rawIncludesAgent = Boolean((data as any).serviceAgentOfService);
   const includesAgentOfService = rawIncludesAgent && svcEnabled.agentOfService;
 
-  const includesCfoAdvisory =
-    Boolean((data as any).serviceCfoAdvisory) && svcEnabled.cfoAdvisory;
+  const includesCfoAdvisory = Boolean((data as any).serviceCfoAdvisory) && svcEnabled.cfoAdvisory;
 
   // Bookkeeping monthly and setup (pre-discount). Use config base fee; multipliers remain from constants
   let bookkeepingFees: FeeResult = { monthlyFee: 0, setupFee: 0 };
   if (includesMonthlyBookkeeping && svcEnabled.bookkeeping) {
-    if (
-      !data.monthlyRevenueRange ||
-      !data.monthlyTransactions ||
-      !data.industry
-    ) {
+    if (!data.monthlyRevenueRange || !data.monthlyTransactions || !data.industry) {
       bookkeepingFees = { monthlyFee: 0, setupFee: 0 };
     } else {
       const transactionUpcharge =
@@ -817,11 +804,13 @@ function calculateCombinedFeesWithConfig(
       ] || { monthly: 1, cleanup: 1 };
       const industryMultiplier = industryData.monthly;
       const afterMultipliers = Math.round(
-        beforeMultipliers * revenueMultiplier * industryMultiplier,
+        beforeMultipliers * revenueMultiplier * industryMultiplier
       );
       const monthlyFee = afterMultipliers;
       const currentMonth = new Date().getMonth() + 1;
-      const setupFee = Math.round(afterMultipliers * currentMonth * 0.25);
+      const setupFee = Math.round(
+        afterMultipliers * currentMonth * PricingConstants.BOOKKEEPING_SETUP_MULTIPLIER
+      );
       bookkeepingFees = {
         monthlyFee,
         setupFee,
@@ -833,10 +822,9 @@ function calculateCombinedFeesWithConfig(
           industryMultiplier,
           afterMultipliers,
           monthlyTotal: monthlyFee,
-          qboFee:
-            (data as any).qboSubscription && svcEnabled.qbo ? qboMonthly : 0,
+          qboFee: (data as any).qboSubscription && svcEnabled.qbo ? qboMonthly : 0,
           currentMonth,
-          setupFeeCalculation: `${afterMultipliers} × ${currentMonth} × 0.25`,
+          setupFeeCalculation: `${afterMultipliers} × ${currentMonth} × ${PricingConstants.BOOKKEEPING_SETUP_MULTIPLIER}`,
         },
       };
     }
@@ -858,28 +846,19 @@ function calculateCombinedFeesWithConfig(
             return { monthlyFee: 0, setupFee: 0 };
           }
           const base = 150;
-          const effectiveNumEntities =
-            (data as any).customNumEntities || (data as any).numEntities;
-          const effectiveStatesFiled =
-            (data as any).customStatesFiled || (data as any).statesFiled;
+          const effectiveNumEntities = (data as any).customNumEntities || (data as any).numEntities;
+          const effectiveStatesFiled = (data as any).customStatesFiled || (data as any).statesFiled;
           const effectiveNumBusinessOwners =
-            (data as any).customNumBusinessOwners ||
-            (data as any).numBusinessOwners;
+            (data as any).customNumBusinessOwners || (data as any).numBusinessOwners;
           let entityUpcharge = 0;
-          if (effectiveNumEntities > 5)
-            entityUpcharge = (effectiveNumEntities - 5) * 75;
+          if (effectiveNumEntities > 5) entityUpcharge = (effectiveNumEntities - 5) * 75;
           let stateUpcharge = 0;
-          if (effectiveStatesFiled > 1)
-            stateUpcharge = Math.min(effectiveStatesFiled - 1, 49) * 50;
+          if (effectiveStatesFiled > 1) stateUpcharge = Math.min(effectiveStatesFiled - 1, 49) * 50;
           const intlUpcharge = (data as any).internationalFiling ? 200 : 0;
           let ownerUpcharge = 0;
-          if (effectiveNumBusinessOwners > 5)
-            ownerUpcharge = (effectiveNumBusinessOwners - 5) * 25;
-          const bookUpcharge =
-            (data as any).bookkeepingQuality === "Messy" ? 25 : 0;
-          const personal1040 = (data as any).include1040s
-            ? effectiveNumBusinessOwners * 25
-            : 0;
+          if (effectiveNumBusinessOwners > 5) ownerUpcharge = (effectiveNumBusinessOwners - 5) * 25;
+          const bookUpcharge = (data as any).bookkeepingQuality === "Messy" ? 25 : 0;
+          const personal1040 = (data as any).include1040s ? effectiveNumBusinessOwners * 25 : 0;
           const industryData = PRICING_CONSTANTS.industryMultipliers[
             data.industry as keyof typeof PRICING_CONSTANTS.industryMultipliers
           ] || { monthly: 1.0, cleanup: 1.0 };
@@ -921,7 +900,8 @@ function calculateCombinedFeesWithConfig(
           const afterIndustryMult = beforeMultipliers * industryMult;
           const rawFee = afterIndustryMult * revenueMult;
           const monthlyFee = roundToStep(rawFee, step);
-          const setupFee = ((data as any).priorYearsUnfiled || 0) * 2100;
+          // TaaS has no setup fee - it's a monthly recurring service only
+          const setupFee = 0;
           const breakdown = {
             baseFee: base,
             entityUpcharge,
@@ -942,19 +922,11 @@ function calculateCombinedFeesWithConfig(
 
   // QBO line item (separate)
   const qboFee =
-    includesMonthlyBookkeeping &&
-    (data as any).qboSubscription &&
-    svcEnabled.qbo
-      ? qboMonthly
-      : 0;
+    includesMonthlyBookkeeping && (data as any).qboSubscription && svcEnabled.qbo ? qboMonthly : 0;
 
   // Apply discount to bookkeeping if TaaS also included
   let finalBookkeeping = bookkeepingFees;
-  if (
-    includesMonthlyBookkeeping &&
-    includesTaas &&
-    finalBookkeeping.monthlyFee > 0
-  ) {
+  if (includesMonthlyBookkeeping && includesTaas && finalBookkeeping.monthlyFee > 0) {
     const before = finalBookkeeping.monthlyFee;
     const after = roundToStep(before * discountPct, step);
     finalBookkeeping = {
@@ -995,14 +967,10 @@ function calculateCombinedFeesWithConfig(
     : { payrollFee: 0, breakdown: undefined };
   const { payrollFee, breakdown: payrollBreakdown } = payrollResult;
 
-  const apResult = includesAP
-    ? calculateAPFees(data)
-    : { apFee: 0, breakdown: undefined };
+  const apResult = includesAP ? calculateAPFees(data) : { apFee: 0, breakdown: undefined };
   const { apFee, breakdown: apBreakdown } = apResult;
 
-  const arResult = includesAR
-    ? calculateARFees(data)
-    : { arFee: 0, breakdown: undefined };
+  const arResult = includesAR ? calculateARFees(data) : { arFee: 0, breakdown: undefined };
   const { arFee, breakdown: arBreakdown } = arResult;
 
   const agentResult = includesAgentOfService
@@ -1012,18 +980,20 @@ function calculateCombinedFeesWithConfig(
 
   // Totals
   const combinedMonthlyFee =
-    finalBookkeeping.monthlyFee +
-    taasFees.monthlyFee +
-    payrollFee +
-    apFee +
-    arFee +
-    qboFee;
+    finalBookkeeping.monthlyFee + taasFees.monthlyFee + payrollFee + apFee + arFee + qboFee;
   // Gate one-time/setup components by service toggles
   const includesPriorYear = Boolean((data as any).servicePriorYearFilings);
   const includesCleanup = Boolean((data as any).serviceCleanupProjects);
-  const combinedSetupFee =
+  // Combined one-time fees: setup fees + project fees
+  // - Bookkeeping setup fee (one-time)
+  // - TaaS setup fee (always $0 - TaaS is monthly only)
+  // - Cleanup projects (one-time project)
+  // - Prior year filings (one-time project)
+  // - CFO advisory (can be one-time or monthly depending on type)
+  // - Agent of service (one-time)
+  const combinedOneTimeFees =
     (includesMonthlyBookkeeping ? finalBookkeeping.setupFee : 0) +
-    (includesTaas ? taasFees.setupFee : 0) +
+    (includesTaas ? taasFees.setupFee : 0) + // Always $0 now
     (includesCleanup ? cleanupProjectFee : 0) +
     (includesPriorYear ? priorYearFilingsFee : 0) +
     (includesCfoAdvisory ? cfoAdvisoryFee : 0) +
@@ -1032,7 +1002,7 @@ function calculateCombinedFeesWithConfig(
   return {
     bookkeeping: finalBookkeeping,
     taas: taasFees,
-    combined: { monthlyFee: combinedMonthlyFee, setupFee: combinedSetupFee },
+    combined: { monthlyFee: combinedMonthlyFee, setupFee: combinedOneTimeFees },
     includesBookkeeping,
     includesTaas,
     includesAP,
@@ -1063,14 +1033,9 @@ export function toUiPricing(result: CombinedFeeResult): CombinedFeeResult & {
   packageDiscountMonthly?: number;
 } {
   let packageDiscountMonthly: number | undefined;
-  const before = (result.bookkeeping as any)?.breakdown
-    ?.monthlyFeeBeforeDiscount;
+  const before = (result.bookkeeping as any)?.breakdown?.monthlyFeeBeforeDiscount;
   const after = (result.bookkeeping as any)?.breakdown?.monthlyFeeAfterDiscount;
-  if (
-    typeof before === "number" &&
-    typeof after === "number" &&
-    before >= after
-  ) {
+  if (typeof before === "number" && typeof after === "number" && before >= after) {
     packageDiscountMonthly = before - after;
   }
 
@@ -1083,10 +1048,7 @@ export function toUiPricing(result: CombinedFeeResult): CombinedFeeResult & {
 }
 
 // Convenience single call for UI components
-export function calculatePricingDisplay(
-  input: QuotePricingInput,
-  config?: PricingConfig,
-) {
+export function calculatePricingDisplay(input: QuotePricingInput, config?: PricingConfig) {
   const result = calculateQuotePricing(input, config);
   return toUiPricing(result);
 }

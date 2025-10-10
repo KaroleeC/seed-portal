@@ -28,9 +28,7 @@ class CDNService {
   async initialize() {
     console.log("[CDN] Initializing CDN service...");
     await this.buildAssetManifest();
-    console.log(
-      `[CDN] Asset manifest built with ${Object.keys(this.manifest).length} assets`,
-    );
+    console.log(`[CDN] Asset manifest built with ${Object.keys(this.manifest).length} assets`);
   }
 
   private async buildAssetManifest() {
@@ -40,9 +38,7 @@ class CDNService {
         .then(() => true)
         .catch(() => false);
       if (!assetsExist) {
-        console.log(
-          "[CDN] Assets directory not found, skipping manifest build",
-        );
+        console.log("[CDN] Assets directory not found, skipping manifest build");
         return;
       }
 
@@ -54,11 +50,7 @@ class CDNService {
         const content = await fs.readFile(filePath);
 
         // Generate content hash for versioning
-        const hash = crypto
-          .createHash("sha256")
-          .update(content)
-          .digest("hex")
-          .substring(0, 12);
+        const hash = crypto.createHash("sha256").update(content).digest("hex").substring(0, 12);
 
         // Determine content type
         const ext = path.extname(filePath).toLowerCase();
@@ -166,10 +158,7 @@ class CDNService {
             ].includes(ext)
           ) {
             // Static assets - cache aggressively
-            res.setHeader(
-              "Cache-Control",
-              "public, max-age=31536000, immutable",
-            );
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
           } else {
             // HTML and other files - cache for shorter periods
             res.setHeader("Cache-Control", "public, max-age=3600");
@@ -182,7 +171,7 @@ class CDNService {
           res.setHeader("Access-Control-Allow-Origin", "*");
           res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
         },
-      }),
+      })
     );
 
     // Asset manifest endpoint

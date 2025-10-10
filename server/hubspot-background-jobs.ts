@@ -17,9 +17,7 @@ export interface HubSpotSyncJob {
 
 export async function initializeHubSpotQueue(): Promise<void> {
   if (!process.env.REDIS_URL) {
-    hubspotLogger.info(
-      "No REDIS_URL found, skipping HubSpot queue initialization",
-    );
+    hubspotLogger.info("No REDIS_URL found, skipping HubSpot queue initialization");
     return;
   }
 
@@ -59,9 +57,7 @@ export function getHubSpotQueue(): Queue | null {
 /**
  * Schedule a full HubSpot data synchronization
  */
-export async function scheduleFullSync(
-  userId?: number,
-): Promise<string | null> {
+export async function scheduleFullSync(userId?: number): Promise<string | null> {
   if (!hubspotQueue) {
     hubspotLogger.warn("HubSpot queue not available for full sync");
     return null;
@@ -78,13 +74,10 @@ export async function scheduleFullSync(
       {
         priority: 10, // High priority for full sync
         delay: 0,
-      },
+      }
     );
 
-    hubspotLogger.info(
-      { jobId: job.id, userId },
-      "Full HubSpot sync scheduled",
-    );
+    hubspotLogger.info({ jobId: job.id, userId }, "Full HubSpot sync scheduled");
     return job.id ? String(job.id) : null;
   } catch (error) {
     hubspotLogger.error({ error, userId }, "Failed to schedule full sync");
@@ -95,9 +88,7 @@ export async function scheduleFullSync(
 /**
  * Schedule incremental sync to catch up recent changes
  */
-export async function scheduleIncrementalSync(
-  lastSyncTime?: string,
-): Promise<string | null> {
+export async function scheduleIncrementalSync(lastSyncTime?: string): Promise<string | null> {
   if (!hubspotQueue) {
     hubspotLogger.warn("HubSpot queue not available for incremental sync");
     return null;
@@ -108,26 +99,19 @@ export async function scheduleIncrementalSync(
       "incremental-sync",
       {
         type: "incremental-sync",
-        lastSyncTime:
-          lastSyncTime || new Date(Date.now() - 60 * 60 * 1000).toISOString(), // Default: 1 hour ago
+        lastSyncTime: lastSyncTime || new Date(Date.now() - 60 * 60 * 1000).toISOString(), // Default: 1 hour ago
         timestamp: new Date().toISOString(),
       },
       {
         priority: 30, // Medium priority
         delay: 0,
-      },
+      }
     );
 
-    hubspotLogger.info(
-      { jobId: job.id, lastSyncTime },
-      "Incremental HubSpot sync scheduled",
-    );
+    hubspotLogger.info({ jobId: job.id, lastSyncTime }, "Incremental HubSpot sync scheduled");
     return job.id ? String(job.id) : null;
   } catch (error) {
-    hubspotLogger.error(
-      { error, lastSyncTime },
-      "Failed to schedule incremental sync",
-    );
+    hubspotLogger.error({ error, lastSyncTime }, "Failed to schedule incremental sync");
     return null;
   }
 }
@@ -137,7 +121,7 @@ export async function scheduleIncrementalSync(
  */
 export async function scheduleContactEnrichment(
   contactId: string,
-  userId?: number,
+  userId?: number
 ): Promise<string | null> {
   if (!hubspotQueue) {
     hubspotLogger.warn("HubSpot queue not available for contact enrichment");
@@ -156,19 +140,13 @@ export async function scheduleContactEnrichment(
       {
         priority: 40, // Medium-low priority
         delay: 2000, // Small delay to batch similar requests
-      },
+      }
     );
 
-    hubspotLogger.info(
-      { jobId: job.id, contactId, userId },
-      "Contact enrichment scheduled",
-    );
+    hubspotLogger.info({ jobId: job.id, contactId, userId }, "Contact enrichment scheduled");
     return job.id ? String(job.id) : null;
   } catch (error) {
-    hubspotLogger.error(
-      { error, contactId, userId },
-      "Failed to schedule contact enrichment",
-    );
+    hubspotLogger.error({ error, contactId, userId }, "Failed to schedule contact enrichment");
     return null;
   }
 }
@@ -176,9 +154,7 @@ export async function scheduleContactEnrichment(
 /**
  * Schedule deal synchronization
  */
-export async function scheduleDealSync(
-  dealId?: string,
-): Promise<string | null> {
+export async function scheduleDealSync(dealId?: string): Promise<string | null> {
   if (!hubspotQueue) {
     hubspotLogger.warn("HubSpot queue not available for deal sync");
     return null;
@@ -195,7 +171,7 @@ export async function scheduleDealSync(
       {
         priority: 20, // High-medium priority
         delay: 1000,
-      },
+      }
     );
 
     hubspotLogger.info({ jobId: job.id, dealId }, "Deal sync scheduled");
@@ -228,7 +204,7 @@ export async function scheduleRecurringSync(): Promise<void> {
         repeat: { pattern: "0 * * * *" }, // Every hour
         priority: 30,
         jobId: "recurring-incremental-sync", // Prevent duplicates
-      },
+      }
     );
 
     // Schedule full sync daily at 2 AM
@@ -243,7 +219,7 @@ export async function scheduleRecurringSync(): Promise<void> {
         repeat: { pattern: "0 2 * * *" }, // Daily at 2 AM
         priority: 10,
         jobId: "recurring-full-sync", // Prevent duplicates
-      },
+      }
     );
 
     hubspotLogger.info("✅ Recurring HubSpot sync jobs scheduled");

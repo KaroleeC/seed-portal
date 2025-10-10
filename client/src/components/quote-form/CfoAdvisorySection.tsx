@@ -1,16 +1,11 @@
-import { Control, UseFormReturn } from "react-hook-form";
+import type { Control, UseFormReturn } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-} from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Clock, DollarSign, TrendingUp } from "lucide-react";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 
 interface CfoAdvisorySectionProps {
   control: Control<QuoteFormFields>;
@@ -81,10 +76,8 @@ export function CfoAdvisorySection({ control, form }: CfoAdvisorySectionProps) {
   };
 
   return (
-    <KbCard className="p-6 mb-8 space-y-6">
-      <h3 className="text-xl font-semibold text-foreground">
-        CFO Advisory Service Details
-      </h3>
+    <SurfaceCard className="p-6 mb-8 space-y-6">
+      <h3 className="text-xl font-semibold text-foreground">CFO Advisory Service Details</h3>
 
       <FormField
         control={control}
@@ -104,26 +97,14 @@ export function CfoAdvisorySection({ control, form }: CfoAdvisorySectionProps) {
                 <Card
                   className={`cursor-pointer transition-all ${currentType === "pay_as_you_go" ? "ring-2 ring-blue-500 bg-blue-50" : "hover:shadow-md"}`}
                 >
-                  <CardContent
-                    className="p-4"
-                    onClick={() => handleTypeChange("pay_as_you_go")}
-                  >
+                  <CardContent className="p-4" onClick={() => handleTypeChange("pay_as_you_go")}>
                     <div className="flex items-start gap-3">
-                      <RadioGroupItem
-                        value="pay_as_you_go"
-                        id="pay_as_you_go"
-                        className="mt-1"
-                      />
+                      <RadioGroupItem value="pay_as_you_go" id="pay_as_you_go" className="mt-1" />
                       <div className="flex-1">
-                        <Label
-                          htmlFor="pay_as_you_go"
-                          className="cursor-pointer"
-                        >
+                        <Label htmlFor="pay_as_you_go" className="cursor-pointer">
                           <div className="flex items-center gap-2 mb-2">
                             <Clock className="h-4 w-4 text-blue-600" />
-                            <span className="font-semibold text-gray-800">
-                              Pay-as-you-Go
-                            </span>
+                            <span className="font-semibold text-gray-800">Pay-as-you-Go</span>
                           </div>
                           <p className="text-sm text-gray-600 mb-2">
                             $300/hour billed bi-weekly for actual hours worked
@@ -149,16 +130,9 @@ export function CfoAdvisorySection({ control, form }: CfoAdvisorySectionProps) {
                 <Card
                   className={`cursor-pointer transition-all ${currentType === "bundled" ? "ring-2 ring-purple-500 bg-purple-50" : "hover:shadow-md"}`}
                 >
-                  <CardContent
-                    className="p-4"
-                    onClick={() => handleTypeChange("bundled")}
-                  >
+                  <CardContent className="p-4" onClick={() => handleTypeChange("bundled")}>
                     <div className="flex items-start gap-3">
-                      <RadioGroupItem
-                        value="bundled"
-                        id="bundled"
-                        className="mt-1"
-                      />
+                      <RadioGroupItem value="bundled" id="bundled" className="mt-1" />
                       <div className="flex-1">
                         <Label htmlFor="bundled" className="cursor-pointer">
                           <div className="flex items-center gap-2 mb-2">
@@ -171,8 +145,7 @@ export function CfoAdvisorySection({ control, form }: CfoAdvisorySectionProps) {
                             </span>
                           </div>
                           <p className="text-sm text-gray-600 mb-3">
-                            Prepaid hours at discounted rates • Valid for 6
-                            months
+                            Prepaid hours at discounted rates • Valid for 6 months
                           </p>
 
                           {/* Bundle Selection */}
@@ -195,9 +168,7 @@ export function CfoAdvisorySection({ control, form }: CfoAdvisorySectionProps) {
                                     <div className="flex items-center gap-3">
                                       <RadioGroupItem
                                         value={bundle.hours.toString()}
-                                        checked={
-                                          currentBundleHours === bundle.hours
-                                        }
+                                        checked={currentBundleHours === bundle.hours}
                                         className="pointer-events-none"
                                       />
                                       <div>
@@ -205,8 +176,7 @@ export function CfoAdvisorySection({ control, form }: CfoAdvisorySectionProps) {
                                           {bundle.hours} Hours
                                         </div>
                                         <div className="text-sm text-gray-600">
-                                          ${bundle.rate}/hour • Save $
-                                          {300 - bundle.rate}/hour
+                                          ${bundle.rate}/hour • Save ${300 - bundle.rate}/hour
                                         </div>
                                       </div>
                                     </div>
@@ -216,10 +186,7 @@ export function CfoAdvisorySection({ control, form }: CfoAdvisorySectionProps) {
                                       </div>
                                       <div className="text-xs text-green-600 font-medium">
                                         Save $
-                                        {(
-                                          (300 - bundle.rate) *
-                                          bundle.hours
-                                        ).toLocaleString()}
+                                        {((300 - bundle.rate) * bundle.hours).toLocaleString()}
                                       </div>
                                     </div>
                                   </div>
@@ -237,6 +204,6 @@ export function CfoAdvisorySection({ control, form }: CfoAdvisorySectionProps) {
           </FormItem>
         )}
       />
-    </KbCard>
+    </SurfaceCard>
   );
 }

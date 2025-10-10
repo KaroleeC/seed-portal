@@ -5,12 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -91,18 +86,14 @@ const iconMap: Record<string, any> = {
 
 export default function KnowledgeBase() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<KbCategory | null>(
-    null,
-  );
-  const [selectedArticle, setSelectedArticle] = useState<KbArticle | null>(
-    null,
-  );
+  const [selectedCategory, setSelectedCategory] = useState<KbCategory | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<KbArticle | null>(null);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
 
   const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
   const { resolvedTheme } = useTheme();
-  const logoSrc = getThemedLogo(brand, resolvedTheme === 'dark' ? 'dark' : 'light');
+  const logoSrc = getThemedLogo(brand, resolvedTheme === "dark" ? "dark" : "light");
 
   const handleLogout = async () => {
     await logoutMutation.mutateAsync();
@@ -110,9 +101,7 @@ export default function KnowledgeBase() {
   };
 
   // Fetch categories
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery<
-    KbCategory[]
-  >({
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<KbCategory[]>({
     queryKey: ["/api/kb/categories"],
   });
 
@@ -121,9 +110,7 @@ export default function KnowledgeBase() {
     queryKey: ["/api/kb/articles", selectedCategory?.id, "published"],
     queryFn: async () => {
       if (!selectedCategory?.id) return [];
-      return apiRequest(
-        `/api/kb/articles?categoryId=${selectedCategory.id}&status=published`,
-      );
+      return apiRequest(`/api/kb/articles?categoryId=${selectedCategory.id}&status=published`);
     },
     enabled: !!selectedCategory,
   });
@@ -231,10 +218,10 @@ export default function KnowledgeBase() {
               <div className="flex items-center gap-1">
                 <span className="font-medium">Last Reviewed:</span>
                 <span>
-                  {new Date(selectedArticle.updatedAt).toLocaleDateString(
-                    "en-US",
-                    { month: "long", year: "numeric" },
-                  )}
+                  {new Date(selectedArticle.updatedAt).toLocaleDateString("en-US", {
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </span>
               </div>
             </div>
@@ -269,8 +256,7 @@ export default function KnowledgeBase() {
           <div
             className="prose max-w-none text-white leading-relaxed"
             style={{
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               lineHeight: "1.6",
               color: "inherit",
             }}
@@ -285,42 +271,24 @@ export default function KnowledgeBase() {
                 // Remove any paragraph containing Document Type, Target Team, or Last Reviewed
                 content = content.replace(
                   /<p[^>]*>.*?(?:Document Type|Target Team|Last Reviewed).*?<\/p>/gi,
-                  "",
+                  ""
                 );
 
                 // Remove any div containing Document Type, Target Team, or Last Reviewed
                 content = content.replace(
                   /<div[^>]*>.*?(?:Document Type|Target Team|Last Reviewed).*?<\/div>/gi,
-                  "",
+                  ""
                 );
 
                 // Remove any standalone text containing these patterns (in case they're not wrapped)
-                content = content.replace(
-                  /Document Type:\s*[^\n<]*(?:\n|<br[^>]*>)?/gi,
-                  "",
-                );
-                content = content.replace(
-                  /Target Team:\s*[^\n<]*(?:\n|<br[^>]*>)?/gi,
-                  "",
-                );
-                content = content.replace(
-                  /Last Reviewed:\s*[^\n<]*(?:\n|<br[^>]*>)?/gi,
-                  "",
-                );
+                content = content.replace(/Document Type:\s*[^\n<]*(?:\n|<br[^>]*>)?/gi, "");
+                content = content.replace(/Target Team:\s*[^\n<]*(?:\n|<br[^>]*>)?/gi, "");
+                content = content.replace(/Last Reviewed:\s*[^\n<]*(?:\n|<br[^>]*>)?/gi, "");
 
                 // Remove any remaining metadata blocks (more aggressive)
-                content = content.replace(
-                  /<[^>]*>\s*Document Type:.*?<\/[^>]*>/gi,
-                  "",
-                );
-                content = content.replace(
-                  /<[^>]*>\s*Target Team:.*?<\/[^>]*>/gi,
-                  "",
-                );
-                content = content.replace(
-                  /<[^>]*>\s*Last Reviewed:.*?<\/[^>]*>/gi,
-                  "",
-                );
+                content = content.replace(/<[^>]*>\s*Document Type:.*?<\/[^>]*>/gi, "");
+                content = content.replace(/<[^>]*>\s*Target Team:.*?<\/[^>]*>/gi, "");
+                content = content.replace(/<[^>]*>\s*Last Reviewed:.*?<\/[^>]*>/gi, "");
 
                 // Clean up any empty paragraphs or divs left behind
                 content = content.replace(/<p[^>]*>\s*<\/p>/g, "");
@@ -330,19 +298,16 @@ export default function KnowledgeBase() {
                 return content
                   .replace(
                     /<h1([^>]*)>/g,
-                    '<h1$1 style="color: #2d3748; margin-top: 2em; border-bottom: 2px solid #f97316; padding-bottom: 10px;">',
+                    '<h1$1 style="color: #2d3748; margin-top: 2em; border-bottom: 2px solid #f97316; padding-bottom: 10px;">'
                   )
                   .replace(
                     /<h2([^>]*)>/g,
-                    '<h2$1 style="color: #2d3748; margin-top: 2em; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">',
+                    '<h2$1 style="color: #2d3748; margin-top: 2em; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">'
                   )
-                  .replace(
-                    /<h3([^>]*)>/g,
-                    '<h3$1 style="color: #2d3748; margin-top: 2em;">',
-                  )
+                  .replace(/<h3([^>]*)>/g, '<h3$1 style="color: #2d3748; margin-top: 2em;">')
                   .replace(
                     /<blockquote([^>]*)>/g,
-                    '<blockquote$1 style="border-left: 4px solid #f97316; margin: 20px 0; padding: 10px 20px; background: #fef5e7;">',
+                    '<blockquote$1 style="border-left: 4px solid #f97316; margin: 20px 0; padding: 10px 20px; background: #fef5e7;">'
                   )
                   .trim();
               })(),
@@ -415,9 +380,7 @@ export default function KnowledgeBase() {
                               {article.title}
                             </h3>
                             {article.excerpt && (
-                              <p className="text-gray-600 text-sm mb-3">
-                                {article.excerpt}
-                              </p>
+                              <p className="text-gray-600 text-sm mb-3">{article.excerpt}</p>
                             )}
                             <div className="flex items-center gap-4 text-sm text-gray-500">
                               <span className="flex items-center gap-1">
@@ -426,9 +389,7 @@ export default function KnowledgeBase() {
                               </span>
                               <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
-                                {new Date(
-                                  article.updatedAt,
-                                ).toLocaleDateString()}
+                                {new Date(article.updatedAt).toLocaleDateString()}
                               </span>
                             </div>
                           </div>
@@ -445,9 +406,7 @@ export default function KnowledgeBase() {
           {/* Categories Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {categoriesLoading ? (
-              <div className="col-span-full text-center text-white">
-                Loading categories...
-              </div>
+              <div className="col-span-full text-center text-white">Loading categories...</div>
             ) : (
               categories.map((category: KbCategory) => {
                 const IconComponent = getIconComponent(category.icon);
@@ -515,8 +474,7 @@ export default function KnowledgeBase() {
                     </h2>
                   </div>
                   <p className="text-white/70 text-lg max-w-2xl mx-auto">
-                    Revolutionizing knowledge management with cutting-edge AI
-                    capabilities
+                    Revolutionizing knowledge management with cutting-edge AI capabilities
                   </p>
                 </div>
 
@@ -530,8 +488,8 @@ export default function KnowledgeBase() {
                       AI Search Copilot
                     </h3>
                     <p className="text-white/70 text-sm leading-relaxed group-hover:text-white/90 transition-colors">
-                      Natural language search with intelligent recommendations
-                      and contextual understanding
+                      Natural language search with intelligent recommendations and contextual
+                      understanding
                     </p>
                   </div>
 
@@ -543,8 +501,7 @@ export default function KnowledgeBase() {
                       Visual SOP Maps
                     </h3>
                     <p className="text-white/70 text-sm leading-relaxed group-hover:text-white/90 transition-colors">
-                      Interactive flowcharts and visual process maps for complex
-                      procedures
+                      Interactive flowcharts and visual process maps for complex procedures
                     </p>
                   </div>
 
@@ -568,8 +525,7 @@ export default function KnowledgeBase() {
                       Auto-SOP Generator
                     </h3>
                     <p className="text-white/70 text-sm leading-relaxed group-hover:text-white/90 transition-colors">
-                      AI creates step-by-step procedures from simple
-                      descriptions
+                      AI creates step-by-step procedures from simple descriptions
                     </p>
                   </div>
 
@@ -581,8 +537,7 @@ export default function KnowledgeBase() {
                       Smart Tagging
                     </h3>
                     <p className="text-white/70 text-sm leading-relaxed group-hover:text-white/90 transition-colors">
-                      Automatic content categorization and intelligent
-                      cross-referencing
+                      Automatic content categorization and intelligent cross-referencing
                     </p>
                   </div>
 
@@ -685,24 +640,18 @@ export default function KnowledgeBase() {
           >
             {selectedCategory.name}
           </h1>
-          <p className="text-white/80 text-lg">
-            {selectedCategory.description}
-          </p>
+          <p className="text-white/80 text-lg">{selectedCategory.description}</p>
         </div>
 
         {/* Articles */}
         <Card className="bg-white/15 backdrop-blur-md border-white/30">
           <div className="p-8">
             {articlesLoading ? (
-              <div className="text-center text-white py-8">
-                Loading articles...
-              </div>
+              <div className="text-center text-white py-8">Loading articles...</div>
             ) : categoryArticles.length === 0 ? (
               <div className="text-center py-16">
                 <BookOpen className="h-16 w-16 text-white/40 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  No Articles Yet
-                </h3>
+                <h3 className="text-xl font-semibold text-white mb-2">No Articles Yet</h3>
                 <p className="text-white/70 mb-6">
                   This category doesn't have any published articles yet.
                 </p>
@@ -731,9 +680,7 @@ export default function KnowledgeBase() {
                           {article.title}
                         </h3>
                         {article.excerpt && (
-                          <p className="text-white/70 text-sm mb-4">
-                            {article.excerpt}
-                          </p>
+                          <p className="text-white/70 text-sm mb-4">{article.excerpt}</p>
                         )}
                         <div className="flex items-center justify-between text-sm text-white/60">
                           <div className="flex items-center gap-4">
@@ -747,10 +694,7 @@ export default function KnowledgeBase() {
                             </span>
                           </div>
                           {article.featured && (
-                            <Badge
-                              variant="outline"
-                              className="border-orange-500 text-orange-200"
-                            >
+                            <Badge variant="outline" className="border-orange-500 text-orange-200">
                               Featured
                             </Badge>
                           )}

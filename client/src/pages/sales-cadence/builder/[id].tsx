@@ -28,11 +28,11 @@ export default function SalesCadenceBuilderPage() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialLoadRef = useRef(true);
-  
+
   // Force re-render every minute to update relative time
   const [, setTick] = useState(0);
   useEffect(() => {
-    const interval = setInterval(() => setTick(t => t + 1), 60000); // Update every minute
+    const interval = setInterval(() => setTick((t) => t + 1), 60000); // Update every minute
     return () => clearInterval(interval);
   }, []);
 
@@ -68,7 +68,7 @@ export default function SalesCadenceBuilderPage() {
         upsertCadence(saved);
         setLastAutoSave(new Date());
         setAutoSaveStatus("saved");
-        
+
         // Reset to idle after 2 seconds
         setTimeout(() => setAutoSaveStatus("idle"), 2000);
       } catch (e) {
@@ -103,11 +103,11 @@ export default function SalesCadenceBuilderPage() {
 
   const minDayNumber = useMemo(() => {
     if (!model || model.days.length === 0) return 1;
-    return Math.max(...model.days.map(d => d.dayNumber)) + 1;
+    return Math.max(...model.days.map((d) => d.dayNumber)) + 1;
   }, [model]);
 
   const existingDayNumbers = useMemo(() => {
-    return model?.days.map(d => d.dayNumber) || [];
+    return model?.days.map((d) => d.dayNumber) || [];
   }, [model]);
 
   function onChangeDay(idx: number, day: CadenceDay) {
@@ -133,12 +133,12 @@ export default function SalesCadenceBuilderPage() {
 
   async function onSave() {
     if (!model) return;
-    
+
     // Clear auto-save timer if manual save triggered
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
     }
-    
+
     setIsSaving(true);
     setAutoSaveStatus("saving");
     try {
@@ -148,37 +148,44 @@ export default function SalesCadenceBuilderPage() {
       setLastAutoSave(new Date()); // Update auto-save time on manual save too
       setAutoSaveStatus("saved");
       toast({ title: "Saved", description: "Cadence saved successfully" });
-      
+
       setTimeout(() => setAutoSaveStatus("idle"), 2000);
     } catch (e) {
       upsertCadence(model);
       setAutoSaveStatus("idle");
-      toast({ title: "Saved (local)", description: "Server save failed. Saved in memory only.", variant: "destructive" });
+      toast({
+        title: "Saved (local)",
+        description: "Server save failed. Saved in memory only.",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
   }
-  
+
   // Helper to format relative time
   function getRelativeTime(date: Date): string {
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    
+
     if (seconds < 10) return "just now";
     if (seconds < 60) return `${seconds} sec ago`;
-    
+
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes} min ago`;
-    
+
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours} hr ago`;
-    
+
     const days = Math.floor(hours / 24);
-    return `${days} day${days > 1 ? 's' : ''} ago`;
+    return `${days} day${days > 1 ? "s" : ""} ago`;
   }
 
   if (!model) {
     return (
-      <DashboardLayout maxWidthClassName="max-w-7xl" header={<div className="text-xl font-semibold">Sales Cadence</div>}>
+      <DashboardLayout
+        maxWidthClassName="max-w-7xl"
+        header={<div className="text-xl font-semibold">Sales Cadence</div>}
+      >
         <div className="text-sm text-muted-foreground">Loading…</div>
       </DashboardLayout>
     );
@@ -196,11 +203,7 @@ export default function SalesCadenceBuilderPage() {
       <div className="mb-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setLocation("/apps/sales-cadence")}
-            >
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/apps/sales-cadence")}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
@@ -225,11 +228,13 @@ export default function SalesCadenceBuilderPage() {
               )}
               {autoSaveStatus === "idle" && (
                 <div className="text-sm text-gray-400">
-                  {lastAutoSave ? `Last AutoSave ${getRelativeTime(lastAutoSave)}` : "AutoSave enabled"}
+                  {lastAutoSave
+                    ? `Last AutoSave ${getRelativeTime(lastAutoSave)}`
+                    : "AutoSave enabled"}
                 </div>
               )}
             </div>
-            
+
             <Button variant="outline" onClick={onSave} disabled={isSaving}>
               <Save className="h-4 w-4 mr-2" />
               {isSaving ? "Saving..." : "Save"}

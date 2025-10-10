@@ -5,10 +5,7 @@
 
 import type { QuoteFormFields } from "../../schema";
 import type { FeeCalculation } from "../../../../components/seedqc/types";
-import {
-  decideHubSpotAction,
-  buildEnhancedFormData,
-} from "../useHubSpotSync";
+import { decideHubSpotAction, buildEnhancedFormData } from "../useHubSpotSync";
 
 function assert(cond: boolean, msg: string) {
   if (!cond) throw new Error(msg);
@@ -42,7 +39,10 @@ function run(name: string, fn: () => void) {
         hasUnsavedChanges: true,
         editingQuoteId: 123,
       });
-      assert(action === "update_quote_then_update", `expected update_quote_then_update, got ${action}`);
+      assert(
+        action === "update_quote_then_update",
+        `expected update_quote_then_update, got ${action}`
+      );
     });
 
     run("decide: update_then_create", () => {
@@ -166,11 +166,26 @@ function run(name: string, fn: () => void) {
       };
 
       const payload = buildEnhancedFormData(formValues, f);
-      assert(payload.monthlyFee === "500", `monthlyFee should be string '500', got ${payload.monthlyFee}`);
-      assert(payload.setupFee === "1000", `setupFee should be string '1000', got ${payload.setupFee}`);
-      assert(payload.bookkeepingMonthlyFee === "350", `bookkeepingMonthlyFee should be '350', got ${payload.bookkeepingMonthlyFee}`);
-      assert(payload.taasMonthlyFee === "300", `taasMonthlyFee should be '300', got ${payload.taasMonthlyFee}`);
-      assert(payload.serviceTierFee === "79", `serviceTierFee should be '79', got ${payload.serviceTierFee}`);
+      assert(
+        payload.monthlyFee === "500",
+        `monthlyFee should be string '500', got ${payload.monthlyFee}`
+      );
+      assert(
+        payload.setupFee === "1000",
+        `setupFee should be string '1000', got ${payload.setupFee}`
+      );
+      assert(
+        payload.bookkeepingMonthlyFee === "350",
+        `bookkeepingMonthlyFee should be '350', got ${payload.bookkeepingMonthlyFee}`
+      );
+      assert(
+        payload.taasMonthlyFee === "300",
+        `taasMonthlyFee should be '300', got ${payload.taasMonthlyFee}`
+      );
+      assert(
+        payload.serviceTierFee === "79",
+        `serviceTierFee should be '79', got ${payload.serviceTierFee}`
+      );
       // Optional fields present
       assert("apFee" in payload, "apFee missing");
       assert("arFee" in payload, "arFee missing");

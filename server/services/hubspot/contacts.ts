@@ -1,5 +1,11 @@
 import { cache, CacheTTL, CachePrefix } from "../../cache.js";
 import type { HubSpotRequestFn } from "./http.js";
+import { TTLCache } from "../../utils/ttl-cache.js";
+import { hubspotLogger } from "../../logger.js";
+
+// Micro-caches for HubSpot lookups (5 min TTL, 500 entry limit)
+const ownerCache = new TTLCache<string | null>(5 * 60 * 1000, 500);
+const contactCache = new TTLCache<{ verified: boolean; contact?: any }>(5 * 60 * 1000, 500);
 
 export function createContactsService(request: HubSpotRequestFn) {
   async function listOwners(): Promise<any[]> {
@@ -22,16 +28,24 @@ export function createContactsService(request: HubSpotRequestFn) {
   }
   async function getOwnerByEmail(email: string): Promise<string | null> {
     try {
-      const cacheKey = cache.generateKey(CachePrefix.USER_PROFILE, email);
-      return await cache.wrap(
-        cacheKey,
-        async () => {
-          const result = await request("/crm/v3/owners", { method: "GET" });
-          const owner = result.results?.find((o: any) => o.email === email);
-          return owner?.id || null;
-        },
-        { ttl: CacheTTL.USER_PROFILE },
-      );
+      // Check micro-cache first
+      const cached = ownerCache.get(email);
+      if (cached !== undefined) {
+        hubspotLogger.debug({ email, cached: true }, "🎯 Owner cache HIT");
+        return cached;
+      }
+
+      hubspotLogger.debug({ email, cached: false }, "❌ Owner cache MISS");
+
+      // Fetch from HubSpot
+      const result = await request("/crm/v3/owners", { method: "GET" });
+      const owner = result.results?.find((o: any) => o.email === email);
+      const ownerId = owner?.id || null;
+
+      // Cache the result
+      ownerCache.set(email, ownerId);
+
+      return ownerId;
     } catch (error) {
       console.error("Error fetching HubSpot owner:", error);
       return null;
@@ -40,9 +54,7 @@ export function createContactsService(request: HubSpotRequestFn) {
 
   async function getCompanyById(companyId: string): Promise<any | null> {
     try {
-      return await request(
-        `/crm/v3/objects/companies/${companyId}?properties=name,domain`,
-      );
+      return await request(`/crm/v3/objects/companies/${companyId}?properties=name,domain`);
     } catch (error) {
       console.error("Error fetching company by ID from HubSpot:", error);
       return null;
@@ -50,9 +62,18 @@ export function createContactsService(request: HubSpotRequestFn) {
   }
 
   async function verifyContactByEmail(
-    email: string,
+    email: string
   ): Promise<{ verified: boolean; contact?: any }> {
     try {
+      // Check micro-cache first
+      const cached = contactCache.get(email);
+      if (cached !== undefined) {
+        hubspotLogger.debug({ email, cached: true }, "🎯 Contact cache HIT");
+        return cached;
+      }
+
+      hubspotLogger.debug({ email, cached: false }, "❌ Contact cache MISS");
+
       const searchBody = {
         filterGroups: [
           {
@@ -84,20 +105,20 @@ export function createContactsService(request: HubSpotRequestFn) {
         associations: ["companies"],
       };
 
-      const result = await request("/crm/v3/objects/contacts/search", {
+      const searchResult = await request("/crm/v3/objects/contacts/search", {
         method: "POST",
         body: JSON.stringify(searchBody),
       });
 
-      if (result.results && result.results.length > 0) {
-        const contact = result.results[0];
+      if (searchResult.results && searchResult.results.length > 0) {
+        const contact = searchResult.results[0];
 
         let companyData: any = {};
         if (contact.associations?.companies?.results?.length > 0) {
           const companyId = contact.associations.companies.results[0].id;
           try {
             const companyResult = await request(
-              `/crm/v3/objects/companies/${companyId}?properties=industry,annualrevenue,numberofemployees,hs_industry_group,monthly_revenue_range,entity_type`,
+              `/crm/v3/objects/companies/${companyId}?properties=industry,annualrevenue,numberofemployees,hs_industry_group,monthly_revenue_range,entity_type`
             );
             if (companyResult) {
               companyData = {
@@ -105,12 +126,10 @@ export function createContactsService(request: HubSpotRequestFn) {
                   companyResult.properties?.industry ||
                   companyResult.properties?.hs_industry_group ||
                   "",
-                monthly_revenue_range:
-                  companyResult.properties?.monthly_revenue_range || "",
+                monthly_revenue_range: companyResult.properties?.monthly_revenue_range || "",
                 entity_type: companyResult.properties?.entity_type || "",
                 annualrevenue: companyResult.properties?.annualrevenue || "",
-                numberofemployees:
-                  companyResult.properties?.numberofemployees || "",
+                numberofemployees: companyResult.properties?.numberofemployees || "",
               };
             }
           } catch (err) {
@@ -118,7 +137,7 @@ export function createContactsService(request: HubSpotRequestFn) {
           }
         }
 
-        return {
+        const verificationResult = {
           verified: true,
           contact: {
             id: contact.id,
@@ -142,19 +161,24 @@ export function createContactsService(request: HubSpotRequestFn) {
             },
           },
         };
+
+        // Cache the successful result
+        contactCache.set(email, verificationResult);
+        return verificationResult;
       }
 
-      return { verified: false };
+      const notFoundResult = { verified: false };
+      // Cache the not-found result (avoid repeated lookups)
+      contactCache.set(email, notFoundResult);
+      return notFoundResult;
     } catch (error) {
       console.error("Error verifying contact in HubSpot:", error);
+      // Don't cache errors (might be transient)
       return { verified: false };
     }
   }
 
-  async function searchContacts(
-    query: string,
-    ownerEmail?: string,
-  ): Promise<any[]> {
+  async function searchContacts(query: string, ownerEmail?: string): Promise<any[]> {
     try {
       let searchBody: any;
 
@@ -174,9 +198,7 @@ export function createContactsService(request: HubSpotRequestFn) {
               },
             ],
             query,
-            sorts: [
-              { propertyName: "lastmodifieddate", direction: "DESCENDING" },
-            ],
+            sorts: [{ propertyName: "lastmodifieddate", direction: "DESCENDING" }],
             limit: 20,
             properties: [
               "email",
@@ -202,9 +224,7 @@ export function createContactsService(request: HubSpotRequestFn) {
         } else {
           searchBody = {
             query,
-            sorts: [
-              { propertyName: "lastmodifieddate", direction: "DESCENDING" },
-            ],
+            sorts: [{ propertyName: "lastmodifieddate", direction: "DESCENDING" }],
             limit: 20,
             properties: [
               "email",
@@ -231,9 +251,7 @@ export function createContactsService(request: HubSpotRequestFn) {
       } else {
         searchBody = {
           query,
-          sorts: [
-            { propertyName: "lastmodifieddate", direction: "DESCENDING" },
-          ],
+          sorts: [{ propertyName: "lastmodifieddate", direction: "DESCENDING" }],
           limit: 20,
           properties: [
             "email",
@@ -272,18 +290,15 @@ export function createContactsService(request: HubSpotRequestFn) {
 
   async function getContactById(contactId: string): Promise<any> {
     try {
-      const cacheKey = cache.generateKey(
-        CachePrefix.HUBSPOT_CONTACT,
-        contactId,
-      );
+      const cacheKey = cache.generateKey(CachePrefix.HUBSPOT_CONTACT, contactId);
       return await cache.wrap(
         cacheKey,
         async () => {
           return await request(
-            `/crm/v3/objects/contacts/${contactId}?properties=email,firstname,lastname,company,industry,annualrevenue,numemployees,phone,city,state,country,notes_last_contacted,notes_last_activity_date,hs_lead_status,lifecyclestage,createdate,lastmodifieddate`,
+            `/crm/v3/objects/contacts/${contactId}?properties=email,firstname,lastname,company,industry,annualrevenue,numemployees,phone,city,state,country,notes_last_contacted,notes_last_activity_date,hs_lead_status,lifecyclestage,createdate,lastmodifieddate`
           );
         },
-        { ttl: CacheTTL.HUBSPOT_CONTACT },
+        { ttl: CacheTTL.HUBSPOT_CONTACT }
       );
     } catch (error) {
       console.error("Error fetching contact by ID:", error);
@@ -293,35 +308,30 @@ export function createContactsService(request: HubSpotRequestFn) {
 
   async function getContactDeals(contactId: string): Promise<any[]> {
     try {
-      const cacheKey = cache.generateKey(
-        CachePrefix.HUBSPOT_DEAL,
-        `contact:${contactId}`,
-      );
+      const cacheKey = cache.generateKey(CachePrefix.HUBSPOT_DEAL, `contact:${contactId}`);
       return await cache.wrap(
         cacheKey,
         async () => {
           const dealsResponse = await request(
-            `/crm/v4/objects/contacts/${contactId}/associations/deals`,
+            `/crm/v4/objects/contacts/${contactId}/associations/deals`
           );
           if (!dealsResponse?.results?.length) return [];
-          const dealIds = dealsResponse.results.map(
-            (assoc: any) => assoc.toObjectId,
-          );
+          const dealIds = dealsResponse.results.map((assoc: any) => assoc.toObjectId);
           const dealDetails = await Promise.all(
             dealIds.map(async (dealId: string) => {
               try {
                 return await request(
-                  `/crm/v3/objects/deals/${dealId}?properties=dealname,dealstage,amount,closedate,pipeline,deal_type,hs_object_id`,
+                  `/crm/v3/objects/deals/${dealId}?properties=dealname,dealstage,amount,closedate,pipeline,deal_type,hs_object_id`
                 );
               } catch (err) {
                 console.error(`Error fetching deal ${dealId}:`, err);
                 return null;
               }
-            }),
+            })
           );
           return dealDetails.filter((d) => d !== null);
         },
-        { ttl: CacheTTL.HUBSPOT_DEALS },
+        { ttl: CacheTTL.HUBSPOT_DEALS }
       );
     } catch (error) {
       console.error("Error fetching contact deals:", error);
@@ -337,8 +347,7 @@ export function createContactsService(request: HubSpotRequestFn) {
         const ownersResponse = await request("/crm/v3/owners");
         if (ownersResponse && ownersResponse.results) {
           const userExists = ownersResponse.results.some(
-            (owner: any) =>
-              owner.email && owner.email.toLowerCase() === email.toLowerCase(),
+            (owner: any) => owner.email && owner.email.toLowerCase() === email.toLowerCase()
           );
           if (userExists) return true;
         }
@@ -352,15 +361,13 @@ export function createContactsService(request: HubSpotRequestFn) {
     }
   }
 
-  async function verifyUser(
-    email: string,
-  ): Promise<{ exists: boolean; userData?: any }> {
+  async function verifyUser(email: string): Promise<{ exists: boolean; userData?: any }> {
     try {
       if (!email.endsWith("@seedfinancial.io")) return { exists: false };
       const response = await request("/crm/v3/owners/", { method: "GET" });
       if (response.results) {
         const user = response.results.find(
-          (owner: any) => owner.email?.toLowerCase() === email.toLowerCase(),
+          (owner: any) => owner.email?.toLowerCase() === email.toLowerCase()
         );
         if (user) {
           return {
@@ -381,6 +388,21 @@ export function createContactsService(request: HubSpotRequestFn) {
     }
   }
 
+  function getCacheStats() {
+    return {
+      owner: ownerCache.getStats(),
+      contact: contactCache.getStats(),
+      ownerHitRate: ownerCache.getHitRate(),
+      contactHitRate: contactCache.getHitRate(),
+    };
+  }
+
+  function clearCaches() {
+    ownerCache.clear();
+    contactCache.clear();
+    hubspotLogger.info("🧹 HubSpot caches cleared");
+  }
+
   return {
     listOwners,
     getOwnerByEmail,
@@ -392,5 +414,7 @@ export function createContactsService(request: HubSpotRequestFn) {
     getContactDeals,
     verifyUserByEmail,
     verifyUser,
+    getCacheStats,
+    clearCaches,
   };
 }

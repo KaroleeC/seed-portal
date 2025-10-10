@@ -65,7 +65,6 @@ yarn-error.log*
 .npm
 .yarn-integrity
 .eslintcache
-
 # TypeScript
 *.tsbuildinfo
 .tscache
@@ -74,12 +73,23 @@ yarn-error.log*
 coverage/
 .nyc_output
 
+# Sentry
+.sentryclirc
+
+# Storybook
+storybook-static/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
 # OS files
 Thumbs.db
 .DS_Store
 .AppleDouble
 .LSOverride
-
+{{ ... }}
 # Temporary files
 *.tmp
 *.temp

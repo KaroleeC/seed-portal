@@ -39,8 +39,7 @@ export const SERVICE_REGISTRY = {
   serviceTaasMonthly: {
     key: "serviceTaasMonthly",
     name: "TaaS",
-    description:
-      "Tax as a Service - comprehensive tax advisory and preparation",
+    description: "Tax as a Service - comprehensive tax advisory and preparation",
     category: SERVICE_CATEGORIES.CORE,
     hubspotProductId: "26203849099", // Tax as a Service (Monthly)
     pricingKey: "taas",
@@ -250,8 +249,7 @@ export const SERVICE_REGISTRY = {
 // TYPE HELPERS - Automatically generated from the registry
 export type ServiceKey = keyof typeof SERVICE_REGISTRY;
 export type ServiceDefinition = (typeof SERVICE_REGISTRY)[ServiceKey];
-export type ServiceCategory =
-  (typeof SERVICE_CATEGORIES)[keyof typeof SERVICE_CATEGORIES];
+export type ServiceCategory = (typeof SERVICE_CATEGORIES)[keyof typeof SERVICE_CATEGORIES];
 
 // UTILITY FUNCTIONS - Use these instead of hardcoding everywhere
 export const getAllServices = () => Object.values(SERVICE_REGISTRY);
@@ -259,23 +257,17 @@ export const getAllServices = () => Object.values(SERVICE_REGISTRY);
 export const getServicesByCategory = (category: ServiceCategory) =>
   getAllServices().filter((service) => service.category === category);
 
-export const getCoreServices = () =>
-  getAllServices().filter((service) => service.standalone);
+export const getCoreServices = () => getAllServices().filter((service) => service.standalone);
 
-export const getAddonServices = () =>
-  getAllServices().filter((service) => !service.standalone);
+export const getAddonServices = () => getAllServices().filter((service) => !service.standalone);
 
 export const getServiceByKey = (key: ServiceKey) => SERVICE_REGISTRY[key];
 
-export const getServiceKeys = () =>
-  Object.keys(SERVICE_REGISTRY) as ServiceKey[];
+export const getServiceKeys = () => Object.keys(SERVICE_REGISTRY) as ServiceKey[];
 
 export const getHubSpotProductIds = () =>
   Object.fromEntries(
-    Object.entries(SERVICE_REGISTRY).map(([key, service]) => [
-      key,
-      service.hubspotProductId,
-    ]),
+    Object.entries(SERVICE_REGISTRY).map(([key, service]) => [key, service.hubspotProductId])
   );
 
 export const getMsaDescriptions = () =>
@@ -283,15 +275,12 @@ export const getMsaDescriptions = () =>
     Object.entries(SERVICE_REGISTRY).map(([key, service]) => [
       service.pricingKey,
       service.msaDescription,
-    ]),
+    ])
   );
 
 export const getServiceIcons = () =>
   Object.fromEntries(
-    Object.entries(SERVICE_REGISTRY).map(([key, service]) => [
-      service.pricingKey,
-      service.icon,
-    ]),
+    Object.entries(SERVICE_REGISTRY).map(([key, service]) => [service.pricingKey, service.icon])
   );
 
 // ZOD SCHEMA HELPERS - Generate form schemas automatically
@@ -305,23 +294,17 @@ export const generateServiceZodFields = () => {
 
 // SERVICE VALIDATION
 export const validateServiceSelection = (
-  selectedServices: Partial<Record<ServiceKey, boolean>>,
+  selectedServices: Partial<Record<ServiceKey, boolean>>
 ) => {
   const errors: string[] = [];
   const selected = getServiceKeys().filter((key) => selectedServices[key]);
 
   // Check if any addon services are selected without core services
-  const selectedAddonServices = selected.filter(
-    (key) => !SERVICE_REGISTRY[key].standalone,
-  );
-  const selectedCoreServices = selected.filter(
-    (key) => SERVICE_REGISTRY[key].standalone,
-  );
+  const selectedAddonServices = selected.filter((key) => !SERVICE_REGISTRY[key].standalone);
+  const selectedCoreServices = selected.filter((key) => SERVICE_REGISTRY[key].standalone);
 
   if (selectedAddonServices.length > 0 && selectedCoreServices.length === 0) {
-    errors.push(
-      "Addon services require at least one core service to be selected",
-    );
+    errors.push("Addon services require at least one core service to be selected");
   }
 
   return {
@@ -340,7 +323,7 @@ export const mapQuoteToFormServices = (quote: any) => {
 };
 
 export const getSelectedServiceDescriptions = (
-  selectedServices: Partial<Record<ServiceKey, boolean>>,
+  selectedServices: Partial<Record<ServiceKey, boolean>>
 ) => {
   const selected = getServiceKeys().filter((key) => selectedServices[key]);
   return selected.map((key) => SERVICE_REGISTRY[key].msaDescription);

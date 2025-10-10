@@ -11,36 +11,21 @@ export const seedpayKeys = {
     root: () => [...seedpayKeys.root, "commissions"] as const,
     list: (salesRepId?: string | number) =>
       [...seedpayKeys.commissions.root(), salesRepId ?? "all"] as const,
-    summary: () =>
-      [...seedpayKeys.commissions.root(), "current-period-summary"] as const,
+    summary: () => [...seedpayKeys.commissions.root(), "current-period-summary"] as const,
   },
   bonuses: {
     root: () => [...seedpayKeys.root, "bonuses"] as const,
     monthly: (salesRepId?: string | number) =>
       [...seedpayKeys.bonuses.root(), "monthly", salesRepId ?? "all"] as const,
     milestone: (salesRepId?: string | number) =>
-      [
-        ...seedpayKeys.bonuses.root(),
-        "milestone",
-        salesRepId ?? "all",
-      ] as const,
+      [...seedpayKeys.bonuses.root(), "milestone", salesRepId ?? "all"] as const,
   },
   deals: {
     root: () => [...seedpayKeys.root, "deals"] as const,
     list: (params?: { ownerId?: string; limit?: number }) =>
-      [
-        ...seedpayKeys.deals.root(),
-        "list",
-        params?.ownerId ?? "",
-        params?.limit ?? "",
-      ] as const,
+      [...seedpayKeys.deals.root(), "list", params?.ownerId ?? "", params?.limit ?? ""] as const,
     byOwner: (ownerId: string | undefined, limit?: number) =>
-      [
-        ...seedpayKeys.deals.root(),
-        "by-owner",
-        ownerId ?? "none",
-        limit ?? "",
-      ] as const,
+      [...seedpayKeys.deals.root(), "by-owner", ownerId ?? "none", limit ?? ""] as const,
     byIds: (ids: string[] | undefined, limit?: number) =>
       [
         ...seedpayKeys.deals.root(),
@@ -54,8 +39,7 @@ export const seedpayKeys = {
 // Calculator (SeedQC) app keys
 export const seedqcKeys = {
   root: ["seedqc"] as const,
-  content: (service?: string) =>
-    [...seedqcKeys.root, "content", service || "all"] as const,
+  content: (service?: string) => [...seedqcKeys.root, "content", service || "all"] as const,
   adminContent: (service?: string) =>
     [...seedqcKeys.root, "admin-content", service || "all"] as const,
   pricing: {
@@ -71,14 +55,10 @@ export const pricingKeys = {
     root: () => [...pricingKeys.root, "admin"] as const,
     base: () => [...pricingKeys.admin.root(), "base"] as const,
     tiers: () => [...pricingKeys.admin.root(), "tiers"] as const,
-    industryMultipliers: () =>
-      [...pricingKeys.admin.root(), "industry-multipliers"] as const,
-    revenueMultipliers: () =>
-      [...pricingKeys.admin.root(), "revenue-multipliers"] as const,
-    transactionSurcharges: () =>
-      [...pricingKeys.admin.root(), "transaction-surcharges"] as const,
-    serviceSettings: () =>
-      [...pricingKeys.admin.root(), "service-settings"] as const,
+    industryMultipliers: () => [...pricingKeys.admin.root(), "industry-multipliers"] as const,
+    revenueMultipliers: () => [...pricingKeys.admin.root(), "revenue-multipliers"] as const,
+    transactionSurcharges: () => [...pricingKeys.admin.root(), "transaction-surcharges"] as const,
+    serviceSettings: () => [...pricingKeys.admin.root(), "service-settings"] as const,
     history: () => [...pricingKeys.admin.root(), "history"] as const,
   },
 };

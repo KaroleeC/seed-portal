@@ -1,17 +1,12 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
- 
+
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { PERMISSIONS } from "@shared/permissions";
- 
+
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
- 
+
 import {
   BarChart3,
   TrendingUp,
@@ -33,9 +28,7 @@ import {
   Banknote,
   Receipt,
 } from "lucide-react";
- 
- 
- 
+
 import { SurfaceCard } from "@/components/ds/SurfaceCard";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { DashboardWelcome } from "@/components/layout/DashboardWelcome";
@@ -61,19 +54,15 @@ interface HealthCheckResponse {
   };
 }
 
- 
-
 // navigationItems removed (left nav deprecated)
 
 export default function AdminDashboard() {
-
   // Real-time system health monitoring
-  const { data: healthData, isLoading: healthLoading } =
-    useQuery<HealthCheckResponse>({
-      queryKey: ["/api/health"],
-      refetchInterval: 60000, // Refresh every 60 seconds
-      refetchIntervalInBackground: true,
-    });
+  const { data: healthData, isLoading: healthLoading } = useQuery<HealthCheckResponse>({
+    queryKey: ["/api/health"],
+    refetchInterval: 60000, // Refresh every 60 seconds
+    refetchIntervalInBackground: true,
+  });
 
   const systemHealth: SystemHealth = {
     crm: healthData?.services.crm?.status || "error",
@@ -82,8 +71,6 @@ export default function AdminDashboard() {
     weather: healthData?.services.weather?.status || "error",
     geocoding: healthData?.services.geocoding?.status || "error",
   };
-
-  
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -115,10 +102,7 @@ export default function AdminDashboard() {
     }
   };
 
-  
-
   // Debug logging for admin check
-  
 
   // Left navigation removed
 
@@ -127,15 +111,11 @@ export default function AdminDashboard() {
     <PermissionGuard
       permissions={PERMISSIONS.VIEW_ADMIN_DASHBOARD}
       fallback={
-        <div
-          className="min-h-screen theme-seed-dark flex items-center justify-center page-bg"
-        >
+        <div className="min-h-screen theme-seed-dark flex items-center justify-center page-bg">
           <Card className="border shadow-xl max-w-md">
             <CardContent className="p-12 text-center">
               <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-foreground mb-2">
-                Access Denied
-              </h1>
+              <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
               <p className="text-muted-foreground mb-4">
                 You need admin privileges to access SEEDOS.
               </p>
@@ -230,15 +210,9 @@ export default function AdminDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-muted-foreground text-sm">
-                        Total Revenue
-                      </p>
-                      <p className="text-3xl font-bold text-foreground">
-                        $425K
-                      </p>
-                      <p className="text-muted-foreground text-sm">
-                        +12% from last month
-                      </p>
+                      <p className="text-muted-foreground text-sm">Total Revenue</p>
+                      <p className="text-3xl font-bold text-foreground">$425K</p>
+                      <p className="text-muted-foreground text-sm">+12% from last month</p>
                     </div>
                     <div className="p-3 bg-blue-100 rounded-full">
                       <TrendingUp className="h-8 w-8 text-blue-600" />
@@ -259,13 +233,9 @@ export default function AdminDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-muted-foreground text-sm">
-                        Active Clients
-                      </p>
+                      <p className="text-muted-foreground text-sm">Active Clients</p>
                       <p className="text-3xl font-bold text-foreground">89</p>
-                      <p className="text-muted-foreground text-sm">
-                        +5 new this month
-                      </p>
+                      <p className="text-muted-foreground text-sm">+5 new this month</p>
                     </div>
                     <div className="p-3 bg-green-100 rounded-full">
                       <Users className="h-8 w-8 text-green-600" />
@@ -278,15 +248,9 @@ export default function AdminDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-muted-foreground text-sm">
-                        Pipeline Value
-                      </p>
-                      <p className="text-3xl font-bold text-foreground">
-                        $127K
-                      </p>
-                      <p className="text-muted-foreground text-sm">
-                        18 active deals
-                      </p>
+                      <p className="text-muted-foreground text-sm">Pipeline Value</p>
+                      <p className="text-3xl font-bold text-foreground">$127K</p>
+                      <p className="text-muted-foreground text-sm">18 active deals</p>
                     </div>
                     <div className="p-3 bg-purple-100 rounded-full">
                       <Target className="h-8 w-8 text-purple-600" />
@@ -299,13 +263,9 @@ export default function AdminDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-muted-foreground text-sm">
-                        System Health
-                      </p>
+                      <p className="text-muted-foreground text-sm">System Health</p>
                       <p className="text-3xl font-bold text-foreground">98%</p>
-                      <p className="text-muted-foreground text-sm">
-                        All systems operational
-                      </p>
+                      <p className="text-muted-foreground text-sm">All systems operational</p>
                     </div>
                     <div className="p-3 bg-orange-100 rounded-full">
                       <Shield className="h-8 w-8 text-orange-600" />
@@ -322,10 +282,7 @@ export default function AdminDashboard() {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between text-foreground">
                     <span>Revenue Analytics</span>
-                    <Badge
-                      variant="secondary"
-                      className="bg-orange-500 text-white"
-                    >
+                    <Badge variant="secondary" className="bg-orange-500 text-white">
                       Current Week
                     </Badge>
                   </CardTitle>
@@ -335,9 +292,7 @@ export default function AdminDashboard() {
                     <div className="text-center text-muted-foreground">
                       <BarChart3 className="h-16 w-16 mx-auto mb-4" />
                       <p className="font-medium">Revenue Chart Integration</p>
-                      <p className="text-sm">
-                        Connect to Stripe/Mercury for live data
-                      </p>
+                      <p className="text-sm">Connect to Stripe/Mercury for live data</p>
                     </div>
                   </div>
                 </CardContent>
@@ -401,8 +356,6 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </SurfaceCard>
-
-              
             </div>
 
             {/* Integration Status Grid */}
@@ -416,9 +369,7 @@ export default function AdminDashboard() {
                 <CardContent className="p-6 text-center">
                   <CreditCardIcon className="h-12 w-12 text-purple-500 mx-auto mb-4" />
                   <h3 className="font-semibold mb-2 text-foreground">Stripe</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Payment processing
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-3">Payment processing</p>
                   <Badge className="bg-green-500 text-white">Connected</Badge>
                 </CardContent>
               </SurfaceCard>
@@ -427,9 +378,7 @@ export default function AdminDashboard() {
                 <CardContent className="p-6 text-center">
                   <Banknote className="h-12 w-12 text-blue-500 mx-auto mb-4" />
                   <h3 className="font-semibold mb-2 text-foreground">Mercury</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Business banking
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-3">Business banking</p>
                   <Badge variant="secondary">Setup Required</Badge>
                 </CardContent>
               </SurfaceCard>
@@ -438,9 +387,7 @@ export default function AdminDashboard() {
                 <CardContent className="p-6 text-center">
                   <Receipt className="h-12 w-12 text-green-500 mx-auto mb-4" />
                   <h3 className="font-semibold mb-2 text-foreground">QuickBooks</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Accounting sync
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-3">Accounting sync</p>
                   <Badge variant="secondary">Setup Required</Badge>
                 </CardContent>
               </SurfaceCard>
@@ -449,9 +396,7 @@ export default function AdminDashboard() {
                 <CardContent className="p-6 text-center">
                   <Video className="h-12 w-12 text-red-500 mx-auto mb-4" />
                   <h3 className="font-semibold mb-2 text-foreground">Zoom</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Meeting analytics
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-3">Meeting analytics</p>
                   <Badge variant="secondary">Setup Required</Badge>
                 </CardContent>
               </SurfaceCard>
@@ -471,43 +416,27 @@ export default function AdminDashboard() {
                     <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-2" />
                       <div>
-                        <p className="font-medium text-foreground">
-                          New client onboarded
-                        </p>
+                        <p className="font-medium text-foreground">New client onboarded</p>
                         <p className="text-sm text-muted-foreground">
                           TechFlow Solutions - $12,000 ARR
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          2 hours ago
-                        </p>
+                        <p className="text-xs text-muted-foreground">2 hours ago</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2" />
                       <div>
-                        <p className="font-medium text-foreground">
-                          Commission approved
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Amanda Rodriguez - $450
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          4 hours ago
-                        </p>
+                        <p className="font-medium text-foreground">Commission approved</p>
+                        <p className="text-sm text-muted-foreground">Amanda Rodriguez - $450</p>
+                        <p className="text-xs text-muted-foreground">4 hours ago</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                       <div className="w-2 h-2 bg-purple-500 rounded-full mt-2" />
                       <div>
-                        <p className="font-medium text-foreground">
-                          System backup completed
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          All data synchronized
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          6 hours ago
-                        </p>
+                        <p className="font-medium text-foreground">System backup completed</p>
+                        <p className="text-sm text-muted-foreground">All data synchronized</p>
+                        <p className="text-xs text-muted-foreground">6 hours ago</p>
                       </div>
                     </div>
                   </div>
@@ -525,34 +454,22 @@ export default function AdminDashboard() {
                     <div className="flex items-start gap-3 p-3 bg-muted border rounded-lg">
                       <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
                       <div>
-                        <p className="font-medium text-foreground">
-                          ClickUp Integration Warning
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          API rate limit approaching
-                        </p>
+                        <p className="font-medium text-foreground">ClickUp Integration Warning</p>
+                        <p className="text-sm text-muted-foreground">API rate limit approaching</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-3 bg-muted border rounded-lg">
                       <Clock className="h-5 w-5 text-blue-500 mt-0.5" />
                       <div>
-                        <p className="font-medium text-foreground">
-                          Scheduled Maintenance
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Database backup in 2 hours
-                        </p>
+                        <p className="font-medium text-foreground">Scheduled Maintenance</p>
+                        <p className="text-sm text-muted-foreground">Database backup in 2 hours</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-3 bg-muted border rounded-lg">
                       <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
                       <div>
-                        <p className="font-medium text-foreground">
-                          Security Scan Complete
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          No vulnerabilities detected
-                        </p>
+                        <p className="font-medium text-foreground">Security Scan Complete</p>
+                        <p className="text-sm text-muted-foreground">No vulnerabilities detected</p>
                       </div>
                     </div>
                   </div>

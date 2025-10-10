@@ -11,10 +11,7 @@ export function usePricingConfig() {
         const data = await apiRequest("/api/apps/seedqc/pricing/config");
         return data as PricingConfig;
       } catch (err) {
-        console.error(
-          "[usePricingConfig] falling back to defaults due to error:",
-          err,
-        );
+        console.error("[usePricingConfig] falling back to defaults due to error:", err);
         // Provide a minimal fallback so downstream mapping can proceed without throwing
         const fallback: any = {
           baseFees: { bookkeeping: 150 },

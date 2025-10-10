@@ -1,12 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SurfaceCard } from "@/components/ds/SurfaceCard";
 import {
   Dialog,
@@ -100,7 +94,7 @@ export default function Profile() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { resolvedTheme } = useTheme();
-  const logoSrc = getThemedLogo(brand, resolvedTheme === 'dark' ? 'dark' : 'light');
+  const logoSrc = getThemedLogo(brand, resolvedTheme === "dark" ? "dark" : "light");
 
   // Password change modal state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -134,8 +128,7 @@ export default function Profile() {
     onError: (error: any) => {
       toast({
         title: "Password Change Failed",
-        description:
-          error.message || "Failed to change password. Please try again.",
+        description: error.message || "Failed to change password. Please try again.",
         variant: "destructive",
       });
     },
@@ -148,17 +141,12 @@ export default function Profile() {
   const [weather, setWeather] = useState<WeatherData>({
     temperature: null,
     condition: "",
-    location:
-      user?.city && user?.state
-        ? `${user.city}, ${user.state}`
-        : "Marina Del Rey, CA",
+    location: user?.city && user?.state ? `${user.city}, ${user.state}` : "Marina Del Rey, CA",
     isLoading: false,
   });
 
   // Address autocomplete state
-  const [addressSuggestions, setAddressSuggestions] = useState<
-    AddressSuggestion[]
-  >([]);
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [addressQuery, setAddressQuery] = useState("");
 
@@ -203,14 +191,11 @@ export default function Profile() {
       }
       console.log("=== ADDRESS SEARCH END ===");
     }, 300),
-    [],
+    []
   );
 
   // Simple debounce function
-  function debounce<T extends (...args: any[]) => any>(
-    func: T,
-    wait: number,
-  ): T {
+  function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
     let timeout: NodeJS.Timeout;
     return ((...args: any[]) => {
       clearTimeout(timeout);
@@ -243,8 +228,7 @@ export default function Profile() {
     console.log("Address object:", address);
 
     // Parse and set form fields with proper fallbacks
-    const streetAddress =
-      `${address.house_number || ""} ${address.road || ""}`.trim();
+    const streetAddress = `${address.house_number || ""} ${address.road || ""}`.trim();
     const city = address.city || address.town || address.village || "";
     const state = address.state || "";
     const zipCode = address.postcode || "";
@@ -334,34 +318,20 @@ export default function Profile() {
       // Initialize address query with existing address
       if (user.address && user.city && user.state) {
         setAddressQuery(
-          `${user.address}, ${user.city}, ${user.state} ${user.zipCode || ""}`.trim(),
+          `${user.address}, ${user.city}, ${user.state} ${user.zipCode || ""}`.trim()
         );
       }
 
       // If user has address but no coordinates, geocode and fetch weather
-      if (
-        user.address &&
-        user.city &&
-        user.state &&
-        (!user.latitude || !user.longitude)
-      ) {
-        console.log(
-          "Address exists but coordinates missing, fetching weather...",
-        );
-        fetchWeatherForAddress(
-          user.address,
-          user.city,
-          user.state,
-          user.zipCode || "",
-        );
+      if (user.address && user.city && user.state && (!user.latitude || !user.longitude)) {
+        console.log("Address exists but coordinates missing, fetching weather...");
+        fetchWeatherForAddress(user.address, user.city, user.state, user.zipCode || "");
       }
     }
   }, [user, form, formatPhoneNumber]);
 
   // Handle photo upload
-  const handlePhotoUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -421,14 +391,11 @@ export default function Profile() {
     address: string,
     city: string,
     state: string,
-    zipCode: string,
+    zipCode: string
   ): Promise<GeocodeResult | null> => {
     try {
       // Known coordinates for common cities to avoid API issues
-      const knownLocations: Record<
-        string,
-        { latitude: number; longitude: number }
-      > = {
+      const knownLocations: Record<string, { latitude: number; longitude: number }> = {
         "Marina Del Rey, CA": { latitude: 33.9802, longitude: -118.4517 },
         "Los Angeles, CA": { latitude: 34.0522, longitude: -118.2437 },
         "Los Angeles, California": { latitude: 34.0522, longitude: -118.2437 },
@@ -457,7 +424,7 @@ export default function Profile() {
       // Fall back to API for unknown locations
       console.log("Geocoding via API:", cityStateKey);
       const response = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityStateKey)}&count=1&language=en&format=json`,
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityStateKey)}&count=1&language=en&format=json`
       );
 
       if (!response.ok) {
@@ -490,16 +457,12 @@ export default function Profile() {
   };
 
   // Fetch weather based on coordinates
-  const fetchWeatherByCoordinates = async (
-    lat: number,
-    lon: number,
-    location: string,
-  ) => {
+  const fetchWeatherByCoordinates = async (lat: number, lon: number, location: string) => {
     try {
       setWeather((prev) => ({ ...prev, isLoading: true }));
 
       const response = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`,
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`
       );
 
       if (!response.ok) throw new Error("Weather fetch failed");
@@ -534,7 +497,7 @@ export default function Profile() {
     address: string,
     city: string,
     state: string,
-    zipCode: string,
+    zipCode: string
   ) => {
     const geocodeResult = await geocodeAddress(address, city, state, zipCode);
     if (geocodeResult) {
@@ -544,7 +507,7 @@ export default function Profile() {
         console.log(
           "Saving coordinates to database:",
           geocodeResult.latitude,
-          geocodeResult.longitude,
+          geocodeResult.longitude
         );
         await apiRequest("PATCH", "/api/user/profile", {
           latitude: geocodeResult.latitude.toString(),
@@ -562,16 +525,10 @@ export default function Profile() {
       await fetchWeatherByCoordinates(
         geocodeResult.latitude,
         geocodeResult.longitude,
-        geocodeResult.location,
+        geocodeResult.location
       );
     } else {
-      console.log(
-        "Geocoding failed for address:",
-        address,
-        city,
-        state,
-        zipCode,
-      );
+      console.log("Geocoding failed for address:", address, city, state, zipCode);
     }
   };
 
@@ -608,33 +565,23 @@ export default function Profile() {
       const currentState = form.getValues("state") || "";
       const currentZipCode = form.getValues("zipCode") || "";
 
-      console.log(
-        "Profile updated, refreshing weather with current form values:",
-        {
-          currentAddress,
-          currentCity,
-          currentState,
-          currentZipCode,
-        },
-      );
+      console.log("Profile updated, refreshing weather with current form values:", {
+        currentAddress,
+        currentCity,
+        currentState,
+        currentZipCode,
+      });
 
       // If we have address information, fetch weather immediately
       if (currentAddress && currentCity && currentState) {
-        await fetchWeatherForAddress(
-          currentAddress,
-          currentCity,
-          currentState,
-          currentZipCode,
-        );
+        await fetchWeatherForAddress(currentAddress, currentCity, currentState, currentZipCode);
       }
 
       // Force refresh user data immediately after all updates
       console.log("Invalidating user cache for dashboard weather update...");
       await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       await queryClient.refetchQueries({ queryKey: ["/api/user"] });
-      console.log(
-        "User cache invalidated and refetched - dashboard should update",
-      );
+      console.log("User cache invalidated and refetched - dashboard should update");
 
       toast({
         title: "Profile Updated",
@@ -676,15 +623,8 @@ export default function Profile() {
   // Load weather on component mount if coordinates exist
   useEffect(() => {
     if (user?.latitude && user?.longitude) {
-      const location =
-        user.city && user.state
-          ? `${user.city}, ${user.state}`
-          : "Unknown Location";
-      fetchWeatherByCoordinates(
-        parseFloat(user.latitude),
-        parseFloat(user.longitude),
-        location,
-      );
+      const location = user.city && user.state ? `${user.city}, ${user.state}` : "Unknown Location";
+      fetchWeatherByCoordinates(parseFloat(user.latitude), parseFloat(user.longitude), location);
     }
   }, [user?.latitude, user?.longitude]);
 
@@ -700,13 +640,9 @@ export default function Profile() {
       case "sunny":
         return <Sun {...iconProps} className="h-4 w-4 text-yellow-500" />;
       case "partly cloudy":
-        return (
-          <Cloud {...iconProps} className="h-4 w-4 text-muted-foreground" />
-        );
+        return <Cloud {...iconProps} className="h-4 w-4 text-muted-foreground" />;
       case "cloudy":
-        return (
-          <Cloud {...iconProps} className="h-4 w-4 text-muted-foreground" />
-        );
+        return <Cloud {...iconProps} className="h-4 w-4 text-muted-foreground" />;
       case "rainy":
         return <CloudRain {...iconProps} />;
       case "showers":
@@ -753,9 +689,7 @@ export default function Profile() {
       <main className="max-w-4xl mx-auto px-6 py-8">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-light text-white mb-2">My Profile</h1>
-          <p className="text-white/70">
-            Manage your personal information and preferences
-          </p>
+          <p className="text-white/70">Manage your personal information and preferences</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
@@ -785,18 +719,13 @@ export default function Profile() {
                       <RefreshCw
                         className={`h-4 w-4 ${syncHubSpotMutation.isPending ? "animate-spin" : ""}`}
                       />
-                      {syncHubSpotMutation.isPending
-                        ? "Syncing..."
-                        : "Sync Now"}
+                      {syncHubSpotMutation.isPending ? "Syncing..." : "Sync Now"}
                     </Button>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <Label
-                        htmlFor="firstName"
-                        className="text-muted-foreground"
-                      >
+                      <Label htmlFor="firstName" className="text-muted-foreground">
                         First Name
                       </Label>
                       <div className="flex items-center gap-2 mt-1">
@@ -809,10 +738,7 @@ export default function Profile() {
                       </div>
                     </div>
                     <div>
-                      <Label
-                        htmlFor="lastName"
-                        className="text-muted-foreground"
-                      >
+                      <Label htmlFor="lastName" className="text-muted-foreground">
                         Last Name
                       </Label>
                       <Input
@@ -844,10 +770,7 @@ export default function Profile() {
 
                 {/* Editable Fields */}
                 <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-6"
-                  >
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     {/* Phone Number Field */}
                     <div className="space-y-4">
                       <h3 className="text-sm font-medium text-muted-foreground">
@@ -865,9 +788,7 @@ export default function Profile() {
                                 placeholder="(555) 555-5555"
                                 {...field}
                                 onChange={(e) => {
-                                  const formatted = formatPhoneNumber(
-                                    e.target.value,
-                                  );
+                                  const formatted = formatPhoneNumber(e.target.value);
                                   field.onChange(formatted);
                                 }}
                                 className="border"
@@ -922,17 +843,12 @@ export default function Profile() {
                                   type="button"
                                   onMouseDown={(e) => {
                                     e.preventDefault(); // Prevent focus loss
-                                    console.log(
-                                      "Button mousedown event triggered",
-                                    );
+                                    console.log("Button mousedown event triggered");
                                   }}
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    console.log(
-                                      "Address suggestion clicked:",
-                                      suggestion,
-                                    );
+                                    console.log("Address suggestion clicked:", suggestion);
                                     selectAddress(suggestion);
                                   }}
                                   className="w-full px-4 py-3 text-left hover:bg-muted/70 focus:bg-muted/70 focus:outline-none border-b border-border last:border-b-0"
@@ -941,14 +857,11 @@ export default function Profile() {
                                     <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                                     <div className="text-sm">
                                       <div className="text-foreground font-medium">
-                                        {suggestion.address.house_number}{" "}
-                                        {suggestion.address.road}
+                                        {suggestion.address.house_number} {suggestion.address.road}
                                       </div>
                                       <div className="text-muted-foreground">
-                                        {suggestion.address.city ||
-                                          suggestion.address.town}
-                                        , {suggestion.address.state}{" "}
-                                        {suggestion.address.postcode}
+                                        {suggestion.address.city || suggestion.address.town},{" "}
+                                        {suggestion.address.state} {suggestion.address.postcode}
                                       </div>
                                     </div>
                                   </div>
@@ -966,11 +879,7 @@ export default function Profile() {
                           <FormItem>
                             <FormLabel>Street Address</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="123 Main Street"
-                                {...field}
-                                className="border"
-                              />
+                              <Input placeholder="123 Main Street" {...field} className="border" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -985,11 +894,7 @@ export default function Profile() {
                             <FormItem>
                               <FormLabel>City</FormLabel>
                               <FormControl>
-                                <Input
-                                  placeholder="Marina Del Rey"
-                                  {...field}
-                                  className="border"
-                                />
+                                <Input placeholder="Marina Del Rey" {...field} className="border" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1003,11 +908,7 @@ export default function Profile() {
                             <FormItem>
                               <FormLabel>State</FormLabel>
                               <FormControl>
-                                <Input
-                                  placeholder="CA"
-                                  {...field}
-                                  className="border"
-                                />
+                                <Input placeholder="CA" {...field} className="border" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1023,11 +924,7 @@ export default function Profile() {
                             <FormItem>
                               <FormLabel>ZIP Code</FormLabel>
                               <FormControl>
-                                <Input
-                                  placeholder="90292"
-                                  {...field}
-                                  className="border"
-                                />
+                                <Input placeholder="90292" {...field} className="border" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1041,11 +938,7 @@ export default function Profile() {
                             <FormItem>
                               <FormLabel>Country</FormLabel>
                               <FormControl>
-                                <Input
-                                  placeholder="US"
-                                  {...field}
-                                  className="border"
-                                />
+                                <Input placeholder="US" {...field} className="border" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1094,12 +987,8 @@ export default function Profile() {
                         {weather.temperature}°F
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {weather.condition}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {weather.location}
-                    </p>
+                    <p className="text-sm text-muted-foreground capitalize">{weather.condition}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{weather.location}</p>
                   </div>
                 ) : (
                   <div className="text-center text-muted-foreground">
@@ -1168,10 +1057,7 @@ export default function Profile() {
                 <CardDescription>Update your account password</CardDescription>
               </CardHeader>
               <CardContent>
-                <Dialog
-                  open={isPasswordModalOpen}
-                  onOpenChange={setIsPasswordModalOpen}
-                >
+                <Dialog open={isPasswordModalOpen} onOpenChange={setIsPasswordModalOpen}>
                   <DialogTrigger asChild>
                     <Button
                       className="w-full bg-green-600 hover:bg-green-700 text-white"
@@ -1188,8 +1074,8 @@ export default function Profile() {
                         Change Password
                       </DialogTitle>
                       <DialogDescription>
-                        Update your account password. You'll need to enter your
-                        current password for verification.
+                        Update your account password. You'll need to enter your current password for
+                        verification.
                       </DialogDescription>
                     </DialogHeader>
 

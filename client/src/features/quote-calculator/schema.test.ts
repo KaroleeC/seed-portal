@@ -7,24 +7,28 @@ describe("Quote Form Schema", () => {
       // Get the shape of both schemas
       const quoteFormShape = quoteFormSchema.shape;
       const formShape = formSchema.shape;
-      
+
       // Check that both schemas have the same keys
       const quoteFormKeys = Object.keys(quoteFormShape);
       const formKeys = Object.keys(formShape);
-      
+
       expect(quoteFormKeys).toEqual(formKeys);
     });
-    
+
     it("should have the same default values for fields with defaults", () => {
       // Test fields that have defaults
       const quoteFormDefaults = quoteFormSchema.parse({});
       const formDefaults = formSchema.parse({});
-      
+
       // Compare specific fields with defaults
-      expect(quoteFormDefaults.serviceMonthlyBookkeeping).toEqual(formDefaults.serviceMonthlyBookkeeping);
+      expect(quoteFormDefaults.serviceMonthlyBookkeeping).toEqual(
+        formDefaults.serviceMonthlyBookkeeping
+      );
       expect(quoteFormDefaults.serviceTaasMonthly).toEqual(formDefaults.serviceTaasMonthly);
       expect(quoteFormDefaults.serviceCleanupProjects).toEqual(formDefaults.serviceCleanupProjects);
-      expect(quoteFormDefaults.servicePriorYearFilings).toEqual(formDefaults.servicePriorYearFilings);
+      expect(quoteFormDefaults.servicePriorYearFilings).toEqual(
+        formDefaults.servicePriorYearFilings
+      );
       expect(quoteFormDefaults.serviceCfoAdvisory).toEqual(formDefaults.serviceCfoAdvisory);
       expect(quoteFormDefaults.servicePayrollService).toEqual(formDefaults.servicePayrollService);
       expect(quoteFormDefaults.serviceApArService).toEqual(formDefaults.serviceApArService);
@@ -32,10 +36,14 @@ describe("Quote Form Schema", () => {
       expect(quoteFormDefaults.serviceFpaBuild).toEqual(formDefaults.serviceFpaBuild);
       expect(quoteFormDefaults.serviceFpaSupport).toEqual(formDefaults.serviceFpaSupport);
       expect(quoteFormDefaults.serviceNexusStudy).toEqual(formDefaults.serviceNexusStudy);
-      expect(quoteFormDefaults.serviceEntityOptimization).toEqual(formDefaults.serviceEntityOptimization);
+      expect(quoteFormDefaults.serviceEntityOptimization).toEqual(
+        formDefaults.serviceEntityOptimization
+      );
       expect(quoteFormDefaults.serviceCostSegregation).toEqual(formDefaults.serviceCostSegregation);
       expect(quoteFormDefaults.serviceRdCredit).toEqual(formDefaults.serviceRdCredit);
-      expect(quoteFormDefaults.serviceRealEstateAdvisory).toEqual(formDefaults.serviceRealEstateAdvisory);
+      expect(quoteFormDefaults.serviceRealEstateAdvisory).toEqual(
+        formDefaults.serviceRealEstateAdvisory
+      );
       expect(quoteFormDefaults.serviceAgentOfService).toEqual(formDefaults.serviceAgentOfService);
       expect(quoteFormDefaults.clientCountry).toEqual(formDefaults.clientCountry);
       expect(quoteFormDefaults.companyNameLocked).toEqual(formDefaults.companyNameLocked);
@@ -47,7 +55,7 @@ describe("Quote Form Schema", () => {
       expect(quoteFormDefaults.payrollStateCount).toEqual(formDefaults.payrollStateCount);
     });
   });
-  
+
   describe("Roundtrip Parse/Stringify", () => {
     it("should maintain data integrity through parse/stringify cycles", () => {
       // Test data with various field types
@@ -100,21 +108,21 @@ describe("Quote Form Schema", () => {
         arServiceTier: "advanced",
         cfoAdvisoryType: "pay_as_you_go",
         cfoAdvisoryBundleHours: 10,
-        cfoAdvisoryHubspotProductId: "12345"
+        cfoAdvisoryHubspotProductId: "12345",
       };
-      
+
       // Parse the data with both schemas
       const quoteFormParsed = quoteFormSchema.parse(testData);
       const formParsed = formSchema.parse(testData);
-      
+
       // Stringify both parsed results
       const quoteFormStringified = JSON.stringify(quoteFormParsed);
       const formStringified = JSON.stringify(formParsed);
-      
+
       // Parse again to ensure roundtrip integrity
       const quoteFormRoundtrip = quoteFormSchema.parse(JSON.parse(quoteFormStringified));
       const formRoundtrip = formSchema.parse(JSON.parse(formStringified));
-      
+
       // Compare the roundtrip results
       expect(quoteFormRoundtrip).toEqual(formRoundtrip);
     });

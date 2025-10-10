@@ -3,11 +3,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { DealsResult } from "@shared/contracts";
 import { seedpayKeys } from "@/lib/queryKeys";
 
-export function useDealsAll(options?: {
-  enabled?: boolean;
-  limit?: number;
-  ownerId?: string;
-}) {
+export function useDealsAll(options?: { enabled?: boolean; limit?: number; ownerId?: string }) {
   const enabled = options?.enabled ?? true;
   const limit = options?.limit;
   const ownerId = options?.ownerId;
@@ -31,7 +27,7 @@ export function useDealsAll(options?: {
 
 export function useDealsByOwner(
   ownerId: string | undefined,
-  options?: { enabled?: boolean; limit?: number },
+  options?: { enabled?: boolean; limit?: number }
 ) {
   const enabled = (options?.enabled ?? true) && !!ownerId;
   const limit = options?.limit;
@@ -46,7 +42,7 @@ export function useDealsByOwner(
       if (typeof limit === "number") qs.set("limit", String(limit));
       return await apiRequest<DealsResult>(
         "GET",
-        `/api/apps/seedpay/deals/by-owner?${qs.toString()}`,
+        `/api/apps/seedpay/deals/by-owner?${qs.toString()}`
       );
     },
     staleTime: 5 * 60 * 1000,
@@ -56,7 +52,7 @@ export function useDealsByOwner(
 
 export function useDealsByIds(
   ids: string[] | undefined,
-  options?: { enabled?: boolean; limit?: number },
+  options?: { enabled?: boolean; limit?: number }
 ) {
   const enabled = (options?.enabled ?? true) && !!ids && ids.length > 0;
   const limit = options?.limit;
@@ -69,10 +65,7 @@ export function useDealsByIds(
       const qs = new URLSearchParams();
       qs.set("ids", ids.join(","));
       if (typeof limit === "number") qs.set("limit", String(limit));
-      return await apiRequest<DealsResult>(
-        "GET",
-        `/api/apps/seedpay/deals?${qs.toString()}`,
-      );
+      return await apiRequest<DealsResult>("GET", `/api/apps/seedpay/deals?${qs.toString()}`);
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,

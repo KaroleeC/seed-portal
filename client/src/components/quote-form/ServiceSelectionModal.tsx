@@ -44,9 +44,7 @@ interface ServiceSelectionModalProps {
     serviceRdCredit: boolean;
     serviceRealEstateAdvisory: boolean;
   };
-  onServiceChange: (
-    services: Partial<ServiceSelectionModalProps["selectedServices"]>,
-  ) => void;
+  onServiceChange: (services: Partial<ServiceSelectionModalProps["selectedServices"]>) => void;
   triggerText?: string;
 }
 
@@ -128,9 +126,7 @@ export function ServiceSelectionModal({
         (tempServices as any).serviceArService;
       if (hasPayrollOrApOrAr) {
         const otherCoreServicesSelected = coreServiceKeys.filter(
-          (key) =>
-            key !== serviceKey &&
-            tempServices[key as keyof typeof tempServices],
+          (key) => key !== serviceKey && tempServices[key as keyof typeof tempServices]
         ).length;
 
         if (otherCoreServicesSelected === 0) {
@@ -183,7 +179,7 @@ export function ServiceSelectionModal({
     ];
 
     return userFacingServices.filter(
-      (service) => tempServices[service as keyof typeof tempServices],
+      (service) => tempServices[service as keyof typeof tempServices]
     ).length;
   };
 
@@ -196,8 +192,7 @@ export function ServiceSelectionModal({
         {
           key: "serviceTaasMonthly" as const,
           name: "TaaS",
-          description:
-            "Tax as a Service - comprehensive tax advisory and preparation",
+          description: "Tax as a Service - comprehensive tax advisory and preparation",
         },
         {
           key: "serviceMonthlyBookkeeping" as const,
@@ -235,8 +230,7 @@ export function ServiceSelectionModal({
         {
           key: "serviceApArService" as const,
           name: "Accounts Payable (AP)",
-          description:
-            "Automated vendor bill processing and payment management",
+          description: "Automated vendor bill processing and payment management",
         },
         {
           key: "serviceArService" as const,
@@ -320,8 +314,7 @@ export function ServiceSelectionModal({
           className="w-full"
           data-testid="button-select-services"
         >
-          {triggerText}{" "}
-          {getSelectedCount() > 0 && `(${getSelectedCount()} selected)`}
+          {triggerText} {getSelectedCount() > 0 && `(${getSelectedCount()} selected)`}
         </Button>
       </DialogTrigger>
       <DialogContent
@@ -357,13 +350,9 @@ export function ServiceSelectionModal({
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-foreground">
-                      {category.title}
-                    </h3>
+                    <h3 className="text-xl font-bold text-foreground">{category.title}</h3>
                     {category.subtitle && (
-                      <p className="text-xs text-muted-foreground italic">
-                        {category.subtitle}
-                      </p>
+                      <p className="text-xs text-muted-foreground italic">{category.subtitle}</p>
                     )}
                   </div>
                 </div>
@@ -375,9 +364,7 @@ export function ServiceSelectionModal({
                       <Card
                         key={service.key}
                         className={`cursor-pointer transition-all duration-300 border-2 shadow-sm ${
-                          isSelected
-                            ? "kb-select kb-select-active"
-                            : "kb-select kb-select-hover"
+                          isSelected ? "kb-select kb-select-active" : "kb-select kb-select-hover"
                         }`}
                         onClick={() => handleServiceToggle(service.key as any)}
                         data-testid={`card-${service.key}`}
@@ -406,9 +393,7 @@ export function ServiceSelectionModal({
                               )}
                             </div>
                             <div className="flex-1">
-                              <h4 className="font-semibold text-foreground mb-2">
-                                {service.name}
-                              </h4>
+                              <h4 className="font-semibold text-foreground mb-2">{service.name}</h4>
                               <p className="text-sm text-muted-foreground leading-relaxed">
                                 {service.description}
                               </p>
@@ -427,8 +412,7 @@ export function ServiceSelectionModal({
         <div className="flex justify-between items-center pt-6 mt-6 border-t border-gray-100">
           <div className="text-sm font-medium text-gray-700">
             <span className="bg-gray-100 px-3 py-1 rounded-full">
-              {getSelectedCount()} service{getSelectedCount() !== 1 ? "s" : ""}{" "}
-              selected
+              {getSelectedCount()} service{getSelectedCount() !== 1 ? "s" : ""} selected
             </span>
           </div>
           <div className="flex gap-2">

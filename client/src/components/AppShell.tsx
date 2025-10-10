@@ -33,24 +33,15 @@ export function AppShell({
   const hasSidebar = !!sidebar;
 
   return (
-    <div
-      className={cn(
-        "min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]",
-        className,
-      )}
-    >
+    <div className={cn("min-h-screen page-bg", className)}>
       {/* Header */}
       {header ?? <UniversalNavbar />}
 
       {/* Main area */}
       <div className={cn(hasSidebar && "flex")}>
         {hasSidebar && <aside className="shrink-0">{sidebar}</aside>}
-        <main
-          className={cn(hasSidebar ? "flex-1" : undefined, "px-6 py-8 w-full")}
-        >
-          <div className={cn("mx-auto", maxWidthClassName, contentClassName)}>
-            {children}
-          </div>
+        <main className={cn(hasSidebar ? "flex-1" : undefined, "px-6 py-8 w-full")}>
+          <div className={cn("mx-auto", maxWidthClassName, contentClassName)}>{children}</div>
         </main>
       </div>
     </div>

@@ -1,18 +1,12 @@
 import React, { useState } from "react";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 // Checkbox no longer used after converting to card-based selections
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 import { ChevronDown, ChevronUp, Banknote, ListChecks, CreditCard } from "lucide-react";
 // Select components no longer used after converting to card-based selections
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,16 +23,24 @@ interface BookkeepingSectionProps {
 }
 
 export default function BookkeepingSection({ form }: BookkeepingSectionProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
+
   // Only show if Monthly Bookkeeping service is selected
   if (!form.watch("serviceMonthlyBookkeeping")) return null;
 
-  const [isExpanded, setIsExpanded] = useState(true);
-
   return (
-    <KbCard className="p-6 mb-8">
+    <SurfaceCard className="p-6 mb-8">
       <div
+        role="button"
+        tabIndex={0}
         className="cursor-pointer select-none"
         onClick={() => setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
       >
         <div className="flex items-center justify-between group p-3 -m-3 rounded-lg transition-colors">
           <h3 className="text-xl font-semibold text-foreground">Bookkeeping Service Details</h3>
@@ -73,16 +75,12 @@ export default function BookkeepingSection({ form }: BookkeepingSectionProps) {
                         <Card
                           key={band}
                           className={`cursor-pointer transition-all duration-300 border-2 shadow-sm ${
-                            selected
-                              ? "kb-select kb-select-active"
-                              : "kb-select kb-select-hover"
+                            selected ? "kb-select kb-select-active" : "kb-select kb-select-hover"
                           }`}
                           onClick={() => field.onChange(band)}
                         >
                           <CardContent className="p-5 text-center">
-                            <span className="text-sm font-medium text-foreground">
-                              {band}
-                            </span>
+                            <span className="text-sm font-medium text-foreground">{band}</span>
                           </CardContent>
                         </Card>
                       );
@@ -111,9 +109,7 @@ export default function BookkeepingSection({ form }: BookkeepingSectionProps) {
                         <Card
                           key={opt}
                           className={`cursor-pointer transition-all duration-300 border-2 shadow-sm ${
-                            selected
-                              ? "kb-select kb-select-active"
-                              : "kb-select kb-select-hover"
+                            selected ? "kb-select kb-select-active" : "kb-select kb-select-hover"
                           }`}
                           onClick={() => field.onChange(opt)}
                         >
@@ -151,26 +147,25 @@ export default function BookkeepingSection({ form }: BookkeepingSectionProps) {
                 </FormLabel>
                 <FormControl>
                   <div className="mt-3 grid grid-cols-2 gap-3 max-w-md">
-                    {[{ label: "No", value: false }, { label: "Yes", value: true }].map(
-                      ({ label, value }) => {
-                        const selected = Boolean(field.value) === value;
-                        return (
-                          <Card
-                            key={label}
-                            className={`cursor-pointer transition-all duration-300 border-2 shadow-sm ${
-                              selected
-                                ? "kb-select kb-select-active"
-                                : "kb-select kb-select-hover"
-                            }`}
-                            onClick={() => field.onChange(value)}
-                          >
-                            <CardContent className="p-5 text-center">
-                              <span className="text-sm font-medium text-foreground">{label}</span>
-                            </CardContent>
-                          </Card>
-                        );
-                      },
-                    )}
+                    {[
+                      { label: "No", value: false },
+                      { label: "Yes", value: true },
+                    ].map(({ label, value }) => {
+                      const selected = Boolean(field.value) === value;
+                      return (
+                        <Card
+                          key={label}
+                          className={`cursor-pointer transition-all duration-300 border-2 shadow-sm ${
+                            selected ? "kb-select kb-select-active" : "kb-select kb-select-hover"
+                          }`}
+                          onClick={() => field.onChange(value)}
+                        >
+                          <CardContent className="p-5 text-center">
+                            <span className="text-sm font-medium text-foreground">{label}</span>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </FormControl>
                 <FormMessage />
@@ -209,9 +204,7 @@ export default function BookkeepingSection({ form }: BookkeepingSectionProps) {
                   </div>
                 </FormControl>
                 {field.value ===
-                  BOOKKEEPING_SOFTWARE_OPTIONS[
-                    BOOKKEEPING_SOFTWARE_OPTIONS.length - 1
-                  ] && (
+                  BOOKKEEPING_SOFTWARE_OPTIONS[BOOKKEEPING_SOFTWARE_OPTIONS.length - 1] && (
                   <div className="mt-3 max-w-md">
                     <FormField
                       control={form.control}
@@ -249,9 +242,7 @@ export default function BookkeepingSection({ form }: BookkeepingSectionProps) {
                         <Card
                           key={bank}
                           className={`cursor-pointer transition-all duration-300 border-2 shadow-sm ${
-                            selected
-                              ? "kb-select kb-select-active"
-                              : "kb-select kb-select-hover"
+                            selected ? "kb-select kb-select-active" : "kb-select kb-select-hover"
                           }`}
                           onClick={() => field.onChange(bank)}
                         >
@@ -289,7 +280,9 @@ export default function BookkeepingSection({ form }: BookkeepingSectionProps) {
             name="additionalBanks"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-lg font-semibold text-foreground">Additional Banks</FormLabel>
+                <FormLabel className="text-lg font-semibold text-foreground">
+                  Additional Banks
+                </FormLabel>
                 <div className="space-y-3">
                   {(field.value || []).map((val: string, idx: number) => (
                     <div key={idx} className="flex items-center gap-2 max-w-xl">
@@ -343,8 +336,7 @@ export default function BookkeepingSection({ form }: BookkeepingSectionProps) {
                 }
               };
               const otherOption =
-                MERCHANT_PROVIDER_OPTIONS[MERCHANT_PROVIDER_OPTIONS.length - 1] ??
-                "Other";
+                MERCHANT_PROVIDER_OPTIONS[MERCHANT_PROVIDER_OPTIONS.length - 1] ?? "Other";
               const isOther = selected.includes(otherOption);
               return (
                 <FormItem>
@@ -415,6 +407,6 @@ export default function BookkeepingSection({ form }: BookkeepingSectionProps) {
           />
         </div>
       )}
-    </KbCard>
+    </SurfaceCard>
   );
 }

@@ -21,7 +21,7 @@ export function QuoteSummarySection({
     <div className="space-y-4">
       {/* Header Total */}
       <div
-        className="bg-muted border rounded-2xl p-6 cursor-pointer kb-hover-motion"
+        className="bg-muted border rounded-2xl p-6 cursor-pointer surface-motion"
         onClick={onToggleBreakdown}
       >
         <div className="text-center">
@@ -38,9 +38,7 @@ export function QuoteSummarySection({
           </div>
           {combinedSetup > 0 && (
             <div className="text-lg text-foreground">
-              <span className="font-semibold">
-                ${combinedSetup.toLocaleString()}
-              </span>
+              <span className="font-semibold">${combinedSetup.toLocaleString()}</span>
               <span className="text-sm">
                 {(form?.watch?.("servicePriorYearFilings") ||
                   form?.watch?.("serviceCfoAdvisory")) &&
@@ -62,9 +60,7 @@ export function QuoteSummarySection({
       {/* Sleek grouped breakdown with per-service steps */}
       {isBreakdownExpanded && (
         <div className="bg-muted border rounded-xl p-6">
-          <h4 className="font-semibold text-foreground mb-4">
-            Detailed Breakdown
-          </h4>
+          <h4 className="font-semibold text-foreground mb-4">Detailed Breakdown</h4>
           {(() => {
             const fmt = (n: number) => `$${Number(n || 0).toLocaleString()}`;
             const watch = form?.watch as any;
@@ -105,8 +101,11 @@ export function QuoteSummarySection({
                           <span className="font-semibold">{fmt(bk?.monthlyFee || 0)}</span>
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Base {fmt(bkbd.baseFee || 0)} + Tx {fmt(bkbd.transactionUpcharge || 0)} = {fmt(bkbd.beforeMultipliers || 0)} → × Rev {bkbd.revenueMultiplier ?? 1} × Ind {bkbd.industryMultiplier ?? 1}
-                          {bkbd.monthlyFeeAfterDiscount !== undefined && bkbd.monthlyFeeBeforeDiscount !== undefined
+                          Base {fmt(bkbd.baseFee || 0)} + Tx {fmt(bkbd.transactionUpcharge || 0)} ={" "}
+                          {fmt(bkbd.beforeMultipliers || 0)} → × Rev {bkbd.revenueMultiplier ?? 1} ×
+                          Ind {bkbd.industryMultiplier ?? 1}
+                          {bkbd.monthlyFeeAfterDiscount !== undefined &&
+                          bkbd.monthlyFeeBeforeDiscount !== undefined
                             ? ` → Disc ${bkbd.discountPercentage ?? Math.round((1 - (bkbd.monthlyFeeAfterDiscount || 0) / Math.max(bkbd.monthlyFeeBeforeDiscount || 1, 1)) * 100)}% → ${fmt(bkbd.monthlyFeeAfterDiscount || bk?.monthlyFee || 0)}`
                             : ` → ${fmt(bkbd.afterMultipliers || bk?.monthlyFee || 0)}`}
                         </div>
@@ -128,7 +127,10 @@ export function QuoteSummarySection({
                           const tOwn = Number(tb.ownerUpcharge || 0);
                           const tQual = Number(tb.bookUpcharge || 0);
                           const t1040 = Number(tb.personal1040 || 0);
-                          const tBefore = typeof tb.beforeMultipliers === "number" ? tb.beforeMultipliers : (tBase + tEnt + tSt + tIntl + tOwn + tQual + t1040);
+                          const tBefore =
+                            typeof tb.beforeMultipliers === "number"
+                              ? tb.beforeMultipliers
+                              : tBase + tEnt + tSt + tIntl + tOwn + tQual + t1040;
                           const tInd = tb.industryMultiplier ?? 1;
                           const tRev = tb.revenueMultiplier ?? 1;
                           return (
@@ -147,7 +149,9 @@ export function QuoteSummarySection({
                           <span className="font-semibold">{fmt(payrollFee)}</span>
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Base {fmt(payrollbd.baseFee || 0)} + Emp {fmt(payrollbd.additionalEmployeeFee || 0)} + St {fmt(payrollbd.additionalStateFee || 0)} → {fmt(payrollFee)}
+                          Base {fmt(payrollbd.baseFee || 0)} + Emp{" "}
+                          {fmt(payrollbd.additionalEmployeeFee || 0)} + St{" "}
+                          {fmt(payrollbd.additionalStateFee || 0)} → {fmt(payrollFee)}
                         </div>
                       </div>
                     )}
@@ -155,11 +159,16 @@ export function QuoteSummarySection({
                     {apFee > 0 && watch?.("serviceApArService") && (
                       <div className="py-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">Accounts Payable ({apbd?.apServiceTier || "tier"})</span>
+                          <span className="font-medium">
+                            Accounts Payable ({apbd?.apServiceTier || "tier"})
+                          </span>
                           <span className="font-semibold">{fmt(apFee)}</span>
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Base {fmt(apbd.baseFee || 0)} + Surcharge {fmt(apbd.vendorSurcharge || 0)}{String(apbd?.apServiceTier || "") === "advanced" ? ` → × 2.5` : ""} → {fmt(apFee)}
+                          Base {fmt(apbd.baseFee || 0)} + Surcharge {fmt(apbd.vendorSurcharge || 0)}
+                          {String(apbd?.apServiceTier || "") === "advanced"
+                            ? ` → × 2.5`
+                            : ""} → {fmt(apFee)}
                         </div>
                       </div>
                     )}
@@ -167,11 +176,17 @@ export function QuoteSummarySection({
                     {arFee > 0 && watch?.("serviceArService") && (
                       <div className="py-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">Accounts Receivable ({arbd?.arServiceTier || "tier"})</span>
+                          <span className="font-medium">
+                            Accounts Receivable ({arbd?.arServiceTier || "tier"})
+                          </span>
                           <span className="font-semibold">{fmt(arFee)}</span>
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Base {fmt(arbd.baseFee || 0)} + Surcharge {fmt(arbd.customerSurcharge || 0)}{String(arbd?.arServiceTier || "") === "advanced" ? ` → × 2.5` : ""} → {fmt(arFee)}
+                          Base {fmt(arbd.baseFee || 0)} + Surcharge{" "}
+                          {fmt(arbd.customerSurcharge || 0)}
+                          {String(arbd?.arServiceTier || "") === "advanced"
+                            ? ` → × 2.5`
+                            : ""} → {fmt(arFee)}
                         </div>
                       </div>
                     )}
@@ -215,7 +230,9 @@ export function QuoteSummarySection({
                     {priorFee > 0 && watch?.("servicePriorYearFilings") && (
                       <div className="py-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">Prior Year Filings{priorYears ? ` (${priorYears} yr)` : ""}</span>
+                          <span className="font-medium">
+                            Prior Year Filings{priorYears ? ` (${priorYears} yr)` : ""}
+                          </span>
                           <span className="font-semibold">{fmt(priorFee)}</span>
                         </div>
                       </div>
@@ -224,7 +241,9 @@ export function QuoteSummarySection({
                     {cleanupFee > 0 && watch?.("serviceCleanupProjects") && (
                       <div className="py-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">Cleanup Projects{cleanupCount ? ` (${cleanupCount} mo)` : ""}</span>
+                          <span className="font-medium">
+                            Cleanup Projects{cleanupCount ? ` (${cleanupCount} mo)` : ""}
+                          </span>
                           <span className="font-semibold">{fmt(cleanupFee)}</span>
                         </div>
                       </div>
@@ -238,7 +257,12 @@ export function QuoteSummarySection({
                         </div>
                         {agentbd && (
                           <div className="text-xs text-muted-foreground mt-1">
-                            Base {fmt(agentbd.baseFee || 0)} + States {fmt(agentbd.additionalStatesFee || 0)}{agentbd.complexCase ? ` + Complex ${fmt(agentbd.complexCaseFee || 0)}` : ""} → {fmt(agentFee)}
+                            Base {fmt(agentbd.baseFee || 0)} + States{" "}
+                            {fmt(agentbd.additionalStatesFee || 0)}
+                            {agentbd.complexCase
+                              ? ` + Complex ${fmt(agentbd.complexCaseFee || 0)}`
+                              : ""}{" "}
+                            → {fmt(agentFee)}
                           </div>
                         )}
                       </div>
@@ -247,7 +271,9 @@ export function QuoteSummarySection({
                     {cfoFee > 0 && watch?.("serviceCfoAdvisory") && (
                       <div className="py-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">CFO Advisory{cfoType ? ` (${cfoType.replace(/_/g, " ")})` : ""}</span>
+                          <span className="font-medium">
+                            CFO Advisory{cfoType ? ` (${cfoType.replace(/_/g, " ")})` : ""}
+                          </span>
                           <span className="font-semibold">{fmt(cfoFee)}</span>
                         </div>
                       </div>

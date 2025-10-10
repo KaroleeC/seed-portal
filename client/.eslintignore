@@ -1,0 +1,7 @@
+# Ignore golden tests and test directories for ESLint
+src/components/command/__tests__/command-dock.golden.ts
+src/**/__tests__/**
+src/**/*.test.ts
+src/**/*.test.tsx
+src/**/*.spec.ts
+src/**/*.spec.tsx

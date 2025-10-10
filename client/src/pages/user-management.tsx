@@ -63,20 +63,14 @@ interface User {
 }
 
 const createUserSchema = z.object({
-  firstName: z
-    .string()
-    .min(1, "First name is required")
-    .max(50, "First name too long"),
-  lastName: z
-    .string()
-    .min(1, "Last name is required")
-    .max(50, "Last name too long"),
+  firstName: z.string().min(1, "First name is required").max(50, "First name too long"),
+  lastName: z.string().min(1, "Last name is required").max(50, "Last name too long"),
   email: z
     .string()
     .email("Invalid email")
     .refine(
       (email) => email.endsWith("@seedfinancial.io"),
-      "Email must be a @seedfinancial.io address",
+      "Email must be a @seedfinancial.io address"
     ),
   role: z.enum(["admin", "employee"], { required_error: "Role is required" }),
   defaultDashboard: z.enum(["admin", "sales", "service"], {
@@ -90,12 +84,9 @@ export default function UserManagement() {
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] =
-    useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedUserForReset, setSelectedUserForReset] = useState<User | null>(
-    null,
-  );
+  const [selectedUserForReset, setSelectedUserForReset] = useState<User | null>(null);
   const [generatedPassword, setGeneratedPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -178,11 +169,9 @@ export default function UserManagement() {
       userId: number;
       defaultDashboard: string;
     }) => {
-      return await apiRequest<any>(
-        "PATCH",
-        `/api/admin/users/${userId}/dashboard`,
-        { defaultDashboard },
-      );
+      return await apiRequest<any>("PATCH", `/api/admin/users/${userId}/dashboard`, {
+        defaultDashboard,
+      });
     },
     onSuccess: () => {
       toast({
@@ -226,11 +215,7 @@ export default function UserManagement() {
   // Reset password mutation
   const resetPasswordMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest<any>(
-        "POST",
-        `/api/admin/users/${userId}/reset-password`,
-        {},
-      );
+      return await apiRequest<any>("POST", `/api/admin/users/${userId}/reset-password`, {});
     },
     onSuccess: (data) => {
       toast({
@@ -263,11 +248,7 @@ export default function UserManagement() {
 
   const impersonateMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest<any>(
-        "POST",
-        `/api/admin/impersonate/${userId}`,
-        {},
-      );
+      return await apiRequest<any>("POST", `/api/admin/impersonate/${userId}`, {});
     },
     onSuccess: (data) => {
       toast({
@@ -367,19 +348,12 @@ export default function UserManagement() {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            User Management
-          </h1>
-          <p className="text-white/80">
-            Manage portal users and their access permissions
-          </p>
+          <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
+          <p className="text-white/80">Manage portal users and their access permissions</p>
         </div>
 
         <div className="flex justify-center mb-8">
-          <Dialog
-            open={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
-          >
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button
                 className="bg-[#e24c00] hover:bg-[#c13e00] text-white shadow-sm"
@@ -393,15 +367,13 @@ export default function UserManagement() {
               <DialogHeader>
                 <DialogTitle>Add New User</DialogTitle>
                 <DialogDescription>
-                  Create a new user account for the portal. A secure password
-                  will be generated automatically and displayed after creation.
+                  Create a new user account for the portal. A secure password will be generated
+                  automatically and displayed after creation.
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
                 <form
-                  onSubmit={form.handleSubmit((data) =>
-                    createUserMutation.mutate(data),
-                  )}
+                  onSubmit={form.handleSubmit((data) => createUserMutation.mutate(data))}
                   className="space-y-4"
                 >
                   <FormField
@@ -461,10 +433,7 @@ export default function UserManagement() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Permission Level</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-role">
                               <SelectValue placeholder="Select permission level" />
@@ -489,10 +458,7 @@ export default function UserManagement() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Default Dashboard</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-default-dashboard">
                               <SelectValue placeholder="Select default dashboard" />
@@ -500,8 +466,7 @@ export default function UserManagement() {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="admin">
-                              Admin Dashboard - User management & system
-                              settings
+                              Admin Dashboard - User management & system settings
                             </SelectItem>
                             <SelectItem value="sales">
                               Sales Dashboard - Quotes, clients & commissions
@@ -522,9 +487,7 @@ export default function UserManagement() {
                       disabled={createUserMutation.isPending}
                       data-testid="button-create-user"
                     >
-                      {createUserMutation.isPending
-                        ? "Creating..."
-                        : "Create User"}
+                      {createUserMutation.isPending ? "Creating..." : "Create User"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -544,8 +507,7 @@ export default function UserManagement() {
             </CardHeader>
             <CardContent>
               <p className="text-green-700 dark:text-green-300 mb-3">
-                Save this password and share it with the user. It won't be shown
-                again.
+                Save this password and share it with the user. It won't be shown again.
               </p>
               <div className="flex items-center gap-2">
                 <div className="bg-white dark:bg-gray-800 border rounded px-3 py-2 flex-1 font-mono text-sm">
@@ -557,11 +519,7 @@ export default function UserManagement() {
                   onClick={() => setShowPassword(!showPassword)}
                   data-testid="button-toggle-password"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
                 <Button
                   variant="outline"
@@ -587,17 +545,13 @@ export default function UserManagement() {
           <CardContent className="p-0">
             {isLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-3 text-gray-600 dark:text-gray-400 text-sm">
-                  Loading users...
-                </p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
+                <p className="mt-3 text-gray-600 dark:text-gray-400 text-sm">Loading users...</p>
               </div>
             ) : users.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  No users found
-                </p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">No users found</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -616,12 +570,9 @@ export default function UserManagement() {
                             ? `${user.firstName} ${user.lastName}`
                             : user.email.split("@")[0]}
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {user.email}
-                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">{user.email}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-500">
-                          Created{" "}
-                          {new Date(user.createdAt).toLocaleDateString()}
+                          Created {new Date(user.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
@@ -634,9 +585,7 @@ export default function UserManagement() {
                         </label>
                         <Select
                           value={user.role}
-                          onValueChange={(newRole) =>
-                            handleRoleUpdate(user.id, newRole)
-                          }
+                          onValueChange={(newRole) => handleRoleUpdate(user.id, newRole)}
                           disabled={updateRoleMutation.isPending}
                         >
                           <SelectTrigger
@@ -742,17 +691,12 @@ export default function UserManagement() {
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
-              >
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
                 Cancel
               </Button>
               <Button
                 variant="destructive"
-                onClick={() =>
-                  selectedUser && deleteUserMutation.mutate(selectedUser.id)
-                }
+                onClick={() => selectedUser && deleteUserMutation.mutate(selectedUser.id)}
                 disabled={deleteUserMutation.isPending}
                 data-testid="button-confirm-delete"
               >
@@ -763,10 +707,7 @@ export default function UserManagement() {
         </Dialog>
 
         {/* Reset Password Confirmation Dialog */}
-        <Dialog
-          open={isResetPasswordDialogOpen}
-          onOpenChange={setIsResetPasswordDialogOpen}
-        >
+        <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center text-orange-600">
@@ -776,13 +717,11 @@ export default function UserManagement() {
               <DialogDescription>
                 Are you sure you want to reset the password for{" "}
                 <span className="font-medium">
-                  {selectedUserForReset?.firstName &&
-                  selectedUserForReset?.lastName
+                  {selectedUserForReset?.firstName && selectedUserForReset?.lastName
                     ? `${selectedUserForReset.firstName} ${selectedUserForReset.lastName}`
                     : selectedUserForReset?.email}
                 </span>
-                ? A new password will be generated and you'll need to share it
-                with the user.
+                ? A new password will be generated and you'll need to share it with the user.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -801,9 +740,7 @@ export default function UserManagement() {
                 disabled={resetPasswordMutation.isPending}
                 data-testid="button-confirm-reset-password"
               >
-                {resetPasswordMutation.isPending
-                  ? "Resetting..."
-                  : "Reset Password"}
+                {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
               </Button>
             </DialogFooter>
           </DialogContent>

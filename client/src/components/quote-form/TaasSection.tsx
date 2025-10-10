@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import {
   Select,
   SelectContent,
@@ -15,10 +9,11 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Control, UseFormReturn, useWatch } from "react-hook-form";
+import type { Control, UseFormReturn } from "react-hook-form";
+import { useWatch } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 
 interface TaasSectionProps {
   control: Control<QuoteFormFields>;
@@ -28,24 +23,16 @@ interface TaasSectionProps {
 
 export function TaasSection({
   control,
-  currentFormView,
+  currentFormView: _currentFormView,
   form,
 }: TaasSectionProps) {
-  // Show when Tax Advisory service is selected (no tab/toggle gating)
-  const isTaasSelected = form.watch("serviceTaasMonthly");
-  if (!isTaasSelected) return null;
+  // State for custom inputs - must be declared before any early returns
+  const [showCustomEntities, setShowCustomEntities] = useState(false);
+  const [showCustomStates, setShowCustomStates] = useState(false);
+  const [showCustomOwners, setShowCustomOwners] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
-  // Auto-default bookkeeping quality to 'clean' when only Prior Year Filings is selected
-  useEffect(() => {
-    const isPriorYearFilingsOnly =
-      form.watch("servicePriorYearFilings") &&
-      !form.watch("serviceTaasMonthly");
-    if (isPriorYearFilingsOnly && !form.watch("bookkeepingQuality")) {
-      form.setValue("bookkeepingQuality", "Clean / New");
-    }
-  }, [form.watch("servicePriorYearFilings"), form.watch("serviceTaasMonthly")]);
-
-  // Watch values for conditional logic
+  // Watch values for conditional logic - must be before early returns
   const numEntities = useWatch({ control, name: "numEntities" });
   const statesFiled = useWatch({ control, name: "statesFiled" });
   const numBusinessOwners = useWatch({ control, name: "numBusinessOwners" });
@@ -54,18 +41,23 @@ export function TaasSection({
     name: "serviceMonthlyBookkeeping",
   });
   const serviceTaasMonthly = useWatch({ control, name: "serviceTaasMonthly" });
-  const servicePriorYearFilings = useWatch({
+  const _servicePriorYearFilings = useWatch({
     control,
     name: "servicePriorYearFilings",
-  });
+  }); // Reserved for future conditional logic
 
-  // State for custom inputs
-  const [showCustomEntities, setShowCustomEntities] = useState(false);
-  const [showCustomStates, setShowCustomStates] = useState(false);
-  const [showCustomOwners, setShowCustomOwners] = useState(false);
+  // Auto-default bookkeeping quality to 'clean' when only Prior Year Filings is selected
+  useEffect(() => {
+    const isPriorYearFilingsOnly =
+      form.watch("servicePriorYearFilings") && !form.watch("serviceTaasMonthly");
+    if (isPriorYearFilingsOnly && !form.watch("bookkeepingQuality")) {
+      form.setValue("bookkeepingQuality", "Clean / New");
+    }
+  }, [form]);
 
-  // State for collapsible section
-  const [isExpanded, setIsExpanded] = useState(true);
+  // Show when Tax Advisory service is selected (no tab/toggle gating)
+  const isTaasSelected = form.watch("serviceTaasMonthly");
+  if (!isTaasSelected) return null;
 
   // Handle tile selections with custom inputs
   const handleEntitiesSelect = (value: number) => {
@@ -99,19 +91,23 @@ export function TaasSection({
   };
 
   return (
-    <KbCard className="p-6 mb-8">
+    <SurfaceCard className="p-6 mb-8">
       <div
+        role="button"
+        tabIndex={0}
         className="cursor-pointer select-none"
         onClick={() => setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
       >
         <div className="flex items-center justify-between group p-3 -m-3 rounded-lg transition-colors">
-          <h3 className="text-xl font-semibold text-foreground">
-            Tax Service Details
-          </h3>
+          <h3 className="text-xl font-semibold text-foreground">Tax Service Details</h3>
           <div className="flex items-center gap-2 text-muted-foreground">
-            <span className="text-sm font-medium">
-              {isExpanded ? "Collapse" : "Expand"}
-            </span>
+            <span className="text-sm font-medium">{isExpanded ? "Collapse" : "Expand"}</span>
             {isExpanded ? (
               <ChevronUp className="h-5 w-5 transition-transform" />
             ) : (
@@ -143,9 +139,7 @@ export function TaasSection({
                   }`}
                   data-testid={`tile-entities-${num === 5 ? "custom" : num}`}
                 >
-                  <div className="font-semibold text-lg">
-                    {num === 5 ? "5+" : num}
-                  </div>
+                  <div className="font-semibold text-lg">{num === 5 ? "5+" : num}</div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {num === 1 ? "Entity" : "Entities"}
                   </div>
@@ -167,9 +161,7 @@ export function TaasSection({
                         min="5"
                         placeholder="Enter exact number (5 or more)"
                         value={field.value || ""}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 5)
-                        }
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 5)}
                         className="max-w-xs"
                         data-testid="input-custom-entities"
                       />
@@ -199,9 +191,7 @@ export function TaasSection({
                   }`}
                   data-testid={`tile-states-${num === 5 ? "custom" : num}`}
                 >
-                  <div className="font-semibold text-lg">
-                    {num === 5 ? "5+" : num}
-                  </div>
+                  <div className="font-semibold text-lg">{num === 5 ? "5+" : num}</div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {num === 1 ? "State" : "States"}
                   </div>
@@ -223,9 +213,7 @@ export function TaasSection({
                         min="5"
                         placeholder="Enter exact number (5 or more)"
                         value={field.value || ""}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 5)
-                        }
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 5)}
                         className="max-w-xs"
                         data-testid="input-custom-states"
                       />
@@ -255,9 +243,7 @@ export function TaasSection({
                   }`}
                   data-testid={`tile-owners-${num === 5 ? "custom" : num}`}
                 >
-                  <div className="font-semibold text-lg">
-                    {num === 5 ? "5+" : num}
-                  </div>
+                  <div className="font-semibold text-lg">{num === 5 ? "5+" : num}</div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {num === 1 ? "Owner" : "Owners"}
                   </div>
@@ -279,9 +265,7 @@ export function TaasSection({
                         min="5"
                         placeholder="Enter exact number (5 or more)"
                         value={field.value || ""}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 5)
-                        }
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 5)}
                         className="max-w-xs"
                         data-testid="input-custom-owners"
                       />
@@ -351,16 +335,12 @@ export function TaasSection({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base font-medium text-foreground">
-                    Current Bookkeeping Quality{" "}
-                    <span className="text-red-500">*</span>
+                    Current Bookkeeping Quality <span className="text-red-500">*</span>
                   </FormLabel>
                   <div className="text-sm text-muted-foreground mb-3">
                     This affects the complexity of tax preparation work required
                   </div>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || undefined}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
                     <FormControl>
                       <SelectTrigger
                         className="bg-background border focus:ring-blue-500 focus:border-blue-500"
@@ -369,14 +349,9 @@ export function TaasSection({
                         <SelectValue placeholder="Select bookkeeping quality" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent
-                      position="popper"
-                      className="z-50 bg-popover"
-                    >
+                    <SelectContent position="popper" className="z-50 bg-popover">
                       <SelectItem value="Clean / New">Clean / New</SelectItem>
-                      <SelectItem value="Not Done / Behind">
-                        Not Done / Behind
-                      </SelectItem>
+                      <SelectItem value="Not Done / Behind">Not Done / Behind</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -386,6 +361,6 @@ export function TaasSection({
           )}
         </div>
       )}
-    </KbCard>
+    </SurfaceCard>
   );
 }

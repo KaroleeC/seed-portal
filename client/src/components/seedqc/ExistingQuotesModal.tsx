@@ -37,9 +37,7 @@ export function ExistingQuotesModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>
-            {hasExisting ? "Existing Quotes Found" : "Create New Quote"}
-          </DialogTitle>
+          <DialogTitle>{hasExisting ? "Existing Quotes Found" : "Create New Quote"}</DialogTitle>
           <DialogDescription>
             {selectedContact && hasExisting
               ? `Found ${existingQuotesForEmail.length} existing quotes for ${selectedContact.properties.firstname} ${selectedContact.properties.lastname} (${selectedContact.properties.email})`
@@ -62,10 +60,7 @@ export function ExistingQuotesModal({
               </h4>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {existingQuotesForEmail.map((quote) => (
-                  <Card
-                    key={quote.id}
-                    className="hover:bg-muted/40 transition-colors"
-                  >
+                  <Card key={quote.id} className="hover:bg-muted/40 transition-colors">
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">
                         <div>
@@ -87,8 +82,7 @@ export function ExistingQuotesModal({
                           <p className="text-xs text-muted-foreground">
                             Updated:{" "}
                             {new Date(
-                              (quote as any).updatedAt ||
-                                (quote as any).createdAt,
+                              (quote as any).updatedAt || (quote as any).createdAt
                             ).toLocaleDateString()}
                           </p>
                         </div>

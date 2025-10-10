@@ -28,7 +28,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -86,9 +86,7 @@ export default function ClientIntel() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedClient, setSelectedClient] = useState<ClientSnapshot | null>(
-    null,
-  );
+  const [selectedClient, setSelectedClient] = useState<ClientSnapshot | null>(null);
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
 
   // Debounced search term to prevent excessive API calls
@@ -108,7 +106,7 @@ export default function ClientIntel() {
       const data = await apiRequest<{ message?: string; airtableData?: any }>(
         "POST",
         `/api/client-intel/enhance/${contactId}`,
-        {},
+        {}
       );
       return data;
     },
@@ -117,8 +115,7 @@ export default function ClientIntel() {
       toast({
         title: "Data Enhanced",
         description:
-          data.message ||
-          "Contact and company data has been automatically populated in HubSpot.",
+          data.message || "Contact and company data has been automatically populated in HubSpot.",
       });
       // Invalidate search results to show updated data
       queryClient.invalidateQueries({ queryKey: ["/api/client-intel/search"] });
@@ -128,8 +125,7 @@ export default function ClientIntel() {
       toast({
         title: "Enhancement Failed",
         description:
-          error.message ||
-          "Unable to enhance data at this time. Please try again later.",
+          error.message || "Unable to enhance data at this time. Please try again later.",
         variant: "destructive",
       });
     },
@@ -176,7 +172,7 @@ export default function ClientIntel() {
       try {
         const data = await apiRequest<any[]>(
           "GET",
-          `/api/client-intel/search?q=${encodeURIComponent(debouncedSearchTerm)}`,
+          `/api/client-intel/search?q=${encodeURIComponent(debouncedSearchTerm)}`
         );
 
         // Update the count of results
@@ -185,14 +181,11 @@ export default function ClientIntel() {
         // Log summary of results for debugging
         if (data.length > 0) {
           const sample = data[0];
-          console.log(
-            `[Frontend] Search returned ${data.length} results. Sample:`,
-            {
-              id: sample.id,
-              name: sample.name,
-              email: sample.email,
-            },
-          );
+          console.log(`[Frontend] Search returned ${data.length} results. Sample:`, {
+            id: sample.id,
+            name: sample.name,
+            email: sample.email,
+          });
         }
 
         return data;
@@ -230,11 +223,9 @@ export default function ClientIntel() {
   // Generate AI insights for selected client (async with polling)
   const generateInsightsMutation = useMutation({
     mutationFn: async (clientId: string) => {
-      const data = await apiRequest<any>(
-        "POST",
-        "/api/client-intel/generate-insights",
-        { clientId },
-      );
+      const data = await apiRequest<any>("POST", "/api/client-intel/generate-insights", {
+        clientId,
+      });
       return data;
     },
     onSuccess: (data) => {
@@ -247,8 +238,7 @@ export default function ClientIntel() {
 
         toast({
           title: "AI Analysis Started",
-          description:
-            data.message || "Processing insights in the background...",
+          description: data.message || "Processing insights in the background...",
         });
 
         // Start polling
@@ -270,8 +260,7 @@ export default function ClientIntel() {
       setCurrentJobId(null);
       toast({
         title: "Analysis Failed",
-        description:
-          error.message || "Failed to generate insights. Please try again.",
+        description: error.message || "Failed to generate insights. Please try again.",
         variant: "destructive",
       });
     },
@@ -311,9 +300,7 @@ export default function ClientIntel() {
 
           toast({
             title: "Analysis Failed",
-            description:
-              statusData.error ||
-              "Background processing failed. Please try again.",
+            description: statusData.error || "Background processing failed. Please try again.",
             variant: "destructive",
           });
         }
@@ -333,8 +320,7 @@ export default function ClientIntel() {
         setCurrentJobId(null);
         toast({
           title: "Analysis Timeout",
-          description:
-            "Processing is taking longer than expected. Please try again.",
+          description: "Processing is taking longer than expected. Please try again.",
           variant: "destructive",
         });
       }
@@ -393,7 +379,7 @@ export default function ClientIntel() {
 
         {/* Search Section */}
         <div className="mb-8">
-          <KbCard>
+          <SurfaceCard>
             <CardContent className="p-6">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
@@ -405,12 +391,12 @@ export default function ClientIntel() {
                 />
               </div>
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
         </div>
 
         {/* Search Results - Top Priority */}
         <div className="mb-8">
-          <KbCard>
+          <SurfaceCard>
             <CardHeader className="pb-4">
               <CardTitle className="font-semibold tracking-tight text-lg text-foreground">
                 Search Results
@@ -419,7 +405,7 @@ export default function ClientIntel() {
             <CardContent className="space-y-3 max-h-96 overflow-y-auto">
               {isSearching ? (
                 <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto" />
                   <p className="text-white/70 mt-2">Searching...</p>
                 </div>
               ) : searchResults?.length > 0 ? (
@@ -434,9 +420,7 @@ export default function ClientIntel() {
                         <h3 className="font-semibold text-foreground text-sm">
                           {client.companyName}
                         </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {client.email}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{client.email}</p>
                         <p className="text-xs text-muted-foreground">
                           {client.industry &&
                           client.industry !== "Unknown" &&
@@ -478,13 +462,13 @@ export default function ClientIntel() {
                 </div>
               )}
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* AI Enhancement Card - Priority */}
           <div className="lg:col-span-1">
-            <KbCard className="mb-6">
+            <SurfaceCard className="mb-6">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
@@ -494,9 +478,7 @@ export default function ClientIntel() {
                     <CardTitle className="font-semibold tracking-tight text-lg text-foreground">
                       AI Data Enhancement
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Auto-populate missing fields
-                    </p>
+                    <p className="text-sm text-muted-foreground">Auto-populate missing fields</p>
                   </div>
                 </div>
               </CardHeader>
@@ -504,22 +486,19 @@ export default function ClientIntel() {
                 {selectedClient ? (
                   <div className="space-y-3">
                     <p className="text-sm text-foreground">
-                      {selectedClient.lifecycleStage?.toLowerCase() ===
-                      "customer"
+                      {selectedClient.lifecycleStage?.toLowerCase() === "customer"
                         ? "Client"
                         : "Prospect"}{" "}
                       selected: {selectedClient.companyName}
                     </p>
                     <Button
                       onClick={() => enhanceSelectedRecord()}
-                      disabled={
-                        enhanceDataMutation.isPending || !selectedClient
-                      }
+                      disabled={enhanceDataMutation.isPending || !selectedClient}
                       className="w-full bg-orange-500 hover:bg-orange-600 text-white border-0"
                     >
                       {enhanceDataMutation.isPending ? (
                         <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                           Enhancing...
                         </div>
                       ) : (
@@ -531,16 +510,14 @@ export default function ClientIntel() {
                     </Button>
                   </div>
                 ) : searchTerm.length > 2 ? (
-                  <p className="text-muted-foreground text-sm">
-                    Select a contact to enhance
-                  </p>
+                  <p className="text-muted-foreground text-sm">Select a contact to enhance</p>
                 ) : (
                   <p className="text-muted-foreground text-sm">
                     Search and select a contact to enable enhancement
                   </p>
                 )}
               </CardContent>
-            </KbCard>
+            </SurfaceCard>
           </div>
 
           {/* Client Details */}
@@ -548,7 +525,7 @@ export default function ClientIntel() {
             {selectedClient ? (
               <div className="space-y-6">
                 {/* Client Overview */}
-                <KbCard>
+                <SurfaceCard>
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -559,21 +536,17 @@ export default function ClientIntel() {
                           <CardTitle className="text-white text-xl">
                             {selectedClient.companyName}
                           </CardTitle>
-                          <p className="text-white/80">
-                            {selectedClient.email}
-                          </p>
+                          <p className="text-white/80">{selectedClient.email}</p>
                           <div className="flex gap-2 mt-2">
                             <Badge
                               variant={
-                                selectedClient.lifecycleStage?.toLowerCase() ===
-                                "customer"
+                                selectedClient.lifecycleStage?.toLowerCase() === "customer"
                                   ? "default"
                                   : "secondary"
                               }
                               className="px-2 py-1"
                             >
-                              {selectedClient.lifecycleStage?.toLowerCase() ===
-                              "customer"
+                              {selectedClient.lifecycleStage?.toLowerCase() === "customer"
                                 ? "Client"
                                 : "Prospect"}
                             </Badge>
@@ -588,15 +561,12 @@ export default function ClientIntel() {
                       </div>
                       <Button
                         onClick={handleGenerateInsights}
-                        disabled={
-                          generateInsightsMutation.isPending ||
-                          isGeneratingInsights
-                        }
+                        disabled={generateInsightsMutation.isPending || isGeneratingInsights}
                         className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
                       >
                         {isGeneratingInsights ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                             {jobStatus === "queued"
                               ? "Queued..."
                               : jobStatus === "active"
@@ -626,9 +596,7 @@ export default function ClientIntel() {
                         <p className="text-sm font-medium text-foreground">
                           {selectedClient.employees || "N/A"}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          Employees
-                        </p>
+                        <p className="text-xs text-muted-foreground">Employees</p>
                       </div>
                       <div className="bg-muted border rounded-lg p-3 text-center">
                         <Target className="h-6 w-6 text-purple-600 mx-auto mb-1" />
@@ -639,48 +607,35 @@ export default function ClientIntel() {
                             ? selectedClient.industry
                             : "Not specified"}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          Industry
-                        </p>
+                        <p className="text-xs text-muted-foreground">Industry</p>
                       </div>
                       <div className="bg-muted border rounded-lg p-3 text-center">
                         <AlertCircle className="h-6 w-6 text-orange-600 mx-auto mb-1" />
                         <p className="text-sm font-medium text-foreground">
                           {selectedClient.riskScore || 0}%
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          Risk Score
-                        </p>
+                        <p className="text-xs text-muted-foreground">Risk Score</p>
                       </div>
                     </div>
 
                     {/* Current Services */}
                     <div className="mb-4">
-                      <h4 className="text-white font-medium mb-2">
-                        Current Services
-                      </h4>
+                      <h4 className="text-white font-medium mb-2">Current Services</h4>
                       <div className="flex flex-wrap gap-2">
-                        {selectedClient.services?.map(
-                          (service: string, index: number) => (
-                            <Badge
-                              key={index}
-                              className="bg-green-100 text-green-800 flex items-center gap-1"
-                            >
-                              {getServiceIcon(service)}
-                              {service}
-                            </Badge>
-                          ),
-                        ) || (
-                          <p className="text-white/70 text-sm">
-                            No services recorded
-                          </p>
-                        )}
+                        {selectedClient.services?.map((service: string, index: number) => (
+                          <Badge
+                            key={index}
+                            className="bg-green-100 text-green-800 flex items-center gap-1"
+                          >
+                            {getServiceIcon(service)}
+                            {service}
+                          </Badge>
+                        )) || <p className="text-white/70 text-sm">No services recorded</p>}
                       </div>
                     </div>
 
                     {/* Prospect Intelligence from Airtable */}
-                    {selectedClient.lifecycleStage?.toLowerCase() !==
-                      "customer" &&
+                    {selectedClient.lifecycleStage?.toLowerCase() !== "customer" &&
                       selectedClient.airtableData && (
                         <div className="mb-4">
                           <div className="bg-muted border rounded-lg p-4">
@@ -690,12 +645,9 @@ export default function ClientIntel() {
                             </h4>
                             <div className="grid grid-cols-2 gap-4 text-sm">
                               <div>
-                                <span className="font-medium text-foreground">
-                                  Lead Score:
-                                </span>
+                                <span className="font-medium text-foreground">Lead Score:</span>
                                 <div className="mt-1 text-foreground font-semibold">
-                                  {selectedClient.airtableData.lead_score ||
-                                    "Not set"}
+                                  {selectedClient.airtableData.lead_score || "Not set"}
                                 </div>
                               </div>
                               <div>
@@ -703,11 +655,10 @@ export default function ClientIntel() {
                                   Contact Verified:
                                 </span>
                                 <div className="mt-1 text-muted-foreground">
-                                  {selectedClient.airtableData
-                                    .contact_verified === "YES"
+                                  {selectedClient.airtableData.contact_verified === "YES"
                                     ? "✅ Verified"
-                                    : selectedClient.airtableData
-                                        .contact_verified || "Not verified"}
+                                    : selectedClient.airtableData.contact_verified ||
+                                      "Not verified"}
                                 </div>
                               </div>
                               <div>
@@ -715,20 +666,15 @@ export default function ClientIntel() {
                                   Business Operational:
                                 </span>
                                 <div className="mt-1 text-muted-foreground">
-                                  {selectedClient.airtableData
-                                    .business_operational === "YES"
+                                  {selectedClient.airtableData.business_operational === "YES"
                                     ? "✅ Active"
-                                    : selectedClient.airtableData
-                                        .business_operational || "Unknown"}
+                                    : selectedClient.airtableData.business_operational || "Unknown"}
                                 </div>
                               </div>
                               <div>
-                                <span className="font-medium text-foreground">
-                                  Urgency:
-                                </span>
+                                <span className="font-medium text-foreground">Urgency:</span>
                                 <div className="mt-1 text-muted-foreground capitalize">
-                                  {selectedClient.airtableData.urgency ||
-                                    "Not set"}
+                                  {selectedClient.airtableData.urgency || "Not set"}
                                 </div>
                               </div>
                             </div>
@@ -746,10 +692,10 @@ export default function ClientIntel() {
                         </div>
                       )}
                   </CardContent>
-                </KbCard>
+                </SurfaceCard>
 
                 {/* Detailed Insights Tabs */}
-                <KbCard>
+                <SurfaceCard>
                   <CardContent className="p-6">
                     <Tabs defaultValue="insights" className="w-full">
                       <TabsList className="grid w-full grid-cols-4 bg-muted">
@@ -787,19 +733,12 @@ export default function ClientIntel() {
                             Pain Points
                           </h4>
                           <div className="space-y-2">
-                            {selectedClient.painPoints?.map(
-                              (point: string, index: number) => (
-                                <div
-                                  key={index}
-                                  className="flex items-start gap-2"
-                                >
-                                  <div className="w-1.5 h-1.5 bg-orange-600 rounded-full mt-2"></div>
-                                  <p className="text-sm text-muted-foreground">
-                                    {point}
-                                  </p>
-                                </div>
-                              ),
-                            ) || (
+                            {selectedClient.painPoints?.map((point: string, index: number) => (
+                              <div key={index} className="flex items-start gap-2">
+                                <div className="w-1.5 h-1.5 bg-orange-600 rounded-full mt-2" />
+                                <p className="text-sm text-muted-foreground">{point}</p>
+                              </div>
+                            )) || (
                               <p className="text-muted-foreground text-sm">
                                 No pain points identified
                               </p>
@@ -816,16 +755,11 @@ export default function ClientIntel() {
                           <div className="space-y-2">
                             {selectedClient.upsellOpportunities?.map(
                               (opp: string, index: number) => (
-                                <div
-                                  key={index}
-                                  className="flex items-start gap-2"
-                                >
-                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></div>
-                                  <p className="text-sm text-muted-foreground">
-                                    {opp}
-                                  </p>
+                                <div key={index} className="flex items-start gap-2">
+                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2" />
+                                  <p className="text-sm text-muted-foreground">{opp}</p>
                                 </div>
-                              ),
+                              )
                             ) || (
                               <p className="text-muted-foreground text-sm">
                                 No opportunities identified
@@ -837,9 +771,7 @@ export default function ClientIntel() {
 
                       <TabsContent value="activity" className="mt-6">
                         <div className="bg-muted border rounded-lg p-4">
-                          <h4 className="font-medium text-foreground mb-3">
-                            Recent Activity
-                          </h4>
+                          <h4 className="font-medium text-foreground mb-3">Recent Activity</h4>
                           <p className="text-muted-foreground text-sm">
                             Activity timeline coming soon...
                           </p>
@@ -848,9 +780,7 @@ export default function ClientIntel() {
 
                       <TabsContent value="quotes" className="mt-6">
                         <div className="bg-muted border rounded-lg p-4">
-                          <h4 className="font-medium text-foreground mb-3">
-                            Quote History
-                          </h4>
+                          <h4 className="font-medium text-foreground mb-3">Quote History</h4>
                           <p className="text-muted-foreground text-sm">
                             Quote history will be displayed here...
                           </p>
@@ -859,9 +789,7 @@ export default function ClientIntel() {
 
                       <TabsContent value="documents" className="mt-6">
                         <div className="bg-muted border rounded-lg p-4">
-                          <h4 className="font-medium text-foreground mb-3">
-                            Documents & Files
-                          </h4>
+                          <h4 className="font-medium text-foreground mb-3">Documents & Files</h4>
                           <p className="text-muted-foreground text-sm">
                             Document management coming soon...
                           </p>
@@ -869,21 +797,18 @@ export default function ClientIntel() {
                       </TabsContent>
                     </Tabs>
                   </CardContent>
-                </KbCard>
+                </SurfaceCard>
               </div>
             ) : (
-              <KbCard>
+              <SurfaceCard>
                 <CardContent className="p-12 text-center">
                   <Sparkles className="h-16 w-16 text-white/50 mx-auto mb-4" />
                   <h3 className="text-xl font-medium text-white mb-2">
-                    Select a Client
+                    Select a client to view detailed
                   </h3>
-                  <p className="text-white/70">
-                    Search and select a client to view their AI-generated
-                    insights
-                  </p>
+                  <p className="text-white/70">insights</p>
                 </CardContent>
-              </KbCard>
+              </SurfaceCard>
             )}
           </div>
         </div>

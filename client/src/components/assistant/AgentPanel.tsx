@@ -9,10 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { Bot, Send, Paperclip, ExternalLink } from "lucide-react";
 import { misc } from "@/assets";
-import {
-  BoxPickerModal,
-  type BoxAttachment,
-} from "@/components/assistant/BoxPickerModal";
+import { BoxPickerModal, type BoxAttachment } from "@/components/assistant/BoxPickerModal";
 
 // Normalize any citation-like value to displayable text without nested ternaries
 function toCitationText(value: unknown): string {
@@ -241,7 +238,10 @@ export function AgentPanel({
                   const last = copy[copy.length - 1] as AgentMessage | undefined;
                   if (!last) return prev;
                   if (last.role === "assistant") {
-                    const updated: AgentMessage = { ...last, content: (last.content || "") + payload.delta };
+                    const updated: AgentMessage = {
+                      ...last,
+                      content: (last.content || "") + payload.delta,
+                    };
                     copy[copy.length - 1] = updated;
                   }
                   return copy;
@@ -259,7 +259,7 @@ export function AgentPanel({
             mode,
             question: q,
             conversationId: conversationId || undefined,
-            attachments: mode === "support" && canUseBox ? resolvedAttachments : []
+            attachments: mode === "support" && canUseBox ? resolvedAttachments : [],
           });
           const answerText = res?.answer || "";
           setMessages((prev) => {
@@ -279,7 +279,7 @@ export function AgentPanel({
           }
         } catch (e: unknown) {
           const msg = (e as Error)?.message || "Request failed";
-          if (typeof msg === 'string' && msg.startsWith("403:")) {
+          if (typeof msg === "string" && msg.startsWith("403:")) {
             setErrorMsg("Access denied. Attachments are not permitted for your role.");
           } else {
             setErrorMsg(msg);
@@ -288,7 +288,7 @@ export function AgentPanel({
       }
     } catch (e: unknown) {
       const msg = (e as Error)?.message || "Failed to get response";
-      setErrorMsg(typeof msg === 'string' ? msg : "Request failed");
+      setErrorMsg(typeof msg === "string" ? msg : "Request failed");
     } finally {
       abortRef.current = null;
       setLoading(false);
@@ -328,16 +328,30 @@ export function AgentPanel({
         ) : (
           // Compact widget: center Gary avatar
           <div className="w-full flex items-center justify-center py-2">
-            <img src={misc.assistantAvatar} alt="Assistant" className="h-10 w-10 rounded-full object-cover ring-2 ring-white/10" />
+            <img
+              src={misc.assistantAvatar}
+              alt="Assistant"
+              className="h-10 w-10 rounded-full object-cover ring-2 ring-white/10"
+            />
           </div>
         )}
         {!compact && (
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 rounded-full bg-white/10 p-1">
-              <Button size="sm" variant="ghost" className={modeButtonClass("sell")} onClick={() => setMode("sell")}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className={modeButtonClass("sell")}
+                onClick={() => setMode("sell")}
+              >
                 Sell
               </Button>
-              <Button size="sm" variant="ghost" className={modeButtonClass("support")} onClick={() => setMode("support")}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className={modeButtonClass("support")}
+                onClick={() => setMode("support")}
+              >
                 Support
               </Button>
             </div>
@@ -388,7 +402,10 @@ export function AgentPanel({
           {/* Message feed */}
           <div className="flex flex-col gap-2">
             {messages.map((m) => (
-              <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                key={m.id}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
                 {m.role === "user" ? (
                   <div className="bg-orange-500 text-white max-w-[85%] rounded-2xl px-3 py-2 whitespace-pre-wrap text-sm">
                     {m.content}
@@ -404,8 +421,14 @@ export function AgentPanel({
                     ) : (
                       <span className="inline-flex items-center gap-1 py-0.5">
                         <span className="inline-block h-2 w-2 rounded-full bg-white/70 animate-pulse" />
-                        <span className="inline-block h-2 w-2 rounded-full bg-white/70 animate-pulse" style={{ animationDelay: "150ms" }} />
-                        <span className="inline-block h-2 w-2 rounded-full bg-white/70 animate-pulse" style={{ animationDelay: "300ms" }} />
+                        <span
+                          className="inline-block h-2 w-2 rounded-full bg-white/70 animate-pulse"
+                          style={{ animationDelay: "150ms" }}
+                        />
+                        <span
+                          className="inline-block h-2 w-2 rounded-full bg-white/70 animate-pulse"
+                          style={{ animationDelay: "300ms" }}
+                        />
                       </span>
                     )}
                   </div>
@@ -443,7 +466,11 @@ export function AgentPanel({
               </Button>
               <div className="flex flex-wrap gap-1">
                 {attachments.map((a) => (
-                  <Badge key={`${a.type}:${a.id}`} variant="secondary" className="bg-white/15 text-white/80">
+                  <Badge
+                    key={`${a.type}:${a.id}`}
+                    variant="secondary"
+                    className="bg-white/15 text-white/80"
+                  >
                     {a.name || `${a.type}:${a.id}`}
                   </Badge>
                 ))}
@@ -485,10 +512,20 @@ export function AgentPanel({
           />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-1 rounded-full bg-white/10 p-1">
-              <Button size="sm" variant="ghost" className={modeButtonClass("sell")} onClick={() => setMode("sell")}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className={modeButtonClass("sell")}
+                onClick={() => setMode("sell")}
+              >
                 Sell
               </Button>
-              <Button size="sm" variant="ghost" className={modeButtonClass("support")} onClick={() => setMode("support")}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className={modeButtonClass("support")}
+                onClick={() => setMode("support")}
+              >
                 Support
               </Button>
             </div>
@@ -519,7 +556,11 @@ export function AgentPanel({
                   Start new
                 </Button>
               )}
-              <Button onClick={onAsk} disabled={loading || !question.trim()} className="rounded-full bg-orange-500 px-5 text-white hover:bg-orange-600 disabled:opacity-60">
+              <Button
+                onClick={onAsk}
+                disabled={loading || !question.trim()}
+                className="rounded-full bg-orange-500 px-5 text-white hover:bg-orange-600 disabled:opacity-60"
+              >
                 <Send className="h-4 w-4 mr-1" />
                 {loading ? "Thinking…" : "Ask"}
               </Button>
@@ -528,7 +569,11 @@ export function AgentPanel({
           {!!attachments.length && (
             <div className="mt-2 flex flex-wrap gap-1">
               {attachments.map((a) => (
-                <Badge key={`${a.type}:${a.id}`} variant="secondary" className="bg-white/15 text-white/80">
+                <Badge
+                  key={`${a.type}:${a.id}`}
+                  variant="secondary"
+                  className="bg-white/15 text-white/80"
+                >
                   {a.name || `${a.type}:${a.id}`}
                 </Badge>
               ))}
@@ -537,20 +582,20 @@ export function AgentPanel({
         </div>
       )}
 
-    <BoxPickerModal
-      open={showBox}
-      onOpenChange={setShowBox}
-      onConfirm={(atts: BoxAttachment[]) => {
-        setAttachments((prev) => {
-          const map = new Map<string, Attachment>();
-          [...prev, ...atts].forEach((a) => {
-            const key = `${a.type}:${a.id}`;
-            map.set(key, { type: a.type, id: a.id, name: a.name });
+      <BoxPickerModal
+        open={showBox}
+        onOpenChange={setShowBox}
+        onConfirm={(atts: BoxAttachment[]) => {
+          setAttachments((prev) => {
+            const map = new Map<string, Attachment>();
+            [...prev, ...atts].forEach((a) => {
+              const key = `${a.type}:${a.id}`;
+              map.set(key, { type: a.type, id: a.id, name: a.name });
+            });
+            return Array.from(map.values());
           });
-          return Array.from(map.values());
-        });
-      }}
-    />
+        }}
+      />
     </div>
   );
 }

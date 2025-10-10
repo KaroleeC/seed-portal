@@ -50,7 +50,9 @@ export default function SalesCadenceListPage() {
                   <MessageSquare className="h-10 w-10 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">No cadences yet</h3>
-                <p className="text-gray-300 mb-6">Create your first sales cadence to automate your outreach sequence</p>
+                <p className="text-gray-300 mb-6">
+                  Create your first sales cadence to automate your outreach sequence
+                </p>
                 <Button onClick={createNew} variant="outline" className="gap-2">
                   <Plus className="h-4 w-4" />
                   Create Your First Cadence
@@ -93,7 +95,9 @@ export default function SalesCadenceListPage() {
                 <div className="space-y-2 text-sm text-gray-300">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-orange-400" />
-                    <span>{c.days?.length || 0} {c.days?.length === 1 ? "day" : "days"}</span>
+                    <span>
+                      {c.days?.length || 0} {c.days?.length === 1 ? "day" : "days"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-orange-400" />
@@ -102,7 +106,8 @@ export default function SalesCadenceListPage() {
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-orange-400" />
                     <span>
-                      {c.days?.reduce((acc, day) => acc + (day.actions?.length || 0), 0) || 0} actions
+                      {c.days?.reduce((acc, day) => acc + (day.actions?.length || 0), 0) || 0}{" "}
+                      actions
                     </span>
                   </div>
                 </div>

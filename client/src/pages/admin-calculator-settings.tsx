@@ -6,13 +6,7 @@ import { PERMISSIONS } from "@shared/permissions";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { seedqcKeys, pricingKeys } from "@/lib/queryKeys";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,12 +79,7 @@ function defaultSowTemplate(serviceKey: string): string {
   const header = `# Statement of Work - ${svc}\n\n`;
   const body = `This Statement of Work ("SOW") outlines the scope of ${svc} services to be provided by Seed Financial ("Seed") to the Client.\n\n`;
   const tokens = `Key Terms:\n- Client: {{companyName}}\n- Monthly Fee: \${{monthlyFee}}\n- Setup Fee: \${{setupFee}}\n- Cleanup Months (if applicable): {{cleanupMonths}}\n- Industry: {{industry}}\n`;
-  return (
-    header +
-    body +
-    tokens +
-    "\nDeliverables:\n- Outline of deliverables here...\n"
-  );
+  return `${header + body + tokens}\nDeliverables:\n- Outline of deliverables here...\n`;
 }
 
 function parseIncluded(json?: string | null): any {
@@ -103,19 +92,15 @@ function parseIncluded(json?: string | null): any {
 }
 
 function renderTemplate(template: string, tokens: Record<string, any>): string {
-  return (template || "").replace(
-    /\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g,
-    (_: string, key: string) => {
-      const value = key
-        .split(".")
-        .reduce<any>(
-          (acc: any, k: string) =>
-            acc && acc[k] !== undefined ? acc[k] : undefined,
-          tokens,
-        );
-      return value !== undefined && value !== null ? String(value) : "";
-    },
-  );
+  return (template || "").replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_: string, key: string) => {
+    const value = key
+      .split(".")
+      .reduce<any>(
+        (acc: any, k: string) => (acc && acc[k] !== undefined ? acc[k] : undefined),
+        tokens
+      );
+    return value !== undefined && value !== null ? String(value) : "";
+  });
 }
 
 export default function AdminCalculatorSettings() {
@@ -123,9 +108,7 @@ export default function AdminCalculatorSettings() {
   // HubSpot pipeline/stage configuration state
   const [hsPipelineId, setHsPipelineId] = useState<string>("");
   const [hsStageId, setHsStageId] = useState<string>("");
-  const [activeService, setActiveService] = useState<string>(
-    SERVICES[0]?.key ?? "bookkeeping",
-  );
+  const [activeService, setActiveService] = useState<string>(SERVICES[0]?.key ?? "bookkeeping");
   const [serviceFilter, setServiceFilter] = useState("");
   const templateRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -135,8 +118,7 @@ export default function AdminCalculatorSettings() {
     msaLink?: string;
   }>({
     queryKey: seedqcKeys.adminContent(),
-    queryFn: async () =>
-      await apiRequest("GET", "/api/admin/apps/seedqc/content"),
+    queryFn: async () => await apiRequest("GET", "/api/admin/apps/seedqc/content"),
   });
   const { data: publicCalc, refetch: refetchPublicCalc } = useQuery<{
     items: ServiceContentItem[];
@@ -173,16 +155,10 @@ export default function AdminCalculatorSettings() {
     }
   }, [hsConfig]);
 
-  const selectedPipeline = (hsPipelines?.pipelines || []).find(
-    (p) => p.id === hsPipelineId,
-  );
+  const selectedPipeline = (hsPipelines?.pipelines || []).find((p) => p.id === hsPipelineId);
   useEffect(() => {
     // Clear stage if not in selected pipeline
-    if (
-      hsStageId &&
-      selectedPipeline &&
-      !selectedPipeline.stages.find((s) => s.id === hsStageId)
-    ) {
+    if (hsStageId && selectedPipeline && !selectedPipeline.stages.find((s) => s.id === hsStageId)) {
       setHsStageId("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -212,13 +188,11 @@ export default function AdminCalculatorSettings() {
   // Pricing data (admin)
   const { data: baseFees } = useQuery<PricingBase[]>({
     queryKey: pricingKeys.admin.base(),
-    queryFn: async () =>
-      await apiRequest<PricingBase[]>("GET", "/api/admin/pricing/base"),
+    queryFn: async () => await apiRequest<PricingBase[]>("GET", "/api/admin/pricing/base"),
   });
   const { data: pricingTiers } = useQuery<PricingTier[]>({
     queryKey: pricingKeys.admin.tiers(),
-    queryFn: async () =>
-      await apiRequest<PricingTier[]>("GET", "/api/admin/pricing/tiers"),
+    queryFn: async () => await apiRequest<PricingTier[]>("GET", "/api/admin/pricing/tiers"),
   });
 
   // Local editing state per service - initialize with synchronous defaults
@@ -256,7 +230,7 @@ export default function AdminCalculatorSettings() {
 
   const msaLink = useMemo(
     () => adminCalc?.msaLink || publicCalc?.msaLink || "",
-    [adminCalc, publicCalc],
+    [adminCalc, publicCalc]
   );
 
   // Update mutation (SOW + link + includedFields)
@@ -268,13 +242,10 @@ export default function AdminCalculatorSettings() {
       agreementLink?: string | null;
       includedFieldsJson?: string;
     }) => {
-      return await apiRequest(
-        `/api/admin/apps/seedqc/content/${payload.service}`,
-        {
-          method: "PUT",
-          body: payload,
-        },
-      );
+      return await apiRequest(`/api/admin/apps/seedqc/content/${payload.service}`, {
+        method: "PUT",
+        body: payload,
+      });
     },
     onSuccess: async () => {
       toast({ title: "Saved successfully" });
@@ -348,7 +319,7 @@ export default function AdminCalculatorSettings() {
       "{{agentOfService.additionalStates}}",
       "{{agentOfService.complexCase}}",
     ],
-    [],
+    []
   );
 
   const insertToken = (token: string) => {
@@ -375,32 +346,26 @@ export default function AdminCalculatorSettings() {
     const f = serviceFilter.trim().toLowerCase();
     if (!f) return SERVICES;
     return SERVICES.filter(
-      (s) =>
-        s.label.toLowerCase().includes(f) || s.key.toLowerCase().includes(f),
+      (s) => s.label.toLowerCase().includes(f) || s.key.toLowerCase().includes(f)
     );
   }, [serviceFilter]);
 
   const selectedServiceLabel = useMemo(
-    () =>
-      SERVICES.find((s) => s.key === activeService)?.label ||
-      "Select a service",
-    [activeService],
+    () => SERVICES.find((s) => s.key === activeService)?.label || "Select a service",
+    [activeService]
   );
 
   const selectedBaseFee = useMemo(
     () => baseFees?.find((b) => b.service === activeService),
-    [baseFees, activeService],
+    [baseFees, activeService]
   );
   const selectedTiers = useMemo(
     () => (pricingTiers || []).filter((t) => t.service === activeService),
-    [pricingTiers, activeService],
+    [pricingTiers, activeService]
   );
 
   return (
-    <PermissionGuard
-      permissions={PERMISSIONS.MANAGE_PRICING}
-      fallback={<div>Access denied</div>}
-    >
+    <PermissionGuard permissions={PERMISSIONS.MANAGE_PRICING} fallback={<div>Access denied</div>}>
       <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
         <UniversalNavbar />
         <main className="flex-1 p-6">
@@ -412,9 +377,7 @@ export default function AdminCalculatorSettings() {
                   <Sliders className="w-8 h-8 text-white" />
                   Calculator Settings
                 </h1>
-                <p className="mt-2 text-white/80">
-                  Unified Pricing + SOW configuration
-                </p>
+                <p className="mt-2 text-white/80">Unified Pricing + SOW configuration</p>
               </div>
               <div className="flex gap-3">
                 <Button
@@ -432,9 +395,7 @@ export default function AdminCalculatorSettings() {
                   disabled={updateMutation.isPending}
                   className="flex items-center gap-2"
                 >
-                  <Save
-                    className={`w-4 h-4 ${updateMutation.isPending ? "animate-pulse" : ""}`}
-                  />{" "}
+                  <Save className={`w-4 h-4 ${updateMutation.isPending ? "animate-pulse" : ""}`} />{" "}
                   Save
                 </Button>
               </div>
@@ -466,16 +427,10 @@ export default function AdminCalculatorSettings() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label>Stage</Label>
-                  <Select
-                    value={hsStageId}
-                    onValueChange={setHsStageId}
-                    disabled={!hsPipelineId}
-                  >
+                  <Select value={hsStageId} onValueChange={setHsStageId} disabled={!hsPipelineId}>
                     <SelectTrigger className="w-full">
                       <SelectValue
-                        placeholder={
-                          hsPipelineId ? "Select a stage" : "Select a pipeline first"
-                        }
+                        placeholder={hsPipelineId ? "Select a stage" : "Select a pipeline first"}
                       />
                     </SelectTrigger>
                     <SelectContent>
@@ -500,14 +455,13 @@ export default function AdminCalculatorSettings() {
                     disabled={!hsPipelineId || !hsStageId || saveHsConfig.isPending}
                     className="w-full md:w-auto"
                   >
-                    <Save
-                      className={`w-4 h-4 ${saveHsConfig.isPending ? "animate-pulse" : ""}`}
-                    />
+                    <Save className={`w-4 h-4 ${saveHsConfig.isPending ? "animate-pulse" : ""}`} />
                     Save
                   </Button>
                 </div>
                 <div className="md:col-span-3 text-sm text-muted-foreground">
-                  Status: {hsConfig?.valid ? (
+                  Status:{" "}
+                  {hsConfig?.valid ? (
                     <span className="text-green-700">Configured</span>
                   ) : (
                     <span className="text-yellow-800">
@@ -522,9 +476,7 @@ export default function AdminCalculatorSettings() {
             <Card>
               <CardHeader>
                 <CardTitle>Service</CardTitle>
-                <CardDescription>
-                  Select a service to edit its SOW and view pricing
-                </CardDescription>
+                <CardDescription>Select a service to edit its SOW and view pricing</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col md:flex-row md:items-center gap-4">
                 <div className="flex items-center gap-3 w-full md:w-1/2">
@@ -537,10 +489,7 @@ export default function AdminCalculatorSettings() {
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-1/2">
                   <Label className="min-w-[70px]">Service</Label>
-                  <Select
-                    value={activeService}
-                    onValueChange={setActiveService}
-                  >
+                  <Select value={activeService} onValueChange={setActiveService}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a service">
                         {selectedServiceLabel}
@@ -558,12 +507,7 @@ export default function AdminCalculatorSettings() {
                 {msaLink && (
                   <div className="text-sm text-muted-foreground">
                     MSA Link:{" "}
-                    <a
-                      href={msaLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline"
-                    >
+                    <a href={msaLink} target="_blank" rel="noreferrer" className="underline">
                       {msaLink}
                     </a>
                   </div>
@@ -591,39 +535,26 @@ export default function AdminCalculatorSettings() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="agreementLink"
-                      className="flex items-center gap-2"
-                    >
+                    <Label htmlFor="agreementLink" className="flex items-center gap-2">
                       <LinkIcon className="w-4 h-4" /> Agreement Link
                     </Label>
                     <Input
                       id="agreementLink"
                       value={local[activeService]?.agreementLink || ""}
-                      onChange={(e) =>
-                        setField("agreementLink", e.target.value)
-                      }
+                      onChange={(e) => setField("agreementLink", e.target.value)}
                       placeholder="https://..."
                     />
                     {msaLink && (
                       <p className="text-xs text-muted-foreground">
                         MSA Link:{" "}
-                        <a
-                          href={msaLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="underline"
-                        >
+                        <a href={msaLink} target="_blank" rel="noreferrer" className="underline">
                           {msaLink}
                         </a>
                       </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="sowTemplate"
-                      className="flex items-center gap-2"
-                    >
+                    <Label htmlFor="sowTemplate" className="flex items-center gap-2">
                       <FileText className="w-4 h-4" /> SOW Template (Markdown)
                     </Label>
                     <Textarea
@@ -647,8 +578,7 @@ export default function AdminCalculatorSettings() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Use tokens like <code>{"{{companyName}}"}</code>,{" "}
-                      <code>{"{{monthlyFee}}"}</code>,{" "}
-                      <code>{"{{setupFee}}"}</code>,{" "}
+                      <code>{"{{monthlyFee}}"}</code>, <code>{"{{setupFee}}"}</code>,{" "}
                       <code>{"{{cleanupMonths}}"}</code>.
                     </p>
                   </div>
@@ -667,9 +597,7 @@ export default function AdminCalculatorSettings() {
                   <div className="flex items-center gap-3">
                     <DollarSign className="w-4 h-4" />
                     <div>
-                      <div className="text-sm text-muted-foreground">
-                        Base Fee
-                      </div>
+                      <div className="text-sm text-muted-foreground">Base Fee</div>
                       <div className="text-lg font-semibold text-foreground">
                         {selectedBaseFee
                           ? `$${Number(selectedBaseFee.baseFee).toLocaleString()}`
@@ -686,30 +614,26 @@ export default function AdminCalculatorSettings() {
                         </div>
                       )}
                       {selectedTiers.map((t) => (
-                        <div
-                          key={t.id}
-                          className="border rounded-md p-3 bg-background/50"
-                        >
+                        <div key={t.id} className="border rounded-md p-3 bg-background/50">
                           <div className="flex items-center justify-between">
                             <div className="font-medium">
                               {t.tier} • {t.volumeBand}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              Updated{" "}
-                              {new Date(t.updatedAt).toLocaleDateString()}
+                              Updated {new Date(t.updatedAt).toLocaleDateString()}
                             </div>
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            Base: ${Number(t.baseFee).toLocaleString()} •
-                            Multiplier: {t.tierMultiplier}x
+                            Base: ${Number(t.baseFee).toLocaleString()} • Multiplier:{" "}
+                            {t.tierMultiplier}x
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    For full editing, use the Pricing page. Changes there
-                    reflect here after refresh.
+                    For full editing, use the Pricing page. Changes there reflect here after
+                    refresh.
                   </div>
                 </CardContent>
               </Card>

@@ -4,13 +4,13 @@
  */
 
 // Re-export from centralized asset registry
-export { 
-  brand, 
-  seedos, 
-  apps, 
+export {
+  brand,
+  seedos,
+  apps,
   misc,
   logoLight,
   logoDark,
   logoLightFallback,
   logoDarkFallback,
-} from './index';
+} from "./index";

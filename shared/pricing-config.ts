@@ -11,9 +11,7 @@ export const PricingConfigSchema = z.object({
   baseFees: z.record(z.number()),
   revenueMultipliers: z.record(z.number()),
   transactionSurcharges: z.record(z.number()),
-  industryMultipliers: z.record(
-    z.object({ monthly: z.number(), cleanup: z.number() }),
-  ),
+  industryMultipliers: z.record(z.object({ monthly: z.number(), cleanup: z.number() })),
   serviceSettings: z.record(z.record(z.number())),
   pricingTiers: z.record(z.record(z.record(PricingTierEntrySchema))),
 });

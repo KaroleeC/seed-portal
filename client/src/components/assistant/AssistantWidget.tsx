@@ -10,7 +10,7 @@ export function AssistantWidget() {
   const [location, navigate] = useLocation();
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
-  
+
   // Global toggle via keyboard (Cmd/Ctrl+L)
   useEffect(() => {
     const handler = (_e: Event) => {
@@ -104,11 +104,7 @@ export function AssistantWidget() {
             </div>
             <div className="flex-1 min-h-0 px-4 py-4">
               <AgentPanel
-                initialMode={
-                  persona === "service" || persona === "admin"
-                    ? "support"
-                    : "sell"
-                }
+                initialMode={persona === "service" || persona === "admin" ? "support" : "sell"}
                 allowBox={allowBox}
                 compact
                 onOpenWorkspace={() => navigate("/assistant")}

@@ -270,16 +270,13 @@ export class MSAGenerator {
     };
 
     const serviceTexts = services.map(
-      (service) =>
-        descriptions[service as keyof typeof descriptions] || service,
+      (service) => descriptions[service as keyof typeof descriptions] || service
     );
 
     if (serviceTexts.length === 1) return serviceTexts[0] || "";
     if (serviceTexts.length === 2) return serviceTexts.join(" and ");
 
-    return (
-      serviceTexts.slice(0, -1).join(", ") + ", and " + serviceTexts.slice(-1)
-    );
+    return `${serviceTexts.slice(0, -1).join(", ")}, and ${serviceTexts.slice(-1)}`;
   }
 }
 

@@ -63,13 +63,15 @@ function baseTaasInput(): QuotePricingInput {
       };
       const result = calculateQuotePricing(input);
       const expectedBkBefore = Math.round(
-        (PRICING_CONSTANTS.baseMonthlyFee +
-          PRICING_CONSTANTS.txSurcharge["100-300"]) *
+        (PRICING_CONSTANTS.baseMonthlyFee + PRICING_CONSTANTS.txSurcharge["100-300"]) *
           PRICING_CONSTANTS.revenueMultipliers["25K-75K"] *
-          PRICING_CONSTANTS.industryMultipliers["Professional Services"].monthly,
+          PRICING_CONSTANTS.industryMultipliers["Professional Services"].monthly
       );
       assert(expectedBkBefore === 550, `expected BK pre-discount 550, got ${expectedBkBefore}`);
-      assert(result.bookkeeping.monthlyFee === 275, `BK after discount expected 275, got ${result.bookkeeping.monthlyFee}`);
+      assert(
+        result.bookkeeping.monthlyFee === 275,
+        `BK after discount expected 275, got ${result.bookkeeping.monthlyFee}`
+      );
     });
 
     // 2. QBO line item not discounted
@@ -82,7 +84,10 @@ function baseTaasInput(): QuotePricingInput {
       const ui = calculatePricingDisplay(input);
       const qboFee = (ui as any).qboFee as number | undefined;
       assert(qboFee === 60, `qboFee expected 60, got ${qboFee}`);
-      assert(ui.bookkeeping.monthlyFee === 275, `BK after discount should remain 275, got ${ui.bookkeeping.monthlyFee}`);
+      assert(
+        ui.bookkeeping.monthlyFee === 275,
+        `BK after discount should remain 275, got ${ui.bookkeeping.monthlyFee}`
+      );
       const parts =
         ui.bookkeeping.monthlyFee +
         ui.taas.monthlyFee +
@@ -91,7 +96,10 @@ function baseTaasInput(): QuotePricingInput {
         ui.apFee +
         ui.arFee +
         (ui as any).qboFee;
-      assert(parts === ui.totalMonthlyFee, `sum of parts ${parts} != totalMonthlyFee ${ui.totalMonthlyFee}`);
+      assert(
+        parts === ui.totalMonthlyFee,
+        `sum of parts ${parts} != totalMonthlyFee ${ui.totalMonthlyFee}`
+      );
     });
 
     // 3. TaaS rounds to nearest 25
@@ -101,7 +109,10 @@ function baseTaasInput(): QuotePricingInput {
         monthlyRevenueRange: "10K-25K",
       };
       const result = calculateQuotePricing(input);
-      assert(result.taas.monthlyFee === 200, `TaaS monthly expected 200, got ${result.taas.monthlyFee}`);
+      assert(
+        result.taas.monthlyFee === 200,
+        `TaaS monthly expected 200, got ${result.taas.monthlyFee}`
+      );
     });
 
     // 4. BK setup fee formula uses current month and > 0
@@ -110,21 +121,32 @@ function baseTaasInput(): QuotePricingInput {
       const result = calculateQuotePricing(input);
       const currentMonth = new Date().getMonth() + 1;
       const expectedBkBefore = Math.round(
-        (PRICING_CONSTANTS.baseMonthlyFee +
-          PRICING_CONSTANTS.txSurcharge["100-300"]) *
+        (PRICING_CONSTANTS.baseMonthlyFee + PRICING_CONSTANTS.txSurcharge["100-300"]) *
           PRICING_CONSTANTS.revenueMultipliers["25K-75K"] *
-          PRICING_CONSTANTS.industryMultipliers["Professional Services"].monthly,
+          PRICING_CONSTANTS.industryMultipliers["Professional Services"].monthly
       );
       const expectedSetup = Math.round(expectedBkBefore * currentMonth * 0.25);
-      assert(result.bookkeeping.setupFee === expectedSetup, `BK setup expected ${expectedSetup}, got ${result.bookkeeping.setupFee}`);
+      assert(
+        result.bookkeeping.setupFee === expectedSetup,
+        `BK setup expected ${expectedSetup}, got ${result.bookkeeping.setupFee}`
+      );
       assert(result.bookkeeping.setupFee > 0, "BK setup should be > 0");
     });
 
     // 5-7. Tier fees reflected in totals
     run("Tier fees: Automated=0, Guided=79, Concierge=249", () => {
-      const auto = calculateQuotePricing({ ...baseBkInput(), serviceTier: "Automated" }).serviceTierFee;
-      const guided = calculateQuotePricing({ ...baseBkInput(), serviceTier: "Guided" }).serviceTierFee;
-      const conc = calculateQuotePricing({ ...baseBkInput(), serviceTier: "Concierge" }).serviceTierFee;
+      const auto = calculateQuotePricing({
+        ...baseBkInput(),
+        serviceTier: "Automated",
+      }).serviceTierFee;
+      const guided = calculateQuotePricing({
+        ...baseBkInput(),
+        serviceTier: "Guided",
+      }).serviceTierFee;
+      const conc = calculateQuotePricing({
+        ...baseBkInput(),
+        serviceTier: "Concierge",
+      }).serviceTierFee;
       assert(auto === 0, `Automated expected 0, got ${auto}`);
       assert(guided === 79, `Guided expected 79, got ${guided}`);
       assert(conc === 249, `Concierge expected 249, got ${conc}`);
@@ -138,7 +160,10 @@ function baseTaasInput(): QuotePricingInput {
         cleanupPeriods: ["Jan", "Feb", "Mar"],
       } as any;
       const result = calculateQuotePricing(input);
-      assert((result as any).cleanupProjectFee === 300, `cleanupProjectFee expected 300, got ${(result as any).cleanupProjectFee}`);
+      assert(
+        (result as any).cleanupProjectFee === 300,
+        `cleanupProjectFee expected 300, got ${(result as any).cleanupProjectFee}`
+      );
       assert(result.combined.setupFee >= 300, "combined setup should include cleanup fee");
     });
 
@@ -150,8 +175,14 @@ function baseTaasInput(): QuotePricingInput {
         priorYearFilings: ["2022", "2023"],
       } as any;
       const result = calculateQuotePricing(input);
-      assert((result as any).priorYearFilingsFee === 3000, `priorYearFilingsFee expected 3000, got ${(result as any).priorYearFilingsFee}`);
-      assert(result.combined.setupFee >= 3000, "combined setup should include prior-year filings fee");
+      assert(
+        (result as any).priorYearFilingsFee === 3000,
+        `priorYearFilingsFee expected 3000, got ${(result as any).priorYearFilingsFee}`
+      );
+      assert(
+        result.combined.setupFee >= 3000,
+        "combined setup should include prior-year filings fee"
+      );
     });
 
     // 10. Monotonic tx bands (BK monthly non-decreasing)
@@ -185,15 +216,19 @@ function baseTaasInput(): QuotePricingInput {
 
     // 12. Industry multiplier effect (BK monthly higher for higher multiplier)
     run("Industry multiplier increases BK monthly", () => {
-      const base = calculateQuotePricing({ ...baseBkInput(), industry: "Software/SaaS" }).bookkeeping.monthlyFee;
-      const rest = calculateQuotePricing({ ...baseBkInput(), industry: "Restaurant/Food Service" }).bookkeeping.monthlyFee;
+      const base = calculateQuotePricing({ ...baseBkInput(), industry: "Software/SaaS" })
+        .bookkeeping.monthlyFee;
+      const rest = calculateQuotePricing({ ...baseBkInput(), industry: "Restaurant/Food Service" })
+        .bookkeeping.monthlyFee;
       assert(rest >= base, `Restaurant BK ${rest} should be >= Software ${base}`);
     });
 
     // 13. TaaS owner upcharge (6 owners > 5 owners)
     run("TaaS owner upcharge after 5 owners", () => {
-      const base5 = calculateQuotePricing({ ...baseTaasInput(), numBusinessOwners: 5 }).taas.monthlyFee;
-      const six = calculateQuotePricing({ ...baseTaasInput(), numBusinessOwners: 6 }).taas.monthlyFee;
+      const base5 = calculateQuotePricing({ ...baseTaasInput(), numBusinessOwners: 5 }).taas
+        .monthlyFee;
+      const six = calculateQuotePricing({ ...baseTaasInput(), numBusinessOwners: 6 }).taas
+        .monthlyFee;
       assert(six > base5, `6 owners fee ${six} should be > 5 owners ${base5}`);
     });
 
@@ -213,8 +248,10 @@ function baseTaasInput(): QuotePricingInput {
 
     // 16. TaaS personal 1040 effect
     run("TaaS includes 1040s increases fee", () => {
-      const no1040 = calculateQuotePricing({ ...baseTaasInput(), include1040s: false }).taas.monthlyFee;
-      const yes1040 = calculateQuotePricing({ ...baseTaasInput(), include1040s: true }).taas.monthlyFee;
+      const no1040 = calculateQuotePricing({ ...baseTaasInput(), include1040s: false }).taas
+        .monthlyFee;
+      const yes1040 = calculateQuotePricing({ ...baseTaasInput(), include1040s: true }).taas
+        .monthlyFee;
       assert(yes1040 > no1040, `include1040s true ${yes1040} should be > false ${no1040}`);
     });
 
@@ -265,7 +302,10 @@ function baseTaasInput(): QuotePricingInput {
         agentOfServiceComplexCase: true,
       } as any);
       assert((result as any).agentOfServiceFee > 0, "agentOfServiceFee should be > 0");
-      assert(result.combined.setupFee >= (result as any).agentOfServiceFee, "setup should include agent of service fee");
+      assert(
+        result.combined.setupFee >= (result as any).agentOfServiceFee,
+        "setup should include agent of service fee"
+      );
     });
 
     // 20. Cleanup-only case has zero BK monthly
@@ -277,24 +317,47 @@ function baseTaasInput(): QuotePricingInput {
         serviceCleanupProjects: true,
         cleanupPeriods: ["Jan", "Feb"],
       } as any);
-      assert(result.bookkeeping.monthlyFee === 0, `BK monthly expected 0, got ${result.bookkeeping.monthlyFee}`);
-      assert((result as any).cleanupProjectFee === 200, `cleanupProjectFee expected 200, got ${(result as any).cleanupProjectFee}`);
+      assert(
+        result.bookkeeping.monthlyFee === 0,
+        `BK monthly expected 0, got ${result.bookkeeping.monthlyFee}`
+      );
+      assert(
+        (result as any).cleanupProjectFee === 200,
+        `cleanupProjectFee expected 200, got ${(result as any).cleanupProjectFee}`
+      );
       assert(result.combined.setupFee >= 200, "setup should include cleanup fee");
     });
 
     // 21. QBO not discounted difference check
     run("Turning on QBO increases total by 60, BK unchanged", () => {
-      const off = calculateQuotePricing({ ...baseBkInput(), ...baseTaasInput(), qboSubscription: false });
-      const on = calculateQuotePricing({ ...baseBkInput(), ...baseTaasInput(), qboSubscription: true });
-      assert(on.combined.monthlyFee - off.combined.monthlyFee === 60, `total diff expected 60, got ${on.combined.monthlyFee - off.combined.monthlyFee}`);
-      assert(on.bookkeeping.monthlyFee === off.bookkeeping.monthlyFee, "BK monthly should be unchanged by QBO");
+      const off = calculateQuotePricing({
+        ...baseBkInput(),
+        ...baseTaasInput(),
+        qboSubscription: false,
+      });
+      const on = calculateQuotePricing({
+        ...baseBkInput(),
+        ...baseTaasInput(),
+        qboSubscription: true,
+      });
+      assert(
+        on.combined.monthlyFee - off.combined.monthlyFee === 60,
+        `total diff expected 60, got ${on.combined.monthlyFee - off.combined.monthlyFee}`
+      );
+      assert(
+        on.bookkeeping.monthlyFee === off.bookkeeping.monthlyFee,
+        "BK monthly should be unchanged by QBO"
+      );
     });
 
     // 22. Concierge tier increases total by 249 vs Automated
     run("Concierge total monthly higher by 249 vs Automated", () => {
       const auto = calculateQuotePricing({ ...baseBkInput(), serviceTier: "Automated" });
       const conc = calculateQuotePricing({ ...baseBkInput(), serviceTier: "Concierge" });
-      assert(conc.combined.monthlyFee - auto.combined.monthlyFee === 249, `concierge-auto diff expected 249, got ${conc.combined.monthlyFee - auto.combined.monthlyFee}`);
+      assert(
+        conc.combined.monthlyFee - auto.combined.monthlyFee === 249,
+        `concierge-auto diff expected 249, got ${conc.combined.monthlyFee - auto.combined.monthlyFee}`
+      );
     });
 
     console.log("\nAll pricing golden tests passed ✅");

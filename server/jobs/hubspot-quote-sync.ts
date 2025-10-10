@@ -1,5 +1,5 @@
 // HubSpot Quote Sync Background Jobs
-import { Job } from "bullmq";
+import type { Job } from "bullmq";
 import { logger } from "../logger";
 import { storage } from "../storage";
 
@@ -21,7 +21,7 @@ export interface HubSpotQuoteSyncResult {
 }
 
 export async function processHubSpotQuoteSync(
-  job: Job<HubSpotQuoteSyncJobData>,
+  job: Job<HubSpotQuoteSyncJobData>
 ): Promise<HubSpotQuoteSyncResult> {
   const { quoteId, action, userId } = job.data;
 
@@ -33,7 +33,7 @@ export async function processHubSpotQuoteSync(
       userId,
       attempt: job.attemptsMade + 1,
     },
-    `🔄 Processing HubSpot quote sync`,
+    `🔄 Processing HubSpot quote sync`
   );
 
   try {
@@ -53,11 +53,7 @@ export async function processHubSpotQuoteSync(
 
     // Use unified sync function for both create/update
     const { syncQuoteToHubSpot } = await import("../services/hubspot/sync.js");
-    const unified = await syncQuoteToHubSpot(
-      quoteId,
-      action as any,
-      user.email,
-    );
+    const unified = await syncQuoteToHubSpot(quoteId, action as any, user.email);
 
     await job.updateProgress(100);
 
@@ -79,7 +75,7 @@ export async function processHubSpotQuoteSync(
         attempt: job.attemptsMade + 1,
         stack: error.stack,
       },
-      "❌ HubSpot quote sync failed",
+      "❌ HubSpot quote sync failed"
     );
 
     // Return failure result

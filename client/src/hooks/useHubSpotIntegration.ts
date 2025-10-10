@@ -11,12 +11,9 @@ export function useHubSpotIntegration() {
   const [hubspotVerificationStatus, setHubspotVerificationStatus] = useState<
     "idle" | "verifying" | "verified" | "not-found"
   >("idle");
-  const [hubspotContact, setHubspotContact] = useState<HubSpotContact | null>(
-    null,
-  );
+  const [hubspotContact, setHubspotContact] = useState<HubSpotContact | null>(null);
   const [lastVerifiedEmail, setLastVerifiedEmail] = useState("");
-  const [verificationTimeoutId, setVerificationTimeoutId] =
-    useState<NodeJS.Timeout | null>(null);
+  const [verificationTimeoutId, setVerificationTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   const verifyHubSpotEmail = async (email: string) => {
     if (!email || email === lastVerifiedEmail) return;
@@ -46,10 +43,7 @@ export function useHubSpotIntegration() {
       try {
         existingQuotesData = await checkExistingQuotes(email);
       } catch (quotesError) {
-        console.warn(
-          "Failed to check existing quotes, continuing without this data:",
-          quotesError,
-        );
+        console.warn("Failed to check existing quotes, continuing without this data:", quotesError);
         existingQuotesData = null;
       }
 
@@ -81,10 +75,7 @@ export function useHubSpotIntegration() {
       console.error("[HubSpot] Error statusText:", error?.statusText);
       console.error("[HubSpot] Error response:", error?.response);
       console.error("[HubSpot] Error body:", error?.body);
-      console.error(
-        "[HubSpot] Error details stringified:",
-        JSON.stringify(error, null, 2),
-      );
+      console.error("[HubSpot] Error details stringified:", JSON.stringify(error, null, 2));
 
       // Try to extract more meaningful error message
       let errorMessage = "Failed to push quote to HubSpot";

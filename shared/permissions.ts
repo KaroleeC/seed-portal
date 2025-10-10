@@ -105,33 +105,21 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 };
 
 // Helper functions for permission checking
-export function hasPermission(
-  userRole: UserRole,
-  permission: Permission,
-): boolean {
+export function hasPermission(userRole: UserRole, permission: Permission): boolean {
   const rolePermissions = ROLE_PERMISSIONS[userRole];
   return rolePermissions.includes(permission);
 }
 
-export function hasAnyPermission(
-  userRole: UserRole,
-  permissions: Permission[],
-): boolean {
+export function hasAnyPermission(userRole: UserRole, permissions: Permission[]): boolean {
   return permissions.some((permission) => hasPermission(userRole, permission));
 }
 
-export function hasAllPermissions(
-  userRole: UserRole,
-  permissions: Permission[],
-): boolean {
+export function hasAllPermissions(userRole: UserRole, permissions: Permission[]): boolean {
   return permissions.every((permission) => hasPermission(userRole, permission));
 }
 
 // Get default dashboard route based on user's preference or role
-export function getDefaultDashboard(
-  userRole: UserRole,
-  userDashboardPreference?: string,
-): string {
+export function getDefaultDashboard(userRole: UserRole, userDashboardPreference?: string): string {
   // If user has a specific dashboard preference, use that
   if (userDashboardPreference) {
     switch (userDashboardPreference) {
@@ -156,9 +144,7 @@ export function getDefaultDashboard(
 }
 
 // Get available dashboard routes for a user (for admin testing)
-export function getAvailableDashboards(
-  userRole: UserRole,
-): Array<{ route: string; name: string }> {
+export function getAvailableDashboards(userRole: UserRole): Array<{ route: string; name: string }> {
   const dashboards = [];
 
   if (hasPermission(userRole, PERMISSIONS.VIEW_ADMIN_DASHBOARD)) {

@@ -6,10 +6,7 @@
 
 import { Worker, Job } from "bullmq";
 import { getRedisAsync } from "./server/redis";
-import {
-  workspaceSyncJob,
-  type WorkspaceSyncJobData,
-} from "./server/jobs/workspace-sync";
+import { workspaceSyncJob, type WorkspaceSyncJobData } from "./server/jobs/workspace-sync";
 import { logger } from "./server/logger";
 
 // Workers registry
@@ -40,14 +37,12 @@ async function initializeWorkers() {
         concurrency: 1, // Process one sync job at a time
         removeOnComplete: 50,
         removeOnFail: 20,
-      },
+      }
     );
 
     // Error handling
     workspaceWorker.on("completed", (job) => {
-      logger.info(
-        `[Worker] Workspace sync job ${job.id} completed successfully`,
-      );
+      logger.info(`[Worker] Workspace sync job ${job.id} completed successfully`);
     });
 
     workspaceWorker.on("failed", (job, err) => {

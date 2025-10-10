@@ -54,8 +54,7 @@ export class CRMService {
 
   constructor() {
     const crmDisabled =
-      process.env.DISABLE_CRM === "1" ||
-      (process.env.DISABLE_CRM || "").toLowerCase() === "true";
+      process.env.DISABLE_CRM === "1" || (process.env.DISABLE_CRM || "").toLowerCase() === "true";
     if (crmDisabled) {
       logger.info("CRM service disabled via DISABLE_CRM flag");
       this.client = null as any;
@@ -67,7 +66,7 @@ export class CRMService {
 
     if (!apiKey) {
       logger.warn(
-        "HUBSPOT_ACCESS_TOKEN not found in environment variables - CRM service will be disabled",
+        "HUBSPOT_ACCESS_TOKEN not found in environment variables - CRM service will be disabled"
       );
       // Don't throw error - allow service to be created but mark as unavailable
       this.client = null as any;
@@ -183,11 +182,7 @@ export class CRMService {
         };
 
         // Cache the result
-        await cache.set(
-          cacheKey,
-          JSON.stringify(contact),
-          this.CACHE_TTL.CONTACT,
-        );
+        await cache.set(cacheKey, JSON.stringify(contact), this.CACHE_TTL.CONTACT);
         return contact;
       }
 
@@ -208,10 +203,7 @@ export class CRMService {
     }
   }
 
-  async searchContacts(
-    query: string,
-    limit = 20,
-  ): Promise<CRMContactSearchResult> {
+  async searchContacts(query: string, limit = 20): Promise<CRMContactSearchResult> {
     if (!this.client) {
       logger.warn("CRM service not configured, skipping contact search", {
         query,
@@ -247,18 +239,16 @@ export class CRMService {
         limit,
       });
 
-      const contacts: CRMContact[] = (response.results || []).map(
-        (hubspotContact) => ({
-          id: `crm_${hubspotContact.id}`,
-          email: hubspotContact.properties.email || "",
-          firstName: hubspotContact.properties.firstname || undefined,
-          lastName: hubspotContact.properties.lastname || undefined,
-          companyName: hubspotContact.properties.company || undefined,
-          industry: hubspotContact.properties.industry || undefined,
-          hubspotId: hubspotContact.id,
-          verified: true,
-        }),
-      );
+      const contacts: CRMContact[] = (response.results || []).map((hubspotContact) => ({
+        id: `crm_${hubspotContact.id}`,
+        email: hubspotContact.properties.email || "",
+        firstName: hubspotContact.properties.firstname || undefined,
+        lastName: hubspotContact.properties.lastname || undefined,
+        companyName: hubspotContact.properties.company || undefined,
+        industry: hubspotContact.properties.industry || undefined,
+        hubspotId: hubspotContact.id,
+        verified: true,
+      }));
 
       const result = { contacts, total: response.total || 0 };
 
@@ -280,46 +270,29 @@ export class CRMService {
     }
   }
 
-  async updateContact(
-    contactId: string,
-    updates: Partial<CRMContact>,
-  ): Promise<CRMContact> {
+  async updateContact(contactId: string, updates: Partial<CRMContact>): Promise<CRMContact> {
     if (!this.client) {
       throw new Error("CRM service not configured");
     }
 
     try {
       // Extract HubSpot ID from our contact ID
-      const hubspotId = contactId.startsWith("crm_")
-        ? contactId.slice(4)
-        : contactId;
+      const hubspotId = contactId.startsWith("crm_") ? contactId.slice(4) : contactId;
 
       // Map our fields to HubSpot properties
       const properties: any = {};
-      if (updates.firstName !== undefined)
-        properties.firstname = updates.firstName;
-      if (updates.lastName !== undefined)
-        properties.lastname = updates.lastName;
-      if (updates.companyName !== undefined)
-        properties.company = updates.companyName;
-      if (updates.industry !== undefined)
-        properties.industry = updates.industry;
+      if (updates.firstName !== undefined) properties.firstname = updates.firstName;
+      if (updates.lastName !== undefined) properties.lastname = updates.lastName;
+      if (updates.companyName !== undefined) properties.company = updates.companyName;
+      if (updates.industry !== undefined) properties.industry = updates.industry;
       if (updates.phone !== undefined) properties.phone = updates.phone;
-      if (updates.address?.street !== undefined)
-        properties.address = updates.address.street;
-      if (updates.address?.city !== undefined)
-        properties.city = updates.address.city;
-      if (updates.address?.state !== undefined)
-        properties.state = updates.address.state;
-      if (updates.address?.zipCode !== undefined)
-        properties.zip = updates.address.zipCode;
-      if (updates.address?.country !== undefined)
-        properties.country = updates.address.country;
+      if (updates.address?.street !== undefined) properties.address = updates.address.street;
+      if (updates.address?.city !== undefined) properties.city = updates.address.city;
+      if (updates.address?.state !== undefined) properties.state = updates.address.state;
+      if (updates.address?.zipCode !== undefined) properties.zip = updates.address.zipCode;
+      if (updates.address?.country !== undefined) properties.country = updates.address.country;
 
-      const response = await this.client.crm.contacts.basicApi.update(
-        hubspotId,
-        { properties },
-      );
+      const response = await this.client.crm.contacts.basicApi.update(hubspotId, { properties });
 
       // Clear cache for this contact
       if (updates.email) {

@@ -1,132 +1,30 @@
 import {
   quoteFormSchema,
   type QuoteFormFields,
+  currentMonth,
 } from "@/features/quote-calculator/schema";
-// Updated to fix mutation undefined error
 import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import {
-  Copy,
-  Save,
-  Check,
-  Search,
-  ArrowUpDown,
-  Edit,
-  AlertCircle,
-  Archive,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  Upload,
-  User,
-  LogOut,
-  Calculator,
-  FileText,
-  DollarSign,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  HelpCircle,
-  Bell,
-  Settings,
-  Lock,
-  Unlock,
-  Building,
-  Users,
-  CreditCard,
-  Receipt,
-} from "lucide-react";
 import { type Quote } from "@shared/schema";
 import { calculateCombinedFees, calculateQuotePricing } from "@shared/pricing";
 import type { PricingConfig as SimplePricingConfig } from "@shared/pricing";
 import { usePricingConfig } from "@/hooks/usePricingConfig";
 import { useCalculatorContent } from "@/hooks/useCalculatorContent";
-import {
-  mapQuoteToFormServices,
-  getServiceKeys,
-  getAllServices,
-} from "@shared/services";
+import { mapQuoteToFormServices, getAllServices } from "@shared/services";
 
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import {
-  fetchQuotes,
-  createQuote as createQuoteApi,
-  updateQuote as updateQuoteApi,
-  archiveQuote as archiveQuoteApi,
-  checkExistingQuotes,
-} from "@/services/quotes";
+import { archiveQuote as archiveQuoteApi, checkExistingQuotes } from "@/services/quotes";
 import {
   verifyContact as verifyHubspotContact,
   searchContacts as searchHubspotContactsApi,
 } from "@/services/hubspot";
 
-// Import the error handling function
-
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { KbCard } from "@/components/seedkb/KbCard";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Textarea } from "@/components/ui/textarea";
+import { Form } from "@/components/ui/form";
 import { useAuth } from "@/hooks/use-auth";
 import { UniversalNavbar } from "@/components/UniversalNavbar";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QuoteSummarySection } from "@/components/seedqc/QuoteSummarySection";
-import { CommissionPreview } from "@/components/seedqc/CommissionPreview";
 import { ExistingQuotesModal } from "@/components/seedqc/ExistingQuotesModal";
 import { ApprovalCodeDialog } from "@/components/seedqc/ApprovalCodeDialog";
 import { StartNewQuoteCard } from "@/components/seedqc/StartNewQuoteCard";
@@ -145,92 +43,18 @@ import ARSection from "@/components/quote-form/ARSection";
 import AgentOfServiceSection from "@/components/quote-form/AgentOfServiceSection";
 import { useQuotes } from "@/hooks/use-quotes";
 import type { FeeCalculation } from "@/components/seedqc/types";
-import { validateRequiredFields as validateRequiredFieldsHelper } from "@/features/quote-calculator/logic/validation";
-import {
-  getApprovalButtonDisabledReason as getApprovalButtonDisabledReasonHelper,
-  isApprovalButtonDisabled as isApprovalButtonDisabledHelper,
-} from "@/features/quote-calculator/logic/approval";
-import { mapFormToQuotePayload } from "@/features/quote-calculator/logic/mapping";
+import { useHubSpotSync } from "@/features/quote-calculator/hooks/useHubSpotSync";
+import { useQuotePersistence } from "@/features/quote-calculator/hooks/useQuotePersistence";
+import { useMutation } from "@tanstack/react-query";
 import QuoteCalculatorContainer from "@/features/quote-calculator/QuoteCalculator";
-
-// Get current month number (1-12)
-const currentMonth = new Date().getMonth() + 1;
-
-// Helper function now delegated to centralized validation logic
-const validateRequiredFields = validateRequiredFieldsHelper;
-
-// Approval helpers delegated to centralized logic
-const getApprovalButtonDisabledReason = getApprovalButtonDisabledReasonHelper;
-const isApprovalButtonDisabled = isApprovalButtonDisabledHelper;
 
 // Typed form data
 type FormData = QuoteFormFields;
 
-// Pricing data
-const baseMonthlyFee = 150; // Starting base fee (updated to $150/mo)
-
-const revenueMultipliers = {
-  "<$10K": 1.0,
-  "10K-25K": 1.0,
-  "25K-75K": 2.2,
-  "75K-250K": 3.5,
-  "250K-1M": 5.0,
-  "1M+": 7.0,
-};
-
-const txSurcharge = {
-  "<100": 0,
-  "100-300": 100,
-  "300-600": 500,
-  "600-1000": 800,
-  "1000-2000": 1200,
-  "2000+": 1600,
-};
-
-const industryMultipliers = {
-  "Software/SaaS": { monthly: 1.0, cleanup: 1.0 },
-  "Professional Services": { monthly: 1.0, cleanup: 1.1 },
-  Consulting: { monthly: 1.0, cleanup: 1.05 },
-  "Healthcare/Medical": { monthly: 1.4, cleanup: 1.3 },
-  "Real Estate": { monthly: 1.25, cleanup: 1.05 },
-  "Property Management": { monthly: 1.3, cleanup: 1.2 },
-  "E-commerce/Retail": { monthly: 1.35, cleanup: 1.15 },
-  "Restaurant/Food Service": { monthly: 1.6, cleanup: 1.4 },
-  Hospitality: { monthly: 1.6, cleanup: 1.4 },
-  "Construction/Trades": { monthly: 1.5, cleanup: 1.08 },
-  Manufacturing: { monthly: 1.45, cleanup: 1.25 },
-  "Transportation/Logistics": { monthly: 1.4, cleanup: 1.2 },
-  Nonprofit: { monthly: 1.2, cleanup: 1.15 },
-  "Law Firm": { monthly: 1.3, cleanup: 1.35 },
-  "Accounting/Finance": { monthly: 1.1, cleanup: 1.1 },
-  "Marketing/Advertising": { monthly: 1.15, cleanup: 1.1 },
-  Insurance: { monthly: 1.35, cleanup: 1.25 },
-  Automotive: { monthly: 1.4, cleanup: 1.2 },
-  Education: { monthly: 1.25, cleanup: 1.2 },
-  "Fitness/Wellness": { monthly: 1.3, cleanup: 1.15 },
-  "Entertainment/Events": { monthly: 1.5, cleanup: 1.3 },
-  Agriculture: { monthly: 1.45, cleanup: 1.2 },
-  "Technology/IT Services": { monthly: 1.1, cleanup: 1.05 },
-  "Multi-entity/Holding Companies": { monthly: 1.35, cleanup: 1.25 },
-  Other: { monthly: 1.2, cleanup: 1.15 },
-};
-
-function roundToNearest5(num: number): number {
-  return Math.round(num / 5) * 5;
-}
-
-function roundToNearest25(num: number): number {
-  return Math.ceil(num / 25) * 25;
-}
-
-// Local calculation functions removed - now using shared/pricing.ts
-
 function QuoteCalculator() {
   const { toast } = useToast();
-  const { user, logoutMutation } = useAuth();
-  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const { user } = useAuth();
   const [editingQuoteId, setEditingQuoteId] = useState<number | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<string>("updatedAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -261,27 +85,19 @@ function QuoteCalculator() {
   const [lastVerifiedEmail, setLastVerifiedEmail] = useState("");
 
   // Existing quotes state
-  const [existingQuotesForEmail, setExistingQuotesForEmail] = useState<Quote[]>(
-    [],
-  );
-  const [existingQuotesInfoMessage, setExistingQuotesInfoMessage] = useState<
-    string | null
-  >(null);
-  const [showExistingQuotesNotification, setShowExistingQuotesNotification] =
-    useState(false);
+  const [existingQuotesForEmail, setExistingQuotesForEmail] = useState<Quote[]>([]);
+  const [existingQuotesInfoMessage, setExistingQuotesInfoMessage] = useState<string | null>(null);
+  const [showExistingQuotesNotification, setShowExistingQuotesNotification] = useState(false);
 
   // Custom dialog states
   const [resetConfirmDialog, setResetConfirmDialog] = useState(false);
   const [discardChangesDialog, setDiscardChangesDialog] = useState(false);
-  const [pendingQuoteToLoad, setPendingQuoteToLoad] = useState<Quote | null>(
-    null,
-  );
+  const [pendingQuoteToLoad, setPendingQuoteToLoad] = useState<Quote | null>(null);
   const [unlockConfirmDialog, setUnlockConfirmDialog] = useState(false);
   const [fieldsLocked, setFieldsLocked] = useState(false);
 
   // Debounce state for HubSpot verification
-  const [verificationTimeoutId, setVerificationTimeoutId] =
-    useState<NodeJS.Timeout | null>(null);
+  const [verificationTimeoutId, setVerificationTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   // New UX flow state
   const [showContactSearch, setShowContactSearch] = useState(false);
@@ -312,8 +128,7 @@ function QuoteCalculator() {
   const [isCfoAdvisoryExpanded, setIsCfoAdvisoryExpanded] = useState(true);
   const [isApExpanded, setIsApExpanded] = useState(true);
   const [isArExpanded, setIsArExpanded] = useState(true);
-  const [isAgentOfServiceExpanded, setIsAgentOfServiceExpanded] =
-    useState(true);
+  const [isAgentOfServiceExpanded, setIsAgentOfServiceExpanded] = useState(true);
 
   // Load pricing config and calculator content (SOW/agreement)
   const { data: pricingConfig } = usePricingConfig();
@@ -324,8 +139,7 @@ function QuoteCalculator() {
     const cfg: any = pricingConfig as any;
     if (!cfg) return undefined;
     const baseMonthlyFee = cfg?.baseFees?.bookkeeping ?? 150;
-    const qboMonthly =
-      cfg?.serviceSettings?.bookkeeping?.qbo_subscription_fee ?? 60;
+    const qboMonthly = cfg?.serviceSettings?.bookkeeping?.qbo_subscription_fee ?? 60;
     return {
       services: {
         bookkeeping: { enabled: true },
@@ -350,9 +164,9 @@ function QuoteCalculator() {
   }, [pricingConfig]);
 
   // Form navigation state
-  const [currentFormView, setCurrentFormView] = useState<
-    "bookkeeping" | "taas" | "placeholder"
-  >("placeholder");
+  const [currentFormView, setCurrentFormView] = useState<"bookkeeping" | "taas" | "placeholder">(
+    "placeholder"
+  );
 
   // Helper functions for navigation (defined after feeCalculation)
 
@@ -417,63 +231,102 @@ function QuoteCalculator() {
     sortOrder,
   });
 
-  const createQuoteMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      console.log("Submitting quote data:", data);
+  // Use extracted persistence hook
+  const { hasUnsavedChanges, clearUnsavedChanges, saveQuote, creating, setHasUnsavedChanges } =
+    useQuotePersistence({
+      form,
+      mappedPricingConfig,
+      editingQuoteId,
+      setEditingQuoteId,
+      refetchQuotes,
+    });
 
-      try {
-        // Use combined calculation system with optional Admin-configured pricing
-        const feeCalculation = mappedPricingConfig
-          ? calculateQuotePricing(data as any, mappedPricingConfig)
-          : calculateCombinedFees(data as any);
+  // Calculate fees for HubSpot sync hook (needs to be before hook call)
+  const watchedValues = form.getValues();
+  let feeCalculation: FeeCalculation;
+  try {
+    const rawCalc: any = mappedPricingConfig
+      ? calculateQuotePricing(watchedValues as any, mappedPricingConfig)
+      : calculateCombinedFees(watchedValues as any);
+    feeCalculation = {
+      combined: {
+        monthlyFee: Number(rawCalc?.combined?.monthlyFee) || 0,
+        setupFee: Number(rawCalc?.combined?.setupFee) || 0,
+      },
+      bookkeeping: {
+        monthlyFee: Number(rawCalc?.bookkeeping?.monthlyFee) || 0,
+        setupFee: Number(rawCalc?.bookkeeping?.setupFee) || 0,
+      },
+      taas: {
+        monthlyFee: Number(rawCalc?.taas?.monthlyFee) || 0,
+        setupFee: Number(rawCalc?.taas?.setupFee) || 0,
+      },
+      priorYearFilingsFee: Number(rawCalc?.priorYearFilingsFee) || 0,
+      cleanupProjectFee: Number(rawCalc?.cleanupProjectFee) || 0,
+      cfoAdvisoryFee: Number(rawCalc?.cfoAdvisoryFee) || 0,
+      payrollFee: Number(rawCalc?.payrollFee) || 0,
+      apFee: Number(rawCalc?.apFee) || 0,
+      arFee: Number(rawCalc?.arFee) || 0,
+      agentOfServiceFee: Number(rawCalc?.agentOfServiceFee) || 0,
+      serviceTierFee: Number(rawCalc?.serviceTierFee) || 0,
+      qboFee: Number(rawCalc?.qboFee) || 0,
+      includesBookkeeping: Boolean(rawCalc?.includesBookkeeping),
+      includesTaas: Boolean(rawCalc?.includesTaas),
+    } as FeeCalculation;
+  } catch (err) {
+    console.error("feeCalculation error, using safe defaults:", err);
+    feeCalculation = {
+      combined: { monthlyFee: 0, setupFee: 0 },
+      bookkeeping: { monthlyFee: 0, setupFee: 0 },
+      taas: { monthlyFee: 0, setupFee: 0 },
+      priorYearFilingsFee: 0,
+      cleanupProjectFee: 0,
+      cfoAdvisoryFee: 0,
+      payrollFee: 0,
+      apFee: 0,
+      arFee: 0,
+      agentOfServiceFee: 0,
+      serviceTierFee: 0,
+      qboFee: 0,
+      includesBookkeeping: false,
+      includesTaas: false,
+    } as FeeCalculation;
+  }
 
-        const quoteData = mapFormToQuotePayload(data, feeCalculation);
+  const isCalculated = (() => {
+    const hasMonthlyFees = feeCalculation.combined.monthlyFee > 0;
+    const hasSetupFees = feeCalculation.combined.setupFee > 0;
+    const hasProjectFees =
+      Number(feeCalculation.priorYearFilingsFee || 0) > 0 ||
+      Number(feeCalculation.cleanupProjectFee || 0) > 0 ||
+      Number(feeCalculation.cfoAdvisoryFee || 0) > 0;
+    const hasServiceFees =
+      Number(feeCalculation.payrollFee || 0) > 0 ||
+      Number(feeCalculation.apFee || 0) > 0 ||
+      Number(feeCalculation.arFee || 0) > 0 ||
+      Number(feeCalculation.agentOfServiceFee || 0) > 0;
+    return hasMonthlyFees || hasSetupFees || hasProjectFees || hasServiceFees;
+  })();
 
-        console.log("Final quote data:", quoteData);
-
-        let result;
-        if (editingQuoteId) {
-          console.log("💡 Updating existing quote with ID:", editingQuoteId);
-          result = await updateQuoteApi(editingQuoteId, quoteData);
-        } else {
-          console.log("💡 Creating new quote");
-          result = await createQuoteApi(quoteData);
-        }
-
-        console.log("💡 Quote API success response:", result);
-        return result;
-      } catch (error: any) {
-        console.error("💡 createQuoteMutation full error:", error);
-        console.error("💡 Error type:", typeof error);
-        console.error("💡 Error message:", error?.message);
-        console.error("💡 Error stack:", error?.stack);
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      console.log("Quote saved successfully:", data);
-      toast({
-        title: editingQuoteId ? "Quote Updated" : "Quote Saved",
-        description: editingQuoteId
-          ? "Your quote has been updated successfully."
-          : "Your quote has been saved successfully.",
-      });
-      // When saving a new quote, set editingQuoteId so user can immediately update it in HubSpot
-      if (!editingQuoteId && data.id) {
-        setEditingQuoteId(data.id);
-      }
-      setHasUnsavedChanges(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
-      refetchQuotes();
-    },
-    onError: (error) => {
-      console.error("Quote save error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save quote. Please try again.",
-        variant: "destructive",
-      });
-    },
+  // Use extracted HubSpot sync hook
+  const {
+    onPushToHubSpot,
+    isPushDisabled,
+    pushLabel,
+    pushToHubSpotMutation,
+    updateHubSpotMutation,
+  } = useHubSpotSync({
+    form,
+    feeCalculation,
+    editingQuoteId,
+    hasUnsavedChanges,
+    allQuotes,
+    isCalculated,
+    hubspotVerificationStatus,
+    creating,
+    refetchQuotes,
+    saveQuote,
+    clearUnsavedChanges,
   });
 
   // Archive quote mutation
@@ -499,11 +352,7 @@ function QuoteCalculator() {
     },
   });
 
-  const handleArchiveQuote = (
-    quoteId: number,
-    contactEmail: string,
-    e: React.MouseEvent,
-  ) => {
+  const handleArchiveQuote = (quoteId: number, contactEmail: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row click event
 
     // If user has chosen to not show the dialog, directly archive
@@ -558,14 +407,8 @@ function QuoteCalculator() {
         form.clearErrors("contactEmail");
 
         // Auto-fill company name if available
-        if (
-          hubspotResult.contact.properties.company &&
-          !form.getValues("companyName")
-        ) {
-          form.setValue(
-            "companyName",
-            hubspotResult.contact.properties.company,
-          );
+        if (hubspotResult.contact.properties.company && !form.getValues("companyName")) {
+          form.setValue("companyName", hubspotResult.contact.properties.company);
         }
       } else {
         setHubspotVerificationStatus("not-found");
@@ -577,12 +420,10 @@ function QuoteCalculator() {
         const verifiedItems = existingQuotesResult?.data?.verified || [];
         if (Array.isArray(verifiedItems) && verifiedItems.length > 0) {
           const editableIds = new Set(
-            verifiedItems
-              .filter((v: any) => v?.existsInHubSpot)
-              .map((v: any) => v.id),
+            verifiedItems.filter((v: any) => v?.existsInHubSpot).map((v: any) => v.id)
           );
-          const filteredQuotes = (existingQuotesResult.quotes || []).filter(
-            (q: any) => editableIds.has(q.id),
+          const filteredQuotes = (existingQuotesResult.quotes || []).filter((q: any) =>
+            editableIds.has(q.id)
           );
           setExistingQuotesForEmail(filteredQuotes);
           setShowExistingQuotesNotification(filteredQuotes.length > 0);
@@ -590,11 +431,8 @@ function QuoteCalculator() {
         } else {
           // Fallback to legacy behavior if verified array not present
           setExistingQuotesForEmail(existingQuotesResult.quotes || []);
-          setShowExistingQuotesNotification(
-            (existingQuotesResult.quotes || []).length > 0,
-          );
-          if ((existingQuotesResult.quotes || []).length > 0)
-            setSearchTerm(email);
+          setShowExistingQuotesNotification((existingQuotesResult.quotes || []).length > 0);
+          if ((existingQuotesResult.quotes || []).length > 0) setSearchTerm(email);
         }
       } else {
         setExistingQuotesForEmail([]);
@@ -687,29 +525,20 @@ function QuoteCalculator() {
 
     // Search for existing quotes for this contact
     try {
-      console.log(
-        "Searching for existing quotes for:",
-        contact.properties.email,
-      );
+      console.log("Searching for existing quotes for:", contact.properties.email);
       // Use BFF to check existing quotes AND verify HubSpot quote existence
       const existing = await checkExistingQuotes(contact.properties.email);
       const verifiedItems = existing?.data?.verified || [];
       let filtered: any[] = [];
       if (Array.isArray(verifiedItems) && verifiedItems.length > 0) {
         const editableIds = new Set(
-          verifiedItems
-            .filter((v: any) => v?.existsInHubSpot)
-            .map((v: any) => v.id),
+          verifiedItems.filter((v: any) => v?.existsInHubSpot).map((v: any) => v.id)
         );
-        filtered = (existing.quotes || []).filter((q: any) =>
-          editableIds.has(q.id),
-        );
-        const nonEditableCount = verifiedItems.filter(
-          (v: any) => !v?.existsInHubSpot,
-        ).length;
+        filtered = (existing.quotes || []).filter((q: any) => editableIds.has(q.id));
+        const nonEditableCount = verifiedItems.filter((v: any) => !v?.existsInHubSpot).length;
         if (nonEditableCount > 0) {
           setExistingQuotesInfoMessage(
-            `We found ${nonEditableCount} historical quote${nonEditableCount > 1 ? "s" : ""} that no longer ${nonEditableCount > 1 ? "exist" : "exists"} in HubSpot. These cannot be edited. Create a new quote instead.`,
+            `We found ${nonEditableCount} historical quote${nonEditableCount > 1 ? "s" : ""} that no longer ${nonEditableCount > 1 ? "exist" : "exists"} in HubSpot. These cannot be edited. Create a new quote instead.`
           );
         } else {
           setExistingQuotesInfoMessage(null);
@@ -806,10 +635,7 @@ function QuoteCalculator() {
 
     // Map HubSpot monthly_revenue_range (company property)
     if (contact.properties.monthly_revenue_range) {
-      form.setValue(
-        "monthlyRevenueRange",
-        contact.properties.monthly_revenue_range,
-      );
+      form.setValue("monthlyRevenueRange", contact.properties.monthly_revenue_range);
     }
 
     // Map HubSpot entity_type (company property)
@@ -830,10 +656,7 @@ function QuoteCalculator() {
       contact.properties.city &&
       contact.properties.state &&
       contact.properties.zip;
-    form.setValue(
-      "companyAddressLocked",
-      !!hasCompleteAddressData,
-    );
+    form.setValue("companyAddressLocked", !!hasCompleteAddressData);
 
     // Hide the existing quotes modal and show client details
     setShowExistingQuotesModal(false);
@@ -844,233 +667,6 @@ function QuoteCalculator() {
 
     setShowClientDetails(true);
   };
-
-  // Push to HubSpot mutation
-  const pushToHubSpotMutation = useMutation({
-    mutationFn: async (quoteId: number) => {
-      console.log("🚀 pushToHubSpotMutation called with quoteId:", quoteId);
-      try {
-        const result = await apiRequest("/api/hubspot/queue-sync", {
-          method: "POST",
-          body: JSON.stringify({
-            quoteId,
-            action: "create",
-          }),
-        });
-
-        console.log("🚀 HubSpot API success response:", result);
-        return { ...result, quoteId }; // Include the original quoteId in the response
-      } catch (error: any) {
-        console.error("🚀 pushToHubSpotMutation error:", error);
-        console.error("🚀 Error type:", typeof error);
-        console.error("🚀 Error message:", error?.message);
-        console.error("🚀 Error stack:", error?.stack);
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "✅ Pushed to HubSpot",
-        description:
-          data.method === "queued"
-            ? "Quote sync has been queued for HubSpot. You'll be notified when complete."
-            : "Quote has been successfully synchronized to HubSpot!",
-      });
-      // Set editingQuoteId so subsequent changes can update the HubSpot quote
-      if (data.quoteId) {
-        setEditingQuoteId(data.quoteId);
-      }
-      queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
-      refetchQuotes();
-    },
-    onError: (error: any) => {
-      console.error("Push to HubSpot error:", error);
-      toast({
-        title: "HubSpot Error",
-        description:
-          error.message || "Failed to push quote to HubSpot. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Update HubSpot quote mutation
-  const updateHubSpotMutation = useMutation({
-    mutationFn: async (quoteId: number) => {
-      const currentFormData = form.getValues();
-
-      // Ensure ALL calculated fees are included in form data
-      const enhancedFormData = {
-        ...currentFormData,
-        // Combined totals
-        monthlyFee: feeCalculation.combined.monthlyFee.toString(),
-        setupFee: feeCalculation.combined.setupFee.toString(),
-        // Individual service fees (for HubSpot line items)
-        bookkeepingMonthlyFee: feeCalculation.bookkeeping.monthlyFee.toString(),
-        taasMonthlyFee: feeCalculation.taas.monthlyFee.toString(),
-        taasPriorYearsFee: feeCalculation.taas.setupFee.toString(),
-        serviceTierFee: Number(feeCalculation.serviceTierFee || 0).toString(),
-        // Other individual service fees
-        cleanupProjectFee: Number(
-          feeCalculation.cleanupProjectFee || 0,
-        ).toString(),
-        priorYearFilingsFee: Number(
-          feeCalculation.priorYearFilingsFee || 0,
-        ).toString(),
-        payrollFee: Number(feeCalculation.payrollFee || 0).toString(),
-        apFee: Number(feeCalculation.apFee || 0).toString(),
-        arFee: Number(feeCalculation.arFee || 0).toString(),
-        agentOfServiceFee: Number(
-          feeCalculation.agentOfServiceFee || 0,
-        ).toString(),
-        cfoAdvisoryFee: Number(feeCalculation.cfoAdvisoryFee || 0).toString(),
-      };
-
-      const result = await apiRequest("/api/hubspot/update-quote", {
-        method: "POST",
-        body: JSON.stringify({
-          quoteId,
-          currentFormData: enhancedFormData,
-        }),
-      });
-      return result;
-    },
-    onSuccess: (data) => {
-      if (data.success) {
-        toast({
-          title: "HubSpot Updated",
-          description: "Quote successfully updated in HubSpot and saved.",
-        });
-        // Refresh the quotes list to show updated data
-        queryClient.invalidateQueries({ queryKey: ["/api/quotes"] });
-        refetchQuotes();
-        setHasUnsavedChanges(false);
-      } else if (data.needsNewQuote) {
-        toast({
-          title: "Quote Expired",
-          description:
-            "The HubSpot quote is no longer active. Use 'Push to HubSpot' to create a new quote.",
-          variant: "destructive",
-        });
-      }
-    },
-    onError: (error: any) => {
-      console.error("Update HubSpot error:", error);
-      toast({
-        title: "HubSpot Error",
-        description:
-          error.message ||
-          "Failed to update quote in HubSpot. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Use a snapshot of current values for calculation to avoid proxy pitfalls during rapid Select changes
-  const watchedValues = form.getValues();
-
-  // Calculate fees using combined system (with safe normalization)
-  let feeCalculation: FeeCalculation;
-  try {
-    const rawCalc: any = mappedPricingConfig
-      ? calculateQuotePricing(watchedValues as any, mappedPricingConfig)
-      : calculateCombinedFees(watchedValues as any);
-    feeCalculation = {
-      combined: {
-        monthlyFee: Number(rawCalc?.combined?.monthlyFee) || 0,
-        setupFee: Number(rawCalc?.combined?.setupFee) || 0,
-      },
-      bookkeeping: {
-        monthlyFee: Number(rawCalc?.bookkeeping?.monthlyFee) || 0,
-        setupFee: Number(rawCalc?.bookkeeping?.setupFee) || 0,
-      },
-      taas: {
-        monthlyFee: Number(rawCalc?.taas?.monthlyFee) || 0,
-        setupFee: Number(rawCalc?.taas?.setupFee) || 0,
-      },
-      priorYearFilingsFee: Number(rawCalc?.priorYearFilingsFee) || 0,
-      cleanupProjectFee: Number(rawCalc?.cleanupProjectFee) || 0,
-      cfoAdvisoryFee: Number(rawCalc?.cfoAdvisoryFee) || 0,
-      payrollFee: Number(rawCalc?.payrollFee) || 0,
-      apFee: Number(rawCalc?.apFee) || 0,
-      arFee: Number(rawCalc?.arFee) || 0,
-      agentOfServiceFee: Number(rawCalc?.agentOfServiceFee) || 0,
-      serviceTierFee: Number(rawCalc?.serviceTierFee) || 0,
-      qboFee: Number(rawCalc?.qboFee) || 0,
-      includesBookkeeping: Boolean(rawCalc?.includesBookkeeping),
-      includesTaas: Boolean(rawCalc?.includesTaas),
-    } as FeeCalculation;
-  } catch (err) {
-    console.error("feeCalculation error, falling back to combined calc:", err);
-    try {
-      const rawCalc: any = calculateCombinedFees(watchedValues as any);
-      feeCalculation = {
-        combined: {
-          monthlyFee: Number(rawCalc?.combined?.monthlyFee) || 0,
-          setupFee: Number(rawCalc?.combined?.setupFee) || 0,
-        },
-        bookkeeping: {
-          monthlyFee: Number(rawCalc?.bookkeeping?.monthlyFee) || 0,
-          setupFee: Number(rawCalc?.bookkeeping?.setupFee) || 0,
-        },
-        taas: {
-          monthlyFee: Number(rawCalc?.taas?.monthlyFee) || 0,
-          setupFee: Number(rawCalc?.taas?.setupFee) || 0,
-        },
-        priorYearFilingsFee: Number(rawCalc?.priorYearFilingsFee) || 0,
-        cleanupProjectFee: Number(rawCalc?.cleanupProjectFee) || 0,
-        cfoAdvisoryFee: Number(rawCalc?.cfoAdvisoryFee) || 0,
-        payrollFee: Number(rawCalc?.payrollFee) || 0,
-        apFee: Number(rawCalc?.apFee) || 0,
-        arFee: Number(rawCalc?.arFee) || 0,
-        agentOfServiceFee: Number(rawCalc?.agentOfServiceFee) || 0,
-        serviceTierFee: Number(rawCalc?.serviceTierFee) || 0,
-        qboFee: Number(rawCalc?.qboFee) || 0,
-        includesBookkeeping: Boolean(rawCalc?.includesBookkeeping),
-        includesTaas: Boolean(rawCalc?.includesTaas),
-      } as FeeCalculation;
-    } catch (err2) {
-      console.error(
-        "combined fee calculation failed, using safe defaults:",
-        err2,
-      );
-      feeCalculation = {
-        combined: { monthlyFee: 0, setupFee: 0 },
-        bookkeeping: { monthlyFee: 0, setupFee: 0 },
-        taas: { monthlyFee: 0, setupFee: 0 },
-        priorYearFilingsFee: 0,
-        cleanupProjectFee: 0,
-        cfoAdvisoryFee: 0,
-        payrollFee: 0,
-        apFee: 0,
-        arFee: 0,
-        agentOfServiceFee: 0,
-        serviceTierFee: 0,
-        qboFee: 0,
-        includesBookkeeping: false,
-        includesTaas: false,
-      } as FeeCalculation;
-    }
-  }
-  const monthlyFee = feeCalculation.combined.monthlyFee;
-  const setupFee = feeCalculation.combined.setupFee;
-
-  // Modular calculation check - any service with a fee > 0 means the quote is calculated
-  const isCalculated = (() => {
-    const hasMonthlyFees = monthlyFee > 0;
-    const hasSetupFees = setupFee > 0;
-    const hasProjectFees =
-      Number(feeCalculation.priorYearFilingsFee || 0) > 0 ||
-      Number(feeCalculation.cleanupProjectFee || 0) > 0 ||
-      Number(feeCalculation.cfoAdvisoryFee || 0) > 0;
-    const hasServiceFees =
-      Number(feeCalculation.payrollFee || 0) > 0 ||
-      Number(feeCalculation.apFee || 0) > 0 ||
-      Number(feeCalculation.arFee || 0) > 0 ||
-      Number(feeCalculation.agentOfServiceFee || 0) > 0;
-
-    return hasMonthlyFees || hasSetupFees || hasProjectFees || hasServiceFees;
-  })();
 
   // Helper functions for navigation (defined after feeCalculation)
   const getActiveServices = () => {
@@ -1084,10 +680,7 @@ function QuoteCalculator() {
   const getFormViewToShow = () => {
     const activeServices = getActiveServices();
     if (activeServices.length === 0) return "placeholder";
-    if (
-      currentFormView === "placeholder" ||
-      !activeServices.includes(currentFormView)
-    ) {
+    if (currentFormView === "placeholder" || !activeServices.includes(currentFormView)) {
       return activeServices[0]; // Show first active service
     }
     return currentFormView;
@@ -1098,27 +691,21 @@ function QuoteCalculator() {
   const canNavigateLeft = () => {
     if (actualFormView === "placeholder") return false;
     const activeServices = getActiveServices();
-    const currentIndex = activeServices.indexOf(
-      actualFormView as "bookkeeping" | "taas",
-    );
+    const currentIndex = activeServices.indexOf(actualFormView as "bookkeeping" | "taas");
     return currentIndex > 0;
   };
 
   const canNavigateRight = () => {
     if (actualFormView === "placeholder") return false;
     const activeServices = getActiveServices();
-    const currentIndex = activeServices.indexOf(
-      actualFormView as "bookkeeping" | "taas",
-    );
+    const currentIndex = activeServices.indexOf(actualFormView as "bookkeeping" | "taas");
     return currentIndex < activeServices.length - 1;
   };
 
   const navigateLeft = () => {
     if (actualFormView === "placeholder") return;
     const activeServices = getActiveServices();
-    const currentIndex = activeServices.indexOf(
-      actualFormView as "bookkeeping" | "taas",
-    );
+    const currentIndex = activeServices.indexOf(actualFormView as "bookkeeping" | "taas");
     if (currentIndex > 0) {
       const next = activeServices[currentIndex - 1] ?? "placeholder";
       setCurrentFormView(next as "bookkeeping" | "taas" | "placeholder");
@@ -1128,9 +715,7 @@ function QuoteCalculator() {
   const navigateRight = () => {
     if (actualFormView === "placeholder") return;
     const activeServices = getActiveServices();
-    const currentIndex = activeServices.indexOf(
-      actualFormView as "bookkeeping" | "taas",
-    );
+    const currentIndex = activeServices.indexOf(actualFormView as "bookkeeping" | "taas");
     if (currentIndex < activeServices.length - 1) {
       const next = activeServices[currentIndex + 1] ?? "placeholder";
       setCurrentFormView(next as "bookkeeping" | "taas" | "placeholder");
@@ -1256,14 +841,10 @@ function QuoteCalculator() {
       numEntities: quote.numEntities ? Number(quote.numEntities) : 1,
       statesFiled: quote.statesFiled ? Number(quote.statesFiled) : 1,
       internationalFiling: quote.internationalFiling ?? false,
-      numBusinessOwners: quote.numBusinessOwners
-        ? Number(quote.numBusinessOwners)
-        : 1,
+      numBusinessOwners: quote.numBusinessOwners ? Number(quote.numBusinessOwners) : 1,
       bookkeepingQuality: quote.bookkeepingQuality || "Clean (Seed)",
       include1040s: quote.include1040s ?? false,
-      priorYearsUnfiled: quote.priorYearsUnfiled
-        ? Number(quote.priorYearsUnfiled)
-        : 0,
+      priorYearsUnfiled: quote.priorYearsUnfiled ? Number(quote.priorYearsUnfiled) : 0,
       priorYearFilings: quote.priorYearFilings || [],
       qboSubscription: quote.qboSubscription ?? false,
       // Cleanup periods
@@ -1278,16 +859,13 @@ function QuoteCalculator() {
     setTimeout(() => {
       // Force update individual TaaS fields to ensure Select components render correctly
       if (quote.entityType) form.setValue("entityType", quote.entityType);
-      if (quote.numEntities)
-        form.setValue("numEntities", Number(quote.numEntities));
-      if (quote.statesFiled)
-        form.setValue("statesFiled", Number(quote.statesFiled));
+      if (quote.numEntities) form.setValue("numEntities", Number(quote.numEntities));
+      if (quote.statesFiled) form.setValue("statesFiled", Number(quote.statesFiled));
       if (quote.numBusinessOwners)
         form.setValue("numBusinessOwners", Number(quote.numBusinessOwners));
       if (quote.priorYearsUnfiled !== undefined)
         form.setValue("priorYearsUnfiled", Number(quote.priorYearsUnfiled));
-      if (quote.bookkeepingQuality)
-        form.setValue("bookkeepingQuality", quote.bookkeepingQuality);
+      if (quote.bookkeepingQuality) form.setValue("bookkeepingQuality", quote.bookkeepingQuality);
 
       form.trigger();
     }, 100);
@@ -1310,13 +888,11 @@ function QuoteCalculator() {
 
       // Check for bookkeeping services
       const hasBookkeepingServices =
-        selectedServices.serviceMonthlyBookkeeping ||
-        selectedServices.serviceCleanupProjects;
+        selectedServices.serviceMonthlyBookkeeping || selectedServices.serviceCleanupProjects;
 
       // Check for TaaS services
       const hasTaasServices =
-        selectedServices.serviceTaasMonthly ||
-        selectedServices.servicePriorYearFilings;
+        selectedServices.serviceTaasMonthly || selectedServices.servicePriorYearFilings;
 
       // Check for other services
       const otherServiceKeys = allServices
@@ -1327,11 +903,11 @@ function QuoteCalculator() {
               "serviceCleanupProjects",
               "serviceTaasMonthly",
               "servicePriorYearFilings",
-            ].includes(s.key),
+            ].includes(s.key)
         )
         .map((s) => s.key);
       const hasOtherServices = otherServiceKeys.some(
-        (key) => selectedServices[key as keyof typeof selectedServices],
+        (key) => selectedServices[key as keyof typeof selectedServices]
       );
 
       if (hasBookkeepingServices || (!hasTaasServices && !hasOtherServices)) {
@@ -1426,24 +1002,6 @@ function QuoteCalculator() {
     setHasUnsavedChanges(false);
   };
 
-  const copyToClipboard = async (text: string, field: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedField(field);
-      setTimeout(() => setCopiedField(null), 2000);
-      toast({
-        title: "Copied to Clipboard",
-        description: `$${text} has been copied to your clipboard.`,
-      });
-    } catch (err) {
-      toast({
-        title: "Copy Failed",
-        description: "Failed to copy to clipboard. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   // Request approval code from server and send Slack notification
   const requestApproval = async () => {
     setIsRequestingApproval(true);
@@ -1471,8 +1029,7 @@ function QuoteCalculator() {
           setShowExistingQuotesModal(false);
           toast({
             title: "Approval Requested",
-            description:
-              "Request sent to admins. Check Slack for approval code.",
+            description: "Request sent to admins. Check Slack for approval code.",
           });
         } else {
           throw new Error(result.message || "Failed to send approval request");
@@ -1545,8 +1102,7 @@ function QuoteCalculator() {
     setIsValidatingCode(true);
     try {
       // Get the email from form or selectedContact
-      const contactEmail =
-        form.getValues().contactEmail || selectedContact?.properties?.email;
+      const contactEmail = form.getValues().contactEmail || selectedContact?.properties?.email;
 
       if (!contactEmail) {
         toast({
@@ -1618,8 +1174,7 @@ function QuoteCalculator() {
     setUnlockConfirmDialog(false);
     toast({
       title: "Fields Unlocked",
-      description:
-        "You can now make changes, but will need a new approval code before saving.",
+      description: "You can now make changes, but will need a new approval code before saving.",
       variant: "destructive",
     });
   };
@@ -1631,8 +1186,7 @@ function QuoteCalculator() {
     if (existingQuotesForEmail.length > 0) {
       toast({
         title: "Approval Required",
-        description:
-          "You must get approval before creating additional quotes for this contact.",
+        description: "You must get approval before creating additional quotes for this contact.",
         variant: "destructive",
       });
       return;
@@ -1642,8 +1196,7 @@ function QuoteCalculator() {
       console.log("Form not calculated, isCalculated:", isCalculated);
       toast({
         title: "Calculation Required",
-        description:
-          "Please fill in all fields to calculate fees before saving.",
+        description: "Please fill in all fields to calculate fees before saving.",
         variant: "destructive",
       });
       return;
@@ -1651,8 +1204,8 @@ function QuoteCalculator() {
 
     // Cleanup override logic removed
 
-    console.log("Submitting quote via createQuoteMutation");
-    createQuoteMutation.mutate(data);
+    console.log("Submitting quote via saveQuote");
+    saveQuote(data);
   };
 
   // Remove the old breakdown function since it's now handled in the calculation logic above
@@ -1704,9 +1257,7 @@ function QuoteCalculator() {
                   form={form}
                   feeCalculation={feeCalculation}
                   isBreakdownExpanded={isBreakdownExpanded}
-                  onToggleBreakdown={() =>
-                    setIsBreakdownExpanded(!isBreakdownExpanded)
-                  }
+                  onToggleBreakdown={() => setIsBreakdownExpanded(!isBreakdownExpanded)}
                 />
               )}
 
@@ -1721,20 +1272,12 @@ function QuoteCalculator() {
 
                   <ServiceCards
                     selectedServices={{
-                      serviceMonthlyBookkeeping: !!form.watch(
-                        "serviceMonthlyBookkeeping",
-                      ),
-                      serviceCleanupProjects: !!form.watch(
-                        "serviceCleanupProjects",
-                      ),
+                      serviceMonthlyBookkeeping: !!form.watch("serviceMonthlyBookkeeping"),
+                      serviceCleanupProjects: !!form.watch("serviceCleanupProjects"),
                       serviceTaasMonthly: !!form.watch("serviceTaasMonthly"),
-                      servicePriorYearFilings: !!form.watch(
-                        "servicePriorYearFilings",
-                      ),
+                      servicePriorYearFilings: !!form.watch("servicePriorYearFilings"),
                       serviceCfoAdvisory: !!form.watch("serviceCfoAdvisory"),
-                      servicePayrollService: !!form.watch(
-                        "servicePayrollService",
-                      ),
+                      servicePayrollService: !!form.watch("servicePayrollService"),
                       serviceApArService: !!form.watch("serviceApArService"),
                       serviceArService: !!form.watch("serviceArService"),
                       // Options not represented in form schema; keep false placeholders
@@ -1744,20 +1287,12 @@ function QuoteCalculator() {
                       serviceArAdvanced: false,
                       serviceFpaBuild: !!form.watch("serviceFpaBuild"),
                       serviceFpaSupport: !!form.watch("serviceFpaSupport"),
-                      serviceAgentOfService: !!form.watch(
-                        "serviceAgentOfService",
-                      ),
+                      serviceAgentOfService: !!form.watch("serviceAgentOfService"),
                       serviceNexusStudy: !!form.watch("serviceNexusStudy"),
-                      serviceEntityOptimization: !!form.watch(
-                        "serviceEntityOptimization",
-                      ),
-                      serviceCostSegregation: !!form.watch(
-                        "serviceCostSegregation",
-                      ),
+                      serviceEntityOptimization: !!form.watch("serviceEntityOptimization"),
+                      serviceCostSegregation: !!form.watch("serviceCostSegregation"),
                       serviceRdCredit: !!form.watch("serviceRdCredit"),
-                      serviceRealEstateAdvisory: !!form.watch(
-                        "serviceRealEstateAdvisory",
-                      ),
+                      serviceRealEstateAdvisory: !!form.watch("serviceRealEstateAdvisory"),
                     }}
                     onServiceChange={(updates) => {
                       const allowed = new Set([
@@ -1803,14 +1338,8 @@ function QuoteCalculator() {
                     currentFormView={actualFormView as "bookkeeping" | "taas"}
                     form={form}
                   />
-                  <BookkeepingCleanupSection
-                    control={form.control}
-                    form={form}
-                  />
-                  <PriorYearFilingsSection
-                    control={form.control as any}
-                    form={form as any}
-                  />
+                  <BookkeepingCleanupSection control={form.control} form={form} />
+                  <PriorYearFilingsSection control={form.control as any} form={form as any} />
                   <PayrollSection form={form} />
                   <APSection form={form} />
                   <ARSection form={form} />
@@ -1825,199 +1354,15 @@ function QuoteCalculator() {
                       form.handleSubmit(onSubmit)();
                     }}
                     onReset={resetForm}
-                    isSaveDisabled={
-                      createQuoteMutation.isPending || !isCalculated
-                    }
+                    isSaveDisabled={creating || !isCalculated}
                     saveLabel={
-                      createQuoteMutation.isPending
-                        ? "Saving..."
-                        : editingQuoteId
-                          ? "Update Quote"
-                          : "Save Quote"
+                      creating ? "Saving..." : editingQuoteId ? "Update Quote" : "Save Quote"
                     }
                     showHubspotButton={isCalculated}
-                    onPushToHubSpot={async () => {
-                      // Determine if current quote already has HubSpot IDs
-                      const currentQuote = editingQuoteId
-                        ? allQuotes?.find((q: Quote) => q.id === editingQuoteId)
-                        : null;
-                      const hasHubSpotIds =
-                        currentQuote?.hubspotQuoteId &&
-                        currentQuote?.hubspotDealId;
-
-                      if (!hasHubSpotIds && hasUnsavedChanges) {
-                        // Save a new quote first, then queue HubSpot sync
-                        const formData = form.getValues();
-                        try {
-                          const savedQuote = await new Promise<any>(
-                            (resolve, reject) => {
-                              createQuoteMutation.mutate(formData, {
-                                onSuccess: resolve,
-                                onError: reject,
-                              });
-                            },
-                          );
-
-                          toast({
-                            title: "✅ Quote Saved Successfully",
-                            description: `Quote #${savedQuote.id} has been saved. Syncing to HubSpot in background...`,
-                          });
-
-                          setTimeout(async () => {
-                            try {
-                              const response = await apiRequest(
-                                "/api/hubspot/queue-sync",
-                                {
-                                  method: "POST",
-                                  body: JSON.stringify({
-                                    quoteId: savedQuote.id,
-                                    action: "create",
-                                  }),
-                                },
-                              );
-
-                              if (response.method === "queued") {
-                                toast({
-                                  title: "🔄 HubSpot Sync Queued",
-                                  description:
-                                    "Quote sync has been queued. You'll be notified when complete.",
-                                });
-                              } else {
-                                toast({
-                                  title: "✅ HubSpot Sync Complete",
-                                  description:
-                                    "Quote has been successfully synchronized to HubSpot!",
-                                });
-                              }
-
-                              setTimeout(() => {
-                                queryClient.invalidateQueries({
-                                  queryKey: ["/api/quotes"],
-                                });
-                                refetchQuotes();
-                              }, 2000);
-                            } catch (error) {
-                              console.error(
-                                "Failed to queue HubSpot sync:",
-                                error,
-                              );
-                              pushToHubSpotMutation.mutate(savedQuote.id);
-                            }
-                          }, 100);
-                        } catch (error) {
-                          console.error("Failed to save quote:", error);
-                          toast({
-                            title: "Error",
-                            description:
-                              "Failed to save quote. Please try again.",
-                            variant: "destructive",
-                          });
-                        }
-                      } else if (hasHubSpotIds) {
-                        // Update existing HubSpot quote
-                        const quoteId = editingQuoteId || currentQuote?.id;
-                        if (!quoteId) return;
-                        if (hasUnsavedChanges) {
-                          const formData = form.getValues();
-                          try {
-                            await apiRequest(`/api/quotes/${quoteId}`, {
-                              method: "PUT",
-                              body: JSON.stringify(formData),
-                            });
-                            toast({
-                              title: "✅ Quote Updated Successfully",
-                              description: `Quote #${quoteId} updated. Syncing to HubSpot...`,
-                            });
-                            updateHubSpotMutation.mutate(quoteId);
-                          } catch (error) {
-                            console.error(
-                              "Failed to update quote before HubSpot sync:",
-                              error,
-                            );
-                            toast({
-                              title: "Error",
-                              description:
-                                "Failed to update quote. Please try again.",
-                              variant: "destructive",
-                            });
-                          }
-                        } else {
-                          toast({
-                            title: "🔄 Syncing to HubSpot",
-                            description: "Updating quote in HubSpot...",
-                          });
-                          updateHubSpotMutation.mutate(quoteId);
-                        }
-                      } else if (editingQuoteId) {
-                        // Quote exists but has no HubSpot IDs yet: update then push
-                        const formData = form.getValues();
-                        try {
-                          await apiRequest(`/api/quotes/${editingQuoteId}`, {
-                            method: "PUT",
-                            body: JSON.stringify(formData),
-                          });
-                          toast({
-                            title: "✅ Quote Updated",
-                            description:
-                              "Quote updated. Now pushing to HubSpot...",
-                          });
-                          queryClient.invalidateQueries({
-                            queryKey: ["/api/quotes"],
-                          });
-                          refetchQuotes();
-                          pushToHubSpotMutation.mutate(editingQuoteId);
-                        } catch (error) {
-                          console.error(
-                            "Failed to update quote before push:",
-                            error,
-                          );
-                          toast({
-                            title: "Error",
-                            description:
-                              "Failed to update quote. Please try again.",
-                            variant: "destructive",
-                          });
-                        }
-                      } else {
-                        toast({
-                          title: "Error",
-                          description:
-                            "Please save the quote first before pushing to HubSpot.",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                    isPushDisabled={
-                      !!(
-                        !isCalculated ||
-                        hubspotVerificationStatus !== "verified" ||
-                        pushToHubSpotMutation.isPending ||
-                        updateHubSpotMutation.isPending ||
-                        createQuoteMutation.isPending
-                      )
-                    }
-                    pushLabel={
-                      pushToHubSpotMutation.isPending ||
-                      updateHubSpotMutation.isPending ||
-                      (createQuoteMutation.isPending && !editingQuoteId)
-                        ? "Pushing to HubSpot..."
-                        : (() => {
-                            const currentQuote = editingQuoteId
-                              ? allQuotes?.find(
-                                  (q: Quote) => q.id === editingQuoteId,
-                                )
-                              : null;
-                            const hasHubSpotIds =
-                              currentQuote?.hubspotQuoteId &&
-                              currentQuote?.hubspotDealId;
-                            return hasHubSpotIds
-                              ? "Update in HubSpot"
-                              : "Push to HubSpot";
-                          })()
-                    }
-                    showNotFoundAlert={
-                      hubspotVerificationStatus === "not-found" && isCalculated
-                    }
+                    onPushToHubSpot={onPushToHubSpot}
+                    isPushDisabled={isPushDisabled}
+                    pushLabel={pushLabel}
+                    showNotFoundAlert={hubspotVerificationStatus === "not-found" && isCalculated}
                     editingQuoteId={editingQuoteId}
                     hasUnsavedChanges={hasUnsavedChanges}
                   />

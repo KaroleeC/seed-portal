@@ -1,8 +1,9 @@
 /**
  * Rate limiting middleware to prevent abuse and improve performance
  */
-
-import { Request, Response, NextFunction } from "express";
+/* eslint-disable no-param-reassign */
+// Middleware intentionally mutates req/res objects
+import type { Request, Response, NextFunction } from "express";
 
 interface RateLimitStore {
   [key: string]: {
@@ -24,7 +25,7 @@ setInterval(
       if (entry && entry.resetTime < now) delete store[key];
     });
   },
-  5 * 60 * 1000,
+  5 * 60 * 1000
 );
 
 export function createRateLimit(
@@ -33,12 +34,11 @@ export function createRateLimit(
     max?: number;
     keyGenerator?: (req: Request) => string;
     skipSuccessfulRequests?: boolean;
-  } = {},
+  } = {}
 ) {
   const windowMs = options.windowMs || WINDOW_SIZE;
   const max = options.max || MAX_REQUESTS;
-  const keyGenerator =
-    options.keyGenerator || ((req: Request) => req.ip || "unknown");
+  const keyGenerator = options.keyGenerator || ((req: Request) => req.ip || "unknown");
   const skipSuccessfulRequests = options.skipSuccessfulRequests || false;
 
   return (req: Request, res: Response, next: NextFunction) => {
@@ -96,8 +96,7 @@ export const apiRateLimit = createRateLimit({
 export const searchRateLimit = createRateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 30, // 30 searches per minute per IP
-  keyGenerator: (req: Request) =>
-    `search:${req.ip}:${(req as any).user?.id || "anonymous"}`,
+  keyGenerator: (req: Request) => `search:${req.ip}:${(req as any).user?.id || "anonymous"}`,
 });
 
 export const enhancementRateLimit = createRateLimit({

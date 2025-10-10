@@ -15,14 +15,18 @@ import { RoleBasedRedirect } from "@/components/RoleBasedRedirect";
 import NotFound from "@/pages/not-found";
 import Calculator from "@/pages/home"; // Quote Calculator component
 import AuthPage from "@/pages/auth-page";
+import LoginPage from "@/pages/login";
 import SalesDashboard from "@/pages/sales-dashboard"; // Sales dashboard
 import AdminDashboard from "@/pages/admin-dashboard"; // Admin dashboard
 import AdminHubspotPage from "@/pages/admin-hubspot"; // Admin HubSpot Diagnostics
+import RBACManagement from "@/pages/rbac-management"; // RBAC & Policy Management
 import ServiceDashboard from "@/pages/service-dashboard"; // Service dashboard
 import CommissionTracker from "@/pages/commission-tracker";
 import AdminCommissionTracker from "@/pages/admin-commission-tracker";
 import SalesCommissionTracker from "@/pages/sales-commission-tracker";
 import ClientIntel from "@/pages/client-intel";
+import ClientProfilesPage from "@/pages/client-profiles";
+import LeadsInboxPage from "@/pages/leads-inbox";
 import Profile from "@/pages/profile";
 import KnowledgeBase from "@/pages/knowledge-base";
 import KbAdmin from "@/pages/kb-admin";
@@ -33,12 +37,22 @@ import CDNTest from "@/pages/CDNTest";
 import StripeDashboard from "@/pages/stripe-dashboard";
 import AdminPricingPage from "@/pages/admin-pricing";
 import AdminCalculatorManager from "@/pages/admin-calculator-manager";
-import AdminCalculatorSettings from "@/pages/admin-calculator-settings";
-import SettingsHub from "@/pages/settings-hub";
-import SeedPaySettings from "@/pages/seedpay-settings";
+// import AdminCalculatorSettings from "@/pages/admin-calculator-settings";
+import SettingsMock from "@/pages/settings-mock";
+import SettingsHubV2 from "@/pages/settings-hub-v2";
+import SchedulerAppPage from "@/pages/scheduler-app";
+import PublicSchedulerPage from "@/pages/public-scheduler";
+import SalesCadenceListPage from "@/pages/sales-cadence";
+import SalesCadenceBuilderPage from "@/pages/sales-cadence/builder/[id]";
+import SeedMailPage from "@/pages/seedmail";
+import SeedMailSettings from "@/pages/apps/seedmail/settings";
+// import SeedPaySettings from "@/pages/seedpay-settings";
 import AssistantPage from "@/pages/assistant";
+import CommandDockSettings from "@/pages/command-dock-settings";
 import { AssistantWidget } from "@/components/assistant/AssistantWidget";
 import { Loader2 } from "lucide-react";
+import { GlobalShortcuts } from "@/components/GlobalShortcuts";
+import { CommandDock } from "@/components/command/CommandDock";
 
 // Simple redirect helper for client-side path consolidation
 function Redirect({ to }: { to: string }) {
@@ -99,21 +113,33 @@ function Router() {
           )}
         />
         {/* Legacy route -> new app namespace */}
-        <ProtectedRoute
-          path="/calculator"
-          component={() => <Redirect to="/apps/seedqc" />}
-        />
+        <ProtectedRoute path="/calculator" component={() => <Redirect to="/apps/seedqc" />} />
         <ProtectedRoute path="/apps/seedqc" component={Calculator} />
         <ProtectedRoute
           path="/apps/seedqc/settings"
-          component={AdminCalculatorSettings}
+          component={() => <Redirect to="/settings#seedqc" />}
         />
         <ProtectedRoute path="/apps/seedpay" component={CommissionTracker} />
         <ProtectedRoute
           path="/apps/seedpay/settings"
-          component={SeedPaySettings}
+          component={() => <Redirect to="/settings#seedpay" />}
         />
-        <ProtectedRoute path="/settings" component={SettingsHub} />
+        <ProtectedRoute path="/settings" component={SettingsHubV2} />
+        <ProtectedRoute path="/settings/v2" component={() => <Redirect to="/settings" />} />
+        <ProtectedRoute path="/settings/mock" component={SettingsMock} />
+        <ProtectedRoute path="/settings/command-dock" component={CommandDockSettings} />
+        {/* App-specific settings pages */}
+        <ProtectedRoute path="/apps/seedmail/settings" component={SeedMailSettings} />
+        {/* Scheduler app (internal) */}
+        <ProtectedRoute path="/apps/scheduler" component={SchedulerAppPage} />
+        {/* Sales Cadence (Phase A.1 UI) */}
+        <ProtectedRoute path="/apps/sales-cadence" component={SalesCadenceListPage} />
+        <ProtectedRoute
+          path="/apps/sales-cadence/builder/:id"
+          component={SalesCadenceBuilderPage}
+        />
+        {/* SeedMail - Email Client */}
+        <ProtectedRoute path="/apps/seedmail" component={SeedMailPage} />
         {/* Consolidate Commission Tracker routes */}
         <ProtectedRoute
           path="/commission-tracker"
@@ -123,18 +149,16 @@ function Router() {
           path="/admin-commission-tracker"
           component={() => <Redirect to="/admin/commission-tracker" />}
         />
-        <ProtectedRoute
-          path="/admin/commission-tracker"
-          component={AdminCommissionTracker}
-        />
-        <ProtectedRoute
-          path="/sales-commission-tracker"
-          component={SalesCommissionTracker}
-        />
+        <ProtectedRoute path="/admin/commission-tracker" component={AdminCommissionTracker} />
+        <ProtectedRoute path="/sales-commission-tracker" component={SalesCommissionTracker} />
         <ProtectedRoute path="/client-intel" component={ClientIntel} />
+        <ProtectedRoute path="/client-profiles" component={ClientProfilesPage} />
+        <ProtectedRoute path="/leads-inbox" component={LeadsInboxPage} />
+        <ProtectedRoute path="/leads" component={LeadsInboxPage} />
         <ProtectedRoute path="/knowledge-base" component={KnowledgeBase} />
         <ProtectedRoute path="/kb-admin" component={KbAdmin} />
         <ProtectedRoute path="/user-management" component={UserManagement} />
+        <ProtectedRoute path="/admin/rbac" component={RBACManagement} />
         <ProtectedRoute path="/admin/pricing" component={AdminPricingPage} />
         {/* Consolidate legacy calculator admin routes under app settings */}
         <ProtectedRoute
@@ -150,8 +174,11 @@ function Router() {
         <ProtectedRoute path="/cdn-test" component={CDNTest} />
         <ProtectedRoute path="/profile" component={Profile} />
         <ProtectedRoute path="/assistant" component={AssistantPage} />
+        <Route path="/login" component={LoginPage} />
         <Route path="/auth" component={AuthPage} />
         <Route path="/request-access" component={RequestAccess} />
+        {/* Public scheduler route (unauthenticated) */}
+        <Route path="/schedule/:slug" component={PublicSchedulerPage} />
         <Route component={NotFound} />
       </Switch>
     </ErrorBoundary>
@@ -161,7 +188,7 @@ function Router() {
 // Gate rendering until auth loading is resolved to avoid first-load flicker
 function AuthGate() {
   const { isLoading, user, error } = useAuth();
-  
+
   // Show loading spinner while auth is being determined
   if (isLoading) {
     return (
@@ -181,6 +208,10 @@ function AuthGate() {
       <Router />
       {/* Global Assistant Widget (hidden on /auth and /request-access internally) */}
       <AssistantWidget />
+      {/* Global Command Dock */}
+      <CommandDock />
+      {/* Global keyboard shortcuts (Cmd/Ctrl+K, Cmd/Ctrl+L) */}
+      <GlobalShortcuts />
     </>
   );
 }

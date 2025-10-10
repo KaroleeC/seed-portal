@@ -1,21 +1,9 @@
 import React from "react";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  CheckCircle,
-  XCircle,
-  Loader2,
-  User,
-  Lock,
-  Unlock,
-} from "lucide-react";
-import { Control, useFormContext } from "react-hook-form";
+import { CheckCircle, XCircle, Loader2, User, Lock, Unlock } from "lucide-react";
+import type { Control } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
 import {
   Select,
@@ -24,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 
 interface ContactSectionProps {
   control: Control<QuoteFormFields>;
@@ -62,34 +50,22 @@ export function ContactSection({
   const getVerificationMessage = () => {
     switch (hubspotVerificationStatus) {
       case "verifying":
-        return (
-          <span className="text-sm text-blue-300">Verifying contact...</span>
-        );
+        return <span className="text-sm text-blue-300">Verifying contact...</span>;
       case "verified":
-        return (
-          <span className="text-sm text-green-300">
-            Contact verified in HubSpot
-          </span>
-        );
+        return <span className="text-sm text-green-300">Contact verified in HubSpot</span>;
       case "not-found":
-        return (
-          <span className="text-sm text-red-300">
-            Contact not found in HubSpot
-          </span>
-        );
+        return <span className="text-sm text-red-300">Contact not found in HubSpot</span>;
         return null;
     }
   };
 
   return (
-    <KbCard className="p-6 overflow-visible mb-8">
+    <SurfaceCard className="p-6 overflow-visible mb-8">
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-2">
             <User className="h-5 w-5 text-muted-foreground" />
-            <h3 className="text-lg font-semibold text-foreground">
-              Client Details
-            </h3>
+            <h3 className="text-lg font-semibold text-foreground">Client Details</h3>
           </div>
           <div className="w-full md:w-[420px]">
             <FormField
@@ -135,27 +111,16 @@ export function ContactSection({
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder={
-                        hubspotContact?.properties?.company ||
-                        "Enter company name"
-                      }
+                      placeholder={hubspotContact?.properties?.company || "Enter company name"}
                       disabled={!!isCompanyNameLocked}
-                      title={
-                        isCompanyNameLocked ? "Locked from HubSpot" : undefined
-                      }
+                      title={isCompanyNameLocked ? "Locked from HubSpot" : undefined}
                     />
                   </FormControl>
                   <button
                     type="button"
                     className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted/50"
-                    onClick={() =>
-                      setValue("companyNameLocked", !isCompanyNameLocked)
-                    }
-                    title={
-                      isCompanyNameLocked
-                        ? "Unlock company name"
-                        : "Lock company name"
-                    }
+                    onClick={() => setValue("companyNameLocked", !isCompanyNameLocked)}
+                    title={isCompanyNameLocked ? "Unlock company name" : "Lock company name"}
                   >
                     {isCompanyNameLocked ? (
                       <Lock className="h-4 w-4" />
@@ -186,26 +151,16 @@ export function ContactSection({
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder={
-                          hubspotContact?.properties?.firstname || "First name"
-                        }
+                        placeholder={hubspotContact?.properties?.firstname || "First name"}
                         disabled={!!isFirstNameLocked}
-                        title={
-                          isFirstNameLocked ? "Locked from HubSpot" : undefined
-                        }
+                        title={isFirstNameLocked ? "Locked from HubSpot" : undefined}
                       />
                     </FormControl>
                     <button
                       type="button"
                       className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted/50"
-                      onClick={() =>
-                        setValue("contactFirstNameLocked", !isFirstNameLocked)
-                      }
-                      title={
-                        isFirstNameLocked
-                          ? "Unlock first name"
-                          : "Lock first name"
-                      }
+                      onClick={() => setValue("contactFirstNameLocked", !isFirstNameLocked)}
+                      title={isFirstNameLocked ? "Unlock first name" : "Lock first name"}
                     >
                       {isFirstNameLocked ? (
                         <Lock className="h-4 w-4" />
@@ -228,24 +183,16 @@ export function ContactSection({
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder={
-                          hubspotContact?.properties?.lastname || "Last name"
-                        }
+                        placeholder={hubspotContact?.properties?.lastname || "Last name"}
                         disabled={!!isLastNameLocked}
-                        title={
-                          isLastNameLocked ? "Locked from HubSpot" : undefined
-                        }
+                        title={isLastNameLocked ? "Locked from HubSpot" : undefined}
                       />
                     </FormControl>
                     <button
                       type="button"
                       className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted/50"
-                      onClick={() =>
-                        setValue("contactLastNameLocked", !isLastNameLocked)
-                      }
-                      title={
-                        isLastNameLocked ? "Unlock last name" : "Lock last name"
-                      }
+                      onClick={() => setValue("contactLastNameLocked", !isLastNameLocked)}
+                      title={isLastNameLocked ? "Unlock last name" : "Lock last name"}
                     >
                       {isLastNameLocked ? (
                         <Lock className="h-4 w-4" />
@@ -272,24 +219,16 @@ export function ContactSection({
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder={
-                          hubspotContact?.properties?.industry || "Industry"
-                        }
+                        placeholder={hubspotContact?.properties?.industry || "Industry"}
                         disabled={!!isIndustryLocked}
-                        title={
-                          isIndustryLocked ? "Locked from HubSpot" : undefined
-                        }
+                        title={isIndustryLocked ? "Locked from HubSpot" : undefined}
                       />
                     </FormControl>
                     <button
                       type="button"
                       className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted/50"
-                      onClick={() =>
-                        setValue("industryLocked", !isIndustryLocked)
-                      }
-                      title={
-                        isIndustryLocked ? "Unlock industry" : "Lock industry"
-                      }
+                      onClick={() => setValue("industryLocked", !isIndustryLocked)}
+                      title={isIndustryLocked ? "Unlock industry" : "Lock industry"}
                     >
                       {isIndustryLocked ? (
                         <Lock className="h-4 w-4" />
@@ -309,10 +248,7 @@ export function ContactSection({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>MONTHLY Revenue Range</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || ""}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select revenue range" />
@@ -338,10 +274,7 @@ export function ContactSection({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Entity Type (Tax Classification)</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value || ""}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select entity type" />
@@ -352,9 +285,7 @@ export function ContactSection({
                       <SelectItem value="S-Corp">S-Corporation</SelectItem>
                       <SelectItem value="C-Corp">C-Corporation</SelectItem>
                       <SelectItem value="Partnership">Partnership</SelectItem>
-                      <SelectItem value="Sole Proprietorship">
-                        Sole Proprietorship
-                      </SelectItem>
+                      <SelectItem value="Sole Proprietorship">Sole Proprietorship</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -365,24 +296,14 @@ export function ContactSection({
 
           {/* Company Address subheader with lock */}
           <div className="flex items-center justify-between mt-2">
-            <div className="text-sm font-semibold text-foreground">
-              Company Address
-            </div>
+            <div className="text-sm font-semibold text-foreground">Company Address</div>
             <button
               type="button"
               className="inline-flex items-center rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/50"
               onClick={() => setValue("companyAddressLocked", !isAddressLocked)}
-              title={
-                isAddressLocked
-                  ? "Unlock address fields"
-                  : "Lock address fields"
-              }
+              title={isAddressLocked ? "Unlock address fields" : "Lock address fields"}
             >
-              {isAddressLocked ? (
-                <Lock className="h-4 w-4" />
-              ) : (
-                <Unlock className="h-4 w-4" />
-              )}
+              {isAddressLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
             </button>
           </div>
 
@@ -396,9 +317,7 @@ export function ContactSection({
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder={
-                      hubspotContact?.properties?.address || "123 Business St"
-                    }
+                    placeholder={hubspotContact?.properties?.address || "123 Business St"}
                     disabled={!!isAddressLocked}
                     title={isAddressLocked ? "Locked from HubSpot" : undefined}
                   />
@@ -420,9 +339,7 @@ export function ContactSection({
                       {...field}
                       placeholder={hubspotContact?.properties?.city || "City"}
                       disabled={!!isAddressLocked}
-                      title={
-                        isAddressLocked ? "Locked from HubSpot" : undefined
-                      }
+                      title={isAddressLocked ? "Locked from HubSpot" : undefined}
                     />
                   </FormControl>
                   <FormMessage />
@@ -440,9 +357,7 @@ export function ContactSection({
                       {...field}
                       placeholder={hubspotContact?.properties?.state || "State"}
                       disabled={!!isAddressLocked}
-                      title={
-                        isAddressLocked ? "Locked from HubSpot" : undefined
-                      }
+                      title={isAddressLocked ? "Locked from HubSpot" : undefined}
                     />
                   </FormControl>
                   <FormMessage />
@@ -460,9 +375,7 @@ export function ContactSection({
                       {...field}
                       placeholder={hubspotContact?.properties?.zip || "ZIP"}
                       disabled={!!isAddressLocked}
-                      title={
-                        isAddressLocked ? "Locked from HubSpot" : undefined
-                      }
+                      title={isAddressLocked ? "Locked from HubSpot" : undefined}
                     />
                   </FormControl>
                   <FormMessage />
@@ -472,6 +385,6 @@ export function ContactSection({
           </div>
         </div>
       </div>
-    </KbCard>
+    </SurfaceCard>
   );
 }

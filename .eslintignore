@@ -1,13 +1,23 @@
 # Dependencies
 node_modules/
 
-# Build outputs
+# Build
 dist/
 build/
-coverage/
+*.config.js
+*.config.ts
+.replit
+replit.nix
+test/
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
 
 # Config files
 .eslintrc.cjs
+check-columns.cjs
 vite.config.*
 tailwind.config.*
 postcss.config.*
@@ -19,7 +29,13 @@ postcss.config.*
 
 # Test files
 **/__tests__/coverage/
+**/__tests__/**
 **/__mocks__/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/*.golden.ts
 
 # Uploads and generated content
 uploads/

@@ -1,13 +1,13 @@
 /**
  * Centralized asset registry using Supabase Storage CDN
- * 
+ *
  * Assets are served from Supabase Storage bucket: seed-portal-assets
  * CDN URL is configured via VITE_SUPABASE_STORAGE_URL environment variable
- * 
+ *
  * Fallback: If CDN is unavailable, falls back to local assets (dev mode)
  */
 
-const cdn = import.meta.env.VITE_SUPABASE_STORAGE_URL || '';
+const cdn = import.meta.env.VITE_SUPABASE_STORAGE_URL || "";
 
 // Brand logos (main Seed Financial branding)
 export const brand = {
@@ -108,9 +108,9 @@ export const misc = {
 // Helper function to get themed logo
 export function getThemedLogo(
   logoSet: { light: string; dark: string },
-  theme: 'light' | 'dark'
+  theme: "light" | "dark"
 ): string {
-  return theme === 'dark' ? logoSet.dark : logoSet.light;
+  return theme === "dark" ? logoSet.dark : logoSet.light;
 }
 
 // Re-export for backwards compatibility

@@ -10,7 +10,7 @@ export function createProductsService(request: HubSpotRequestFn) {
       if (result?.results) {
         result.results.forEach((product: any) => {
           console.log(
-            `  ID: ${product.id} | Name: "${product.properties?.name}" | SKU: ${product.properties?.hs_sku}`,
+            `  ID: ${product.id} | Name: "${product.properties?.name}" | SKU: ${product.properties?.hs_sku}`
           );
         });
       }
@@ -50,13 +50,9 @@ export function createProductsService(request: HubSpotRequestFn) {
       try {
         await request(`/crm/v3/objects/products/${currentIds.bookkeeping}`);
         bookkeepingValid = true;
-        console.log(
-          `✅ Bookkeeping product ID ${currentIds.bookkeeping} is valid`,
-        );
+        console.log(`✅ Bookkeeping product ID ${currentIds.bookkeeping} is valid`);
       } catch {
-        console.log(
-          `❌ Bookkeeping product ID ${currentIds.bookkeeping} is invalid`,
-        );
+        console.log(`❌ Bookkeeping product ID ${currentIds.bookkeeping} is invalid`);
       }
 
       try {
@@ -84,14 +80,12 @@ export function createProductsService(request: HubSpotRequestFn) {
 
         if (
           !bookkeepingValid &&
-          (name.includes("bookkeeping") ||
-            name.includes("monthly") ||
-            sku.includes("book"))
+          (name.includes("bookkeeping") || name.includes("monthly") || sku.includes("book"))
         ) {
           altBookkeeping = product.id;
           bookkeepingValid = true;
           console.log(
-            `🔄 Found alternative bookkeeping product: ${product.id} - ${product.properties?.name}`,
+            `🔄 Found alternative bookkeeping product: ${product.id} - ${product.properties?.name}`
           );
         }
 
@@ -105,7 +99,7 @@ export function createProductsService(request: HubSpotRequestFn) {
           altCleanup = product.id;
           cleanupValid = true;
           console.log(
-            `🔄 Found alternative cleanup product: ${product.id} - ${product.properties?.name}`,
+            `🔄 Found alternative cleanup product: ${product.id} - ${product.properties?.name}`
           );
         }
       }

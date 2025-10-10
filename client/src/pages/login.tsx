@@ -1,15 +1,15 @@
-import { supabase } from '@/lib/supabaseClient';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useEffect, useState } from 'react';
-import { brand, getThemedLogo } from '@/assets';
-import { useTheme } from '@/theme';
+import { supabase } from "@/lib/supabaseClient";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { brand, getThemedLogo } from "@/assets";
+import { useTheme } from "@/theme";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { resolvedTheme } = useTheme();
-  const theme = resolvedTheme === 'dark' ? 'dark' : 'light';
+  const theme = resolvedTheme === "dark" ? "dark" : "light";
   const logoSrc = getThemedLogo(brand, theme);
   const logoFallback = brand.darkFallback;
 
@@ -17,7 +17,7 @@ export default function LoginPage() {
     // If already signed in, redirect home
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) {
-        window.location.href = '/';
+        window.location.href = "/";
       }
     });
   }, []);
@@ -28,12 +28,12 @@ export default function LoginPage() {
       setError(null);
       const redirectTo = window.location.origin;
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: { redirectTo },
       });
       if (error) setError(error.message);
     } catch (e: unknown) {
-      setError((e as Error)?.message || 'Failed to start sign-in');
+      setError((e as Error)?.message || "Failed to start sign-in");
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,7 @@ export default function LoginPage() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    window.location.href = '/login';
+    window.location.href = "/login";
   };
 
   return (
@@ -70,10 +70,16 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">{error}</div>
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+                {error}
+              </div>
             )}
-            <Button onClick={handleGoogleSignIn} disabled={loading} className="w-full bg-[#e24c00] hover:bg-[#c13e00] text-white">
-              {loading ? 'Redirecting…' : 'Sign in with Google'}
+            <Button
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full bg-[#e24c00] hover:bg-[#c13e00] text-white"
+            >
+              {loading ? "Redirecting…" : "Sign in with Google"}
             </Button>
             <Button variant="ghost" onClick={handleSignOut} className="w-full">
               Sign out

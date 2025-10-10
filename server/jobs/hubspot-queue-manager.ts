@@ -12,10 +12,7 @@ import { sendSlackMessage } from "../slack";
 const queueLogger = logger.child({ module: "hubspot-queue" });
 
 let hubspotQueue: Queue<HubSpotQuoteSyncJobData> | null = null;
-let hubspotWorker: Worker<
-  HubSpotQuoteSyncJobData,
-  HubSpotQuoteSyncResult
-> | null = null;
+let hubspotWorker: Worker<HubSpotQuoteSyncJobData, HubSpotQuoteSyncResult> | null = null;
 
 // Initialize HubSpot sync queue and worker
 export async function initializeHubSpotQueue() {
@@ -23,9 +20,7 @@ export async function initializeHubSpotQueue() {
     // Wait for Redis to be available
     const redis = await getRedisAsync();
     if (!redis) {
-      queueLogger.warn(
-        "Redis not available, HubSpot queue will use fallback direct sync",
-      );
+      queueLogger.warn("Redis not available, HubSpot queue will use fallback direct sync");
       return null;
     }
 
@@ -64,7 +59,7 @@ export async function initializeHubSpotQueue() {
           max: 10, // Maximum 10 jobs per minute to respect HubSpot rate limits
           duration: 60 * 1000,
         },
-      },
+      }
     );
 
     // Worker event handlers
@@ -78,9 +73,9 @@ export async function initializeHubSpotQueue() {
             dealId: result.dealId,
             hubspotQuoteId: result.hubspotQuoteId,
           },
-          "✅ HubSpot quote sync completed successfully",
+          "✅ HubSpot quote sync completed successfully"
         );
-      },
+      }
     );
 
     hubspotWorker.on(
@@ -96,7 +91,7 @@ export async function initializeHubSpotQueue() {
             error: err.message,
             attempts: job.attemptsMade,
           },
-          "❌ HubSpot quote sync failed",
+          "❌ HubSpot quote sync failed"
         );
 
         // Send Slack alert for final failures
@@ -125,11 +120,11 @@ export async function initializeHubSpotQueue() {
           } catch (slackError) {
             queueLogger.error(
               { error: slackError },
-              "Failed to send Slack notification for HubSpot sync failure",
+              "Failed to send Slack notification for HubSpot sync failure"
             );
           }
         }
-      },
+      }
     );
 
     hubspotWorker.on("stalled", (jobId: string) => {
@@ -149,7 +144,7 @@ export async function scheduleQuoteSync(
   quoteId: number,
   action: "create" | "update",
   userId: number,
-  priority: number = 1,
+  priority: number = 1
 ) {
   try {
     if (!hubspotQueue) {
@@ -166,7 +161,7 @@ export async function scheduleQuoteSync(
       {
         priority, // Higher priority numbers processed first
         delay: 1000, // 1 second delay to allow database transaction to complete
-      },
+      }
     );
 
     queueLogger.info(
@@ -177,14 +172,14 @@ export async function scheduleQuoteSync(
         userId,
         priority,
       },
-      `📋 Scheduled HubSpot quote sync job`,
+      `📋 Scheduled HubSpot quote sync job`
     );
 
     return job;
   } catch (error) {
     queueLogger.error(
       { error, quoteId, action, userId },
-      "❌ Failed to schedule HubSpot quote sync",
+      "❌ Failed to schedule HubSpot quote sync"
     );
     throw error;
   }

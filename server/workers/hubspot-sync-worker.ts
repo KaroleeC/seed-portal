@@ -10,9 +10,7 @@ let hubspotWorker: Worker | null = null;
 
 export async function startHubSpotSyncWorker(): Promise<Worker | null> {
   if (!process.env.REDIS_URL) {
-    hubspotWorkerLogger.info(
-      "No REDIS_URL found, skipping HubSpot sync worker",
-    );
+    hubspotWorkerLogger.info("No REDIS_URL found, skipping HubSpot sync worker");
     return null;
   }
 
@@ -21,9 +19,7 @@ export async function startHubSpotSyncWorker(): Promise<Worker | null> {
     const redisConfig = await getRedisAsync();
 
     if (!redisConfig?.queueRedis) {
-      hubspotWorkerLogger.warn(
-        "Redis queue not available for HubSpot sync worker",
-      );
+      hubspotWorkerLogger.warn("Redis queue not available for HubSpot sync worker");
       return null;
     }
 
@@ -38,10 +34,7 @@ export async function startHubSpotSyncWorker(): Promise<Worker | null> {
 
     // Worker event handlers
     hubspotWorker.on("completed", (job) => {
-      hubspotWorkerLogger.info(
-        { jobId: job.id, data: job.data },
-        "✅ HubSpot sync job completed",
-      );
+      hubspotWorkerLogger.info({ jobId: job.id, data: job.data }, "✅ HubSpot sync job completed");
     });
 
     hubspotWorker.on("failed", async (job, err) => {
@@ -54,7 +47,7 @@ export async function startHubSpotSyncWorker(): Promise<Worker | null> {
           error: err.message,
           attempts,
         },
-        "❌ HubSpot sync job failed",
+        "❌ HubSpot sync job failed"
       );
 
       // Send Slack alert for critical failures
@@ -82,7 +75,7 @@ export async function startHubSpotSyncWorker(): Promise<Worker | null> {
         } catch (slackError) {
           hubspotWorkerLogger.error(
             { error: slackError },
-            "Failed to send Slack notification for HubSpot job failure",
+            "Failed to send Slack notification for HubSpot job failure"
           );
         }
       }
@@ -95,10 +88,7 @@ export async function startHubSpotSyncWorker(): Promise<Worker | null> {
     hubspotWorkerLogger.info("✅ HubSpot sync worker started successfully");
     return hubspotWorker;
   } catch (error) {
-    hubspotWorkerLogger.error(
-      { error },
-      "❌ Failed to start HubSpot sync worker",
-    );
+    hubspotWorkerLogger.error({ error }, "❌ Failed to start HubSpot sync worker");
     return null;
   }
 }
@@ -114,7 +104,7 @@ async function processHubSpotJob(job: Job<HubSpotSyncJob>): Promise<any> {
       dealId,
       userId,
     },
-    `🔄 Processing HubSpot sync job: ${type}`,
+    `🔄 Processing HubSpot sync job: ${type}`
   );
 
   try {
@@ -141,14 +131,14 @@ async function processHubSpotJob(job: Job<HubSpotSyncJob>): Promise<any> {
         type,
         error: (error as any)?.message,
       },
-      "HubSpot sync job processing failed",
+      "HubSpot sync job processing failed"
     );
     throw error;
   }
 }
 
 async function performFullSync(
-  job: Job<HubSpotSyncJob>,
+  job: Job<HubSpotSyncJob>
 ): Promise<{ synced: number; updated: number }> {
   const startTime = Date.now();
   let synced = 0;
@@ -165,20 +155,14 @@ async function performFullSync(
     // 3. Update local database
     // 4. Cache frequently accessed data
 
-    hubspotWorkerLogger.info(
-      { jobId: job.id },
-      "Starting full HubSpot synchronization",
-    );
+    hubspotWorkerLogger.info({ jobId: job.id }, "Starting full HubSpot synchronization");
 
     // Mock implementation - replace with actual HubSpot API calls
     await job.updateProgress(30);
     await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API calls
 
     // Cache the sync timestamp
-    const fullSyncKey = cache.generateKey(
-      CachePrefix.HUBSPOT_METRICS,
-      "last-full-sync",
-    );
+    const fullSyncKey = cache.generateKey(CachePrefix.HUBSPOT_METRICS, "last-full-sync");
     await cache.set(fullSyncKey, new Date().toISOString(), CacheTTL.ONE_DAY);
 
     await job.updateProgress(70);
@@ -197,7 +181,7 @@ async function performFullSync(
         updated,
         duration,
       },
-      "✅ Full HubSpot sync completed",
+      "✅ Full HubSpot sync completed"
     );
 
     return { synced, updated };
@@ -209,7 +193,7 @@ async function performFullSync(
 
 async function performIncrementalSync(
   job: Job<HubSpotSyncJob>,
-  lastSyncTime?: string,
+  lastSyncTime?: string
 ): Promise<{ synced: number; updated: number }> {
   const startTime = Date.now();
   let synced = 0;
@@ -218,22 +202,17 @@ async function performIncrementalSync(
   try {
     await job.updateProgress(20);
 
-    const incKey = cache.generateKey(
-      CachePrefix.HUBSPOT_METRICS,
-      "last-incremental-sync",
-    );
+    const incKey = cache.generateKey(CachePrefix.HUBSPOT_METRICS, "last-incremental-sync");
     const cachedInc = await cache.get<string>(incKey);
     const syncFrom =
-      lastSyncTime ||
-      cachedInc ||
-      new Date(Date.now() - 60 * 60 * 1000).toISOString(); // Default: 1 hour ago
+      lastSyncTime || cachedInc || new Date(Date.now() - 60 * 60 * 1000).toISOString(); // Default: 1 hour ago
 
     hubspotWorkerLogger.info(
       {
         jobId: job.id,
         syncFrom,
       },
-      "Starting incremental HubSpot synchronization",
+      "Starting incremental HubSpot synchronization"
     );
 
     // Mock implementation - replace with actual HubSpot API calls
@@ -256,22 +235,19 @@ async function performIncrementalSync(
         updated,
         duration,
       },
-      "✅ Incremental HubSpot sync completed",
+      "✅ Incremental HubSpot sync completed"
     );
 
     return { synced, updated };
   } catch (error) {
-    hubspotWorkerLogger.error(
-      { jobId: job.id, error },
-      "Incremental sync failed",
-    );
+    hubspotWorkerLogger.error({ jobId: job.id, error }, "Incremental sync failed");
     throw error;
   }
 }
 
 async function performContactEnrichment(
   job: Job<HubSpotSyncJob>,
-  contactId: string,
+  contactId: string
 ): Promise<{ enriched: boolean; properties: number }> {
   const startTime = Date.now();
 
@@ -283,7 +259,7 @@ async function performContactEnrichment(
         jobId: job.id,
         contactId,
       },
-      "Starting contact enrichment",
+      "Starting contact enrichment"
     );
 
     // Mock implementation - replace with actual HubSpot API calls
@@ -297,10 +273,7 @@ async function performContactEnrichment(
       properties: ["industry", "company_size", "last_activity"],
     };
 
-    const contactKey = cache.generateKey(
-      CachePrefix.HUBSPOT_CONTACT,
-      `contact-${contactId}`,
-    );
+    const contactKey = cache.generateKey(CachePrefix.HUBSPOT_CONTACT, `contact-${contactId}`);
     await cache.set(contactKey, enrichedData, CacheTTL.ONE_HOUR);
 
     await job.updateProgress(100);
@@ -312,22 +285,19 @@ async function performContactEnrichment(
         contactId,
         duration,
       },
-      "✅ Contact enrichment completed",
+      "✅ Contact enrichment completed"
     );
 
     return { enriched: true, properties: 3 };
   } catch (error) {
-    hubspotWorkerLogger.error(
-      { jobId: job.id, contactId, error },
-      "Contact enrichment failed",
-    );
+    hubspotWorkerLogger.error({ jobId: job.id, contactId, error }, "Contact enrichment failed");
     throw error;
   }
 }
 
 async function performDealSync(
   job: Job<HubSpotSyncJob>,
-  dealId?: string,
+  dealId?: string
 ): Promise<{ synced: number }> {
   const startTime = Date.now();
 
@@ -339,7 +309,7 @@ async function performDealSync(
         jobId: job.id,
         dealId,
       },
-      "Starting deal synchronization",
+      "Starting deal synchronization"
     );
 
     // Mock implementation - replace with actual HubSpot API calls
@@ -362,15 +332,12 @@ async function performDealSync(
         synced,
         duration,
       },
-      "✅ Deal sync completed",
+      "✅ Deal sync completed"
     );
 
     return { synced };
   } catch (error) {
-    hubspotWorkerLogger.error(
-      { jobId: job.id, dealId, error },
-      "Deal sync failed",
-    );
+    hubspotWorkerLogger.error({ jobId: job.id, dealId, error }, "Deal sync failed");
     throw error;
   }
 }

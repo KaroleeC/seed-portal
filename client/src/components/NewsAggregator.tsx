@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Newspaper, RefreshCw } from "lucide-react";
@@ -74,9 +74,7 @@ export function NewsAggregator() {
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInMinutes = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60),
-    );
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
 
     if (diffInMinutes < 60) {
       return `${diffInMinutes}m ago`;
@@ -106,7 +104,7 @@ export function NewsAggregator() {
   };
 
   return (
-    <KbCard className="h-fit">
+    <SurfaceCard className="h-fit">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-3 text-white">
@@ -122,14 +120,11 @@ export function NewsAggregator() {
             disabled={isLoading}
             className="text-white/70 hover:text-white hover:bg-white/10"
           >
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-            />
+            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           </Button>
         </div>
         <p className="text-white/70 text-sm">
-          Latest updates from trusted sources • Updated{" "}
-          {formatTimeAgo(lastRefresh.toISOString())}
+          Latest updates from trusted sources • Updated {formatTimeAgo(lastRefresh.toISOString())}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -137,9 +132,9 @@ export function NewsAggregator() {
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-4 bg-white/20 rounded mb-2"></div>
-                <div className="h-3 bg-white/10 rounded mb-1"></div>
-                <div className="h-3 bg-white/10 rounded w-3/4"></div>
+                <div className="h-4 bg-white/20 rounded mb-2" />
+                <div className="h-3 bg-white/10 rounded mb-1" />
+                <div className="h-3 bg-white/10 rounded w-3/4" />
               </div>
             ))}
           </div>
@@ -165,13 +160,9 @@ export function NewsAggregator() {
                   <h4 className="text-sm font-semibold text-white mb-1 line-clamp-2">
                     {article.title}
                   </h4>
-                  <p className="text-xs text-white/70 line-clamp-2 mb-2">
-                    {article.description}
-                  </p>
+                  <p className="text-xs text-white/70 line-clamp-2 mb-2">{article.description}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-white/50">
-                      {article.source}
-                    </span>
+                    <span className="text-xs text-white/50">{article.source}</span>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -195,6 +186,6 @@ export function NewsAggregator() {
           ))
         )}
       </CardContent>
-    </KbCard>
+    </SurfaceCard>
   );
 }

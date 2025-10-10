@@ -6,13 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface BackButtonProps {
   className?: string;
-  variant?:
-    | "default"
-    | "ghost"
-    | "outline"
-    | "secondary"
-    | "destructive"
-    | "link";
+  variant?: "default" | "ghost" | "outline" | "secondary" | "destructive" | "link";
   size?: "default" | "sm" | "lg" | "icon";
   fallbackPath?: string; // Path to go to if no history available
   showText?: boolean;

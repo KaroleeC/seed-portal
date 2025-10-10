@@ -18,8 +18,7 @@ interface DealsResult {
 class DealsService {
   private isDisabled(): boolean {
     return (
-      process.env.DISABLE_CRM === "1" ||
-      (process.env.DISABLE_CRM || "").toLowerCase() === "true"
+      process.env.DISABLE_CRM === "1" || (process.env.DISABLE_CRM || "").toLowerCase() === "true"
     );
   }
 

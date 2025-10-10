@@ -28,12 +28,7 @@ const ARTICLE_TEMPLATES = {
       "Troubleshooting",
       "Related Resources",
     ],
-    variables: [
-      "{{process_name}}",
-      "{{department}}",
-      "{{tools_required}}",
-      "{{compliance_notes}}",
-    ],
+    variables: ["{{process_name}}", "{{department}}", "{{tools_required}}", "{{compliance_notes}}"],
   },
   playbook: {
     name: "Sales/Service Playbook",
@@ -74,12 +69,7 @@ const ARTICLE_TEMPLATES = {
       "Next Steps",
       "Getting Help",
     ],
-    variables: [
-      "{{service_name}}",
-      "{{client_type}}",
-      "{{timeline}}",
-      "{{deliverables}}",
-    ],
+    variables: ["{{service_name}}", "{{client_type}}", "{{timeline}}", "{{deliverables}}"],
   },
   product_docs: {
     name: "Product/Feature Documentation",
@@ -91,11 +81,7 @@ const ARTICLE_TEMPLATES = {
       "Best Practices",
       "Limitations & Considerations",
     ],
-    variables: [
-      "{{feature_name}}",
-      "{{target_users}}",
-      "{{integration_points}}",
-    ],
+    variables: ["{{feature_name}}", "{{target_users}}", "{{integration_points}}"],
   },
 };
 
@@ -143,11 +129,7 @@ interface GenerationStep {
 export class AnthropicService {
   private formatContentAsHtml(content: string): string {
     // If content already looks like HTML, return as-is
-    if (
-      content.includes("<p>") ||
-      content.includes("<h1>") ||
-      content.includes("<h2>")
-    ) {
+    if (content.includes("<p>") || content.includes("<h1>") || content.includes("<h2>")) {
       return content;
     }
 
@@ -192,10 +174,7 @@ export class AnthropicService {
     return html;
   }
 
-  private async callClaude(
-    prompt: string,
-    systemPrompt?: string,
-  ): Promise<string> {
+  private async callClaude(prompt: string, systemPrompt?: string): Promise<string> {
     try {
       const response = await anthropic.messages.create({
         model: DEFAULT_MODEL_STR,
@@ -205,7 +184,7 @@ export class AnthropicService {
       });
 
       const textContent = response.content.find(
-        (block: any) => (block as any).type === "text",
+        (block: any) => (block as any).type === "text"
       ) as any;
       return textContent?.text || "";
     } catch (error) {
@@ -214,9 +193,7 @@ export class AnthropicService {
     }
   }
 
-  async generateArticleOutline(
-    request: ArticleGenerationRequest,
-  ): Promise<GenerationStep> {
+  async generateArticleOutline(request: ArticleGenerationRequest): Promise<GenerationStep> {
     const template = ARTICLE_TEMPLATES[request.templateType];
     const variableText = request.variables
       ? Object.entries(request.variables)
@@ -267,7 +244,7 @@ Format as a structured outline with clear hierarchy.`;
 
   async generateArticleDraft(
     request: ArticleGenerationRequest,
-    outline?: string,
+    outline?: string
   ): Promise<GenerationStep> {
     const template = ARTICLE_TEMPLATES[request.templateType];
     const variableText = request.variables
@@ -326,10 +303,7 @@ Write the complete article now:`;
     };
   }
 
-  async polishArticle(
-    draft: string,
-    request: ArticleGenerationRequest,
-  ): Promise<GenerationStep> {
+  async polishArticle(draft: string, request: ArticleGenerationRequest): Promise<GenerationStep> {
     const systemPrompt = `You are a senior editor for Seed Financial. Polish articles to perfection while maintaining our brand voice and ensuring compliance.
 
 ${BRAND_VOICE_GUIDELINES}
@@ -392,7 +366,7 @@ Provide the polished, publication-ready HTML version:`;
 
   async generateMultipleVersions(
     request: ArticleGenerationRequest,
-    baseContent: string,
+    baseContent: string
   ): Promise<Record<string, string>> {
     const audiences = ["internal", "client", "sales"] as const;
     const versions: Record<string, string> = {};
@@ -526,7 +500,7 @@ Focus on providing specific, actionable suggestions that the AI can implement to
 
   async generateFromTemplate(
     templateName: string,
-    variables: Record<string, string>,
+    variables: Record<string, string>
   ): Promise<string> {
     let content = `# ${templateName}\n\n`;
 
@@ -540,7 +514,7 @@ Focus on providing specific, actionable suggestions that the AI can implement to
 
   async generateMetadata(
     content: string,
-    title: string,
+    title: string
   ): Promise<{ excerpt: string; tags: string[] }> {
     try {
       const response = await anthropic.messages.create({
@@ -568,7 +542,7 @@ Format as valid JSON only, no other text.`,
       });
 
       const textContent = response.content.find(
-        (block: any) => (block as any).type === "text",
+        (block: any) => (block as any).type === "text"
       ) as any;
       let rawText = textContent?.text || "{}";
 
@@ -581,19 +555,13 @@ Format as valid JSON only, no other text.`,
       const result = JSON.parse(rawText);
       return {
         excerpt:
-          result.excerpt ||
-          "Professional knowledge base article with comprehensive guidance.",
-        tags: result.tags || [
-          "knowledge-base",
-          "professional-services",
-          "seed-financial",
-        ],
+          result.excerpt || "Professional knowledge base article with comprehensive guidance.",
+        tags: result.tags || ["knowledge-base", "professional-services", "seed-financial"],
       };
     } catch (error) {
       console.error("Metadata generation failed:", error);
       return {
-        excerpt:
-          "Professional knowledge base article with comprehensive guidance.",
+        excerpt: "Professional knowledge base article with comprehensive guidance.",
         tags: ["knowledge-base", "professional-services", "seed-financial"],
       };
     }
@@ -602,7 +570,7 @@ Format as valid JSON only, no other text.`,
   async redraftWithImprovements(
     currentContent: string,
     selectedImprovements: string[],
-    request: ArticleGenerationRequest,
+    request: ArticleGenerationRequest
   ): Promise<{ content: string }> {
     const systemPrompt = `You are a senior editor for Seed Financial. Re-draft articles by implementing only the selected improvements while maintaining the core content and structure.
 

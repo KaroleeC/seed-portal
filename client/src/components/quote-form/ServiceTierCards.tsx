@@ -2,9 +2,9 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Crown, Star, Users } from "lucide-react";
 import { FormControl, FormField, FormItem } from "@/components/ui/form";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 
 interface ServiceTierCardsProps {
   form: UseFormReturn<QuoteFormFields>;
@@ -18,11 +18,9 @@ export function ServiceTierCards({ form }: ServiceTierCardsProps) {
   };
 
   return (
-    <KbCard className="mb-8 p-6">
+    <SurfaceCard className="mb-8 p-6">
       <div className="text-center mb-6">
-        <h3 className="text-xl font-semibold text-foreground mb-2">
-          Select Service Tier
-        </h3>
+        <h3 className="text-xl font-semibold text-foreground mb-2">Select Service Tier</h3>
         <p className="text-muted-foreground">
           Select level of support and guidance based on client goals and needs
         </p>
@@ -48,12 +46,8 @@ export function ServiceTierCards({ form }: ServiceTierCardsProps) {
                     <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mx-auto mb-4">
                       <Users className="w-6 h-6 text-white" />
                     </div>
-                    <h4 className="font-semibold text-lg text-foreground mb-2">
-                      Automated
-                    </h4>
-                    <p className="text-2xl font-bold text-blue-500 mb-3">
-                      Included
-                    </p>
+                    <h4 className="font-semibold text-lg text-foreground mb-2">Automated</h4>
+                    <p className="text-2xl font-bold text-blue-500 mb-3">Included</p>
                     <p className="text-sm text-muted-foreground mb-4">
                       Base level of service with standard support
                     </p>
@@ -79,9 +73,7 @@ export function ServiceTierCards({ form }: ServiceTierCardsProps) {
                     <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mx-auto mb-4">
                       <Star className="w-6 h-6 text-white" />
                     </div>
-                    <h4 className="font-semibold text-lg text-foreground mb-2">
-                      Guided
-                    </h4>
+                    <h4 className="font-semibold text-lg text-foreground mb-2">Guided</h4>
                     <p className="text-2xl font-bold text-orange-500 mb-3">
                       +$79<span className="text-sm">/mo</span>
                     </p>
@@ -92,10 +84,7 @@ export function ServiceTierCards({ form }: ServiceTierCardsProps) {
                       <li>• Kickoff call & quarterly checkins</li>
                       <li>• Dedicated Slack channel support</li>
                       <li>• Personalized insights</li>
-                      <li>
-                        • Quarterly strategy calls, payment assistance &
-                        deadline prep
-                      </li>
+                      <li>• Quarterly strategy calls, payment assistance & deadline prep</li>
                     </ul>
                   </CardContent>
                 </Card>
@@ -113,9 +102,7 @@ export function ServiceTierCards({ form }: ServiceTierCardsProps) {
                     <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mx-auto mb-4">
                       <Crown className="w-6 h-6 text-white" />
                     </div>
-                    <h4 className="font-semibold text-lg text-foreground mb-2">
-                      Concierge
-                    </h4>
+                    <h4 className="font-semibold text-lg text-foreground mb-2">Concierge</h4>
                     <p className="text-2xl font-bold text-purple-500 mb-3">
                       +$249<span className="text-sm">/mo</span>
                     </p>
@@ -135,6 +122,6 @@ export function ServiceTierCards({ form }: ServiceTierCardsProps) {
           </FormItem>
         )}
       />
-    </KbCard>
+    </SurfaceCard>
   );
 }

@@ -30,8 +30,7 @@ export class StorageService {
 
   constructor() {
     const boxDisabled =
-      process.env.DISABLE_BOX === "1" ||
-      (process.env.DISABLE_BOX || "").toLowerCase() === "true";
+      process.env.DISABLE_BOX === "1" || (process.env.DISABLE_BOX || "").toLowerCase() === "true";
     if (boxDisabled) {
       logger.info("Storage service (Box) disabled via DISABLE_BOX flag");
       this.serviceAccountClient = null;
@@ -50,7 +49,7 @@ export class StorageService {
 
     if (missingVars.length > 0) {
       logger.warn(
-        `Box configuration missing: ${missingVars.join(", ")} - Storage service will be disabled`,
+        `Box configuration missing: ${missingVars.join(", ")} - Storage service will be disabled`
       );
       this.serviceAccountClient = null;
       this.client = null;
@@ -72,11 +71,9 @@ export class StorageService {
 
       this.serviceAccountClient = sdk.getAppAuthClient(
         "enterprise",
-        process.env.BOX_ENTERPRISE_ID!,
+        process.env.BOX_ENTERPRISE_ID!
       );
-      logger.info(
-        "✅ Box SDK initialized successfully with JWT authentication",
-      );
+      logger.info("✅ Box SDK initialized successfully with JWT authentication");
     } catch (error: any) {
       logger.error("Failed to initialize storage service", {
         error: error.message,
@@ -84,9 +81,7 @@ export class StorageService {
       // Don't throw error - allow service to be created but mark as unavailable
       this.serviceAccountClient = null;
       this.client = null;
-      logger.warn(
-        "Storage service will be disabled due to configuration error",
-      );
+      logger.warn("Storage service will be disabled due to configuration error");
     }
   }
 
@@ -130,24 +125,16 @@ export class StorageService {
     }
   }
 
-  async createFolder(
-    name: string,
-    parentFolderId = "0",
-  ): Promise<StorageFolder> {
+  async createFolder(name: string, parentFolderId = "0"): Promise<StorageFolder> {
     try {
       logger.debug("Creating storage folder", { name, parentFolderId });
 
-      const folder = await this.serviceAccountClient.folders.create(
-        parentFolderId,
-        name,
-      );
+      const folder = await this.serviceAccountClient.folders.create(parentFolderId, name);
 
       return {
         id: folder.id,
         name: folder.name,
-        path:
-          folder.path_collection?.entries?.map((e: any) => e.name).join("/") ||
-          name,
+        path: folder.path_collection?.entries?.map((e: any) => e.name).join("/") || name,
         parentId: parentFolderId !== "0" ? parentFolderId : undefined,
       };
     } catch (error: any) {
@@ -160,11 +147,7 @@ export class StorageService {
     }
   }
 
-  async uploadFile(
-    fileName: string,
-    fileContent: Buffer,
-    folderId = "0",
-  ): Promise<StorageFile> {
+  async uploadFile(fileName: string, fileContent: Buffer, folderId = "0"): Promise<StorageFile> {
     try {
       logger.debug("Uploading file to storage", {
         fileName,
@@ -176,11 +159,7 @@ export class StorageService {
       const fileStream = new stream.PassThrough();
       fileStream.end(fileContent);
 
-      const file = await this.serviceAccountClient.files.uploadFile(
-        folderId,
-        fileName,
-        fileStream,
-      );
+      const file = await this.serviceAccountClient.files.uploadFile(folderId, fileName, fileStream);
 
       return {
         id: file.entries[0].id,
@@ -201,7 +180,7 @@ export class StorageService {
   async copyFile(
     sourceFileId: string,
     targetFolderId: string,
-    newName?: string,
+    newName?: string
   ): Promise<StorageFile> {
     try {
       logger.debug("Copying file in storage", {
@@ -210,11 +189,9 @@ export class StorageService {
         newName,
       });
 
-      const copiedFile = await this.serviceAccountClient.files.copy(
-        sourceFileId,
-        targetFolderId,
-        { name: newName },
-      );
+      const copiedFile = await this.serviceAccountClient.files.copy(sourceFileId, targetFolderId, {
+        name: newName,
+      });
 
       return {
         id: copiedFile.id,
@@ -257,7 +234,7 @@ export class StorageService {
   }
 
   async getFolderContents(
-    folderId = "0",
+    folderId = "0"
   ): Promise<{ folders: StorageFolder[]; files: StorageFile[] }> {
     try {
       logger.debug("Getting storage folder contents", { folderId });
@@ -269,10 +246,7 @@ export class StorageService {
         .map((folder: any) => ({
           id: folder.id,
           name: folder.name,
-          path:
-            folder.path_collection?.entries
-              ?.map((e: any) => e.name)
-              .join("/") || folder.name,
+          path: folder.path_collection?.entries?.map((e: any) => e.name).join("/") || folder.name,
           parentId: folderId !== "0" ? folderId : undefined,
         }));
 
@@ -299,8 +273,7 @@ export class StorageService {
     try {
       logger.debug("Getting download URL for file", { fileId });
 
-      const downloadUrl =
-        await this.serviceAccountClient.files.getDownloadURL(fileId);
+      const downloadUrl = await this.serviceAccountClient.files.getDownloadURL(fileId);
       return downloadUrl;
     } catch (error: any) {
       logger.error("Storage download URL generation failed", {

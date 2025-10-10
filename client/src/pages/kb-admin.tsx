@@ -127,14 +127,12 @@ export default function KbAdmin() {
   const [isAIGeneratorOpen, setIsAIGeneratorOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  const [selectedArticleId, setSelectedArticleId] = useState<number | null>(
-    null,
-  );
+  const [selectedArticleId, setSelectedArticleId] = useState<number | null>(null);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
   const [showAdvancedDelete, setShowAdvancedDelete] = useState(false);
 
   const { resolvedTheme } = useTheme();
-  const logoSrc = getThemedLogo(brand, resolvedTheme === 'dark' ? 'dark' : 'light');
+  const logoSrc = getThemedLogo(brand, resolvedTheme === "dark" ? "dark" : "light");
 
   // Fetch categories - only when authenticated
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
@@ -203,13 +201,7 @@ export default function KbAdmin() {
 
   // Update article mutation
   const updateArticleMutation = useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: number;
-      data: Partial<ArticleFormData>;
-    }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<ArticleFormData> }) => {
       const payload = {
         ...data,
         tags: data.tags
@@ -219,11 +211,7 @@ export default function KbAdmin() {
               .filter(Boolean)
           : undefined,
       };
-      return await apiRequest<KbArticle>(
-        "PATCH",
-        `/api/kb/articles/${id}`,
-        payload,
-      );
+      return await apiRequest<KbArticle>("PATCH", `/api/kb/articles/${id}`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kb/articles"] });
@@ -247,10 +235,7 @@ export default function KbAdmin() {
   // Delete article mutation (permanent deletion)
   const deleteArticleMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest<{ success: boolean }>(
-        "DELETE",
-        `/api/kb/articles/${id}`,
-      );
+      return await apiRequest<{ success: boolean }>("DELETE", `/api/kb/articles/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kb/articles"] });
@@ -273,11 +258,7 @@ export default function KbAdmin() {
   // Archive article mutation
   const archiveArticleMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest<{ success: boolean }>(
-        "PATCH",
-        `/api/kb/articles/${id}/archive`,
-        {},
-      );
+      return await apiRequest<{ success: boolean }>("PATCH", `/api/kb/articles/${id}/archive`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kb/articles"] });
@@ -307,8 +288,7 @@ export default function KbAdmin() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/kb/articles"] });
-      const newStatus =
-        variables.status === "published" ? "draft" : "published";
+      const newStatus = variables.status === "published" ? "draft" : "published";
       toast({
         title: "Success",
         description: `Article ${newStatus === "published" ? "published" : "unpublished"} successfully`,
@@ -337,8 +317,7 @@ export default function KbAdmin() {
       form.setValue("tags", data.tags.join(", "));
       toast({
         title: "Metadata Generated",
-        description:
-          "Excerpt and tags have been auto-generated based on your content.",
+        description: "Excerpt and tags have been auto-generated based on your content.",
       });
     },
     onError: (error: any) => {
@@ -565,7 +544,7 @@ export default function KbAdmin() {
                   <CardTitle className="text-white">
                     {selectedCategory
                       ? (categories as KbCategory[]).find(
-                          (c: KbCategory) => c.id === selectedCategory,
+                          (c: KbCategory) => c.id === selectedCategory
                         )?.name
                       : "All Articles"}
                   </CardTitle>
@@ -577,10 +556,7 @@ export default function KbAdmin() {
                       <Wand2 className="h-4 w-4 mr-2" />
                       Generate Article
                     </Button>
-                    <Dialog
-                      open={isArticleDialogOpen}
-                      onOpenChange={setIsArticleDialogOpen}
-                    >
+                    <Dialog open={isArticleDialogOpen} onOpenChange={setIsArticleDialogOpen}>
                       <DialogTrigger asChild>
                         <Button
                           className="bg-orange-500 hover:bg-orange-600 text-white"
@@ -593,18 +569,14 @@ export default function KbAdmin() {
                       <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>
-                            {editingArticle
-                              ? "Edit Article"
-                              : "Create New Article"}
+                            {editingArticle ? "Edit Article" : "Create New Article"}
                           </DialogTitle>
                         </DialogHeader>
 
                         <Form {...form}>
                           <form
                             onSubmit={form.handleSubmit(
-                              editingArticle
-                                ? handleUpdateArticle
-                                : handleCreateArticle,
+                              editingArticle ? handleUpdateArticle : handleCreateArticle
                             )}
                             className="space-y-6"
                           >
@@ -616,10 +588,7 @@ export default function KbAdmin() {
                                   <FormItem>
                                     <FormLabel>Title</FormLabel>
                                     <FormControl>
-                                      <Input
-                                        placeholder="Article title"
-                                        {...field}
-                                      />
+                                      <Input placeholder="Article title" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -634,9 +603,7 @@ export default function KbAdmin() {
                                     <FormLabel>Category</FormLabel>
                                     <Select
                                       value={field.value?.toString()}
-                                      onValueChange={(value) =>
-                                        field.onChange(parseInt(value))
-                                      }
+                                      onValueChange={(value) => field.onChange(parseInt(value))}
                                     >
                                       <FormControl>
                                         <SelectTrigger>
@@ -652,7 +619,7 @@ export default function KbAdmin() {
                                             >
                                               {category.name}
                                             </SelectItem>
-                                          ),
+                                          )
                                         )}
                                       </SelectContent>
                                     </Select>
@@ -726,25 +693,16 @@ export default function KbAdmin() {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel>Status</FormLabel>
-                                    <Select
-                                      value={field.value}
-                                      onValueChange={field.onChange}
-                                    >
+                                    <Select value={field.value} onValueChange={field.onChange}>
                                       <FormControl>
                                         <SelectTrigger>
                                           <SelectValue />
                                         </SelectTrigger>
                                       </FormControl>
                                       <SelectContent>
-                                        <SelectItem value="draft">
-                                          Draft
-                                        </SelectItem>
-                                        <SelectItem value="published">
-                                          Published
-                                        </SelectItem>
-                                        <SelectItem value="archived">
-                                          Archived
-                                        </SelectItem>
+                                        <SelectItem value="draft">Draft</SelectItem>
+                                        <SelectItem value="published">Published</SelectItem>
+                                        <SelectItem value="archived">Archived</SelectItem>
                                       </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -780,10 +738,7 @@ export default function KbAdmin() {
                                       </Button>
                                     </FormLabel>
                                     <FormControl>
-                                      <Input
-                                        placeholder="tag1, tag2, tag3"
-                                        {...field}
-                                      />
+                                      <Input placeholder="tag1, tag2, tag3" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -804,9 +759,7 @@ export default function KbAdmin() {
                                           className="rounded border border-gray-300"
                                         />
                                       </FormControl>
-                                      <FormLabel className="!mt-0">
-                                        Featured Article
-                                      </FormLabel>
+                                      <FormLabel className="!mt-0">Featured Article</FormLabel>
                                     </FormItem>
                                   )}
                                 />
@@ -825,13 +778,10 @@ export default function KbAdmin() {
                                 type="submit"
                                 className="bg-orange-500 hover:bg-orange-600"
                                 disabled={
-                                  createArticleMutation.isPending ||
-                                  updateArticleMutation.isPending
+                                  createArticleMutation.isPending || updateArticleMutation.isPending
                                 }
                               >
-                                {editingArticle
-                                  ? "Update Article"
-                                  : "Create Article"}
+                                {editingArticle ? "Update Article" : "Create Article"}
                               </Button>
                             </div>
                           </form>
@@ -843,9 +793,7 @@ export default function KbAdmin() {
               </CardHeader>
               <CardContent>
                 {articlesLoading ? (
-                  <div className="text-white text-center py-8">
-                    Loading articles...
-                  </div>
+                  <div className="text-white text-center py-8">Loading articles...</div>
                 ) : articles.length === 0 ? (
                   <div className="text-white/70 text-center py-8">
                     No articles found. Create your first article to get started.
@@ -853,10 +801,7 @@ export default function KbAdmin() {
                 ) : (
                   <div className="space-y-4">
                     {articles.map((article: KbArticle) => (
-                      <Card
-                        key={article.id}
-                        className="bg-white border-gray-200 shadow-sm"
-                      >
+                      <Card key={article.id} className="bg-white border-gray-200 shadow-sm">
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
@@ -864,22 +809,12 @@ export default function KbAdmin() {
                                 {article.title}
                               </h3>
                               {article.excerpt && (
-                                <p className="text-gray-600 text-sm mb-3">
-                                  {article.excerpt}
-                                </p>
+                                <p className="text-gray-600 text-sm mb-3">{article.excerpt}</p>
                               )}
                               <div className="flex items-center gap-4 text-sm text-gray-500">
                                 <Badge
-                                  variant={
-                                    article.status === "published"
-                                      ? "default"
-                                      : "secondary"
-                                  }
-                                  className={
-                                    article.status === "published"
-                                      ? "bg-green-500"
-                                      : ""
-                                  }
+                                  variant={article.status === "published" ? "default" : "secondary"}
+                                  className={article.status === "published" ? "bg-green-500" : ""}
                                 >
                                   {article.status}
                                 </Badge>
@@ -892,25 +827,19 @@ export default function KbAdmin() {
                                   </Badge>
                                 )}
                                 <span>{article.viewCount} views</span>
-                                <span>
-                                  {new Date(
-                                    article.createdAt,
-                                  ).toLocaleDateString()}
-                                </span>
+                                <span>{new Date(article.createdAt).toLocaleDateString()}</span>
                               </div>
                               {article.tags && article.tags.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
-                                  {article.tags
-                                    .slice(0, 4)
-                                    .map((tag, index) => (
-                                      <Badge
-                                        key={index}
-                                        variant="outline"
-                                        className="text-xs border-gray-300 text-gray-600 px-2 py-0.5"
-                                      >
-                                        {tag}
-                                      </Badge>
-                                    ))}
+                                  {article.tags.slice(0, 4).map((tag, index) => (
+                                    <Badge
+                                      key={index}
+                                      variant="outline"
+                                      className="text-xs border-gray-300 text-gray-600 px-2 py-0.5"
+                                    >
+                                      {tag}
+                                    </Badge>
+                                  ))}
                                   {article.tags.length > 4 && (
                                     <Badge
                                       variant="outline"
@@ -979,9 +908,7 @@ export default function KbAdmin() {
                                     Create Versions
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    onClick={() =>
-                                      openArchiveDialog(article.id)
-                                    }
+                                    onClick={() => openArchiveDialog(article.id)}
                                     className="text-orange-600 focus:text-orange-700"
                                   >
                                     <Archive className="h-4 w-4 mr-2" />
@@ -1033,15 +960,14 @@ export default function KbAdmin() {
             <div className="space-y-4">
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-800 font-semibold text-center">
-                  This will permanently destroy the article and cannot be
-                  undone!
+                  This will permanently destroy the article and cannot be undone!
                 </p>
               </div>
 
               <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <p className="text-orange-800">
-                  <strong>Recommended:</strong> Use "Archive Article" instead to
-                  safely hide the article while preserving the content.
+                  <strong>Recommended:</strong> Use "Archive Article" instead to safely hide the
+                  article while preserving the content.
                 </p>
               </div>
 
@@ -1064,9 +990,7 @@ export default function KbAdmin() {
                     </p>
                     <Input
                       value={deleteConfirmationText}
-                      onChange={(e) =>
-                        setDeleteConfirmationText(e.target.value)
-                      }
+                      onChange={(e) => setDeleteConfirmationText(e.target.value)}
                       placeholder="Type DELETE to confirm"
                       className="border-red-300 focus:border-red-500 focus:ring-red-200 text-center font-mono"
                       autoComplete="off"
@@ -1091,15 +1015,10 @@ export default function KbAdmin() {
               {showAdvancedDelete && (
                 <AlertDialogAction
                   onClick={confirmDelete}
-                  disabled={
-                    deleteConfirmationText !== "DELETE" ||
-                    deleteArticleMutation.isPending
-                  }
+                  disabled={deleteConfirmationText !== "DELETE" || deleteArticleMutation.isPending}
                   className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {deleteArticleMutation.isPending
-                    ? "Deleting..."
-                    : "Delete Permanently"}
+                  {deleteArticleMutation.isPending ? "Deleting..." : "Delete Permanently"}
                 </AlertDialogAction>
               )}
             </AlertDialogFooter>
@@ -1107,17 +1026,14 @@ export default function KbAdmin() {
         </AlertDialog>
 
         {/* Archive Confirmation Dialog */}
-        <AlertDialog
-          open={archiveDialogOpen}
-          onOpenChange={setArchiveDialogOpen}
-        >
+        <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Archive Article</AlertDialogTitle>
               <AlertDialogDescription>
-                This will archive the article and hide it from users. The
-                article will remain in the database and can be restored later by
-                changing its status back to published or draft.
+                This will archive the article and hide it from users. The article will remain in the
+                database and can be restored later by changing its status back to published or
+                draft.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -1126,9 +1042,7 @@ export default function KbAdmin() {
                 onClick={confirmArchive}
                 className="bg-orange-600 hover:bg-orange-700"
               >
-                {archiveArticleMutation.isPending
-                  ? "Archiving..."
-                  : "Archive Article"}
+                {archiveArticleMutation.isPending ? "Archiving..." : "Archive Article"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

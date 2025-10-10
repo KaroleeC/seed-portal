@@ -35,14 +35,12 @@ export async function setupVite(app: Express, server: Server) {
         viteLogger.error(msg, options);
         // In development, do not crash the dev server on client compile errors.
         // Keep the process alive so Vite's overlay can display the error.
-        if (process.env['NODE_ENV'] === "production") {
+        if (process.env["NODE_ENV"] === "production") {
           try {
             process.exit(1);
           } catch {}
         } else {
-          console.warn(
-            "[Vite] Dev compile error - keeping server alive for overlay",
-          );
+          console.warn("[Vite] Dev compile error - keeping server alive for overlay");
         }
       },
     },
@@ -55,19 +53,11 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(
-        import.meta.dirname,
-        "..",
-        "client",
-        "index.html",
-      );
+      const clientTemplate = path.resolve(import.meta.dirname, "..", "client", "index.html");
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
-      );
+      template = template.replace(`src="/src/main.tsx"`, `src="/src/main.tsx?v=${nanoid()}"`);
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
@@ -82,7 +72,7 @@ export function serveStatic(app: Express) {
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
 

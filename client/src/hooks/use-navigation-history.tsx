@@ -1,10 +1,5 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useReducer,
-  ReactNode,
-} from "react";
+import type { ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useReducer } from "react";
 import { useLocation } from "wouter";
 
 interface NavigationHistoryState {
@@ -18,9 +13,7 @@ interface NavigationHistoryState {
   clearHistory: () => void;
 }
 
-const NavigationHistoryContext = createContext<
-  NavigationHistoryState | undefined
->(undefined);
+const NavigationHistoryContext = createContext<NavigationHistoryState | undefined>(undefined);
 
 interface NavigationHistoryProviderProps {
   children: ReactNode;
@@ -48,10 +41,7 @@ function clampHistory(history: string[]): string[] {
   return history.slice(history.length - MAX_HISTORY_LENGTH);
 }
 
-function navigationReducer(
-  state: NavigationState,
-  action: NavigationAction,
-): NavigationState {
+function navigationReducer(state: NavigationState, action: NavigationAction): NavigationState {
   switch (action.type) {
     case "INITIALIZE":
       return {
@@ -109,10 +99,7 @@ function navigationReducer(
 
     case "HYDRATE": {
       const hydratedHistory = clampHistory(action.history || []);
-      const idx = Math.max(
-        0,
-        Math.min(action.index ?? 0, hydratedHistory.length - 1),
-      );
+      const idx = Math.max(0, Math.min(action.index ?? 0, hydratedHistory.length - 1));
       return {
         history: hydratedHistory,
         currentIndex: hydratedHistory.length ? idx : -1,
@@ -130,9 +117,7 @@ function navigationReducer(
   }
 }
 
-export function NavigationHistoryProvider({
-  children,
-}: NavigationHistoryProviderProps) {
+export function NavigationHistoryProvider({ children }: NavigationHistoryProviderProps) {
   const [location, setLocation] = useLocation();
   const [state, dispatch] = useReducer(navigationReducer, {
     history: [],
@@ -144,9 +129,7 @@ export function NavigationHistoryProvider({
     try {
       const rawHistory = sessionStorage.getItem("navHistory");
       const rawIndex = sessionStorage.getItem("navIndex");
-      const parsedHistory = rawHistory
-        ? (JSON.parse(rawHistory) as string[])
-        : [];
+      const parsedHistory = rawHistory ? (JSON.parse(rawHistory) as string[]) : [];
       const parsedIndex = rawIndex ? parseInt(rawIndex, 10) : -1;
       if (parsedHistory && parsedHistory.length > 0) {
         dispatch({
@@ -237,18 +220,14 @@ export function NavigationHistoryProvider({
   };
 
   return (
-    <NavigationHistoryContext.Provider value={value}>
-      {children}
-    </NavigationHistoryContext.Provider>
+    <NavigationHistoryContext.Provider value={value}>{children}</NavigationHistoryContext.Provider>
   );
 }
 
 export function useNavigationHistory() {
   const context = useContext(NavigationHistoryContext);
   if (context === undefined) {
-    throw new Error(
-      "useNavigationHistory must be used within a NavigationHistoryProvider",
-    );
+    throw new Error("useNavigationHistory must be used within a NavigationHistoryProvider");
   }
   return context;
 }

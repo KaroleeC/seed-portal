@@ -1,13 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -201,16 +195,10 @@ export default function CommissionTracker() {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [monthlyBonuses, setMonthlyBonuses] = useState<MonthlyBonus[]>([]);
-  const [milestoneBonuses, setMilestoneBonuses] = useState<MilestoneBonus[]>(
-    [],
-  );
+  const [milestoneBonuses, setMilestoneBonuses] = useState<MilestoneBonus[]>([]);
   const [salesReps, setSalesReps] = useState<SalesRep[]>([]);
-  const [adjustmentRequests, setAdjustmentRequests] = useState<
-    AdjustmentRequest[]
-  >([]);
-  const [commissionPeriods, setCommissionPeriods] = useState<
-    CommissionPeriod[]
-  >([]);
+  const [adjustmentRequests, setAdjustmentRequests] = useState<AdjustmentRequest[]>([]);
+  const [commissionPeriods, setCommissionPeriods] = useState<CommissionPeriod[]>([]);
 
   // Filter and search states
   const [selectedSalesRep, setSelectedSalesRep] = useState<string>("all");
@@ -220,8 +208,7 @@ export default function CommissionTracker() {
 
   // Dialog states
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
-  const [selectedCommission, setSelectedCommission] =
-    useState<Commission | null>(null);
+  const [selectedCommission, setSelectedCommission] = useState<Commission | null>(null);
   const [adjustmentReason, setAdjustmentReason] = useState("");
   const [adjustmentAmount, setAdjustmentAmount] = useState("");
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
@@ -235,56 +222,51 @@ export default function CommissionTracker() {
   const { data: currentSalesRep, isLoading: salesRepLoading } = useSalesRepMe();
 
   // Fetch commission data for current user only
-  const { data: commissionData = [], isLoading: commissionsLoading } = useQuery(
-    {
-      queryKey: seedpayKeys.commissions.list(currentSalesRep?.id),
-      queryFn: async () => {
-        if (!currentSalesRep?.id) return [];
-        return await apiRequest<Commission[]>(
-          "GET",
-          `/api/apps/seedpay/commissions?salesRepId=${currentSalesRep.id}`,
-        );
-      },
-      enabled: !!currentSalesRep?.id,
+  const { data: commissionData = [], isLoading: commissionsLoading } = useQuery({
+    queryKey: seedpayKeys.commissions.list(currentSalesRep?.id),
+    queryFn: async () => {
+      if (!currentSalesRep?.id) return [];
+      return await apiRequest<Commission[]>(
+        "GET",
+        `/api/apps/seedpay/commissions?salesRepId=${currentSalesRep.id}`
+      );
     },
-  );
+    enabled: !!currentSalesRep?.id,
+  });
 
   // Use centralized Deals BFF filtered by HubSpot owner (sales rep ≡ owner)
   const ownerId = user?.hubspotUserId || undefined;
-  const { data: dealsResult, isLoading: dealsLoading } = useDealsByOwner(
-    ownerId,
-    { enabled: !!ownerId, limit: 100 },
-  );
+  const { data: dealsResult, isLoading: dealsLoading } = useDealsByOwner(ownerId, {
+    enabled: !!ownerId,
+    limit: 100,
+  });
 
-  const { data: monthlyBonusData = [], isLoading: monthlyBonusLoading } =
-    useQuery({
-      queryKey: seedpayKeys.bonuses.monthly(currentSalesRep?.id),
-      queryFn: async () => {
-        if (!currentSalesRep?.id) return [];
-        return await apiRequest<MonthlyBonus[]>(
-          "GET",
-          `/api/apps/seedpay/monthly-bonuses?salesRepId=${currentSalesRep.id}`,
-        );
-      },
-      enabled: !!currentSalesRep?.id,
-    });
+  const { data: monthlyBonusData = [], isLoading: monthlyBonusLoading } = useQuery({
+    queryKey: seedpayKeys.bonuses.monthly(currentSalesRep?.id),
+    queryFn: async () => {
+      if (!currentSalesRep?.id) return [];
+      return await apiRequest<MonthlyBonus[]>(
+        "GET",
+        `/api/apps/seedpay/monthly-bonuses?salesRepId=${currentSalesRep.id}`
+      );
+    },
+    enabled: !!currentSalesRep?.id,
+  });
 
-  const { data: milestoneBonusData = [], isLoading: milestoneBonusLoading } =
-    useQuery({
-      queryKey: seedpayKeys.bonuses.milestone(currentSalesRep?.id),
-      queryFn: async () => {
-        if (!currentSalesRep?.id) return [];
-        return await apiRequest<MilestoneBonus[]>(
-          "GET",
-          `/api/apps/seedpay/milestone-bonuses?salesRepId=${currentSalesRep.id}`,
-        );
-      },
-      enabled: !!currentSalesRep?.id,
-    });
+  const { data: milestoneBonusData = [], isLoading: milestoneBonusLoading } = useQuery({
+    queryKey: seedpayKeys.bonuses.milestone(currentSalesRep?.id),
+    queryFn: async () => {
+      if (!currentSalesRep?.id) return [];
+      return await apiRequest<MilestoneBonus[]>(
+        "GET",
+        `/api/apps/seedpay/milestone-bonuses?salesRepId=${currentSalesRep.id}`
+      );
+    },
+    enabled: !!currentSalesRep?.id,
+  });
 
   // Fetch current period commission summary (from centrally processed data)
-  const { data: hubspotCommissionData = null, isLoading: hubspotLoading } =
-    useCommissionSummary();
+  const { data: hubspotCommissionData = null, isLoading: hubspotLoading } = useCommissionSummary();
 
   // Set the fetched data to state
   useEffect(() => {
@@ -438,27 +420,19 @@ export default function CommissionTracker() {
       return hubspotCommissionData.total_commissions;
     }
 
-    if (
-      !currentPeriod ||
-      !currentPeriod.periodStart ||
-      !currentPeriod.periodEnd
-    ) {
+    if (!currentPeriod || !currentPeriod.periodStart || !currentPeriod.periodEnd) {
       return 0;
     }
 
     return commissions
       .filter(
-        (c) =>
-          c.dateEarned >= currentPeriod.periodStart &&
-          c.dateEarned <= currentPeriod.periodEnd,
+        (c) => c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd
       )
       .reduce((sum, c) => sum + c.amount, 0);
   }, [hubspotCommissionData, commissions, currentPeriod]);
 
   const totalPendingCommissions = useMemo(() => {
-    return commissions
-      .filter((c) => c.status === "pending")
-      .reduce((sum, c) => sum + c.amount, 0);
+    return commissions.filter((c) => c.status === "pending").reduce((sum, c) => sum + c.amount, 0);
   }, [commissions]);
 
   const totalProcessingCommissions = useMemo(() => {
@@ -475,7 +449,7 @@ export default function CommissionTracker() {
         const proj = calculateProjectedCommission(
           d.setupFee || 0,
           d.monthlyFee || 0,
-          d.serviceType || "bookkeeping",
+          d.serviceType || "bookkeeping"
         );
         // For dashboard purposes, project the first-month commission weighted by probability
         return sum + proj.firstMonth * ((d.probability || 0) / 100);
@@ -483,30 +457,29 @@ export default function CommissionTracker() {
   }, [deals]);
 
   // Sales rep stats and bonuses/milestones wiring (mechanical, no UI change)
-  const { totalClientsClosedMonthly, totalClientsClosedAllTime } =
-    useMemo(() => {
-      // Determine current calendar month range
-      const now = new Date();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      // Unique deals closed (month_1) by dealId
-      const closedThisMonthIds = new Set(
-        commissions
-          .filter((c) => c.type === "month_1")
-          .filter((c) => {
-            const d = new Date(c.dateEarned);
-            return d >= monthStart && d <= monthEnd;
-          })
-          .map((c) => c.dealId),
-      );
-      const allClosedIds = new Set(
-        commissions.filter((c) => c.type === "month_1").map((c) => c.dealId),
-      );
-      return {
-        totalClientsClosedMonthly: closedThisMonthIds.size,
-        totalClientsClosedAllTime: allClosedIds.size,
-      };
-    }, [commissions]);
+  const { totalClientsClosedMonthly, totalClientsClosedAllTime } = useMemo(() => {
+    // Determine current calendar month range
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    // Unique deals closed (month_1) by dealId
+    const closedThisMonthIds = new Set(
+      commissions
+        .filter((c) => c.type === "month_1")
+        .filter((c) => {
+          const d = new Date(c.dateEarned);
+          return d >= monthStart && d <= monthEnd;
+        })
+        .map((c) => c.dealId)
+    );
+    const allClosedIds = new Set(
+      commissions.filter((c) => c.type === "month_1").map((c) => c.dealId)
+    );
+    return {
+      totalClientsClosedMonthly: closedThisMonthIds.size,
+      totalClientsClosedAllTime: allClosedIds.size,
+    };
+  }, [commissions]);
 
   const monthlyBonusEligibility = useMemo(() => {
     return calculateMonthlyBonus(totalClientsClosedMonthly);
@@ -520,26 +493,19 @@ export default function CommissionTracker() {
     return {
       totalClientsClosedMonthly,
       totalClientsClosedAllTime,
-    } as Pick<
-      SalesRepStats,
-      "totalClientsClosedMonthly" | "totalClientsClosedAllTime"
-    > &
+    } as Pick<SalesRepStats, "totalClientsClosedMonthly" | "totalClientsClosedAllTime"> &
       Partial<SalesRepStats>;
   }, [totalClientsClosedMonthly, totalClientsClosedAllTime]);
 
   // Filter commissions based on current filters - memoized to prevent infinite re-renders
   const filteredCommissions = useMemo(() => {
     return commissions.filter((commission) => {
-      const matchesRep =
-        selectedSalesRep === "all" || commission.salesRep === selectedSalesRep;
-      const matchesStatus =
-        statusFilter === "all" || commission.status === statusFilter;
+      const matchesRep = selectedSalesRep === "all" || commission.salesRep === selectedSalesRep;
+      const matchesStatus = statusFilter === "all" || commission.status === statusFilter;
       const matchesSearch =
         searchTerm === "" ||
         commission.dealName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        commission.companyName
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
+        commission.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         commission.salesRep.toLowerCase().includes(searchTerm.toLowerCase());
 
       return matchesRep && matchesStatus && matchesSearch;
@@ -553,9 +519,7 @@ export default function CommissionTracker() {
 
     const currentPeriodCommissions = repCommissions
       .filter(
-        (c) =>
-          c.dateEarned >= currentPeriod.periodStart &&
-          c.dateEarned <= currentPeriod.periodEnd,
+        (c) => c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd
       )
       .reduce((sum, c) => sum + c.amount, 0);
 
@@ -586,7 +550,7 @@ export default function CommissionTracker() {
       | Commission["status"]
       | MonthlyBonus["status"]
       | MilestoneBonus["status"]
-      | AdjustmentRequest["status"],
+      | AdjustmentRequest["status"]
   ) => {
     switch (status) {
       case "paid":
@@ -609,10 +573,7 @@ export default function CommissionTracker() {
         );
       case "pending":
         return (
-          <Badge
-            className="bg-muted text-foreground hover:bg-muted"
-            data-testid="badge-pending"
-          >
+          <Badge className="bg-muted text-foreground hover:bg-muted" data-testid="badge-pending">
             Pending
           </Badge>
         );
@@ -636,10 +597,7 @@ export default function CommissionTracker() {
         );
       default:
         return (
-          <Badge
-            className="bg-muted text-foreground hover:bg-muted"
-            data-testid="badge-unknown"
-          >
+          <Badge className="bg-muted text-foreground hover:bg-muted" data-testid="badge-unknown">
             Unknown
           </Badge>
         );
@@ -660,12 +618,9 @@ export default function CommissionTracker() {
   };
 
   const getPriorityIcon = (probability?: number) => {
-    if (!probability)
-      return <Clock className="w-4 h-4 text-muted-foreground" />;
-    if (probability >= 75)
-      return <CheckCircle className="w-4 h-4 text-green-600" />;
-    if (probability >= 50)
-      return <AlertCircle className="w-4 h-4 text-yellow-600" />;
+    if (!probability) return <Clock className="w-4 h-4 text-muted-foreground" />;
+    if (probability >= 75) return <CheckCircle className="w-4 h-4 text-green-600" />;
+    if (probability >= 50) return <AlertCircle className="w-4 h-4 text-yellow-600" />;
     return <TrendingDown className="w-4 h-4 text-red-600" />;
   };
 
@@ -685,8 +640,7 @@ export default function CommissionTracker() {
       commissionId: selectedCommission.id,
       salesRep: selectedCommission.salesRep,
       originalAmount: selectedCommission.amount,
-      requestedAmount:
-        parseFloat(adjustmentAmount) || selectedCommission.amount,
+      requestedAmount: parseFloat(adjustmentAmount) || selectedCommission.amount,
       reason: adjustmentReason,
       status: "pending",
       requestedDate: new Date().toISOString().slice(0, 10),
@@ -718,8 +672,8 @@ export default function CommissionTracker() {
               reviewedDate: new Date().toISOString().slice(0, 10),
               reviewNotes,
             }
-          : req,
-      ),
+          : req
+      )
     );
 
     // Update the commission amount
@@ -727,8 +681,8 @@ export default function CommissionTracker() {
       prev.map((comm) =>
         comm.id === selectedAdjustmentRequest.commissionId
           ? { ...comm, amount: selectedAdjustmentRequest.requestedAmount }
-          : comm,
-      ),
+          : comm
+      )
     );
 
     setReviewDialogOpen(false);
@@ -749,8 +703,8 @@ export default function CommissionTracker() {
               reviewedDate: new Date().toISOString().slice(0, 10),
               reviewNotes,
             }
-          : req,
-      ),
+          : req
+      )
     );
 
     setReviewDialogOpen(false);
@@ -767,7 +721,7 @@ export default function CommissionTracker() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
+    <div className="min-h-screen page-bg theme-seed-dark">
       <div className="max-w-7xl mx-auto p-6">
         <UniversalNavbar showBackButton={true} fallbackPath="/admin" />
 
@@ -775,10 +729,7 @@ export default function CommissionTracker() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1
-                className="text-3xl font-bold text-white mb-2"
-                data-testid="page-title"
-              >
+              <h1 className="text-3xl font-bold text-white mb-2" data-testid="page-title">
                 Commission Tracking
               </h1>
               <p className="text-white/80">
@@ -787,12 +738,11 @@ export default function CommissionTracker() {
                   ? `${new Date(hubspotCommissionData.period_start).toLocaleDateString()} - ${new Date(hubspotCommissionData.period_end).toLocaleDateString()}`
                   : `${new Date(currentPeriod.periodStart).toLocaleDateString()} - ${new Date(currentPeriod.periodEnd).toLocaleDateString()}`}
                 <span className="ml-4">
-                  Next Payroll:{" "}
-                  {new Date(currentPeriod.payrollDate).toLocaleDateString()}
+                  Next Payroll: {new Date(currentPeriod.payrollDate).toLocaleDateString()}
                 </span>
                 {hubspotCommissionData && (
                   <span className="ml-4 inline-flex items-center gap-1 text-green-200">
-                    <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                    <span className="w-2 h-2 bg-green-400 rounded-full" />
                     Live HubSpot Data
                   </span>
                 )}
@@ -820,16 +770,14 @@ export default function CommissionTracker() {
 
         {/* Key Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <KbCard
+          <SurfaceCard
             className="bg-white/95 backdrop-blur border-0 shadow-xl"
             data-testid="card-current-period"
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Current Period Total
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Current Period Total</p>
                   <p className="text-2xl font-bold text-foreground">
                     $
                     {totalCurrentPeriodCommissions.toLocaleString(undefined, {
@@ -840,14 +788,12 @@ export default function CommissionTracker() {
                     <div className="text-xs text-muted-foreground mt-1">
                       <p>
                         {hubspotCommissionData.invoice_count} paid invoices •{" "}
-                        {hubspotCommissionData.subscription_count} active
-                        subscriptions
+                        {hubspotCommissionData.subscription_count} active subscriptions
                       </p>
                       {hubspotCommissionData.invoice_count === 0 &&
                         hubspotCommissionData.subscription_count === 0 && (
                           <p className="text-blue-600 mt-1 font-medium">
-                            🎯 New: Commissions now based on actual invoice
-                            payments
+                            🎯 New: Commissions now based on actual invoice payments
                           </p>
                         )}
                     </div>
@@ -856,18 +802,16 @@ export default function CommissionTracker() {
                 <Calendar className="h-8 w-8 text-blue-600" />
               </div>
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
 
-          <KbCard
+          <SurfaceCard
             className="bg-white/95 backdrop-blur border-0 shadow-xl"
             data-testid="card-pending"
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Pending
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Pending</p>
                   <p className="text-2xl font-bold text-yellow-600">
                     $
                     {totalPendingCommissions.toLocaleString(undefined, {
@@ -878,18 +822,16 @@ export default function CommissionTracker() {
                 <Clock className="h-8 w-8 text-yellow-600" />
               </div>
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
 
-          <KbCard
+          <SurfaceCard
             className="bg-white/95 backdrop-blur border-0 shadow-xl"
             data-testid="card-processing"
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Processing
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Processing</p>
                   <p className="text-2xl font-bold text-blue-600">
                     $
                     {totalProcessingCommissions.toLocaleString(undefined, {
@@ -900,18 +842,16 @@ export default function CommissionTracker() {
                 <TrendingUp className="h-8 w-8 text-blue-600" />
               </div>
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
 
-          <KbCard
+          <SurfaceCard
             className="bg-white/95 backdrop-blur border-0 shadow-xl"
             data-testid="card-projected"
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Projected
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Projected</p>
                   <p className="text-2xl font-bold text-purple-600">
                     $
                     {projectedCommissions.toLocaleString(undefined, {
@@ -922,30 +862,24 @@ export default function CommissionTracker() {
                 <Target className="h-8 w-8 text-purple-600" />
               </div>
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
 
-          <KbCard
+          <SurfaceCard
             className="bg-white/95 backdrop-blur border-0 shadow-xl"
             data-testid="card-adjustments"
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Pending Adjustments
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Pending Adjustments</p>
                   <p className="text-2xl font-bold text-red-600">
-                    {
-                      adjustmentRequests.filter(
-                        (req) => req.status === "pending",
-                      ).length
-                    }
+                    {adjustmentRequests.filter((req) => req.status === "pending").length}
                   </p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-red-600" />
               </div>
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
         </div>
 
         {/* Filters and Search */}
@@ -965,10 +899,7 @@ export default function CommissionTracker() {
                   data-testid="input-search"
                 />
               </div>
-              <Select
-                value={selectedSalesRep}
-                onValueChange={setSelectedSalesRep}
-              >
+              <Select value={selectedSalesRep} onValueChange={setSelectedSalesRep}>
                 <SelectTrigger className="w-48" data-testid="select-sales-rep">
                   <SelectValue placeholder="All Sales Reps" />
                 </SelectTrigger>
@@ -1007,11 +938,7 @@ export default function CommissionTracker() {
         </Card>
 
         {/* Main Content - Tabbed Interface */}
-        <Tabs
-          defaultValue="commissions"
-          className="space-y-6"
-          data-testid="main-tabs"
-        >
+        <Tabs defaultValue="commissions" className="space-y-6" data-testid="main-tabs">
           <TabsList
             className="bg-white/95 backdrop-blur border-0 shadow-xl"
             data-testid="tabs-list"
@@ -1036,11 +963,7 @@ export default function CommissionTracker() {
               data-testid="tab-adjustments"
             >
               Adjustment Requests (
-              {
-                adjustmentRequests.filter((req) => req.status === "pending")
-                  .length
-              }
-              )
+              {adjustmentRequests.filter((req) => req.status === "pending").length})
             </TabsTrigger>
             <TabsTrigger
               value="pipeline"
@@ -1088,9 +1011,7 @@ export default function CommissionTracker() {
                         >
                           <TableCell className="font-medium">
                             <div>
-                              <p className="font-semibold text-foreground">
-                                {commission.dealName}
-                              </p>
+                              <p className="font-semibold text-foreground">{commission.dealName}</p>
                               <p className="text-sm text-muted-foreground">
                                 {commission.companyName}
                               </p>
@@ -1123,22 +1044,16 @@ export default function CommissionTracker() {
                               minimumFractionDigits: 2,
                             })}
                           </TableCell>
+                          <TableCell>{getStatusBadge(commission.status)}</TableCell>
                           <TableCell>
-                            {getStatusBadge(commission.status)}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(
-                              commission.dateEarned,
-                            ).toLocaleDateString()}
+                            {new Date(commission.dateEarned).toLocaleDateString()}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() =>
-                                  handleRequestAdjustment(commission)
-                                }
+                                onClick={() => handleRequestAdjustment(commission)}
                                 data-testid={`button-adjust-${commission.id}`}
                               >
                                 <Edit className="w-4 h-4 mr-1" /> Adjust
@@ -1174,8 +1089,7 @@ export default function CommissionTracker() {
                   Adjustment Requests
                 </CardTitle>
                 <CardDescription>
-                  Review and approve commission adjustment requests from sales
-                  reps
+                  Review and approve commission adjustment requests from sales reps
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1195,14 +1109,9 @@ export default function CommissionTracker() {
                     </TableHeader>
                     <TableBody>
                       {adjustmentRequests.map((request) => {
-                        const commission = commissions.find(
-                          (c) => c.id === request.commissionId,
-                        );
+                        const commission = commissions.find((c) => c.id === request.commissionId);
                         return (
-                          <TableRow
-                            key={request.id}
-                            data-testid={`row-adjustment-${request.id}`}
-                          >
+                          <TableRow key={request.id} data-testid={`row-adjustment-${request.id}`}>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <User className="w-4 h-4 text-muted-foreground" />
@@ -1220,32 +1129,27 @@ export default function CommissionTracker() {
                                   </p>
                                 </div>
                               ) : (
-                                <span className="text-muted-foreground">
-                                  Deal not found
-                                </span>
+                                <span className="text-muted-foreground">Deal not found</span>
                               )}
                             </TableCell>
                             <TableCell className="font-semibold">
                               $
-                              {request.originalAmount.toLocaleString(
-                                undefined,
-                                { minimumFractionDigits: 2 },
-                              )}
+                              {request.originalAmount.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                              })}
                             </TableCell>
                             <TableCell className="font-semibold">
                               <span
                                 className={
-                                  request.requestedAmount >
-                                  request.originalAmount
+                                  request.requestedAmount > request.originalAmount
                                     ? "text-green-600"
                                     : "text-red-600"
                                 }
                               >
                                 $
-                                {request.requestedAmount.toLocaleString(
-                                  undefined,
-                                  { minimumFractionDigits: 2 },
-                                )}
+                                {request.requestedAmount.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                })}
                               </span>
                             </TableCell>
                             <TableCell className="max-w-xs">
@@ -1262,18 +1166,14 @@ export default function CommissionTracker() {
                               )}
                             </TableCell>
                             <TableCell>
-                              {new Date(
-                                request.requestedDate,
-                              ).toLocaleDateString()}
+                              {new Date(request.requestedDate).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
                               {request.status === "pending" ? (
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() =>
-                                    handleReviewAdjustment(request)
-                                  }
+                                  onClick={() => handleReviewAdjustment(request)}
                                   data-testid={`button-review-${request.id}`}
                                 >
                                   <Eye className="w-4 h-4 mr-1" />
@@ -1281,9 +1181,7 @@ export default function CommissionTracker() {
                                 </Button>
                               ) : (
                                 <span className="text-sm text-muted-foreground">
-                                  {request.status === "approved"
-                                    ? "Approved"
-                                    : "Rejected"}
+                                  {request.status === "approved" ? "Approved" : "Rejected"}
                                 </span>
                               )}
                             </TableCell>
@@ -1339,11 +1237,7 @@ export default function CommissionTracker() {
                           $
                           {deals
                             .filter((d) => d.status === "open" && d.probability)
-                            .reduce(
-                              (sum, d) =>
-                                sum + d.amount * (d.probability! / 100),
-                              0,
-                            )
+                            .reduce((sum, d) => sum + d.amount * (d.probability! / 100), 0)
                             .toLocaleString()}
                         </p>
                       </div>
@@ -1383,8 +1277,7 @@ export default function CommissionTracker() {
                     Pipeline Deals & Commission Projections
                   </CardTitle>
                   <CardDescription>
-                    Future commission projections based on current pipeline and
-                    probability
+                    Future commission projections based on current pipeline and probability
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -1410,19 +1303,13 @@ export default function CommissionTracker() {
                               deal.setupFee * 0.2 + deal.monthlyFee * 0.4;
                             const monthlyCommission = deal.monthlyFee * 0.1;
                             const projectedCommission =
-                              firstMonthCommission *
-                              ((deal.probability || 0) / 100);
+                              firstMonthCommission * ((deal.probability || 0) / 100);
 
                             return (
-                              <TableRow
-                                key={deal.id}
-                                data-testid={`row-pipeline-${deal.id}`}
-                              >
+                              <TableRow key={deal.id} data-testid={`row-pipeline-${deal.id}`}>
                                 <TableCell className="font-medium">
                                   <div>
-                                    <p className="font-semibold text-foreground">
-                                      {deal.dealName}
-                                    </p>
+                                    <p className="font-semibold text-foreground">{deal.dealName}</p>
                                     <p className="text-sm text-muted-foreground">
                                       {deal.companyName}
                                     </p>
@@ -1452,10 +1339,9 @@ export default function CommissionTracker() {
                                 </TableCell>
                                 <TableCell className="font-semibold text-green-600">
                                   $
-                                  {projectedCommission.toLocaleString(
-                                    undefined,
-                                    { minimumFractionDigits: 2 },
-                                  )}
+                                  {projectedCommission.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                  })}
                                 </TableCell>
                                 <TableCell>
                                   <div className="text-sm">
@@ -1463,8 +1349,7 @@ export default function CommissionTracker() {
                                       ${(deal.setupFee * 0.2).toLocaleString()}
                                     </p>
                                     <p className="text-muted-foreground">
-                                      20% of ${deal.setupFee.toLocaleString()}{" "}
-                                      setup fee
+                                      20% of ${deal.setupFee.toLocaleString()} setup fee
                                     </p>
                                   </div>
                                 </TableCell>
@@ -1474,8 +1359,7 @@ export default function CommissionTracker() {
                                       ${monthlyCommission.toLocaleString()}
                                     </p>
                                     <p className="text-muted-foreground">
-                                      10% of ${deal.monthlyFee.toLocaleString()}{" "}
-                                      monthly fee
+                                      10% of ${deal.monthlyFee.toLocaleString()} monthly fee
                                     </p>
                                   </div>
                                 </TableCell>
@@ -1484,9 +1368,7 @@ export default function CommissionTracker() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() =>
-                                        handleViewDealDetails(deal.id)
-                                      }
+                                      onClick={() => handleViewDealDetails(deal.id)}
                                       data-testid={`button-view-pipeline-${deal.id}`}
                                     >
                                       <Eye className="w-4 h-4" />
@@ -1522,19 +1404,12 @@ export default function CommissionTracker() {
         </Tabs>
 
         {/* Adjustment Request Dialog */}
-        <Dialog
-          open={adjustmentDialogOpen}
-          onOpenChange={setAdjustmentDialogOpen}
-        >
-          <DialogContent
-            className="sm:max-w-[500px]"
-            data-testid="dialog-adjustment-request"
-          >
+        <Dialog open={adjustmentDialogOpen} onOpenChange={setAdjustmentDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]" data-testid="dialog-adjustment-request">
             <DialogHeader>
               <DialogTitle>Request Commission Adjustment</DialogTitle>
               <DialogDescription>
-                {selectedCommission &&
-                  `Requesting adjustment for ${selectedCommission.dealName}`}
+                {selectedCommission && `Requesting adjustment for ${selectedCommission.dealName}`}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -1542,17 +1417,13 @@ export default function CommissionTracker() {
                 <div className="p-4 bg-muted rounded-lg">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-medium text-muted-foreground">
-                        Current Amount:
-                      </span>
+                      <span className="font-medium text-muted-foreground">Current Amount:</span>
                       <p className="text-lg font-bold">
                         ${selectedCommission.amount.toLocaleString()}
                       </p>
                     </div>
                     <div>
-                      <span className="font-medium text-muted-foreground">
-                        Commission Type:
-                      </span>
+                      <span className="font-medium text-muted-foreground">Commission Type:</span>
                       <p>
                         {selectedCommission.type === "month_1"
                           ? "First Month"
@@ -1577,9 +1448,7 @@ export default function CommissionTracker() {
               </div>
 
               <div>
-                <Label htmlFor="adjustment-reason">
-                  Reason for Adjustment *
-                </Label>
+                <Label htmlFor="adjustment-reason">Reason for Adjustment *</Label>
                 <Textarea
                   id="adjustment-reason"
                   value={adjustmentReason}
@@ -1611,10 +1480,7 @@ export default function CommissionTracker() {
 
         {/* Review Adjustment Dialog */}
         <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
-          <DialogContent
-            className="sm:max-w-[600px]"
-            data-testid="dialog-review-adjustment"
-          >
+          <DialogContent className="sm:max-w-[600px]" data-testid="dialog-review-adjustment">
             <DialogHeader>
               <DialogTitle>Review Adjustment Request</DialogTitle>
               <DialogDescription>
@@ -1628,23 +1494,17 @@ export default function CommissionTracker() {
                   <div className="p-4 bg-muted rounded-lg">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="font-medium text-muted-foreground">
-                          Original Amount:
-                        </span>
+                        <span className="font-medium text-muted-foreground">Original Amount:</span>
                         <p className="text-lg font-bold">
-                          $
-                          {selectedAdjustmentRequest.originalAmount.toLocaleString()}
+                          ${selectedAdjustmentRequest.originalAmount.toLocaleString()}
                         </p>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">
-                          Requested Amount:
-                        </span>
+                        <span className="font-medium text-gray-600">Requested Amount:</span>
                         <p
                           className={`text-lg font-bold ${selectedAdjustmentRequest.requestedAmount > selectedAdjustmentRequest.originalAmount ? "text-green-600" : "text-red-600"}`}
                         >
-                          $
-                          {selectedAdjustmentRequest.requestedAmount.toLocaleString()}
+                          ${selectedAdjustmentRequest.requestedAmount.toLocaleString()}
                         </p>
                       </div>
                     </div>
@@ -1653,9 +1513,7 @@ export default function CommissionTracker() {
                   <div>
                     <Label>Reason for Adjustment:</Label>
                     <div className="p-3 bg-gray-50 rounded-md mt-1">
-                      <p className="text-sm text-gray-700">
-                        {selectedAdjustmentRequest.reason}
-                      </p>
+                      <p className="text-sm text-gray-700">{selectedAdjustmentRequest.reason}</p>
                     </div>
                   </div>
 
@@ -1688,10 +1546,7 @@ export default function CommissionTracker() {
               >
                 Reject
               </Button>
-              <Button
-                onClick={handleApproveAdjustment}
-                data-testid="button-approve-adjustment"
-              >
+              <Button onClick={handleApproveAdjustment} data-testid="button-approve-adjustment">
                 Approve
               </Button>
             </DialogFooter>
@@ -1699,14 +1554,8 @@ export default function CommissionTracker() {
         </Dialog>
 
         {/* Deal Details Dialog */}
-        <Dialog
-          open={dealDetailsDialogOpen}
-          onOpenChange={setDealDetailsDialogOpen}
-        >
-          <DialogContent
-            className="sm:max-w-[700px]"
-            data-testid="dialog-deal-details"
-          >
+        <Dialog open={dealDetailsDialogOpen} onOpenChange={setDealDetailsDialogOpen}>
+          <DialogContent className="sm:max-w-[700px]" data-testid="dialog-deal-details">
             <DialogHeader>
               <DialogTitle>Deal Details</DialogTitle>
               <DialogDescription>
@@ -1719,25 +1568,17 @@ export default function CommissionTracker() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">
-                          Company
-                        </Label>
-                        <p className="text-lg font-semibold">
-                          {selectedDeal.companyName}
-                        </p>
+                        <Label className="text-sm font-medium text-gray-600">Company</Label>
+                        <p className="text-lg font-semibold">{selectedDeal.companyName}</p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">
-                          Deal Value
-                        </Label>
+                        <Label className="text-sm font-medium text-gray-600">Deal Value</Label>
                         <p className="text-lg font-semibold">
                           ${selectedDeal.amount.toLocaleString()}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">
-                          Service Type
-                        </Label>
+                        <Label className="text-sm font-medium text-gray-600">Service Type</Label>
                         <div className="flex items-center gap-2">
                           {getServiceTypeIcon(selectedDeal.serviceType)}
                           <span className="capitalize">
@@ -1748,36 +1589,22 @@ export default function CommissionTracker() {
                     </div>
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">
-                          Sales Rep
-                        </Label>
-                        <p className="text-lg font-semibold">
-                          {selectedDeal.salesRep}
-                        </p>
+                        <Label className="text-sm font-medium text-gray-600">Sales Rep</Label>
+                        <p className="text-lg font-semibold">{selectedDeal.salesRep}</p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">
-                          Status
-                        </Label>
+                        <Label className="text-sm font-medium text-gray-600">Status</Label>
                         <Badge
-                          variant={
-                            selectedDeal.status === "closed_won"
-                              ? "default"
-                              : "secondary"
-                          }
+                          variant={selectedDeal.status === "closed_won" ? "default" : "secondary"}
                         >
                           {selectedDeal.status.replace("_", " ").toUpperCase()}
                         </Badge>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">
-                          Close Date
-                        </Label>
+                        <Label className="text-sm font-medium text-gray-600">Close Date</Label>
                         <p>
                           {selectedDeal.closedDate
-                            ? new Date(
-                                selectedDeal.closedDate,
-                              ).toLocaleDateString()
+                            ? new Date(selectedDeal.closedDate).toLocaleDateString()
                             : "Not closed"}
                         </p>
                       </div>
@@ -1790,33 +1617,25 @@ export default function CommissionTracker() {
                     </Label>
                     <div className="grid grid-cols-2 gap-4 mt-2">
                       <div className="p-3 bg-green-50 rounded-lg">
-                        <p className="text-sm text-gray-600">
-                          Setup Fee Commission (20%)
-                        </p>
+                        <p className="text-sm text-gray-600">Setup Fee Commission (20%)</p>
                         <p className="text-lg font-bold text-green-600">
                           ${(selectedDeal.setupFee * 0.2).toLocaleString()}
                         </p>
                         <p className="text-xs text-gray-500">
-                          from ${selectedDeal.setupFee.toLocaleString()} setup
-                          fee
+                          from ${selectedDeal.setupFee.toLocaleString()} setup fee
                         </p>
                       </div>
                       <div className="p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-gray-600">
-                          First Month Commission (40%)
-                        </p>
+                        <p className="text-sm text-gray-600">First Month Commission (40%)</p>
                         <p className="text-lg font-bold text-blue-600">
                           ${(selectedDeal.monthlyFee * 0.4).toLocaleString()}
                         </p>
                         <p className="text-xs text-gray-500">
-                          from ${selectedDeal.monthlyFee.toLocaleString()}{" "}
-                          monthly fee
+                          from ${selectedDeal.monthlyFee.toLocaleString()} monthly fee
                         </p>
                       </div>
                       <div className="p-3 bg-purple-50 rounded-lg col-span-2">
-                        <p className="text-sm text-gray-600">
-                          Total First Month Commission
-                        </p>
+                        <p className="text-sm text-gray-600">Total First Month Commission</p>
                         <p className="text-xl font-bold text-purple-600">
                           $
                           {(
@@ -1828,32 +1647,23 @@ export default function CommissionTracker() {
                     </div>
                   </div>
 
-                  {selectedDeal.status === "open" &&
-                    selectedDeal.probability && (
-                      <div className="border-t pt-4">
-                        <Label className="text-sm font-medium text-gray-600">
-                          Pipeline Information
-                        </Label>
-                        <div className="grid grid-cols-2 gap-4 mt-2">
-                          <div>
-                            <p className="text-sm text-gray-600">
-                              Pipeline Stage
-                            </p>
-                            <p className="font-semibold">
-                              {selectedDeal.pipelineStage}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-600">
-                              Close Probability
-                            </p>
-                            <p className="font-semibold">
-                              {selectedDeal.probability}%
-                            </p>
-                          </div>
+                  {selectedDeal.status === "open" && selectedDeal.probability && (
+                    <div className="border-t pt-4">
+                      <Label className="text-sm font-medium text-gray-600">
+                        Pipeline Information
+                      </Label>
+                      <div className="grid grid-cols-2 gap-4 mt-2">
+                        <div>
+                          <p className="text-sm text-gray-600">Pipeline Stage</p>
+                          <p className="font-semibold">{selectedDeal.pipelineStage}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Close Probability</p>
+                          <p className="font-semibold">{selectedDeal.probability}%</p>
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1898,9 +1708,7 @@ export default function CommissionTracker() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Clients Closed This Month</span>
-                  <span className="font-medium">
-                    {salesRepStats.totalClientsClosedMonthly}
-                  </span>
+                  <span className="font-medium">{salesRepStats.totalClientsClosedMonthly}</span>
                 </div>
                 <Progress
                   value={(salesRepStats.totalClientsClosedMonthly / 15) * 100}
@@ -1912,13 +1720,9 @@ export default function CommissionTracker() {
                 <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                   <div className="flex items-center gap-2 mb-2">
                     <CheckCircle className="w-5 h-5 text-green-600" />
-                    <span className="font-medium text-green-800">
-                      Bonus Eligible!
-                    </span>
+                    <span className="font-medium text-green-800">Bonus Eligible!</span>
                   </div>
-                  <p className="text-sm text-green-700">
-                    {monthlyBonusEligibility.description}
-                  </p>
+                  <p className="text-sm text-green-700">{monthlyBonusEligibility.description}</p>
                   <p className="text-lg font-bold text-green-800">
                     ${monthlyBonusEligibility.amount}
                   </p>
@@ -1949,37 +1753,28 @@ export default function CommissionTracker() {
                 <Trophy className="h-5 w-5 text-yellow-600" />
                 Milestone Progress
               </CardTitle>
-              <CardDescription>
-                Track lifetime client milestones and major bonuses
-              </CardDescription>
+              <CardDescription>Track lifetime client milestones and major bonuses</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Progress to {nextMilestone.nextMilestone} Clients</span>
                   <span className="font-medium">
-                    {salesRepStats.totalClientsClosedAllTime}/
-                    {nextMilestone.nextMilestone}
+                    {salesRepStats.totalClientsClosedAllTime}/{nextMilestone.nextMilestone}
                   </span>
                 </div>
                 <Progress value={nextMilestone.progress} className="h-2" />
-                <p className="text-xs text-gray-500">
-                  {nextMilestone.remaining} clients remaining
-                </p>
+                <p className="text-xs text-gray-500">{nextMilestone.remaining} clients remaining</p>
               </div>
 
               {milestoneBonuses.length > 0 && (
                 <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                   <div className="flex items-center gap-2 mb-2">
                     <Award className="w-5 h-5 text-yellow-600" />
-                    <span className="font-medium text-yellow-800">
-                      Last Achievement
-                    </span>
+                    <span className="font-medium text-yellow-800">Last Achievement</span>
                   </div>
                   <p className="text-sm text-yellow-700">40 Client Milestone</p>
-                  <p className="text-lg font-bold text-yellow-800">
-                    $5,000 Bonus
-                  </p>
+                  <p className="text-lg font-bold text-yellow-800">$5,000 Bonus</p>
                 </div>
               )}
 
@@ -2011,20 +1806,14 @@ export default function CommissionTracker() {
             <Tabs defaultValue="deals" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="deals">Recent Deals</TabsTrigger>
-                <TabsTrigger value="monthly-bonuses">
-                  Monthly Bonuses
-                </TabsTrigger>
-                <TabsTrigger value="milestone-bonuses">
-                  Milestone Bonuses
-                </TabsTrigger>
+                <TabsTrigger value="monthly-bonuses">Monthly Bonuses</TabsTrigger>
+                <TabsTrigger value="milestone-bonuses">Milestone Bonuses</TabsTrigger>
               </TabsList>
 
               <TabsContent value="deals" className="mt-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">
-                      Recent Closed Deals
-                    </h3>
+                    <h3 className="text-lg font-semibold">Recent Closed Deals</h3>
                     <Badge variant="outline">{deals.length} deals</Badge>
                   </div>
                   <div className="rounded-md border">
@@ -2043,23 +1832,15 @@ export default function CommissionTracker() {
                       <TableBody>
                         {deals.map((deal) => (
                           <TableRow key={deal.id}>
-                            <TableCell className="font-medium">
-                              {deal.companyName}
-                            </TableCell>
+                            <TableCell className="font-medium">{deal.companyName}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 {getServiceTypeIcon(deal.serviceType)}
-                                <span className="capitalize">
-                                  {deal.serviceType}
-                                </span>
+                                <span className="capitalize">{deal.serviceType}</span>
                               </div>
                             </TableCell>
-                            <TableCell>
-                              ${deal.setupFee.toLocaleString()}
-                            </TableCell>
-                            <TableCell>
-                              ${deal.monthlyFee.toLocaleString()}
-                            </TableCell>
+                            <TableCell>${deal.setupFee.toLocaleString()}</TableCell>
+                            <TableCell>${deal.monthlyFee.toLocaleString()}</TableCell>
                             <TableCell className="font-medium">
                               ${deal.amount.toLocaleString()}
                             </TableCell>
@@ -2085,9 +1866,7 @@ export default function CommissionTracker() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Monthly Bonuses</h3>
-                    <Badge variant="outline">
-                      {monthlyBonuses.length} bonuses
-                    </Badge>
+                    <Badge variant="outline">{monthlyBonuses.length} bonuses</Badge>
                   </div>
                   <div className="rounded-md border">
                     <Table>
@@ -2104,9 +1883,7 @@ export default function CommissionTracker() {
                       <TableBody>
                         {monthlyBonuses.map((bonus) => (
                           <TableRow key={bonus.id}>
-                            <TableCell className="font-medium">
-                              {bonus.month}
-                            </TableCell>
+                            <TableCell className="font-medium">{bonus.month}</TableCell>
                             <TableCell>{bonus.clientsClosedCount}</TableCell>
                             <TableCell className="capitalize">
                               {bonus.bonusType.replace("_", " ")}
@@ -2117,12 +1894,8 @@ export default function CommissionTracker() {
                                 minimumFractionDigits: 2,
                               })}
                             </TableCell>
-                            <TableCell>
-                              {getStatusBadge(bonus.status)}
-                            </TableCell>
-                            <TableCell>
-                              {new Date(bonus.dateEarned).toLocaleDateString()}
-                            </TableCell>
+                            <TableCell>{getStatusBadge(bonus.status)}</TableCell>
+                            <TableCell>{new Date(bonus.dateEarned).toLocaleDateString()}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -2135,9 +1908,7 @@ export default function CommissionTracker() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Milestone Bonuses</h3>
-                    <Badge variant="outline">
-                      {milestoneBonuses.length} achievements
-                    </Badge>
+                    <Badge variant="outline">{milestoneBonuses.length} achievements</Badge>
                   </div>
                   <div className="rounded-md border">
                     <Table>
@@ -2154,9 +1925,7 @@ export default function CommissionTracker() {
                       <TableBody>
                         {milestoneBonuses.map((bonus) => (
                           <TableRow key={bonus.id}>
-                            <TableCell className="font-medium">
-                              {bonus.milestone} Clients
-                            </TableCell>
+                            <TableCell className="font-medium">{bonus.milestone} Clients</TableCell>
                             <TableCell className="font-medium">
                               $
                               {bonus.bonusAmount.toLocaleString(undefined, {
@@ -2172,16 +1941,10 @@ export default function CommissionTracker() {
                                 <span className="text-gray-500">No</span>
                               )}
                             </TableCell>
+                            <TableCell>{getStatusBadge(bonus.status)}</TableCell>
+                            <TableCell>{new Date(bonus.dateEarned).toLocaleDateString()}</TableCell>
                             <TableCell>
-                              {getStatusBadge(bonus.status)}
-                            </TableCell>
-                            <TableCell>
-                              {new Date(bonus.dateEarned).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              {bonus.datePaid
-                                ? new Date(bonus.datePaid).toLocaleDateString()
-                                : "-"}
+                              {bonus.datePaid ? new Date(bonus.datePaid).toLocaleDateString() : "-"}
                             </TableCell>
                           </TableRow>
                         ))}

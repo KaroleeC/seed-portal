@@ -93,7 +93,7 @@ export class HubSpotCommissionSync {
             `);
             userId = (inserted.rows[0] as any).id;
             console.log(
-              `✅ Added user for sales rep: ${hsUser.firstName} ${hsUser.lastName} (${hsUser.email}) -> user_id=${userId}`,
+              `✅ Added user for sales rep: ${hsUser.firstName} ${hsUser.lastName} (${hsUser.email}) -> user_id=${userId}`
             );
           } else {
             userId = (existingUser.rows[0] as any).id;
@@ -106,7 +106,7 @@ export class HubSpotCommissionSync {
               WHERE id = ${userId}
             `);
             console.log(
-              `🔄 Updated user for sales rep: ${hsUser.firstName} ${hsUser.lastName} (${hsUser.email}) -> user_id=${userId}`,
+              `🔄 Updated user for sales rep: ${hsUser.firstName} ${hsUser.lastName} (${hsUser.email}) -> user_id=${userId}`
             );
           }
 
@@ -165,33 +165,21 @@ export class HubSpotCommissionSync {
 
       for (const invoice of invoices) {
         console.log(`🔍 Processing invoice ID: ${invoice.id}`);
-        console.log(
-          `📝 Invoice properties:`,
-          JSON.stringify(invoice.properties, null, 2),
-        );
-        console.log(
-          `🔗 Invoice associations:`,
-          JSON.stringify(invoice.associations, null, 2),
-        );
+        console.log(`📝 Invoice properties:`, JSON.stringify(invoice.properties, null, 2));
+        console.log(`🔗 Invoice associations:`, JSON.stringify(invoice.associations, null, 2));
 
         // Get line items for this invoice
         const lineItemIds =
-          invoice.associations?.["line items"]?.results?.map(
-            (li: any) => li.id,
-          ) || [];
+          invoice.associations?.["line items"]?.results?.map((li: any) => li.id) || [];
 
         console.log(`🔗 Line item IDs for invoice ${invoice.id}:`, lineItemIds);
 
         if (lineItemIds.length === 0) {
           console.log(`⚠️ No line items found for invoice ${invoice.id}`);
-          console.log(
-            `🔍 Creating sample line items based on invoice amount for testing...`,
-          );
+          console.log(`🔍 Creating sample line items based on invoice amount for testing...`);
 
           // Create a sample line item for testing based on invoice amount
-          const invoiceAmount = parseFloat(
-            invoice.properties.hs_invoice_amount || "1000",
-          );
+          const invoiceAmount = parseFloat(invoice.properties.hs_invoice_amount || "1000");
           const sampleLineItems = [
             {
               id: `sample-${invoice.id}`,
@@ -213,11 +201,7 @@ export class HubSpotCommissionSync {
 
           // Process with sample line items
           const totalAmount = invoiceAmount;
-          await this.processInvoiceWithLineItems(
-            invoice,
-            sampleLineItems,
-            totalAmount,
-          );
+          await this.processInvoiceWithLineItems(invoice, sampleLineItems, totalAmount);
           processedInvoices++;
           continue;
         }
@@ -227,9 +211,7 @@ export class HubSpotCommissionSync {
         let lineItems: any[] = [];
         if (lineItemIds.length > 0) {
           // Prefer detailed fetch via billing helper to ensure properties
-          lineItems = await this.hubspotService.getInvoiceLineItems(
-            String(invoice.id),
-          );
+          lineItems = await this.hubspotService.getInvoiceLineItems(String(invoice.id));
           for (const li of lineItems) {
             const amount = parseFloat(li.properties?.amount || "0");
             totalAmount += amount;
@@ -247,11 +229,11 @@ export class HubSpotCommissionSync {
         // Debug: Log what HubSpot actually gave us
         console.log(
           `🔍 DEBUGGING - Invoice ${invoice.id} properties:`,
-          JSON.stringify(invoice.properties, null, 2),
+          JSON.stringify(invoice.properties, null, 2)
         );
         console.log(
           `🔍 DEBUGGING - Invoice ${invoice.id} associations:`,
-          JSON.stringify(invoice.associations, null, 2),
+          JSON.stringify(invoice.associations, null, 2)
         );
 
         // Store debug data in database temporarily
@@ -272,9 +254,7 @@ export class HubSpotCommissionSync {
         processedInvoices++;
       }
 
-      console.log(
-        `✅ Invoices sync completed - processed ${processedInvoices} invoices`,
-      );
+      console.log(`✅ Invoices sync completed - processed ${processedInvoices} invoices`);
       return processedInvoices;
     } catch (error) {
       console.error("❌ Error syncing invoices:", error);
@@ -288,16 +268,12 @@ export class HubSpotCommissionSync {
   private async processInvoiceWithLineItems(
     invoice: any,
     lineItems: any[],
-    totalAmount: number,
+    totalAmount: number
   ): Promise<void> {
     // Check for invoice discounts - use balance_due if less than invoice_amount
-    const invoiceAmount = parseFloat(
-      invoice.properties.hs_invoice_amount || "0",
-    );
+    const invoiceAmount = parseFloat(invoice.properties.hs_invoice_amount || "0");
     const balanceDue = parseFloat(
-      invoice.properties.hs_balance_due ||
-        invoice.properties.hs_invoice_amount ||
-        "0",
+      invoice.properties.hs_balance_due || invoice.properties.hs_invoice_amount || "0"
     );
 
     // If balance_due is less than invoice_amount, a discount was applied
@@ -334,23 +310,17 @@ export class HubSpotCommissionSync {
         try {
           const dealDataArr = await this.hubspotService.getDeals({
             ids: [dealId],
-            properties: [
-              "dealname",
-              "hubspot_owner_id",
-              "hs_deal_stage_probability",
-            ],
+            properties: ["dealname", "hubspot_owner_id", "hs_deal_stage_probability"],
           });
           const dealData = Array.isArray(dealDataArr) ? dealDataArr[0] : null;
 
           if (dealData?.properties?.hubspot_owner_id) {
             // Get owner details from HubSpot
             const ownerData = await this.hubspotService.getOwnerById(
-              dealData.properties.hubspot_owner_id,
+              dealData.properties.hubspot_owner_id
             );
 
-            const ownerEmail = ownerData?.email
-              ? ownerData.email.toLowerCase()
-              : undefined;
+            const ownerEmail = ownerData?.email ? ownerData.email.toLowerCase() : undefined;
             if (ownerEmail) {
               // Resolve sales_rep_id by joining users -> sales_reps. Create if missing.
               const repRes = await db.execute(sql`
@@ -365,12 +335,11 @@ export class HubSpotCommissionSync {
                 const row = repRes.rows[0] as any;
                 salesRepId = Number(row.sales_rep_id);
                 salesRepName =
-                  `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim() ||
-                  ownerEmail;
+                  `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim() || ownerEmail;
               } else {
                 // Create user and sales_rep record for this owner
                 const userLookup = await db.execute(
-                  sql`SELECT id FROM users WHERE lower(email) = lower(${ownerEmail}) LIMIT 1`,
+                  sql`SELECT id FROM users WHERE lower(email) = lower(${ownerEmail}) LIMIT 1`
                 );
                 let userId: number;
                 if (userLookup.rows.length === 0) {
@@ -398,17 +367,14 @@ export class HubSpotCommissionSync {
                   salesRepId = (repInserted.rows[0] as any).id;
                 } else {
                   const repLookup = await db.execute(
-                    sql`SELECT id FROM sales_reps WHERE user_id = ${userId} LIMIT 1`,
+                    sql`SELECT id FROM sales_reps WHERE user_id = ${userId} LIMIT 1`
                   );
                   salesRepId =
-                    repLookup.rows.length > 0
-                      ? Number((repLookup.rows[0] as any).id)
-                      : null;
+                    repLookup.rows.length > 0 ? Number((repLookup.rows[0] as any).id) : null;
                 }
 
                 salesRepName =
-                  `${ownerData.firstName || ""} ${ownerData.lastName || ""}`.trim() ||
-                  ownerEmail;
+                  `${ownerData.firstName || ""} ${ownerData.lastName || ""}`.trim() || ownerEmail;
               }
             }
           }
@@ -420,7 +386,7 @@ export class HubSpotCommissionSync {
       // Fallback if still null: assign to first active sales rep if any
       if (!salesRepId) {
         const fallback = await db.execute(
-          sql`SELECT id FROM sales_reps WHERE is_active = true ORDER BY id ASC LIMIT 1`,
+          sql`SELECT id FROM sales_reps WHERE is_active = true ORDER BY id ASC LIMIT 1`
         );
         if (fallback.rows.length > 0) {
           salesRepId = Number((fallback.rows[0] as any).id);
@@ -428,7 +394,7 @@ export class HubSpotCommissionSync {
         } else {
           // As a last resort, create a placeholder sales rep tied to an admin user if present
           const adminUser = await db.execute(
-            sql`SELECT id, first_name, last_name, email FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1`,
+            sql`SELECT id, first_name, last_name, email FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1`
           );
           if (adminUser.rows.length > 0) {
             const u = adminUser.rows[0] as any;
@@ -438,8 +404,7 @@ export class HubSpotCommissionSync {
               RETURNING id
             `);
             salesRepId = Number((inserted.rows[0] as any).id);
-            salesRepName =
-              `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email;
+            salesRepName = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email;
           }
         }
       }
@@ -451,7 +416,7 @@ export class HubSpotCommissionSync {
         `);
         if (verifyRep.rows.length === 0) {
           console.warn(
-            `⚠️ sales_rep_id ${salesRepId} not found; setting to null to avoid FK violation`,
+            `⚠️ sales_rep_id ${salesRepId} not found; setting to null to avoid FK violation`
           );
           salesRepId = null as any;
         }
@@ -471,8 +436,7 @@ export class HubSpotCommissionSync {
         console.log(`🏢 Fetching company details for ID: ${companyId}`);
 
         try {
-          const companyData =
-            await this.hubspotService.getCompanyById(companyId);
+          const companyData = await this.hubspotService.getCompanyById(companyId);
           companyName = companyData?.properties?.name || companyName;
           console.log(`✅ Retrieved company name: ${companyName}`);
         } catch (error) {
@@ -486,7 +450,7 @@ export class HubSpotCommissionSync {
       `);
       if (verifySalesRepId.rows.length === 0) {
         console.warn(
-          `⚠️ sales_rep_id ${salesRepId} not found; setting to null to avoid FK violation`,
+          `⚠️ sales_rep_id ${salesRepId} not found; setting to null to avoid FK violation`
         );
         salesRepId = null;
       }
@@ -524,7 +488,7 @@ export class HubSpotCommissionSync {
       `);
 
       const hubspotInvoiceId = (invoiceResult.rows[0] as any).id;
-      
+
       // Normalize line items to a consistent shape then create records
       const normalizedItems = lineItems.map((li: any) => {
         const p = li?.properties ?? {};
@@ -532,20 +496,13 @@ export class HubSpotCommissionSync {
         const description = String(p.description ?? li?.description ?? "");
         const quantityRaw = p.quantity ?? li?.quantity ?? 1;
         const priceRaw = p.price ?? li?.price ?? 0;
-        const amountRaw =
-          p.amount ?? li?.amount ?? Number(priceRaw) * Number(quantityRaw);
+        const amountRaw = p.amount ?? li?.amount ?? Number(priceRaw) * Number(quantityRaw);
         const quantity =
-          typeof quantityRaw === "number"
-            ? quantityRaw
-            : parseFloat(String(quantityRaw || "1"));
+          typeof quantityRaw === "number" ? quantityRaw : parseFloat(String(quantityRaw || "1"));
         const unitPrice =
-          typeof priceRaw === "number"
-            ? priceRaw
-            : parseFloat(String(priceRaw || "0"));
+          typeof priceRaw === "number" ? priceRaw : parseFloat(String(priceRaw || "0"));
         const amount =
-          typeof amountRaw === "number"
-            ? amountRaw
-            : parseFloat(String(amountRaw || "0"));
+          typeof amountRaw === "number" ? amountRaw : parseFloat(String(amountRaw || "0"));
         const id = li?.id ?? p?.hs_object_id ?? undefined;
         return { id, name, description, quantity, price: unitPrice, amount };
       });
@@ -583,7 +540,7 @@ export class HubSpotCommissionSync {
       }
 
       console.log(
-        `✅ Created invoice ${invoice.id} with ${lineItems.length} line items - $${totalAmount}`,
+        `✅ Created invoice ${invoice.id} with ${lineItems.length} line items - $${totalAmount}`
       );
 
       // Generate commissions based on normalized items (apply discount ratio if needed)
@@ -601,11 +558,11 @@ export class HubSpotCommissionSync {
           salesRepId,
           salesRepName,
           adjustedItems,
-          invoice.properties.hs_createdate,
+          invoice.properties.hs_createdate
         );
       } else {
         console.warn(
-          `⚠️ Skipping commission generation for invoice ${hubspotInvoiceId} due to missing sales_rep_id`,
+          `⚠️ Skipping commission generation for invoice ${hubspotInvoiceId} due to missing sales_rep_id`
         );
       }
     } else {
@@ -618,14 +575,8 @@ export class HubSpotCommissionSync {
    */
   private getInvoiceCompanyName(invoice: any): string {
     console.log(`🔍 Getting company name for invoice ${invoice.id}...`);
-    console.log(
-      `Invoice properties:`,
-      JSON.stringify(invoice.properties, null, 2),
-    );
-    console.log(
-      `Invoice associations:`,
-      JSON.stringify(invoice.associations, null, 2),
-    );
+    console.log(`Invoice properties:`, JSON.stringify(invoice.properties, null, 2));
+    console.log(`Invoice associations:`, JSON.stringify(invoice.associations, null, 2));
 
     // Try direct properties first
     if (invoice.properties.hs_deal_name) {
@@ -639,28 +590,22 @@ export class HubSpotCommissionSync {
     }
 
     if (invoice.properties.hs_company_name) {
-      console.log(
-        `✅ Found hs_company_name: ${invoice.properties.hs_company_name}`,
-      );
+      console.log(`✅ Found hs_company_name: ${invoice.properties.hs_company_name}`);
       return invoice.properties.hs_company_name;
     }
 
     if (invoice.properties.recipient_company_name) {
-      console.log(
-        `✅ Found recipient_company_name: ${invoice.properties.recipient_company_name}`,
-      );
+      console.log(`✅ Found recipient_company_name: ${invoice.properties.recipient_company_name}`);
       return invoice.properties.recipient_company_name;
     }
 
     if (invoice.properties.billing_contact_name) {
-      console.log(
-        `✅ Found billing_contact_name: ${invoice.properties.billing_contact_name}`,
-      );
+      console.log(`✅ Found billing_contact_name: ${invoice.properties.billing_contact_name}`);
       return invoice.properties.billing_contact_name;
     }
 
     console.log(
-      `⚠️ No company/contact name found in properties or associations for invoice ${invoice.id}`,
+      `⚠️ No company/contact name found in properties or associations for invoice ${invoice.id}`
     );
     return `Invoice ${invoice.id}`;
   }
@@ -672,9 +617,7 @@ export class HubSpotCommissionSync {
     // Look for recurring services like "Monthly Bookkeeping", "Tax as a Service"
     return lineItems
       .filter((item) => {
-        const name = String(
-          (item?.name ?? item?.properties?.name) || "",
-        ).toLowerCase();
+        const name = String((item?.name ?? item?.properties?.name) || "").toLowerCase();
         return (
           name.includes("monthly") ||
           name.includes("bookkeeping") ||
@@ -684,8 +627,7 @@ export class HubSpotCommissionSync {
       })
       .reduce((sum, item) => {
         const raw = item?.amount ?? item?.properties?.amount ?? 0;
-        const amount =
-          typeof raw === "number" ? raw : parseFloat(String(raw || "0"));
+        const amount = typeof raw === "number" ? raw : parseFloat(String(raw || "0"));
         return sum + (Number.isFinite(amount) ? amount : 0);
       }, 0);
   }
@@ -694,9 +636,7 @@ export class HubSpotCommissionSync {
     // Look for one-time services like "Clean-Up"
     return lineItems
       .filter((item) => {
-        const name = String(
-          (item?.name ?? item?.properties?.name) || "",
-        ).toLowerCase();
+        const name = String((item?.name ?? item?.properties?.name) || "").toLowerCase();
         return (
           name.includes("clean") ||
           name.includes("setup") ||
@@ -706,15 +646,14 @@ export class HubSpotCommissionSync {
       })
       .reduce((sum, item) => {
         const raw = item?.amount ?? item?.properties?.amount ?? 0;
-        const amount =
-          typeof raw === "number" ? raw : parseFloat(String(raw || "0"));
+        const amount = typeof raw === "number" ? raw : parseFloat(String(raw || "0"));
         return sum + (Number.isFinite(amount) ? amount : 0);
       }, 0);
   }
 
   private determineServiceType(lineItems: any[]): string {
     const services = lineItems.map((item) =>
-      String((item?.name ?? item?.properties?.name) || "").toLowerCase(),
+      String((item?.name ?? item?.properties?.name) || "").toLowerCase()
     );
 
     const hasBookkeeping = services.some(
@@ -722,14 +661,11 @@ export class HubSpotCommissionSync {
         s.includes("bookkeeping") ||
         s.includes("monthly") ||
         s.includes("clean") ||
-        s.includes("catch"),
+        s.includes("catch")
     );
 
     const hasTaas = services.some(
-      (s) =>
-        s.includes("tax as a service") ||
-        s.includes("prior year") ||
-        s.includes("tax service"),
+      (s) => s.includes("tax as a service") || s.includes("prior year") || s.includes("tax service")
     );
 
     if (hasBookkeeping && hasTaas) return "bookkeeping, taas";
@@ -748,8 +684,7 @@ export class HubSpotCommissionSync {
       serviceName.includes("setup")
     )
       return "setup";
-    if (serviceName.includes("prior") || serviceName.includes("year"))
-      return "prior_years";
+    if (serviceName.includes("prior") || serviceName.includes("year")) return "prior_years";
     if (
       serviceName.includes("monthly") ||
       serviceName.includes("recurring") ||
@@ -768,7 +703,7 @@ export class HubSpotCommissionSync {
     salesRepId: number,
     salesRepName: string,
     lineItems: any[],
-    paidDate: string,
+    paidDate: string
   ): Promise<void> {
     try {
       // Calculate setup fee and monthly value from line items
@@ -780,7 +715,7 @@ export class HubSpotCommissionSync {
         console.log(`  - ${item.name}: $${item.amount.toFixed(2)}`);
       }
       console.log(
-        `📊 Setup fee: $${setupFee.toFixed(2)}, Monthly value: $${monthlyValue.toFixed(2)}`,
+        `📊 Setup fee: $${setupFee.toFixed(2)}, Monthly value: $${monthlyValue.toFixed(2)}`
       );
 
       // Generate setup commission (20% of setup fee)
@@ -811,7 +746,7 @@ export class HubSpotCommissionSync {
           )
         `);
         console.log(
-          `✅ Setup commission: $${(setupFee * 0.2).toFixed(2)} (20% of $${setupFee.toFixed(2)})`,
+          `✅ Setup commission: $${(setupFee * 0.2).toFixed(2)} (20% of $${setupFee.toFixed(2)})`
         );
       }
 
@@ -843,20 +778,15 @@ export class HubSpotCommissionSync {
           )
         `);
         console.log(
-          `✅ Month 1 commission: $${(monthlyValue * 0.4).toFixed(2)} (40% of $${monthlyValue.toFixed(2)})`,
+          `✅ Month 1 commission: $${(monthlyValue * 0.4).toFixed(2)} (40% of $${monthlyValue.toFixed(2)})`
         );
 
         // Note: Residual commissions (months 2-12) will be generated when actual subscription payments are received
       }
 
-      console.log(
-        `✅ Generated all commissions for invoice ${hubspotInvoiceId}`,
-      );
+      console.log(`✅ Generated all commissions for invoice ${hubspotInvoiceId}`);
     } catch (error) {
-      console.error(
-        `❌ Error generating commissions for invoice ${hubspotInvoiceId}:`,
-        error,
-      );
+      console.error(`❌ Error generating commissions for invoice ${hubspotInvoiceId}:`, error);
       throw error;
     }
   }
@@ -880,14 +810,10 @@ export class HubSpotCommissionSync {
 
       // Count results
       const salesRepsCount = await db.execute(
-        sql`SELECT COUNT(*) as count FROM sales_reps WHERE is_active = true`,
+        sql`SELECT COUNT(*) as count FROM sales_reps WHERE is_active = true`
       );
-      const invoicesCount = await db.execute(
-        sql`SELECT COUNT(*) as count FROM hubspot_invoices`,
-      );
-      const commissionsCount = await db.execute(
-        sql`SELECT COUNT(*) as count FROM commissions`,
-      );
+      const invoicesCount = await db.execute(sql`SELECT COUNT(*) as count FROM hubspot_invoices`);
+      const commissionsCount = await db.execute(sql`SELECT COUNT(*) as count FROM commissions`);
 
       const results = {
         salesReps: (salesRepsCount.rows[0] as any).count,
@@ -909,9 +835,7 @@ export const hubspotSync: any = process.env.HUBSPOT_ACCESS_TOKEN
   ? new HubSpotCommissionSync()
   : {
       async performFullSync() {
-        console.warn(
-          "HubSpot not configured (no HUBSPOT_ACCESS_TOKEN). Skipping performFullSync.",
-        );
+        console.warn("HubSpot not configured (no HUBSPOT_ACCESS_TOKEN). Skipping performFullSync.");
         return {
           salesReps: 0,
           invoices: 0,

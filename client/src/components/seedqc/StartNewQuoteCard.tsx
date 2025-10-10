@@ -1,5 +1,5 @@
 import React from "react";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2, User } from "lucide-react";
@@ -28,14 +28,12 @@ export function StartNewQuoteCard({
   liveSearchContacts,
 }: Props) {
   return (
-    <KbCard overflowVisible className="max-w-lg mx-auto mb-8">
+    <SurfaceCard overflowVisible className="max-w-lg mx-auto mb-8">
       <CardContent className="p-8 text-center">
         <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-full mx-auto mb-6">
           <User className="h-8 w-8 text-white" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          Start New Quote
-        </h2>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Start New Quote</h2>
         <p className="text-muted-foreground mb-6">
           Enter a client email to begin the quoting process
         </p>
@@ -80,9 +78,7 @@ export function StartNewQuoteCard({
                 {isLiveSearching ? (
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      Searching...
-                    </span>
+                    <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
                   </div>
                 ) : liveSearchResults.length > 0 ? (
                   <div className="py-1">
@@ -94,12 +90,9 @@ export function StartNewQuoteCard({
                         onMouseDown={(e) => e.preventDefault()}
                       >
                         <div className="font-medium text-foreground">
-                          {contact.properties.firstname}{" "}
-                          {contact.properties.lastname}
+                          {contact.properties.firstname} {contact.properties.lastname}
                         </div>
-                        <div className="text-sm text-blue-600">
-                          {contact.properties.email}
-                        </div>
+                        <div className="text-sm text-blue-600">{contact.properties.email}</div>
                         {contact.properties.company && (
                           <div className="text-sm text-muted-foreground">
                             {contact.properties.company}
@@ -118,6 +111,6 @@ export function StartNewQuoteCard({
           </div>
         </div>
       </CardContent>
-    </KbCard>
+    </SurfaceCard>
   );
 }

@@ -1,14 +1,11 @@
 import type { Express } from "express";
-import { requireAuth } from "./auth";
+import { requireAuth } from "./middleware/supabase-auth";
 import { cache, CachePrefix, CacheTTL } from "./cache";
 import { hubSpotService } from "./hubspot";
 import { syncQuoteToHubSpot } from "./services/hubspot/sync";
 import { storage } from "./storage";
 import { sendOk, sendError } from "./utils/responses";
-import {
-  buildServiceConfig,
-  toPricingDataFromQuote,
-} from "./services/hubspot/compose";
+import { buildServiceConfig, toPricingDataFromQuote } from "./services/hubspot/compose";
 
 function getErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
@@ -26,34 +23,22 @@ export function registerHubspotRoutes(app: Express) {
   app.post("/api/hubspot/verify-contact", requireAuth, async (req, res) => {
     try {
       const { email } = (req.body || {}) as { email?: string };
-      if (!email)
-        return sendError(res, "INVALID_REQUEST", "Email is required", 400);
+      if (!email) return sendError(res, "INVALID_REQUEST", "Email is required", 400);
       if (!hubSpotService)
-        return sendError(
-          res,
-          "HUBSPOT_NOT_CONFIGURED",
-          "HubSpot integration not configured",
-          400,
-          { verified: false, data: { verified: false } },
-        );
+        return sendError(res, "HUBSPOT_NOT_CONFIGURED", "HubSpot integration not configured", 400, {
+          verified: false,
+          data: { verified: false },
+        });
       const cacheKey = cache.generateKey(CachePrefix.HUBSPOT_CONTACT, email);
       const result = await cache.wrap(
         cacheKey,
-        () =>
-          (
-            hubSpotService as NonNullable<typeof hubSpotService>
-          ).verifyContactByEmail(email),
-        { ttl: CacheTTL.HUBSPOT_CONTACT },
+        () => (hubSpotService as NonNullable<typeof hubSpotService>).verifyContactByEmail(email),
+        { ttl: CacheTTL.HUBSPOT_CONTACT }
       );
       return sendOk(res, result, undefined, result);
     } catch (error) {
       console.error("Error verifying contact:", error);
-      return sendError(
-        res,
-        "VERIFY_CONTACT_FAILED",
-        "Failed to verify contact",
-        500,
-      );
+      return sendError(res, "VERIFY_CONTACT_FAILED", "Failed to verify contact", 500);
     }
   });
 
@@ -64,23 +49,14 @@ export function registerHubspotRoutes(app: Express) {
       if (!searchTerm || searchTerm.length < 2)
         return sendOk(res, { contacts: [] }, undefined, { contacts: [] });
       if (!hubSpotService)
-        return sendError(
-          res,
-          "HUBSPOT_NOT_CONFIGURED",
-          "HubSpot integration not configured",
-          400,
-          { contacts: [] },
-        );
+        return sendError(res, "HUBSPOT_NOT_CONFIGURED", "HubSpot integration not configured", 400, {
+          contacts: [],
+        });
       const contacts = await hubSpotService.searchContacts(searchTerm);
       return sendOk(res, { contacts }, undefined, { contacts });
     } catch (error) {
       console.error("HubSpot search contacts error:", error);
-      return sendError(
-        res,
-        "HUBSPOT_SEARCH_FAILED",
-        "Failed to search HubSpot contacts",
-        500,
-      );
+      return sendError(res, "HUBSPOT_SEARCH_FAILED", "Failed to search HubSpot contacts", 500);
     }
   });
 
@@ -89,46 +65,25 @@ export function registerHubspotRoutes(app: Express) {
     try {
       const { quoteId } = (req.body || {}) as { quoteId?: number };
       const action = ((req.body || {}) as any).action || "create";
-      if (!quoteId)
-        return sendError(res, "INVALID_REQUEST", "Quote ID is required", 400);
-      if (!req.user)
-        return sendError(res, "UNAUTHENTICATED", "User not authenticated", 401);
+      if (!quoteId) return sendError(res, "INVALID_REQUEST", "Quote ID is required", 400);
+      if (!req.user) return sendError(res, "UNAUTHENTICATED", "User not authenticated", 401);
 
       try {
-        const { scheduleQuoteSync } = await import(
-          "./jobs/hubspot-queue-manager"
-        );
-        const job = await scheduleQuoteSync(
+        const { scheduleQuoteSync } = await import("./jobs/hubspot-queue-manager");
+        const job = await scheduleQuoteSync(quoteId, action, (req.user as any).id, 1);
+        return sendOk(res, { jobId: job.id, quoteId, action, method: "queued" }, undefined, {
+          jobId: job.id,
+          message: "HubSpot sync queued successfully",
           quoteId,
           action,
-          (req.user as any).id,
-          1,
-        );
-        return sendOk(
-          res,
-          { jobId: job.id, quoteId, action, method: "queued" },
-          undefined,
-          {
-            jobId: job.id,
-            message: "HubSpot sync queued successfully",
-            quoteId,
-            action,
-            method: "queued",
-          },
-        );
+          method: "queued",
+        });
       } catch (queueError) {
-        console.log(
-          "Queue unavailable, falling back to direct sync:",
-          getErrorMessage(queueError),
-        );
+        console.log("Queue unavailable, falling back to direct sync:", getErrorMessage(queueError));
       }
 
       try {
-        const unified = await syncQuoteToHubSpot(
-          quoteId,
-          action as any,
-          (req.user as any).email,
-        );
+        const unified = await syncQuoteToHubSpot(quoteId, action as any, (req.user as any).email);
         return sendOk(
           res,
           {
@@ -148,26 +103,20 @@ export function registerHubspotRoutes(app: Express) {
             hubspotDealId: unified.hubspotDealId,
             hubspotQuoteId: unified.hubspotQuoteId,
             totals: unified.totals,
-          },
+          }
         );
       } catch (unifiedError) {
         console.error("Unified direct sync failed:", unifiedError);
-        return sendError(
-          res,
-          "HUBSPOT_SYNC_FAILED",
-          "HubSpot sync failed",
-          500,
-          { quoteId, action, method: "direct", reason: getErrorMessage(unifiedError) },
-        );
+        return sendError(res, "HUBSPOT_SYNC_FAILED", "HubSpot sync failed", 500, {
+          quoteId,
+          action,
+          method: "direct",
+          reason: getErrorMessage(unifiedError),
+        });
       }
     } catch (error) {
       console.error("Failed to sync to HubSpot:", error);
-      return sendError(
-        res,
-        "HUBSPOT_SYNC_FAILED",
-        "Failed to sync to HubSpot",
-        500,
-      );
+      return sendError(res, "HUBSPOT_SYNC_FAILED", "Failed to sync to HubSpot", 500);
     }
   });
 
@@ -179,12 +128,7 @@ export function registerHubspotRoutes(app: Express) {
       return sendOk(res, status, undefined, status as any);
     } catch (error) {
       console.error("Failed to get queue status:", error);
-      return sendError(
-        res,
-        "QUEUE_STATUS_FAILED",
-        "Failed to get queue status",
-        500,
-      );
+      return sendError(res, "QUEUE_STATUS_FAILED", "Failed to get queue status", 500);
     }
   });
 
@@ -192,12 +136,7 @@ export function registerHubspotRoutes(app: Express) {
   app.get("/api/hubspot/debug/products", requireAuth, async (_req, res) => {
     try {
       if (!hubSpotService)
-        return sendError(
-          res,
-          "HUBSPOT_NOT_CONFIGURED",
-          "HubSpot integration not configured",
-          400,
-        );
+        return sendError(res, "HUBSPOT_NOT_CONFIGURED", "HubSpot integration not configured", 400);
 
       const productIds = await hubSpotService.verifyAndGetProductIds();
       const allProducts = await hubSpotService.getProducts();
@@ -206,34 +145,25 @@ export function registerHubspotRoutes(app: Express) {
         {
           productIds,
           totalProducts: allProducts.length,
-          sampleProducts: allProducts
-            .slice(0, 5)
-            .map((p) => ({
-              id: p.id,
-              name: p.properties?.name,
-              sku: p.properties?.hs_sku,
-            })),
+          sampleProducts: allProducts.slice(0, 5).map((p) => ({
+            id: p.id,
+            name: p.properties?.name,
+            sku: p.properties?.hs_sku,
+          })),
         },
         undefined,
-        { productIds, totalProducts: allProducts.length },
+        { productIds, totalProducts: allProducts.length }
       );
     } catch (error) {
       console.error("Error debugging products:", error);
-      return sendError(
-        res,
-        "DEBUG_PRODUCTS_FAILED",
-        "Failed to debug products",
-        500,
-      );
+      return sendError(res, "DEBUG_PRODUCTS_FAILED", "Failed to debug products", 500);
     }
   });
 
   // GET /api/hubspot/health
   app.get("/api/hubspot/health", requireAuth, async (_req, res) => {
     try {
-      const { checkHubSpotApiHealth } = await import(
-        "./hubspot-background-jobs.js"
-      );
+      const { checkHubSpotApiHealth } = await import("./hubspot-background-jobs.js");
       const isHealthy = await checkHubSpotApiHealth();
       return sendOk(
         res,
@@ -247,40 +177,25 @@ export function registerHubspotRoutes(app: Express) {
           status: isHealthy ? "healthy" : "unhealthy",
           timestamp: new Date().toISOString(),
           hasApiAccess: isHealthy,
-        },
+        }
       );
     } catch (error) {
       console.error("HubSpot health check error:", error);
-      return sendError(
-        res,
-        "HEALTH_CHECK_FAILED",
-        "Failed to check HubSpot health",
-        500,
-      );
+      return sendError(res, "HEALTH_CHECK_FAILED", "Failed to check HubSpot health", 500);
     }
   });
 
   // POST /api/hubspot/cleanup-queue
   app.post("/api/hubspot/cleanup-queue", requireAuth, async (_req, res) => {
     try {
-      const { cleanupHubSpotQueue } = await import(
-        "./hubspot-background-jobs.js"
-      );
+      const { cleanupHubSpotQueue } = await import("./hubspot-background-jobs.js");
       await cleanupHubSpotQueue();
-      return sendOk(
-        res,
-        { message: "HubSpot queue cleanup completed successfully" },
-        undefined,
-        { message: "HubSpot queue cleanup completed successfully" },
-      );
+      return sendOk(res, { message: "HubSpot queue cleanup completed successfully" }, undefined, {
+        message: "HubSpot queue cleanup completed successfully",
+      });
     } catch (error) {
       console.error("HubSpot queue cleanup error:", error);
-      return sendError(
-        res,
-        "QUEUE_CLEANUP_FAILED",
-        "Failed to cleanup HubSpot queue",
-        500,
-      );
+      return sendError(res, "QUEUE_CLEANUP_FAILED", "Failed to cleanup HubSpot queue", 500);
     }
   });
 
@@ -288,32 +203,20 @@ export function registerHubspotRoutes(app: Express) {
   app.post("/api/hubspot/diagnostics/create", requireAuth, async (req, res) => {
     try {
       const { quoteId } = (req.body || {}) as { quoteId?: number | string };
-      if (!quoteId)
-        return sendError(res, "INVALID_REQUEST", "quoteId required", 400);
+      if (!quoteId) return sendError(res, "INVALID_REQUEST", "quoteId required", 400);
       if (!hubSpotService)
-        return sendError(
-          res,
-          "HUBSPOT_NOT_CONFIGURED",
-          "HubSpot integration not configured",
-          400,
-        );
-      const idNum =
-        typeof quoteId === "string" ? parseInt(quoteId, 10) : quoteId;
+        return sendError(res, "HUBSPOT_NOT_CONFIGURED", "HubSpot integration not configured", 400);
+      const idNum = typeof quoteId === "string" ? parseInt(quoteId, 10) : quoteId;
       if (!idNum || Number.isNaN(idNum))
         return sendError(res, "INVALID_REQUEST", "invalid quoteId", 400);
       const quote = await storage.getQuote(idNum);
-      if (!quote)
-        return sendError(res, "NOT_FOUND", `Quote ${quoteId} not found`, 404);
+      if (!quote) return sendError(res, "NOT_FOUND", `Quote ${quoteId} not found`, 404);
 
-      const contactResult = await hubSpotService.verifyContactByEmail(
-        quote.contactEmail,
-      );
+      const contactResult = await hubSpotService.verifyContactByEmail(quote.contactEmail);
       const contact = contactResult.contact || null;
       const companyName = contact?.properties?.company || "Unknown Company";
       const ownerEmail = (req.user as any)?.email || null;
-      const ownerId = ownerEmail
-        ? await hubSpotService.getOwnerByEmail(ownerEmail)
-        : null;
+      const ownerId = ownerEmail ? await hubSpotService.getOwnerByEmail(ownerEmail) : null;
 
       const pricingInput = toPricingDataFromQuote(quote);
       const svcConfig = buildServiceConfig(quote);
@@ -331,17 +234,13 @@ export function registerHubspotRoutes(app: Express) {
       // Identify missing required fields for TaaS when selected (for debugging)
       const taasMissing: string[] = [];
       if (includesTaas) {
-        if (!pricingInput.monthlyRevenueRange)
-          taasMissing.push("monthlyRevenueRange");
+        if (!pricingInput.monthlyRevenueRange) taasMissing.push("monthlyRevenueRange");
         if (!pricingInput.industry) taasMissing.push("industry");
         if (!pricingInput.numEntities) taasMissing.push("numEntities");
         if (!pricingInput.statesFiled) taasMissing.push("statesFiled");
-        if (pricingInput.internationalFiling === undefined)
-          taasMissing.push("internationalFiling");
-        if (!pricingInput.numBusinessOwners)
-          taasMissing.push("numBusinessOwners");
-        if (pricingInput.include1040s === undefined)
-          taasMissing.push("include1040s");
+        if (pricingInput.internationalFiling === undefined) taasMissing.push("internationalFiling");
+        if (!pricingInput.numBusinessOwners) taasMissing.push("numBusinessOwners");
+        if (pricingInput.include1040s === undefined) taasMissing.push("include1040s");
       }
 
       const productIds = await hubSpotService.verifyAndGetProductIds();
@@ -399,9 +298,7 @@ export function registerHubspotRoutes(app: Express) {
       if (includesAP && fees.ap > 0)
         lineItemsPreview.push({
           productKey:
-            (quote as any).apServiceTier === "advanced"
-              ? "AP_ADVANCED_SERVICE"
-              : "AP_LITE_SERVICE",
+            (quote as any).apServiceTier === "advanced" ? "AP_ADVANCED_SERVICE" : "AP_LITE_SERVICE",
           productId: null,
           price: fees.ap,
           quantity: 1,
@@ -409,9 +306,7 @@ export function registerHubspotRoutes(app: Express) {
       if (includesAR && fees.ar > 0)
         lineItemsPreview.push({
           productKey:
-            (quote as any).arServiceTier === "advanced"
-              ? "AR_ADVANCED_SERVICE"
-              : "AR_LITE_SERVICE",
+            (quote as any).arServiceTier === "advanced" ? "AR_ADVANCED_SERVICE" : "AR_LITE_SERVICE",
           productId: null,
           price: fees.ar,
           quantity: 1,
@@ -453,7 +348,7 @@ export function registerHubspotRoutes(app: Express) {
         },
         totals: {
           monthly: fees.combinedMonthly,
-          setup: fees.combinedSetup,
+          setup: fees.combinedOneTimeFees,
           bookkeepingSetupFee: fees.bookkeepingSetup,
         },
         productIds,
@@ -466,12 +361,7 @@ export function registerHubspotRoutes(app: Express) {
       return sendOk(res, payload, undefined, payload as any);
     } catch (error) {
       console.error("Create diagnostics failed:", error);
-      return sendError(
-        res,
-        "DIAGNOSTICS_CREATE_FAILED",
-        "Create diagnostics failed",
-        500,
-      );
+      return sendError(res, "DIAGNOSTICS_CREATE_FAILED", "Create diagnostics failed", 500);
     }
   });
 
@@ -479,39 +369,27 @@ export function registerHubspotRoutes(app: Express) {
   app.post("/api/hubspot/diagnostics/update", requireAuth, async (req, res) => {
     try {
       const { quoteId } = (req.body || {}) as { quoteId?: number | string };
-      if (!quoteId)
-        return sendError(res, "INVALID_REQUEST", "quoteId required", 400);
+      if (!quoteId) return sendError(res, "INVALID_REQUEST", "quoteId required", 400);
       if (!hubSpotService)
-        return sendError(
-          res,
-          "HUBSPOT_NOT_CONFIGURED",
-          "HubSpot integration not configured",
-          400,
-        );
-      const idNum =
-        typeof quoteId === "string" ? parseInt(quoteId, 10) : quoteId;
+        return sendError(res, "HUBSPOT_NOT_CONFIGURED", "HubSpot integration not configured", 400);
+      const idNum = typeof quoteId === "string" ? parseInt(quoteId, 10) : quoteId;
       if (!idNum || Number.isNaN(idNum))
         return sendError(res, "INVALID_REQUEST", "invalid quoteId", 400);
       const quote = await storage.getQuote(idNum);
-      if (!quote)
-        return sendError(res, "NOT_FOUND", `Quote ${quoteId} not found`, 404);
+      if (!quote) return sendError(res, "NOT_FOUND", `Quote ${quoteId} not found`, 404);
       if (!(quote as any).hubspotDealId || !(quote as any).hubspotQuoteId)
         return sendError(
           res,
           "INVALID_STATE",
           "Quote missing hubspotDealId or hubspotQuoteId; cannot update",
-          400,
+          400
         );
 
-      const contactResult = await hubSpotService.verifyContactByEmail(
-        quote.contactEmail,
-      );
+      const contactResult = await hubSpotService.verifyContactByEmail(quote.contactEmail);
       const contact = contactResult.contact || null;
       const companyName = contact?.properties?.company || "Unknown Company";
       const ownerEmail = (req.user as any)?.email || null;
-      const ownerId = ownerEmail
-        ? await hubSpotService.getOwnerByEmail(ownerEmail)
-        : null;
+      const ownerId = ownerEmail ? await hubSpotService.getOwnerByEmail(ownerEmail) : null;
 
       const pricingInput = toPricingDataFromQuote(quote);
       const svcConfig2 = buildServiceConfig(quote);
@@ -592,9 +470,7 @@ export function registerHubspotRoutes(app: Express) {
       if (includesAP && fees2.ap > 0)
         lineItemsPreview.push({
           productKey:
-            (quote as any).apServiceTier === "advanced"
-              ? "AP_ADVANCED_SERVICE"
-              : "AP_LITE_SERVICE",
+            (quote as any).apServiceTier === "advanced" ? "AP_ADVANCED_SERVICE" : "AP_LITE_SERVICE",
           productId: null,
           price: fees2.ap,
           quantity: 1,
@@ -602,9 +478,7 @@ export function registerHubspotRoutes(app: Express) {
       if (includesAR && fees2.ar > 0)
         lineItemsPreview.push({
           productKey:
-            (quote as any).arServiceTier === "advanced"
-              ? "AR_ADVANCED_SERVICE"
-              : "AR_LITE_SERVICE",
+            (quote as any).arServiceTier === "advanced" ? "AR_ADVANCED_SERVICE" : "AR_LITE_SERVICE",
           productId: null,
           price: fees2.ar,
           quantity: 1,
@@ -669,7 +543,7 @@ export function registerHubspotRoutes(app: Express) {
         },
         totals: {
           monthly: fees2.combinedMonthly,
-          setup: fees2.combinedSetup,
+          setup: fees2.combinedOneTimeFees,
           bookkeepingSetupFee: fees2.bookkeepingSetup,
         },
         productIds,
@@ -679,12 +553,7 @@ export function registerHubspotRoutes(app: Express) {
       return sendOk(res, payload, undefined, payload as any);
     } catch (error) {
       console.error("Update diagnostics failed:", error);
-      return sendError(
-        res,
-        "DIAGNOSTICS_UPDATE_FAILED",
-        "Update diagnostics failed",
-        500,
-      );
+      return sendError(res, "DIAGNOSTICS_UPDATE_FAILED", "Update diagnostics failed", 500);
     }
   });
 
@@ -692,34 +561,20 @@ export function registerHubspotRoutes(app: Express) {
   app.get("/api/hubspot/diagnostics/create", requireAuth, async (req, res) => {
     try {
       const quoteId =
-        typeof (req.query as any).quoteId === "string"
-          ? (req.query as any).quoteId
-          : undefined;
-      if (!quoteId)
-        return sendError(res, "INVALID_REQUEST", "quoteId required", 400);
+        typeof (req.query as any).quoteId === "string" ? (req.query as any).quoteId : undefined;
+      if (!quoteId) return sendError(res, "INVALID_REQUEST", "quoteId required", 400);
       if (!hubSpotService)
-        return sendError(
-          res,
-          "HUBSPOT_NOT_CONFIGURED",
-          "HubSpot integration not configured",
-          400,
-        );
+        return sendError(res, "HUBSPOT_NOT_CONFIGURED", "HubSpot integration not configured", 400);
       const idNum = parseInt(String(quoteId), 10);
-      if (Number.isNaN(idNum))
-        return sendError(res, "INVALID_REQUEST", "invalid quoteId", 400);
+      if (Number.isNaN(idNum)) return sendError(res, "INVALID_REQUEST", "invalid quoteId", 400);
       const quote = await storage.getQuote(idNum);
-      if (!quote)
-        return sendError(res, "NOT_FOUND", `Quote ${quoteId} not found`, 404);
+      if (!quote) return sendError(res, "NOT_FOUND", `Quote ${quoteId} not found`, 404);
 
-      const contactResult = await hubSpotService.verifyContactByEmail(
-        quote.contactEmail,
-      );
+      const contactResult = await hubSpotService.verifyContactByEmail(quote.contactEmail);
       const contact = contactResult.contact || null;
       const companyName = contact?.properties?.company || "Unknown Company";
       const ownerEmail = (req.user as any)?.email || null;
-      const ownerId = ownerEmail
-        ? await hubSpotService.getOwnerByEmail(ownerEmail)
-        : null;
+      const ownerId = ownerEmail ? await hubSpotService.getOwnerByEmail(ownerEmail) : null;
       const pricingInput = toPricingDataFromQuote(quote);
       const svcConfig3 = buildServiceConfig(quote);
       const fees3 = svcConfig3.fees;
@@ -736,17 +591,13 @@ export function registerHubspotRoutes(app: Express) {
       // Identify missing required fields for TaaS when selected (for debugging)
       const taasMissing: string[] = [];
       if (includesTaas) {
-        if (!pricingInput.monthlyRevenueRange)
-          taasMissing.push("monthlyRevenueRange");
+        if (!pricingInput.monthlyRevenueRange) taasMissing.push("monthlyRevenueRange");
         if (!pricingInput.industry) taasMissing.push("industry");
         if (!pricingInput.numEntities) taasMissing.push("numEntities");
         if (!pricingInput.statesFiled) taasMissing.push("statesFiled");
-        if (pricingInput.internationalFiling === undefined)
-          taasMissing.push("internationalFiling");
-        if (!pricingInput.numBusinessOwners)
-          taasMissing.push("numBusinessOwners");
-        if (pricingInput.include1040s === undefined)
-          taasMissing.push("include1040s");
+        if (pricingInput.internationalFiling === undefined) taasMissing.push("internationalFiling");
+        if (!pricingInput.numBusinessOwners) taasMissing.push("numBusinessOwners");
+        if (pricingInput.include1040s === undefined) taasMissing.push("include1040s");
       }
       const productIds = await hubSpotService.verifyAndGetProductIds();
       const lineItemsPreview: Array<{
@@ -801,9 +652,7 @@ export function registerHubspotRoutes(app: Express) {
       if (includesAP && fees3.ap > 0)
         lineItemsPreview.push({
           productKey:
-            (quote as any).apServiceTier === "advanced"
-              ? "AP_ADVANCED_SERVICE"
-              : "AP_LITE_SERVICE",
+            (quote as any).apServiceTier === "advanced" ? "AP_ADVANCED_SERVICE" : "AP_LITE_SERVICE",
           productId: null,
           price: fees3.ap,
           quantity: 1,
@@ -811,9 +660,7 @@ export function registerHubspotRoutes(app: Express) {
       if (includesAR && fees3.ar > 0)
         lineItemsPreview.push({
           productKey:
-            (quote as any).arServiceTier === "advanced"
-              ? "AR_ADVANCED_SERVICE"
-              : "AR_LITE_SERVICE",
+            (quote as any).arServiceTier === "advanced" ? "AR_ADVANCED_SERVICE" : "AR_LITE_SERVICE",
           productId: null,
           price: fees3.ar,
           quantity: 1,
@@ -854,7 +701,7 @@ export function registerHubspotRoutes(app: Express) {
         },
         totals: {
           monthly: fees3.combinedMonthly,
-          setup: fees3.combinedSetup,
+          setup: fees3.combinedOneTimeFees,
           bookkeepingSetupFee: fees3.bookkeepingSetup,
         },
         productIds,
@@ -867,53 +714,34 @@ export function registerHubspotRoutes(app: Express) {
       return sendOk(res, payload, undefined, payload as any);
     } catch (error) {
       console.error("Create diagnostics (GET) failed:", error);
-      return sendError(
-        res,
-        "DIAGNOSTICS_CREATE_FAILED",
-        "Create diagnostics failed",
-        500,
-      );
+      return sendError(res, "DIAGNOSTICS_CREATE_FAILED", "Create diagnostics failed", 500);
     }
   });
 
   app.get("/api/hubspot/diagnostics/update", requireAuth, async (req, res) => {
     try {
       const quoteId =
-        typeof (req.query as any).quoteId === "string"
-          ? (req.query as any).quoteId
-          : undefined;
-      if (!quoteId)
-        return sendError(res, "INVALID_REQUEST", "quoteId required", 400);
+        typeof (req.query as any).quoteId === "string" ? (req.query as any).quoteId : undefined;
+      if (!quoteId) return sendError(res, "INVALID_REQUEST", "quoteId required", 400);
       if (!hubSpotService)
-        return sendError(
-          res,
-          "HUBSPOT_NOT_CONFIGURED",
-          "HubSpot integration not configured",
-          400,
-        );
+        return sendError(res, "HUBSPOT_NOT_CONFIGURED", "HubSpot integration not configured", 400);
       const idNum = parseInt(String(quoteId), 10);
-      if (Number.isNaN(idNum))
-        return sendError(res, "INVALID_REQUEST", "invalid quoteId", 400);
+      if (Number.isNaN(idNum)) return sendError(res, "INVALID_REQUEST", "invalid quoteId", 400);
       const quote = await storage.getQuote(idNum);
-      if (!quote)
-        return sendError(res, "NOT_FOUND", `Quote ${quoteId} not found`, 404);
+      if (!quote) return sendError(res, "NOT_FOUND", `Quote ${quoteId} not found`, 404);
       if (!(quote as any).hubspotDealId || !(quote as any).hubspotQuoteId)
         return sendError(
           res,
           "INVALID_STATE",
           "Quote missing hubspotDealId or hubspotQuoteId; cannot update",
-          400,
+          400
         );
 
-      const contactResult = await hubSpotService.verifyContactByEmail(
-        quote.contactEmail,
-      );
+      const contactResult = await hubSpotService.verifyContactByEmail(quote.contactEmail);
       const contact = contactResult.contact || null;
       const companyName = contact?.properties?.company || "Unknown Company";
       const ownerEmail = (req.user as any)?.email || null;
-      const ownerId = ownerEmail
-        ? await hubSpotService.getOwnerByEmail(ownerEmail)
-        : null;
+      const ownerId = ownerEmail ? await hubSpotService.getOwnerByEmail(ownerEmail) : null;
       const pricingInput = toPricingDataFromQuote(quote);
       const svcConfig4 = buildServiceConfig(quote);
       const fees4 = svcConfig4.fees;
@@ -979,9 +807,7 @@ export function registerHubspotRoutes(app: Express) {
       if (includesAP && fees4.ap > 0)
         lineItemsPreview.push({
           productKey:
-            (quote as any).apServiceTier === "advanced"
-              ? "AP_ADVANCED_SERVICE"
-              : "AP_LITE_SERVICE",
+            (quote as any).apServiceTier === "advanced" ? "AP_ADVANCED_SERVICE" : "AP_LITE_SERVICE",
           productId: null,
           price: fees4.ap,
           quantity: 1,
@@ -989,9 +815,7 @@ export function registerHubspotRoutes(app: Express) {
       if (includesAR && fees4.ar > 0)
         lineItemsPreview.push({
           productKey:
-            (quote as any).arServiceTier === "advanced"
-              ? "AR_ADVANCED_SERVICE"
-              : "AR_LITE_SERVICE",
+            (quote as any).arServiceTier === "advanced" ? "AR_ADVANCED_SERVICE" : "AR_LITE_SERVICE",
           productId: null,
           price: fees4.ar,
           quantity: 1,
@@ -1010,10 +834,7 @@ export function registerHubspotRoutes(app: Express) {
           price: fees4.serviceTier,
           quantity: 1,
         });
-      else if (
-        (quote as any).serviceTier === "Guided" &&
-        fees4.serviceTier > 0
-      )
+      else if ((quote as any).serviceTier === "Guided" && fees4.serviceTier > 0)
         lineItemsPreview.push({
           productKey: "GUIDED_SERVICE_TIER",
           productId: null,
@@ -1070,7 +891,7 @@ export function registerHubspotRoutes(app: Express) {
         },
         totals: {
           monthly: fees4.combinedMonthly,
-          setup: fees4.combinedSetup,
+          setup: fees4.combinedOneTimeFees,
           bookkeepingSetupFee: fees4.bookkeepingSetup,
         },
         productIds,
@@ -1080,12 +901,7 @@ export function registerHubspotRoutes(app: Express) {
       return sendOk(res, payload, undefined, payload as any);
     } catch (error) {
       console.error("Update diagnostics (GET) failed:", error);
-      return sendError(
-        res,
-        "DIAGNOSTICS_UPDATE_FAILED",
-        "Update diagnostics failed",
-        500,
-      );
+      return sendError(res, "DIAGNOSTICS_UPDATE_FAILED", "Update diagnostics failed", 500);
     }
   });
 
@@ -1095,8 +911,7 @@ export function registerHubspotRoutes(app: Express) {
       if ((req.user as any)?.role !== "admin")
         return sendError(res, "FORBIDDEN", "Admin access required", 403);
       const { jobId } = (req.body || {}) as { jobId?: string };
-      if (!jobId)
-        return sendError(res, "INVALID_REQUEST", "Job ID is required", 400);
+      if (!jobId) return sendError(res, "INVALID_REQUEST", "Job ID is required", 400);
       const { retryFailedJob } = await import("./jobs/hubspot-queue-manager");
       await retryFailedJob(jobId);
       return sendOk(res, { jobId }, undefined, {
@@ -1112,19 +927,12 @@ export function registerHubspotRoutes(app: Express) {
   // GET /api/hubspot/queue-metrics
   app.get("/api/hubspot/queue-metrics", requireAuth, async (_req, res) => {
     try {
-      const { getHubSpotQueueMetrics } = await import(
-        "./hubspot-background-jobs.js"
-      );
+      const { getHubSpotQueueMetrics } = await import("./hubspot-background-jobs.js");
       const metrics = await getHubSpotQueueMetrics();
       return sendOk(res, metrics, undefined, metrics as any);
     } catch (error) {
       console.error("HubSpot queue metrics error:", error);
-      return sendError(
-        res,
-        "QUEUE_METRICS_FAILED",
-        "Failed to get HubSpot queue metrics",
-        500,
-      );
+      return sendError(res, "QUEUE_METRICS_FAILED", "Failed to get HubSpot queue metrics", 500);
     }
   });
 
@@ -1156,12 +964,9 @@ export function registerHubspotRoutes(app: Express) {
               res,
               "INVALID_REQUEST",
               "Contact ID required for contact enrichment",
-              400,
+              400
             );
-          jobId = await scheduleContactEnrichment(
-            contactId,
-            (req.user as any)?.id,
-          );
+          jobId = await scheduleContactEnrichment(contactId, (req.user as any)?.id);
           break;
         case "deal-sync":
           jobId = await scheduleDealSync(dealId);
@@ -1170,26 +975,14 @@ export function registerHubspotRoutes(app: Express) {
           return sendError(res, "INVALID_REQUEST", "Invalid sync type", 400);
       }
       if (jobId)
-        return sendOk(
-          res,
-          { message: `${type} scheduled successfully`, jobId },
-          undefined,
-          { message: `${type} scheduled successfully`, jobId },
-        );
-      return sendError(
-        res,
-        "SCHEDULE_FAILED",
-        `Failed to schedule ${type}`,
-        500,
-      );
+        return sendOk(res, { message: `${type} scheduled successfully`, jobId }, undefined, {
+          message: `${type} scheduled successfully`,
+          jobId,
+        });
+      return sendError(res, "SCHEDULE_FAILED", `Failed to schedule ${type}`, 500);
     } catch (error) {
       console.error("Schedule HubSpot sync error:", error);
-      return sendError(
-        res,
-        "SCHEDULE_FAILED",
-        "Failed to schedule HubSpot sync",
-        500,
-      );
+      return sendError(res, "SCHEDULE_FAILED", "Failed to schedule HubSpot sync", 500);
     }
   });
 
@@ -1197,28 +990,16 @@ export function registerHubspotRoutes(app: Express) {
   app.post("/api/hubspot/push-quote", requireAuth, async (req, res) => {
     try {
       const { quoteId } = (req.body || {}) as { quoteId?: number | string };
-      if (!quoteId)
-        return sendError(res, "INVALID_REQUEST", "Quote ID is required", 400);
-      if (!req.user)
-        return sendError(res, "UNAUTHENTICATED", "User not authenticated", 401);
+      if (!quoteId) return sendError(res, "INVALID_REQUEST", "Quote ID is required", 400);
+      if (!req.user) return sendError(res, "UNAUTHENTICATED", "User not authenticated", 401);
       if (!hubSpotService)
-        return sendError(
-          res,
-          "HUBSPOT_NOT_CONFIGURED",
-          "HubSpot integration not configured",
-          400,
-        );
-      const idNum =
-        typeof quoteId === "string" ? parseInt(quoteId, 10) : quoteId;
+        return sendError(res, "HUBSPOT_NOT_CONFIGURED", "HubSpot integration not configured", 400);
+      const idNum = typeof quoteId === "string" ? parseInt(quoteId, 10) : quoteId;
       if (!idNum || Number.isNaN(idNum))
         return sendError(res, "INVALID_REQUEST", "Invalid quote ID", 400);
       const quote = await storage.getQuote(idNum);
       if (!quote) return sendError(res, "NOT_FOUND", "Quote not found", 404);
-      const result = await syncQuoteToHubSpot(
-        idNum,
-        "create",
-        (req.user as any)!.email,
-      );
+      const result = await syncQuoteToHubSpot(idNum, "create", (req.user as any)!.email);
       return sendOk(
         res,
         {
@@ -1230,7 +1011,7 @@ export function registerHubspotRoutes(app: Express) {
           hubspotDealId: result.hubspotDealId,
           hubspotQuoteId: result.hubspotQuoteId,
           message: "Successfully pushed to HubSpot (unified)",
-        },
+        }
       );
     } catch (error) {
       console.error("HUBSPOT PUSH ERROR:", error);
@@ -1242,32 +1023,16 @@ export function registerHubspotRoutes(app: Express) {
   app.post("/api/hubspot/update-quote", requireAuth, async (req, res) => {
     try {
       const { quoteId } = (req.body || {}) as { quoteId?: number | string };
-      if (!quoteId)
-        return sendError(res, "INVALID_REQUEST", "Quote ID is required", 400);
+      if (!quoteId) return sendError(res, "INVALID_REQUEST", "Quote ID is required", 400);
       if (!hubSpotService)
-        return sendError(
-          res,
-          "HUBSPOT_NOT_CONFIGURED",
-          "HubSpot integration not configured",
-          400,
-        );
-      const idNum =
-        typeof quoteId === "string" ? parseInt(quoteId, 10) : quoteId;
+        return sendError(res, "HUBSPOT_NOT_CONFIGURED", "HubSpot integration not configured", 400);
+      const idNum = typeof quoteId === "string" ? parseInt(quoteId, 10) : quoteId;
       if (!idNum || Number.isNaN(idNum))
         return sendError(res, "INVALID_REQUEST", "Invalid quote ID", 400);
       const quote = await storage.getQuote(idNum);
       if (!quote || !(quote as any).hubspotQuoteId)
-        return sendError(
-          res,
-          "NOT_FOUND",
-          "Quote not found or not linked to HubSpot",
-          404,
-        );
-      const result = await syncQuoteToHubSpot(
-        idNum,
-        "update",
-        (req.user as any)!.email,
-      );
+        return sendError(res, "NOT_FOUND", "Quote not found or not linked to HubSpot", 404);
+      const result = await syncQuoteToHubSpot(idNum, "update", (req.user as any)!.email);
       return sendOk(
         res,
         {
@@ -1279,16 +1044,11 @@ export function registerHubspotRoutes(app: Express) {
           hubspotDealId: result.hubspotDealId,
           hubspotQuoteId: result.hubspotQuoteId,
           message: "HubSpot quote updated (unified)",
-        },
+        }
       );
     } catch (error) {
       console.error("ERROR UPDATING HUBSPOT QUOTE:", error);
-      return sendError(
-        res,
-        "HUBSPOT_UPDATE_FAILED",
-        getErrorMessage(error),
-        500,
-      );
+      return sendError(res, "HUBSPOT_UPDATE_FAILED", getErrorMessage(error), 500);
     }
   });
 

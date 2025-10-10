@@ -5,16 +5,12 @@
  */
 
 import React from "react";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Send, CheckCircle } from "lucide-react";
 
-import {
-  QuoteFormData,
-  PricingCalculationResult,
-  HubSpotContact,
-} from "../types/QuoteTypes";
+import type { QuoteFormData, PricingCalculationResult, HubSpotContact } from "../types/QuoteTypes";
 
 interface QuoteSubmissionFlowProps {
   form: UseFormReturn<QuoteFormData>;
@@ -72,9 +68,7 @@ export const QuoteSubmissionFlow: React.FC<QuoteSubmissionFlowProps> = ({
             </div>
             <div className="flex justify-between text-sm">
               <span>Company:</span>
-              <span className="font-medium">
-                {formData.companyName || "Not specified"}
-              </span>
+              <span className="font-medium">{formData.companyName || "Not specified"}</span>
             </div>
           </div>
         </div>
@@ -119,8 +113,7 @@ export const QuoteSubmissionFlow: React.FC<QuoteSubmissionFlowProps> = ({
 
         {!isReadyForSubmission && (
           <p className="text-sm text-gray-600 text-center">
-            Please complete all required fields and select at least one service
-            to continue.
+            Please complete all required fields and select at least one service to continue.
           </p>
         )}
       </CardContent>

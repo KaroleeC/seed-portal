@@ -2,13 +2,7 @@ import React from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { Redirect } from "wouter";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +13,7 @@ import { useTheme } from "@/theme";
 export default function AuthPage() {
   const { user, loginMutation, googleSignIn } = useAuth();
   const { resolvedTheme } = useTheme();
-  const logoSrc = getThemedLogo(brand, resolvedTheme === 'dark' ? 'dark' : 'light');
+  const logoSrc = getThemedLogo(brand, resolvedTheme === "dark" ? "dark" : "light");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -53,15 +47,9 @@ export default function AuthPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a] flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <img
-            src={logoSrc}
-            alt="Seed Financial Logo"
-            className="h-16 mx-auto mb-6"
-          />
+          <img src={logoSrc} alt="Seed Financial Logo" className="h-16 mx-auto mb-6" />
           <h2 className="text-3xl font-bold text-white">Welcome Back</h2>
-          <p className="mt-2 text-sm text-gray-200">
-            Sign in to access the portal
-          </p>
+          <p className="mt-2 text-sm text-gray-200">Sign in to access the portal</p>
         </div>
 
         <Card className="shadow-xl">
@@ -106,11 +94,7 @@ export default function AuthPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     data-testid="button-toggle-password"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>

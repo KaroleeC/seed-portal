@@ -1,0 +1,28 @@
+---
+server:
+  httpListenAddr: ":3592"
+  grpcListenAddr: ":3593"
+  requestLimits:
+    maxActionsPerResource: 50
+    maxResourcesPerRequest: 50
+
+storage:
+  driver: "disk"
+  disk:
+    directory: /policies
+    watchForChanges: true
+
+schema:
+  enforcement: reject
+
+audit:
+  enabled: true
+  backend: local
+  local:
+    storagePath: /tmp/audit.log
+    advanced:
+      bufferSize: 1024
+      flushInterval: 5s
+
+telemetry:
+  disabled: false

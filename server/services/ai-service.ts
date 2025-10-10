@@ -32,8 +32,7 @@ export class AIService {
 
   constructor() {
     const aiDisabled =
-      process.env.DISABLE_AI === "1" ||
-      (process.env.DISABLE_AI || "").toLowerCase() === "true";
+      process.env.DISABLE_AI === "1" || (process.env.DISABLE_AI || "").toLowerCase() === "true";
     if (aiDisabled) {
       logger.info("AI service disabled via DISABLE_AI flag");
       this.client = null;
@@ -55,21 +54,14 @@ export class AIService {
    */
   async streamChat(
     prompt: string,
-    options: AIGenerationOptions & { onDelta: (delta: string) => void },
+    options: AIGenerationOptions & { onDelta: (delta: string) => void }
   ): Promise<void> {
     if (!this.client) {
       throw new Error(
-        process.env.DISABLE_AI
-          ? "AI disabled via DISABLE_AI"
-          : "AI service unavailable",
+        process.env.DISABLE_AI ? "AI disabled via DISABLE_AI" : "AI service unavailable"
       );
     }
-    const {
-      onDelta,
-      model = "gpt-4o",
-      maxTokens = 1200,
-      temperature = 0.4,
-    } = options;
+    const { onDelta, model = "gpt-4o", maxTokens = 1200, temperature = 0.4 } = options;
     const client = this.client as OpenAI;
     try {
       const stream = await client.chat.completions.create({
@@ -99,9 +91,7 @@ export class AIService {
     if (!this.client) {
       return {
         status: "degraded",
-        message: process.env.DISABLE_AI
-          ? "AI disabled via DISABLE_AI"
-          : "OPENAI_API_KEY missing",
+        message: process.env.DISABLE_AI ? "AI disabled via DISABLE_AI" : "OPENAI_API_KEY missing",
         responseTime: Date.now() - startTime,
       };
     }
@@ -133,9 +123,7 @@ export class AIService {
     const cacheKey = `ai:analysis:${this.hashData(clientData)}`;
     if (!this.client) {
       throw new Error(
-        process.env.DISABLE_AI
-          ? "AI disabled via DISABLE_AI"
-          : "AI service unavailable",
+        process.env.DISABLE_AI ? "AI disabled via DISABLE_AI" : "AI service unavailable"
       );
     }
     const client = this.client as OpenAI;
@@ -187,7 +175,7 @@ Format as JSON with fields: insights (array), riskScore (number), recommendation
       } catch {
         // Fallback if AI doesn't return valid JSON
         result = {
-          insights: [content.slice(0, 200) + "..."],
+          insights: [`${content.slice(0, 200)}...`],
           riskScore: 50,
           recommendations: ["Review manually due to parsing error"],
           confidence: 30,
@@ -213,16 +201,11 @@ Format as JSON with fields: insights (array), riskScore (number), recommendation
     }
   }
 
-  async generateContent(
-    prompt: string,
-    options: AIGenerationOptions = {},
-  ): Promise<string> {
+  async generateContent(prompt: string, options: AIGenerationOptions = {}): Promise<string> {
     const cacheKey = `ai:generation:${this.hashString(prompt)}`;
     if (!this.client) {
       throw new Error(
-        process.env.DISABLE_AI
-          ? "AI disabled via DISABLE_AI"
-          : "AI service unavailable",
+        process.env.DISABLE_AI ? "AI disabled via DISABLE_AI" : "AI service unavailable"
       );
     }
 

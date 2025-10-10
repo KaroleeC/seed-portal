@@ -13,16 +13,9 @@ export default defineConfig({
     react(),
     // Disable the runtime error overlay by default to avoid intercepting benign errors
     // Enable explicitly by setting VITE_RUNTIME_ERROR_OVERLAY=1
-    ...(process.env['VITE_RUNTIME_ERROR_OVERLAY'] === "1"
-      ? [runtimeErrorOverlay()]
-      : []),
-    ...(process.env['NODE_ENV'] !== "production" &&
-    process.env['REPL_ID'] !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
+    ...(process.env["VITE_RUNTIME_ERROR_OVERLAY"] === "1" ? [runtimeErrorOverlay()] : []),
+    ...(process.env["NODE_ENV"] !== "production" && process.env["REPL_ID"] !== undefined
+      ? [await import("@replit/vite-plugin-cartographer").then((m) => m.cartographer())]
       : []),
   ],
   resolve: {
@@ -31,6 +24,9 @@ export default defineConfig({
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "client", "src", "assets"),
     },
+  },
+  optimizeDeps: {
+    exclude: ["@playwright/test", "playwright", "playwright-core", "fsevents"],
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {

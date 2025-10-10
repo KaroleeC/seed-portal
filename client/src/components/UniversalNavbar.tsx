@@ -22,12 +22,7 @@ export function UniversalNavbar({
   const { resolvedTheme } = useTheme();
 
   // Determine back button and fallback path
-  const mainDashboardRoutes = [
-    "/",
-    "/admin",
-    "/sales-dashboard",
-    "/service-dashboard",
-  ];
+  const mainDashboardRoutes = ["/", "/admin", "/sales-dashboard", "/service-dashboard"];
   const isMainDashboard = mainDashboardRoutes.includes(location as unknown as string);
   const shouldShowBackButton = showBackButton && canGoBack && !isMainDashboard;
 
@@ -51,12 +46,12 @@ export function UniversalNavbar({
   const isClientIQ = path.startsWith("/client-profiles") || path.startsWith("/client-intel");
   const appMatch = path.match(/^\/apps\/([^/]+)/);
   const appName = appMatch?.[1];
-  
-  const theme = resolvedTheme === 'dark' ? 'dark' : 'light';
+
+  const theme = resolvedTheme === "dark" ? "dark" : "light";
   const logoFallback = brand.darkFallback;
   let logoSrc = getThemedLogo(brand, theme);
   let logoAlt = "Seed Financial";
-  
+
   if (isAdmin) {
     logoSrc = getThemedLogo(seedos.admin, theme);
     logoAlt = "SEEDOS Admin";

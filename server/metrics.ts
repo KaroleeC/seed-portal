@@ -15,7 +15,7 @@ let memLastFailure: { at: string; reason?: string } | null = null;
 export async function recordHubspotSync(
   success: boolean,
   durationMs: number,
-  failureReason?: string,
+  failureReason?: string
 ) {
   const redis = await getRedisAsync();
   if (!redis) {
@@ -41,14 +41,11 @@ export async function recordHubspotSync(
           JSON.stringify({
             at: new Date().toISOString(),
             reason: failureReason,
-          }),
+          })
         );
       }
     }
-    await cacheRedis.lpush(
-      "metrics:hubspot:sync:durations",
-      durationMs.toString(),
-    );
+    await cacheRedis.lpush("metrics:hubspot:sync:durations", durationMs.toString());
     await cacheRedis.ltrim("metrics:hubspot:sync:durations", 0, 999); // keep last 1000
   } catch (err) {
     // Fall back to memory if Redis operation fails

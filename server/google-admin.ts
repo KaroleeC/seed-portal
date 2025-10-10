@@ -1,5 +1,6 @@
 import { OAuth2Client } from "google-auth-library";
-import { admin_directory_v1, google } from "googleapis";
+import type { admin_directory_v1 } from "googleapis";
+import { google } from "googleapis";
 
 export interface GoogleWorkspaceUser {
   id: string;
@@ -40,9 +41,7 @@ export class GoogleAdminService {
         console.log("🔑 Attempting service account authentication...");
         try {
           console.log("📋 Parsing service account JSON...");
-          const serviceAccountKey = JSON.parse(
-            process.env.GOOGLE_SERVICE_ACCOUNT_JSON,
-          );
+          const serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
           console.log("✅ Service account parsed successfully");
           console.log("📧 Client email:", serviceAccountKey.client_email);
           console.log("🏢 Project ID:", serviceAccountKey.project_id);
@@ -56,7 +55,20 @@ export class GoogleAdminService {
               "https://www.googleapis.com/auth/admin.directory.group.member.readonly",
             ],
           };
-          (authOptions as any)["subject"] = "jon@seedfinancial.io";
+          // Prefer explicit subject for domain-wide delegation; fallback to first allowlisted admin email
+          const allowlist = (process.env.ADMIN_EMAIL_ALLOWLIST || "")
+            .split(",")
+            .map((s) => s.trim().toLowerCase())
+            .filter(Boolean);
+          const subjectEmail =
+            (process.env.GOOGLE_ADMIN_SUBJECT || "").trim().toLowerCase() || allowlist[0];
+          if (subjectEmail) {
+            (authOptions as any)["subject"] = subjectEmail;
+          } else {
+            console.warn(
+              "[GoogleAdmin] No subject configured for domain-wide delegation. Set GOOGLE_ADMIN_SUBJECT or ADMIN_EMAIL_ALLOWLIST."
+            );
+          }
           const auth = new GoogleAuth(authOptions as any);
 
           // Test the service account credentials
@@ -68,41 +80,28 @@ export class GoogleAdminService {
           this.initialized = true;
 
           console.log(
-            "✅ Google Admin API initialized with service account (domain-wide delegation)",
+            "✅ Google Admin API initialized with service account (domain-wide delegation)"
           );
           return;
         } catch (serviceError: any) {
-          console.error(
-            "❌ Service account authentication failed:",
-            serviceError.message,
-          );
+          console.error("❌ Service account authentication failed:", serviceError.message);
           if (serviceError.message?.includes("domain-wide delegation")) {
             console.log(
-              "💡 Hint: Ensure domain-wide delegation is enabled in Google Workspace Admin Console",
+              "💡 Hint: Ensure domain-wide delegation is enabled in Google Workspace Admin Console"
             );
           }
           console.log("⚠️ Falling back to user credentials...");
         }
       } else {
-        console.log(
-          "No GOOGLE_SERVICE_ACCOUNT_JSON found, using user credentials...",
-        );
+        console.log("No GOOGLE_SERVICE_ACCOUNT_JSON found, using user credentials...");
       }
 
       // Fallback to user credentials (current approach)
-      const {
-        GOOGLE_CLIENT_ID_OS,
-        GOOGLE_CLIENT_SECRET_OS,
-        GOOGLE_REFRESH_TOKEN,
-      } = process.env;
+      const { GOOGLE_CLIENT_ID_OS, GOOGLE_CLIENT_SECRET_OS, GOOGLE_REFRESH_TOKEN } = process.env;
 
-      if (
-        !GOOGLE_CLIENT_ID_OS ||
-        !GOOGLE_CLIENT_SECRET_OS ||
-        !GOOGLE_REFRESH_TOKEN
-      ) {
+      if (!GOOGLE_CLIENT_ID_OS || !GOOGLE_CLIENT_SECRET_OS || !GOOGLE_REFRESH_TOKEN) {
         throw new Error(
-          "Missing required secrets: GOOGLE_CLIENT_ID_OS, GOOGLE_CLIENT_SECRET_OS, GOOGLE_REFRESH_TOKEN, or GOOGLE_SERVICE_ACCOUNT_JSON",
+          "Missing required secrets: GOOGLE_CLIENT_ID_OS, GOOGLE_CLIENT_SECRET_OS, GOOGLE_REFRESH_TOKEN, or GOOGLE_SERVICE_ACCOUNT_JSON"
         );
       }
 
@@ -131,16 +130,14 @@ export class GoogleAdminService {
       this.admin = google.admin({ version: "directory_v1", auth });
       this.initialized = true;
 
-      console.log(
-        "✅ Google Admin API initialized with automatic token refresh enabled",
-      );
+      console.log("✅ Google Admin API initialized with automatic token refresh enabled");
     } catch (error) {
       // Log the actual error for debugging
       console.error("❌ Failed to initialize Google Admin API:", error);
 
       if ((error as any).message?.includes("invalid_grant")) {
         console.log(
-          "🔧 Refresh token expired. Please regenerate credentials using OAuth 2.0 Playground",
+          "🔧 Refresh token expired. Please regenerate credentials using OAuth 2.0 Playground"
         );
       }
 
@@ -204,9 +201,7 @@ export class GoogleAdminService {
 
       if (error.code === 403 || error.status === 403) {
         if (error.message?.includes("iam.serviceAccounts.getAccessToken")) {
-          console.log(
-            "💡 Issue: Domain-wide delegation not configured properly",
-          );
+          console.log("💡 Issue: Domain-wide delegation not configured properly");
           return {
             connected: false,
             error:
@@ -271,17 +266,15 @@ export class GoogleAdminService {
       if (error.code === 403 || error.status === 403) {
         if (error.message?.includes("iam.serviceAccounts.getAccessToken")) {
           throw new Error(
-            "Domain-wide delegation not configured. The service account needs domain-wide delegation enabled in Google Workspace Admin Console.",
+            "Domain-wide delegation not configured. The service account needs domain-wide delegation enabled in Google Workspace Admin Console."
           );
         }
         throw new Error(
-          "Insufficient permissions to access Google Workspace users. Check admin permissions and domain-wide delegation.",
+          "Insufficient permissions to access Google Workspace users. Check admin permissions and domain-wide delegation."
         );
       }
 
-      throw new Error(
-        `Failed to fetch workspace users: ${error.message || error}`,
-      );
+      throw new Error(`Failed to fetch workspace users: ${error.message || error}`);
     }
   }
 
@@ -321,9 +314,7 @@ export class GoogleAdminService {
         return null;
       }
       console.error("Error fetching Google Workspace user:", error);
-      throw new Error(
-        `Failed to fetch workspace user: ${error?.message || error}`,
-      );
+      throw new Error(`Failed to fetch workspace user: ${error?.message || error}`);
     }
   }
 }

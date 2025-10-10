@@ -2,7 +2,27 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { misc } from "@/assets";
 import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
 import { useLocation } from "wouter";
-import { Search, Settings, Calculator, BarChart3, Users, BookOpen, Headphones, Shield, Command, DollarSign, Inbox, ChevronDown, ChevronUp, Star, Bot, Sun, Moon, Bell, LogOut } from "lucide-react";
+import {
+  Search,
+  Settings,
+  Calculator,
+  BarChart3,
+  Users,
+  BookOpen,
+  Headphones,
+  Shield,
+  Command,
+  DollarSign,
+  Inbox,
+  ChevronDown,
+  ChevronUp,
+  Star,
+  Bot,
+  Sun,
+  Moon,
+  Bell,
+  LogOut,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,7 +31,15 @@ import { useTheme } from "@/theme";
 
 type IconType = React.ComponentType<{ className?: string }>;
 type NavCategory = "Apps" | "Admin" | "Settings" | "Profile";
-type NavItemBase = { id: string; label: string; icon: IconType; keywords?: string[]; required?: Permission[]; category: NavCategory; searchBlob?: string };
+type NavItemBase = {
+  id: string;
+  label: string;
+  icon: IconType;
+  keywords?: string[];
+  required?: Permission[];
+  category: NavCategory;
+  searchBlob?: string;
+};
 type NavItemRoute = NavItemBase & { to: string; onSelect?: never };
 type NavItemAction = NavItemBase & { onSelect: () => void; to?: never };
 type NavItem = NavItemRoute | NavItemAction;
@@ -39,13 +67,16 @@ function getPins(): string[] {
 function togglePin(id: string) {
   try {
     const pins = new Set(getPins());
-    if (pins.has(id)) pins.delete(id); else pins.add(id);
+    if (pins.has(id)) pins.delete(id);
+    else pins.add(id);
     localStorage.setItem(PINS_KEY, JSON.stringify(Array.from(pins)));
   } catch {}
 }
 
 function clearRecents() {
-  try { localStorage.removeItem(RECENTS_KEY); } catch {}
+  try {
+    localStorage.removeItem(RECENTS_KEY);
+  } catch {}
 }
 
 type CommandRBACConfig = {
@@ -95,7 +126,9 @@ function emit(action: string, payload: Record<string, unknown> = {}) {
     const meta = import.meta as unknown as { env?: { VITE_TELEMETRY_URL?: string } };
     const url = meta.env?.VITE_TELEMETRY_URL;
     if (url && typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
-      const blob = new Blob([JSON.stringify({ type: "command-dock", action, ...payload })], { type: "application/json" });
+      const blob = new Blob([JSON.stringify({ type: "command-dock", action, ...payload })], {
+        type: "application/json",
+      });
       navigator.sendBeacon(url, blob);
     }
   } catch {}
@@ -115,7 +148,7 @@ export function CommandDock() {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
-  const inputModeRef = useRef<'mouse' | 'keyboard'>('mouse');
+  const inputModeRef = useRef<"mouse" | "keyboard">("mouse");
   const { toast } = useToast();
   const { hasAnyPermission, userRole } = usePermissions();
   const { resolvedTheme, setTheme } = useTheme();
@@ -145,7 +178,9 @@ export function CommandDock() {
   useEffect(() => {
     try {
       window.dispatchEvent(
-        new CustomEvent("telemetry", { detail: { type: "command-dock", action: open ? "open" : "close" } })
+        new CustomEvent("telemetry", {
+          detail: { type: "command-dock", action: open ? "open" : "close" },
+        })
       );
     } catch {}
   }, [open]);
@@ -159,23 +194,112 @@ export function CommandDock() {
     }
   }, [open]);
 
-  const navItems: NavItem[] = useMemo(
-    () => {
-      const base: NavItem[] = [
+  const navItems: NavItem[] = useMemo(() => {
+    const base: NavItem[] = [
       // Apps
-      { id: "apps.sales", label: "Sales Dashboard", icon: BarChart3, to: "/sales-dashboard", category: "Apps" },
-      { id: "apps.service", label: "Service Dashboard", icon: Headphones, to: "/service-dashboard", category: "Apps" },
-      { id: "apps.admin", label: "Admin Dashboard", icon: Shield, to: "/admin", required: [PERMISSIONS.VIEW_ADMIN_DASHBOARD], category: "Admin" },
-      { id: "apps.seedqc", label: "SEEDQC", icon: Calculator, to: "/apps/seedqc", keywords: ["quote", "pricing", "calculator", "seedqc", "quote builder"], category: "Apps" },
-      { id: "apps.leads", label: "LEADIQ", icon: Inbox, to: "/leads-inbox", keywords: ["leads", "inbox"], category: "Apps" },
-      { id: "apps.clientProfiles", label: "CLIENTIQ", icon: Users, to: "/client-profiles", keywords: ["clients", "profiles", "accounts"], category: "Apps" },
-      { id: "apps.kb", label: "SEEDKB", icon: BookOpen, to: "/knowledge-base", keywords: ["kb", "knowledge", "articles", "playbook"], category: "Apps" },
-      { id: "apps.seedpay", label: "SEEDPAY", icon: DollarSign, to: "/apps/seedpay", keywords: ["commission", "payouts", "seedpay", "pay"], category: "Apps" },
-      { id: "apps.ai", label: "SEEDAI", icon: Bot, to: "/assistant", keywords: ["ai", "assistant", "workspace", "copilot"], category: "Apps" },
-      { id: "apps.userManagement", label: "User Management", icon: Users, to: "/user-management", keywords: ["users", "invites", "roles"], required: [PERMISSIONS.MANAGE_USERS], category: "Admin" },
-      { id: "apps.rbac", label: "RBAC Management", icon: Shield, to: "/admin/rbac", keywords: ["permissions", "rbac", "access", "roles"], required: [PERMISSIONS.MANAGE_USERS], category: "Admin" },
-      { id: "apps.settingsHub", label: "Settings Hub", icon: Settings, to: "/settings", category: "Settings" },
-      { id: "profile", label: "Profile Settings", icon: Users, to: "/profile", keywords: ["profile", "account", "settings"], category: "Profile" },
+      {
+        id: "apps.sales",
+        label: "Sales Dashboard",
+        icon: BarChart3,
+        to: "/sales-dashboard",
+        category: "Apps",
+      },
+      {
+        id: "apps.service",
+        label: "Service Dashboard",
+        icon: Headphones,
+        to: "/service-dashboard",
+        category: "Apps",
+      },
+      {
+        id: "apps.admin",
+        label: "Admin Dashboard",
+        icon: Shield,
+        to: "/admin",
+        required: [PERMISSIONS.VIEW_ADMIN_DASHBOARD],
+        category: "Admin",
+      },
+      {
+        id: "apps.seedqc",
+        label: "SEEDQC",
+        icon: Calculator,
+        to: "/apps/seedqc",
+        keywords: ["quote", "pricing", "calculator", "seedqc", "quote builder"],
+        category: "Apps",
+      },
+      {
+        id: "apps.leads",
+        label: "LEADIQ",
+        icon: Inbox,
+        to: "/leads-inbox",
+        keywords: ["leads", "inbox"],
+        category: "Apps",
+      },
+      {
+        id: "apps.clientProfiles",
+        label: "CLIENTIQ",
+        icon: Users,
+        to: "/client-profiles",
+        keywords: ["clients", "profiles", "accounts"],
+        category: "Apps",
+      },
+      {
+        id: "apps.kb",
+        label: "SEEDKB",
+        icon: BookOpen,
+        to: "/knowledge-base",
+        keywords: ["kb", "knowledge", "articles", "playbook"],
+        category: "Apps",
+      },
+      {
+        id: "apps.seedpay",
+        label: "SEEDPAY",
+        icon: DollarSign,
+        to: "/apps/seedpay",
+        keywords: ["commission", "payouts", "seedpay", "pay"],
+        category: "Apps",
+      },
+      {
+        id: "apps.ai",
+        label: "SEEDAI",
+        icon: Bot,
+        to: "/assistant",
+        keywords: ["ai", "assistant", "workspace", "copilot"],
+        category: "Apps",
+      },
+      {
+        id: "apps.userManagement",
+        label: "User Management",
+        icon: Users,
+        to: "/user-management",
+        keywords: ["users", "invites", "roles"],
+        required: [PERMISSIONS.MANAGE_USERS],
+        category: "Admin",
+      },
+      {
+        id: "apps.rbac",
+        label: "RBAC Management",
+        icon: Shield,
+        to: "/admin/rbac",
+        keywords: ["permissions", "rbac", "access", "roles"],
+        required: [PERMISSIONS.MANAGE_USERS],
+        category: "Admin",
+      },
+      {
+        id: "apps.settingsHub",
+        label: "Settings Hub",
+        icon: Settings,
+        to: "/settings",
+        category: "Settings",
+      },
+      {
+        id: "profile",
+        label: "Profile Settings",
+        icon: Users,
+        to: "/profile",
+        keywords: ["profile", "account", "settings"],
+        category: "Profile",
+      },
       // Logout action
       {
         id: "profile.logout",
@@ -188,13 +312,50 @@ export function CommandDock() {
         category: "Profile",
       } as NavItemAction,
       // Settings (existing)
-      { id: "settings.seedqc", label: "SeedQC Settings", icon: Calculator, to: "/settings#seedqc", keywords: ["quote", "pricing", "calculator", "seedqc"], required: [PERMISSIONS.MANAGE_PRICING], category: "Settings" },
-      { id: "settings.seedpay", label: "SeedPay Settings", icon: DollarSign, to: "/settings#seedpay", keywords: ["commission", "payouts", "seedpay", "payments"], required: [PERMISSIONS.MANAGE_COMMISSIONS], category: "Settings" },
+      {
+        id: "settings.seedqc",
+        label: "SeedQC Settings",
+        icon: Calculator,
+        to: "/settings#seedqc",
+        keywords: ["quote", "pricing", "calculator", "seedqc"],
+        required: [PERMISSIONS.MANAGE_PRICING],
+        category: "Settings",
+      },
+      {
+        id: "settings.seedpay",
+        label: "SeedPay Settings",
+        icon: DollarSign,
+        to: "/settings#seedpay",
+        keywords: ["commission", "payouts", "seedpay", "payments"],
+        required: [PERMISSIONS.MANAGE_COMMISSIONS],
+        category: "Settings",
+      },
 
       // Settings (placeholders → toast + redirect to Settings Hub)
-      { id: "settings.seedkb", label: "SeedKB Settings", icon: BookOpen, to: "/settings#seedkb", keywords: ["seedkb", "kb", "knowledge", "settings"], category: "Settings" },
-      { id: "settings.clientProfiles", label: "Client Profiles Settings", icon: Users, to: "/settings#client-profiles", keywords: ["client", "profiles", "settings"], category: "Settings" },
-      { id: "settings.leadsInbox", label: "Leads Inbox Settings", icon: Inbox, to: "/settings#leads-inbox", keywords: ["leads", "inbox", "settings"], category: "Settings" },
+      {
+        id: "settings.seedkb",
+        label: "SeedKB Settings",
+        icon: BookOpen,
+        to: "/settings#seedkb",
+        keywords: ["seedkb", "kb", "knowledge", "settings"],
+        category: "Settings",
+      },
+      {
+        id: "settings.clientProfiles",
+        label: "Client Profiles Settings",
+        icon: Users,
+        to: "/settings#client-profiles",
+        keywords: ["client", "profiles", "settings"],
+        category: "Settings",
+      },
+      {
+        id: "settings.leadsInbox",
+        label: "Leads Inbox Settings",
+        icon: Inbox,
+        to: "/settings#leads-inbox",
+        keywords: ["leads", "inbox", "settings"],
+        category: "Settings",
+      },
 
       // Theme toggle (action)
       {
@@ -215,18 +376,19 @@ export function CommandDock() {
         label: "Notifications (Coming Soon)",
         icon: Bell,
         onSelect: () => {
-          toast({ title: "Notifications", description: "Notifications will land in the Command Dock soon." });
+          toast({
+            title: "Notifications",
+            description: "Notifications will land in the Command Dock soon.",
+          });
         },
         category: "Settings",
       } as NavItemAction,
     ];
-      return base.map((i) => ({
-        ...i,
-        searchBlob: `${i.label} ${(i.keywords || []).join(" ")}`.toLowerCase(),
-      }));
-    },
-    [resolvedTheme, setTheme, toast, logoutMutation],
-  );
+    return base.map((i) => ({
+      ...i,
+      searchBlob: `${i.label} ${(i.keywords || []).join(" ")}`.toLowerCase(),
+    }));
+  }, [resolvedTheme, setTheme, toast, logoutMutation]);
 
   // Simple fuzzy scoring with aliases and context boosts
   const scoreItem = useCallback(
@@ -249,11 +411,27 @@ export function CommandDock() {
 
       // Context boosts by current route
       if (location?.startsWith("/admin")) {
-        if (label.includes("rbac") || label.includes("user management") || label.includes("settings")) s += 10;
+        if (
+          label.includes("rbac") ||
+          label.includes("user management") ||
+          label.includes("settings")
+        )
+          s += 10;
       } else if (location?.startsWith("/service-dashboard")) {
-        if (label.includes("client profiles") || label.includes("leads") || label.includes("settings")) s += 6;
+        if (
+          label.includes("client profiles") ||
+          label.includes("leads") ||
+          label.includes("settings")
+        )
+          s += 6;
       } else if (location?.startsWith("/sales-dashboard") || location === "/") {
-        if (label.includes("seedqc") || label.includes("seedpay") || blob.includes("kb") || blob.includes("leads")) s += 8;
+        if (
+          label.includes("seedqc") ||
+          label.includes("seedpay") ||
+          blob.includes("kb") ||
+          blob.includes("leads")
+        )
+          s += 8;
       } else if (location?.startsWith("/assistant")) {
         if (blob.includes("ai") || blob.includes("assistant")) s += 8;
       }
@@ -269,7 +447,7 @@ export function CommandDock() {
       }
       return s;
     },
-    [location],
+    [location]
   );
 
   const filtered: NavItem[] = useMemo(() => {
@@ -295,21 +473,26 @@ export function CommandDock() {
     };
     // RBAC filtering first (permission-based with overrides)
     const cfg = getRBACConfig();
-    const visible = navItems.filter((i) => {
-      const id = i.id;
-      // Role-specific hide
-      const roleHide = cfg.byRole?.[userRole]?.hide || [];
-      if (roleHide.includes(id)) return false;
-      // Command-specific overrides
-      const ov = cfg.byCommand?.[id];
-      if (ov?.hide) return false;
-      const effectiveRequired = ov?.required === undefined ? i.required : ov.required ?? [];
-      return effectiveRequired ? hasAnyPermission(effectiveRequired) : true;
-    }).filter((i) => (categoryFilter ? i.category === categoryFilter : true));
+    const visible = navItems
+      .filter((i) => {
+        const id = i.id;
+        // Role-specific hide
+        const roleHide = cfg.byRole?.[userRole]?.hide || [];
+        if (roleHide.includes(id)) return false;
+        // Command-specific overrides
+        const ov = cfg.byCommand?.[id];
+        if (ov?.hide) return false;
+        const effectiveRequired = ov?.required === undefined ? i.required : (ov.required ?? []);
+        return effectiveRequired ? hasAnyPermission(effectiveRequired) : true;
+      })
+      .filter((i) => (categoryFilter ? i.category === categoryFilter : true));
     const scored = [...visible]
       .map((item, idx) => ({ item, score: q ? scoreItem(item, q) : 1, idx }))
       .filter((x) => (q ? x.score > 0 : true))
-      .sort((a, b) => rank(a.item.category) - rank(b.item.category) || b.score - a.score || a.idx - b.idx)
+      .sort(
+        (a, b) =>
+          rank(a.item.category) - rank(b.item.category) || b.score - a.score || a.idx - b.idx
+      )
       .slice(0, 50);
     return scored.map(({ item }) => item);
   }, [navItems, query, scoreItem, hasAnyPermission, userRole]);
@@ -345,13 +528,13 @@ export function CommandDock() {
       }
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        inputModeRef.current = 'keyboard';
+        inputModeRef.current = "keyboard";
         setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
         return;
       }
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        inputModeRef.current = 'keyboard';
+        inputModeRef.current = "keyboard";
         setActiveIndex((i) => Math.max(i - 1, 0));
         return;
       }
@@ -361,7 +544,13 @@ export function CommandDock() {
           e.preventDefault();
           setOpen(false);
           const idForTelem = isRoute(item) ? item.to : item.label;
-          emit("select", { id: idForTelem, label: item.label, to: isRoute(item) ? item.to : undefined, category: item.category, ts: Date.now() });
+          emit("select", {
+            id: idForTelem,
+            label: item.label,
+            to: isRoute(item) ? item.to : undefined,
+            category: item.category,
+            ts: Date.now(),
+          });
           if (isAction(item)) item.onSelect();
           else if (isRoute(item)) navigate(item.to);
         }
@@ -371,7 +560,9 @@ export function CommandDock() {
         // Focus trap
         const root = panelRef.current;
         if (!root) return;
-        const focusables = root.querySelectorAll<HTMLElement>('a, button, input, [tabindex]:not([tabindex="-1"])');
+        const focusables = root.querySelectorAll<HTMLElement>(
+          'a, button, input, [tabindex]:not([tabindex="-1"])'
+        );
         if (focusables.length === 0) return;
         const first = focusables[0]!;
         const last = focusables[focusables.length - 1]!;
@@ -467,11 +658,14 @@ export function CommandDock() {
     }
     const out: Array<{ category: string; items: NavItem[] }> = [];
     if (pinnedItems.length) out.push({ category: "Pinned", items: pinnedItems });
-    for (const c of CATEGORY_ORDER) if (byCat.has(c)) out.push({ category: c, items: byCat.get(c)! });
+    for (const c of CATEGORY_ORDER)
+      if (byCat.has(c)) out.push({ category: c, items: byCat.get(c)! });
     return out;
   }, [filtered, pinsSet]);
 
-  type RenderRow = { type: "header"; category: string } | { type: "item"; item: NavItem; idx: number };
+  type RenderRow =
+    | { type: "header"; category: string }
+    | { type: "item"; item: NavItem; idx: number };
   const rendered = useMemo(() => {
     const out: RenderRow[] = [];
     let idx = 0;
@@ -549,7 +743,9 @@ export function CommandDock() {
             className="relative max-h-[60vh] overflow-y-auto"
             tabIndex={-1}
             ref={listRef}
-            onMouseMove={() => { inputModeRef.current = 'mouse'; }}
+            onMouseMove={() => {
+              inputModeRef.current = "mouse";
+            }}
             data-cmd-scroll
           >
             {/* Hide native scrollbar on the actual scroller */}
@@ -564,10 +760,19 @@ export function CommandDock() {
                 return (
                   <div
                     key={key}
-                    style={{ position: "absolute", top: 0, left: 0, width: "100%", transform: `translateY(${vi.start}px)` }}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      transform: `translateY(${vi.start}px)`,
+                    }}
                   >
                     {row.type === "header" ? (
-                      <div role="separator" className="px-4 py-2 text-[10px] uppercase tracking-wider text-white/50">
+                      <div
+                        role="separator"
+                        className="px-4 py-2 text-[10px] uppercase tracking-wider text-white/50"
+                      >
                         {row.category}
                       </div>
                     ) : (
@@ -577,17 +782,25 @@ export function CommandDock() {
                         aria-selected={row.idx === activeIndex}
                         data-cmd-item
                         className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-2 ring-white/30 ring-offset-1 ring-offset-slate-950/90 ${
-                          row.idx === activeIndex ? "bg-white/10 ring-1 ring-white/10" : "hover:bg-white/5"
+                          row.idx === activeIndex
+                            ? "bg-white/10 ring-1 ring-white/10"
+                            : "hover:bg-white/5"
                         }`}
                         onMouseEnter={() => {
-                          if (inputModeRef.current !== 'mouse') return;
+                          if (inputModeRef.current !== "mouse") return;
                           setActiveIndex(row.idx);
                         }}
                         onClick={() => {
                           setOpen(false);
                           const id = isRoute(row.item) ? row.item.to : row.item.label;
                           bumpRecent(id);
-                          emit("select", { id, label: row.item.label, to: isRoute(row.item) ? row.item.to : undefined, category: row.item.category, ts: Date.now() });
+                          emit("select", {
+                            id,
+                            label: row.item.label,
+                            to: isRoute(row.item) ? row.item.to : undefined,
+                            category: row.item.category,
+                            ts: Date.now(),
+                          });
                           if (isAction(row.item)) {
                             row.item.onSelect();
                           } else if (isRoute(row.item)) {
@@ -602,8 +815,19 @@ export function CommandDock() {
                           tabIndex={0}
                           aria-label="Pin command"
                           className={`ml-auto ${pinsSet.has(row.item.id) ? "text-yellow-400" : "text-white/60 hover:text-white"}`}
-                          onClick={(e) => { e.stopPropagation(); togglePin(row.item.id); setPinsTick((t) => t + 1); }}
-                          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); togglePin(row.item.id); setPinsTick((t) => t + 1); } }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            togglePin(row.item.id);
+                            setPinsTick((t) => t + 1);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              togglePin(row.item.id);
+                              setPinsTick((t) => t + 1);
+                            }
+                          }}
                         >
                           <Star className="h-4 w-4" />
                         </span>
@@ -619,10 +843,14 @@ export function CommandDock() {
             {/* Bottom sentinel for IntersectionObserver */}
             <div ref={bottomSentinelRef} aria-hidden="true" className="h-1 w-full opacity-0" />
             {/* Up/Down chevrons */}
-            <div className={`pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 text-white/60 transition-opacity duration-200 ${hasMoreAbove ? 'opacity-100' : 'opacity-0'}`}>
+            <div
+              className={`pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 text-white/60 transition-opacity duration-200 ${hasMoreAbove ? "opacity-100" : "opacity-0"}`}
+            >
               <ChevronUp className="h-4 w-4" />
             </div>
-            <div className={`pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-white/60 transition-opacity duration-200 ${hasMoreBelow ? 'opacity-100' : 'opacity-0'}`}>
+            <div
+              className={`pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 text-white/60 transition-opacity duration-200 ${hasMoreBelow ? "opacity-100" : "opacity-0"}`}
+            >
               <ChevronDown className="h-4 w-4" />
             </div>
           </div>
@@ -636,7 +864,14 @@ export function CommandDock() {
                 <span className="opacity-80">open</span>
               </div>
               <div className="flex items-center gap-3">
-                <button className="text-white/70 hover:text-white text-xs underline" onClick={() => { clearRecents(); setActiveIndex(0); toast({ title: "Recents cleared" }); }}>
+                <button
+                  className="text-white/70 hover:text-white text-xs underline"
+                  onClick={() => {
+                    clearRecents();
+                    setActiveIndex(0);
+                    toast({ title: "Recents cleared" });
+                  }}
+                >
                   Clear recents
                 </button>
                 <span className="opacity-80">AI</span>

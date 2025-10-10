@@ -36,7 +36,7 @@
     },
 
     /* Type Checking */
-    "types": ["node", "vite/client", "@types/jest"],
+    "types": ["node", "vite/client", "vitest/globals"],
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "allowJs": true,
     "checkJs": true,
@@ -51,7 +51,9 @@
     "client/src/**/*",
     "shared/**/*",
     "server/**/*",
+    "test/**/*",
     "vite.config.ts",
+    "vitest.config.ts",
     "tailwind.config.ts",
     "drizzle.config.ts"
   ],
@@ -64,6 +66,11 @@
     "**/*.spec.ts",
     "**/*.spec.tsx",
     "**/__tests__/**",
-    "**/__mocks__/**"
+    "**/__mocks__/**",
+    // Legacy session/passport files (to be removed)
+    "server/auth.ts",
+    "server/session-config.ts",
+    "server/apply-redis-sessions-startup.ts",
+    "server/direct-session-setup.ts"
   ]
 }

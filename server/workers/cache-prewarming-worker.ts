@@ -1,10 +1,7 @@
 // Cache Pre-warming Worker
 import { Worker, Job } from "bullmq";
 import Redis from "ioredis";
-import {
-  preWarmHighPriorityContacts,
-  preWarmDashboardMetrics,
-} from "../cache-prewarming";
+import { preWarmHighPriorityContacts, preWarmDashboardMetrics } from "../cache-prewarming";
 import { logger } from "../logger";
 
 const workerLogger = logger.child({ module: "cache-prewarming-worker" });
@@ -14,9 +11,7 @@ let preWarmWorker: Worker | null = null;
 
 async function initializeWorkerRedis(): Promise<void> {
   if (!process.env.REDIS_URL) {
-    workerLogger.info(
-      "No REDIS_URL found, skipping pre-warm worker initialization",
-    );
+    workerLogger.info("No REDIS_URL found, skipping pre-warm worker initialization");
     return;
   }
 
@@ -28,18 +23,13 @@ async function initializeWorkerRedis(): Promise<void> {
         enableReadyCheck: true,
         lazyConnect: false,
         connectTimeout: 15000,
-      } as any,
+      } as any
     );
 
     await workerRedis.ping();
-    workerLogger.info(
-      "✅ Worker Redis connection established for cache pre-warming",
-    );
+    workerLogger.info("✅ Worker Redis connection established for cache pre-warming");
   } catch (error) {
-    workerLogger.error(
-      { error },
-      "❌ Failed to connect worker Redis for cache pre-warming",
-    );
+    workerLogger.error({ error }, "❌ Failed to connect worker Redis for cache pre-warming");
     workerRedis = null;
   }
 }
@@ -59,10 +49,7 @@ export async function initializePreWarmWorker(): Promise<void> {
         const startTime = Date.now();
 
         try {
-          workerLogger.info(
-            { jobId: job.id, jobName: job.name },
-            "Starting cache pre-warming job",
-          );
+          workerLogger.info({ jobId: job.id, jobName: job.name }, "Starting cache pre-warming job");
 
           await job.updateProgress(10);
 
@@ -82,7 +69,7 @@ export async function initializePreWarmWorker(): Promise<void> {
               jobId: job.id,
               processingTime: `${processingTime}ms`,
             },
-            "✅ Cache pre-warming job completed",
+            "✅ Cache pre-warming job completed"
           );
 
           return {
@@ -98,7 +85,7 @@ export async function initializePreWarmWorker(): Promise<void> {
               jobId: job.id,
               processingTime: `${processingTime}ms`,
             },
-            "❌ Cache pre-warming job failed",
+            "❌ Cache pre-warming job failed"
           );
 
           throw error;
@@ -107,15 +94,12 @@ export async function initializePreWarmWorker(): Promise<void> {
       {
         connection: workerRedis,
         concurrency: 1, // Only one pre-warming job at a time
-      },
+      }
     );
 
     workerLogger.info("✅ Cache pre-warming worker initialized");
   } catch (error) {
-    workerLogger.error(
-      { error },
-      "❌ Failed to initialize cache pre-warming worker",
-    );
+    workerLogger.error({ error }, "❌ Failed to initialize cache pre-warming worker");
   }
 }
 

@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -67,40 +61,31 @@ export default function CDNMonitoring() {
   const [testResults, setTestResults] = useState<any>(null);
 
   // Fetch CDN health
-  const { data: cdnHealth, isLoading: healthLoading } = useQuery<CDNHealthData>(
-    {
-      queryKey: ["/api/cdn/health"],
-      queryFn: async (): Promise<CDNHealthData> =>
-        apiRequest("/api/cdn/health"),
-      refetchInterval: 30000, // Refresh every 30 seconds
-    },
-  );
+  const { data: cdnHealth, isLoading: healthLoading } = useQuery<CDNHealthData>({
+    queryKey: ["/api/cdn/health"],
+    queryFn: async (): Promise<CDNHealthData> => apiRequest("/api/cdn/health"),
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
 
   // Fetch compression stats
-  const { data: compressionStats, isLoading: compressionLoading } =
-    useQuery<CompressionStats>({
-      queryKey: ["/api/cdn/compression-stats"],
-      queryFn: async (): Promise<CompressionStats> =>
-        apiRequest("/api/cdn/compression-stats"),
-      refetchInterval: 10000, // Refresh every 10 seconds
-    });
+  const { data: compressionStats, isLoading: compressionLoading } = useQuery<CompressionStats>({
+    queryKey: ["/api/cdn/compression-stats"],
+    queryFn: async (): Promise<CompressionStats> => apiRequest("/api/cdn/compression-stats"),
+    refetchInterval: 10000, // Refresh every 10 seconds
+  });
 
   // Fetch CDN performance
-  const { data: cdnPerformance, isLoading: performanceLoading } =
-    useQuery<CDNPerformance>({
-      queryKey: ["/api/cdn/performance"],
-      queryFn: async (): Promise<CDNPerformance> =>
-        apiRequest("/api/cdn/performance"),
-      refetchInterval: 60000, // Refresh every minute
-    });
+  const { data: cdnPerformance, isLoading: performanceLoading } = useQuery<CDNPerformance>({
+    queryKey: ["/api/cdn/performance"],
+    queryFn: async (): Promise<CDNPerformance> => apiRequest("/api/cdn/performance"),
+    refetchInterval: 60000, // Refresh every minute
+  });
 
   // Fetch asset manifest
-  const { data: assetManifest, isLoading: manifestLoading } =
-    useQuery<AssetManifest>({
-      queryKey: ["/api/assets/manifest"],
-      queryFn: async (): Promise<AssetManifest> =>
-        apiRequest("/api/assets/manifest"),
-    });
+  const { data: assetManifest, isLoading: manifestLoading } = useQuery<AssetManifest>({
+    queryKey: ["/api/assets/manifest"],
+    queryFn: async (): Promise<AssetManifest> => apiRequest("/api/assets/manifest"),
+  });
 
   // Reset compression stats mutation
   const resetStatsMutation = useMutation({
@@ -174,8 +159,7 @@ export default function CDNMonitoring() {
           details: {
             ratio: stats.averageCompressionRatio,
             requests: stats.requests,
-            savings:
-              Math.round((1 - stats.averageCompressionRatio) * 100) + "%",
+            savings: `${Math.round((1 - stats.averageCompressionRatio) * 100)}%`,
           },
         });
       } catch (error: any) {
@@ -191,10 +175,7 @@ export default function CDNMonitoring() {
         const manifest = await apiRequest("/api/assets/manifest");
         results.tests.push({
           name: "Asset Manifest",
-          status:
-            Object.keys(manifest.assets || {}).length > 0
-              ? "passed"
-              : "warning",
+          status: Object.keys(manifest.assets || {}).length > 0 ? "passed" : "warning",
           details: {
             assets: Object.keys(manifest.assets || {}).length,
             version: manifest.version,
@@ -238,7 +219,7 @@ export default function CDNMonitoring() {
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   };
 
   const compressionSavings = compressionStats
@@ -249,19 +230,13 @@ export default function CDNMonitoring() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            CDN Monitoring
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">CDN Monitoring</h1>
           <p className="text-gray-600 dark:text-gray-400">
             Monitor content delivery network performance and optimization
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            onClick={runCDNTest}
-            disabled={testResults?.testing}
-            variant="outline"
-          >
+          <Button onClick={runCDNTest} disabled={testResults?.testing} variant="outline">
             <Activity className="w-4 h-4 mr-2" />
             Run Test Suite
           </Button>
@@ -290,18 +265,12 @@ export default function CDNMonitoring() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  CDN Status
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">CDN Status</CardTitle>
                 <Server className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {healthLoading
-                    ? "..."
-                    : cdnHealth?.status === "healthy"
-                      ? "Healthy"
-                      : "Issues"}
+                  {healthLoading ? "..." : cdnHealth?.status === "healthy" ? "Healthy" : "Issues"}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {cdnHealth?.assetsLoaded || 0} assets loaded
@@ -311,9 +280,7 @@ export default function CDNMonitoring() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Compression
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Compression</CardTitle>
                 <Zap className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -326,16 +293,12 @@ export default function CDNMonitoring() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Assets
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Total Assets</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {performanceLoading
-                    ? "..."
-                    : cdnPerformance?.totalAssets || 0}
+                  {performanceLoading ? "..." : cdnPerformance?.totalAssets || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {formatBytes(cdnPerformance?.totalSize || 0)}
@@ -352,9 +315,7 @@ export default function CDNMonitoring() {
                 <div className="text-2xl font-bold">
                   {compressionLoading ? "..." : compressionStats?.requests || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Compressed responses
-                </p>
+                <p className="text-xs text-muted-foreground">Compressed responses</p>
               </CardContent>
             </Card>
           </div>
@@ -417,25 +378,19 @@ export default function CDNMonitoring() {
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span>Average Asset Size</span>
-                  <span className="font-mono">
-                    {formatBytes(cdnPerformance?.averageSize || 0)}
-                  </span>
+                  <span className="font-mono">{formatBytes(cdnPerformance?.averageSize || 0)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Last Updated</span>
                   <span className="text-sm text-muted-foreground">
                     {cdnPerformance?.lastUpdated
-                      ? new Date(
-                          cdnPerformance.lastUpdated,
-                        ).toLocaleTimeString()
+                      ? new Date(cdnPerformance.lastUpdated).toLocaleTimeString()
                       : "Unknown"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>CDN Version</span>
-                  <span className="font-mono text-sm">
-                    {cdnHealth?.version || "Unknown"}
-                  </span>
+                  <span className="font-mono text-sm">{cdnHealth?.version || "Unknown"}</span>
                 </div>
               </CardContent>
             </Card>
@@ -447,9 +402,7 @@ export default function CDNMonitoring() {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Compression Statistics</CardTitle>
-                <CardDescription>
-                  Real-time compression performance metrics
-                </CardDescription>
+                <CardDescription>Real-time compression performance metrics</CardDescription>
               </div>
               <Button
                 onClick={() => resetStatsMutation.mutate()}
@@ -469,31 +422,21 @@ export default function CDNMonitoring() {
                       <div className="text-3xl font-bold text-blue-600">
                         {compressionStats.requests}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Compressed Requests
-                      </div>
+                      <div className="text-sm text-muted-foreground">Compressed Requests</div>
                     </div>
                     <div className="text-center">
                       <div className="text-3xl font-bold text-green-600">
                         {formatBytes(
-                          compressionStats.totalOriginalSize -
-                            compressionStats.totalCompressedSize,
+                          compressionStats.totalOriginalSize - compressionStats.totalCompressedSize
                         )}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Bandwidth Saved
-                      </div>
+                      <div className="text-sm text-muted-foreground">Bandwidth Saved</div>
                     </div>
                     <div className="text-center">
                       <div className="text-3xl font-bold text-purple-600">
-                        {Math.round(
-                          (1 - compressionStats.averageCompressionRatio) * 100,
-                        )}
-                        %
+                        {Math.round((1 - compressionStats.averageCompressionRatio) * 100)}%
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Size Reduction
-                      </div>
+                      <div className="text-sm text-muted-foreground">Size Reduction</div>
                     </div>
                   </div>
 
@@ -501,10 +444,7 @@ export default function CDNMonitoring() {
                     <div className="flex justify-between text-sm">
                       <span>Compression Efficiency</span>
                       <span>
-                        {Math.round(
-                          (1 - compressionStats.averageCompressionRatio) * 100,
-                        )}
-                        %
+                        {Math.round((1 - compressionStats.averageCompressionRatio) * 100)}%
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -513,23 +453,19 @@ export default function CDNMonitoring() {
                         style={{
                           width: `${Math.round((1 - compressionStats.averageCompressionRatio) * 100)}%`,
                         }}
-                      ></div>
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-muted-foreground">
-                        Original Size:
-                      </span>
+                      <span className="text-muted-foreground">Original Size:</span>
                       <div className="font-mono">
                         {formatBytes(compressionStats.totalOriginalSize)}
                       </div>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">
-                        Compressed Size:
-                      </span>
+                      <span className="text-muted-foreground">Compressed Size:</span>
                       <div className="font-mono">
                         {formatBytes(compressionStats.totalCompressedSize)}
                       </div>
@@ -546,9 +482,7 @@ export default function CDNMonitoring() {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Asset Manifest</CardTitle>
-                <CardDescription>
-                  Static asset inventory and metadata
-                </CardDescription>
+                <CardDescription>Static asset inventory and metadata</CardDescription>
               </div>
               <Button
                 onClick={() => rebuildManifestMutation.mutate()}
@@ -562,14 +496,12 @@ export default function CDNMonitoring() {
             </CardHeader>
             <CardContent>
               {manifestLoading ? (
-                <div className="text-center py-8">
-                  Loading asset manifest...
-                </div>
+                <div className="text-center py-8">Loading asset manifest...</div>
               ) : assetManifest?.assets ? (
                 <div className="space-y-4">
                   <div className="text-sm text-muted-foreground">
-                    {Object.keys(assetManifest.assets).length} assets in
-                    manifest (v{assetManifest.version})
+                    {Object.keys(assetManifest.assets).length} assets in manifest (v
+                    {assetManifest.version})
                   </div>
                   <div className="space-y-2 max-h-96 overflow-auto">
                     {Object.entries(
@@ -582,16 +514,14 @@ export default function CDNMonitoring() {
                           contentType: string;
                           lastModified: string;
                         }
-                      >,
+                      >
                     ).map(([path, asset]) => (
                       <div
                         key={path}
                         className="flex items-center justify-between p-2 bg-muted rounded"
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="font-mono text-sm truncate">
-                            {path}
-                          </div>
+                          <div className="font-mono text-sm truncate">{path}</div>
                           <div className="text-xs text-muted-foreground">
                             {asset.contentType} • {formatBytes(asset.size)}
                           </div>
@@ -606,8 +536,8 @@ export default function CDNMonitoring() {
               ) : (
                 <Alert>
                   <AlertDescription>
-                    No assets found in manifest. Assets will be discovered when
-                    the build is generated.
+                    No assets found in manifest. Assets will be discovered when the build is
+                    generated.
                   </AlertDescription>
                 </Alert>
               )}
@@ -627,15 +557,9 @@ export default function CDNMonitoring() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button
-                onClick={runCDNTest}
-                disabled={testResults?.testing}
-                className="w-full"
-              >
+              <Button onClick={runCDNTest} disabled={testResults?.testing} className="w-full">
                 <Activity className="w-4 h-4 mr-2" />
-                {testResults?.testing
-                  ? "Running Tests..."
-                  : "Run Comprehensive CDN Test"}
+                {testResults?.testing ? "Running Tests..." : "Run Comprehensive CDN Test"}
               </Button>
 
               {testResults && !testResults.testing && (
@@ -647,8 +571,7 @@ export default function CDNMonitoring() {
                   ) : (
                     <>
                       <div className="text-sm text-muted-foreground">
-                        Test completed at{" "}
-                        {new Date(testResults.timestamp).toLocaleString()}
+                        Test completed at {new Date(testResults.timestamp).toLocaleString()}
                       </div>
                       {testResults.tests?.map((test: any, index: number) => (
                         <div
@@ -664,11 +587,7 @@ export default function CDNMonitoring() {
                                   : test.details}
                               </div>
                             )}
-                            {test.error && (
-                              <div className="text-sm text-red-600">
-                                {test.error}
-                              </div>
-                            )}
+                            {test.error && <div className="text-sm text-red-600">{test.error}</div>}
                           </div>
                           <span
                             className={`px-2 py-1 rounded-md text-sm ${

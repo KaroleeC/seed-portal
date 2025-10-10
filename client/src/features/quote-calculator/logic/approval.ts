@@ -7,7 +7,7 @@
 export function getApprovalButtonDisabledReason(
   formValues: any,
   isRequestingApproval: boolean,
-  hasRequestedApproval: boolean,
+  hasRequestedApproval: boolean
 ): string | null {
   // Mirror original behavior: if in-flight request, don't disable by reason
   if (isRequestingApproval) return null;
@@ -44,13 +44,9 @@ export function getApprovalButtonDisabledReason(
 export function isApprovalButtonDisabled(
   formValues: any,
   isRequestingApproval: boolean,
-  hasRequestedApproval: boolean,
+  hasRequestedApproval: boolean
 ): boolean {
   return (
-    getApprovalButtonDisabledReason(
-      formValues,
-      isRequestingApproval,
-      hasRequestedApproval,
-    ) !== null
+    getApprovalButtonDisabledReason(formValues, isRequestingApproval, hasRequestedApproval) !== null
   );
 }

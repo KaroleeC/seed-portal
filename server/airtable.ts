@@ -38,23 +38,18 @@ export class AirtableService {
 
   constructor() {
     if (!process.env.AIRTABLE_API_KEY || !process.env.AIRTABLE_BASE_ID) {
-      console.warn(
-        "Airtable configuration missing - data enhancement will use AI only",
-      );
+      console.warn("Airtable configuration missing - data enhancement will use AI only");
       return;
     }
 
     console.log("Initializing Airtable service with provided credentials");
     this.base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(
-      process.env.AIRTABLE_BASE_ID,
+      process.env.AIRTABLE_BASE_ID
     );
   }
 
   // Search for company record by name or email
-  async findCompanyByName(
-    companyName: string,
-    email?: string,
-  ): Promise<AirtableRecord | null> {
+  async findCompanyByName(companyName: string, email?: string): Promise<AirtableRecord | null> {
     if (!this.base) {
       console.log("Airtable base not initialized - using AI fallback");
       return null;
@@ -62,7 +57,7 @@ export class AirtableService {
 
     try {
       console.log(
-        `🔍 Searching Airtable BK Leads table for ${email ? `email: ${email}` : `company: ${companyName}`}`,
+        `🔍 Searching Airtable BK Leads table for ${email ? `email: ${email}` : `company: ${companyName}`}`
       );
 
       // Search by email first (more accurate), then by company name as fallback
@@ -100,10 +95,7 @@ export class AirtableService {
   }
 
   // Get enriched company data from Airtable
-  async getEnrichedCompanyData(
-    companyName: string,
-    email?: string,
-  ): Promise<any> {
+  async getEnrichedCompanyData(companyName: string, email?: string): Promise<any> {
     const record = await this.findCompanyByName(companyName, email);
     if (!record) return null;
 
@@ -189,7 +181,7 @@ export class AirtableService {
 
     // Default fallback - only return valid HubSpot industry values
     console.log(
-      `No mapping found for industry: ${airtableIndustry}, using default COMPUTER_SOFTWARE`,
+      `No mapping found for industry: ${airtableIndustry}, using default COMPUTER_SOFTWARE`
     );
     return "COMPUTER_SOFTWARE";
   }

@@ -1,29 +1,35 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { UniversalNavbar } from "@/components/UniversalNavbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import {
-  Shield,
-  Calculator,
-  DollarSign,
-  BookOpen,
-  Users,
-  Wrench,
-  Settings,
-} from "lucide-react";
-
+import { Calculator, DollarSign, BookOpen, Users, Wrench } from "lucide-react";
+import { SettingsLayout, type SettingsNavItem } from "@/components/settings/SettingsLayout";
 export default function SettingsHub() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const isAdmin = user?.role === "admin";
+
+  const nav: SettingsNavItem[] = useMemo(
+    () => [
+      { id: "general", label: "General" },
+      { id: "seedqc", label: "Calculator (SeedQC)", visible: !!isAdmin },
+      { id: "seedpay", label: "Commission Tracker (SeedPay)", visible: !!isAdmin },
+      { id: "seedkb", label: "Knowledge Base" },
+      { id: "client-profiles", label: "Client Profiles", visible: !!isAdmin },
+      { id: "leads-inbox", label: "Leads Inbox", visible: !!isAdmin },
+      { id: "system", label: "System (Admin)", visible: !!isAdmin },
+    ],
+    [isAdmin]
+  );
 
   const Section = ({
     title,
     description,
     actions,
     icon: Icon,
+    id,
   }: {
     title: string;
     description: string;
@@ -33,118 +39,104 @@ export default function SettingsHub() {
       variant?: "default" | "outline" | "ghost" | "secondary";
     }>;
     icon: any;
+    id: string;
   }) => (
-    <Card className="border shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Icon className="h-5 w-5 text-orange-600" />
-          <CardTitle>{title}</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{description}</p>
-        <div className="flex gap-2">
-          {actions.map((a) => (
-            <Button
-              key={a.to}
-              variant={a.variant ?? "default"}
-              onClick={() => setLocation(a.to)}
-            >
-              {a.label}
-            </Button>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div id={id} className="scroll-mt-20">
+      <Card className="border shadow-md">
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Icon className="h-5 w-5 text-orange-600" />
+            <CardTitle>{title}</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">{description}</p>
+          <div className="flex gap-2">
+            {actions.map((a) => (
+              <Button key={a.to} variant={a.variant ?? "default"} onClick={() => setLocation(a.to)}>
+                {a.label}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#253e31] to-[#75c29a]">
-      <div className="max-w-5xl mx-auto p-6">
-        <UniversalNavbar showBackButton={true} />
+    <SettingsLayout title="Settings" nav={nav} header={<UniversalNavbar showBackButton={true} />}>
+      <div className="grid grid-cols-1 gap-4">
+        <Section
+          id="general"
+          title="General"
+          description="Update your profile and preferences."
+          actions={[{ label: "Profile", to: "/profile", variant: "outline" }]}
+          icon={Wrench}
+        />
 
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-              <Settings className="h-7 w-7" /> Settings
-            </h1>
-            {isAdmin && (
-              <div className="inline-flex items-center text-white/90 text-sm gap-2">
-                <Shield className="h-4 w-4" /> Admin Access
-              </div>
-            )}
-          </div>
-          <p className="text-white/80 mt-1">
-            Configure the SeedOS apps and system based on your access.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
+        {isAdmin && (
           <Section
-            title="General"
-            description="Update your profile and preferences."
-            actions={[{ label: "Profile", to: "/profile", variant: "outline" }]}
-            icon={Wrench}
+            id="seedqc"
+            title="Calculator (SeedQC)"
+            description="Manage SOW templates, agreement links, and pricing settings for the calculator."
+            actions={[{ label: "Open", to: "/settings#seedqc" }]}
+            icon={Calculator}
           />
+        )}
 
-          {isAdmin && (
-            <Section
-              title="Calculator (SeedQC)"
-              description="Manage SOW templates, agreement links, and pricing settings for the calculator."
-              actions={[
-                { label: "Open Settings", to: "/apps/seedqc/settings" },
-              ]}
-              icon={Calculator}
-            />
-          )}
-
-          {isAdmin && (
-            <Section
-              title="Commission Tracker (SeedPay)"
-              description="View commission diagnostics and settings (read-only for now)."
-              actions={[
-                { label: "Open Settings", to: "/apps/seedpay/settings" },
-              ]}
-              icon={DollarSign}
-            />
-          )}
-
-          {/* Knowledge Base - keep available to employees/admins */}
+        {isAdmin && (
           <Section
-            title="Knowledge Base"
-            description="Manage knowledge base content and settings."
+            id="seedpay"
+            title="Commission Tracker (SeedPay)"
+            description="View commission diagnostics and settings (read-only for now)."
+            actions={[{ label: "Open", to: "/settings#seedpay" }]}
+            icon={DollarSign}
+          />
+        )}
+
+        <Section
+          id="seedkb"
+          title="Knowledge Base"
+          description="Manage knowledge base content and settings."
+          actions={[{ label: "KB Admin", to: "/kb-admin", variant: "outline" }]}
+          icon={BookOpen}
+        />
+
+        {isAdmin && (
+          <Section
+            id="client-profiles"
+            title="Client Profiles"
+            description="Manage client profiles settings."
+            actions={[{ label: "Open", to: "/settings#client-profiles" }]}
+            icon={Users}
+          />
+        )}
+
+        {isAdmin && (
+          <Section
+            id="leads-inbox"
+            title="Leads Inbox"
+            description="Manage leads inbox settings."
+            actions={[{ label: "Open", to: "/settings#leads-inbox" }]}
+            icon={Users}
+          />
+        )}
+
+        {isAdmin && (
+          <Section
+            id="system"
+            title="System (Admin)"
+            description="Manage users, integrations, and diagnostics."
             actions={[
-              { label: "KB Admin", to: "/kb-admin", variant: "outline" },
+              { label: "User Management", to: "/user-management", variant: "outline" },
+              { label: "Pricing Management", to: "/admin/pricing", variant: "outline" },
+              { label: "HubSpot Diagnostics", to: "/admin/hubspot", variant: "outline" },
+              { label: "Command Dock RBAC", to: "/settings/command-dock", variant: "outline" },
             ]}
-            icon={BookOpen}
+            icon={Users}
           />
-
-          {isAdmin && (
-            <Section
-              title="System (Admin)"
-              description="Manage users, integrations, and diagnostics."
-              actions={[
-                {
-                  label: "User Management",
-                  to: "/user-management",
-                  variant: "outline",
-                },
-                {
-                  label: "Pricing Management",
-                  to: "/admin/pricing",
-                  variant: "outline",
-                },
-                {
-                  label: "HubSpot Diagnostics",
-                  to: "/admin/hubspot",
-                  variant: "outline",
-                },
-              ]}
-              icon={Users}
-            />
-          )}
-        </div>
+        )}
       </div>
-    </div>
+    </SettingsLayout>
   );
 }

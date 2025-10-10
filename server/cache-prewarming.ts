@@ -11,9 +11,7 @@ let preWarmQueue: Queue | null = null;
 
 export async function initializePreWarmQueue(): Promise<void> {
   if (!process.env.REDIS_URL) {
-    preWarmLogger.info(
-      "No REDIS_URL found, skipping pre-warm queue initialization",
-    );
+    preWarmLogger.info("No REDIS_URL found, skipping pre-warm queue initialization");
     return;
   }
 
@@ -68,7 +66,7 @@ export async function scheduleNightlyPreWarm(): Promise<void> {
       {
         repeat: { pattern: "0 2 * * *" }, // 2 AM daily
         jobId: "nightly-prewarm", // Prevent duplicates
-      },
+      }
     );
 
     preWarmLogger.info("✅ Scheduled nightly cache pre-warming");
@@ -108,10 +106,7 @@ export async function preWarmHighPriorityContacts(): Promise<void> {
         const contactId = contact.id;
 
         // Check if already cached
-        const cacheKey = cache.generateKey(
-          CachePrefix.OPENAI_ANALYSIS,
-          contactId,
-        );
+        const cacheKey = cache.generateKey(CachePrefix.OPENAI_ANALYSIS, contactId);
         const existing = await cache.get(cacheKey);
 
         if (existing) {
@@ -152,7 +147,7 @@ export async function preWarmHighPriorityContacts(): Promise<void> {
 
         preWarmLogger.debug(
           { contactId, company: clientData.companyName },
-          "Pre-warmed contact insights",
+          "Pre-warmed contact insights"
         );
 
         // Add small delay to avoid overwhelming OpenAI API
@@ -160,14 +155,14 @@ export async function preWarmHighPriorityContacts(): Promise<void> {
       } catch (contactError) {
         preWarmLogger.error(
           { error: contactError, contactId: contact.id },
-          "Failed to pre-warm contact",
+          "Failed to pre-warm contact"
         );
       }
     }
 
     preWarmLogger.info(
       { preWarmedCount, totalContacts: topContacts.length },
-      "✅ Cache pre-warming completed",
+      "✅ Cache pre-warming completed"
     );
   } catch (error) {
     preWarmLogger.error({ error }, "Cache pre-warming failed");

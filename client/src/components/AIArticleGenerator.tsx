@@ -6,12 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -108,9 +103,7 @@ const generatorSchema = z
     title: z.string().min(1, "Title is required"),
     categoryId: z.number().min(1, "Category is required"),
     audience: z.enum(["internal", "client", "sales"]),
-    tone: z
-      .enum(["professional", "friendly", "technical"])
-      .default("professional"),
+    tone: z.enum(["professional", "friendly", "technical"]).default("professional"),
     length: z.enum(["brief", "standard", "comprehensive"]).default("standard"),
     includeCompliance: z.boolean().default(true),
     customRequirements: z.string().optional(),
@@ -152,20 +145,11 @@ export function AIArticleGenerator({
   const [currentStep, setCurrentStep] = useState<
     "setup" | "outline" | "draft" | "polish" | "versions"
   >(existingArticle ? "versions" : "setup");
-  const [generatedContent, setGeneratedContent] = useState<
-    Record<string, string>
-  >({});
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
-    null,
-  );
-  const [contentAnalysis, setContentAnalysis] =
-    useState<ContentAnalysis | null>(null);
-  const [selectedImprovements, setSelectedImprovements] = useState<number[]>(
-    [],
-  );
-  const [audienceVersions, setAudienceVersions] = useState<
-    Record<string, string>
-  >({});
+  const [generatedContent, setGeneratedContent] = useState<Record<string, string>>({});
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [contentAnalysis, setContentAnalysis] = useState<ContentAnalysis | null>(null);
+  const [selectedImprovements, setSelectedImprovements] = useState<number[]>([]);
+  const [audienceVersions, setAudienceVersions] = useState<Record<string, string>>({});
   const [autoExcerpt, setAutoExcerpt] = useState("");
   const [autoTags, setAutoTags] = useState<string[]>([]);
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>([]);
@@ -308,9 +292,7 @@ export function AIArticleGenerator({
       timestamp: Date.now(),
     };
 
-    const existing = JSON.parse(
-      localStorage.getItem("ai-article-sessions") || "[]",
-    );
+    const existing = JSON.parse(localStorage.getItem("ai-article-sessions") || "[]");
     const updated = [sessionData, ...existing.slice(0, 9)]; // Keep last 10 sessions
     localStorage.setItem("ai-article-sessions", JSON.stringify(updated));
     setSavedSessions(updated);
@@ -361,9 +343,7 @@ export function AIArticleGenerator({
 
     const interval = setInterval(() => {
       const hasContent =
-        generatedContent.outline ||
-        generatedContent.draft ||
-        generatedContent.polished;
+        generatedContent.outline || generatedContent.draft || generatedContent.polished;
       if (hasContent) {
         const autoSave: SavedSession = {
           formData: form.getValues(),
@@ -390,9 +370,7 @@ export function AIArticleGenerator({
   // Load sessions on mount
   useEffect(() => {
     if (isOpen) {
-      const saved = JSON.parse(
-        localStorage.getItem("ai-article-sessions") || "[]",
-      );
+      const saved = JSON.parse(localStorage.getItem("ai-article-sessions") || "[]");
       setSavedSessions(saved);
     }
   }, [isOpen]);
@@ -414,8 +392,7 @@ export function AIArticleGenerator({
 
       const payload = {
         ...data,
-        variables:
-          Object.keys(templateVariables).length > 0 ? templateVariables : {},
+        variables: Object.keys(templateVariables).length > 0 ? templateVariables : {},
       };
       return apiRequest("/api/kb/ai/generate-outline", {
         method: "POST",
@@ -473,8 +450,7 @@ export function AIArticleGenerator({
 
       const payload = {
         ...data,
-        variables:
-          Object.keys(templateVariables).length > 0 ? templateVariables : {},
+        variables: Object.keys(templateVariables).length > 0 ? templateVariables : {},
         outline,
       };
       return apiRequest("/api/kb/ai/generate-draft", {
@@ -518,8 +494,7 @@ export function AIArticleGenerator({
 
       const payload = {
         ...data,
-        variables:
-          Object.keys(templateVariables).length > 0 ? templateVariables : {},
+        variables: Object.keys(templateVariables).length > 0 ? templateVariables : {},
         draft,
       };
       return apiRequest("/api/kb/ai/polish", {
@@ -534,8 +509,7 @@ export function AIArticleGenerator({
         setCurrentStep("polish");
         toast({
           title: "Article Polished",
-          description:
-            "Your article has been refined and is ready for publication",
+          description: "Your article has been refined and is ready for publication",
         });
       }, 100);
     },
@@ -554,7 +528,7 @@ export function AIArticleGenerator({
     mutationFn: async () => {
       const formData = form.getValues();
       const selectedSuggestions = selectedImprovements.map(
-        (index) => contentAnalysis!.suggestions[index],
+        (index) => contentAnalysis!.suggestions[index]
       );
 
       return apiRequest("/api/kb/ai/redraft-with-improvements", {
@@ -572,8 +546,7 @@ export function AIArticleGenerator({
       setContentAnalysis(null); // Clear old analysis
       toast({
         title: "Article Re-drafted",
-        description:
-          "Your draft has been updated with the selected improvements",
+        description: "Your draft has been updated with the selected improvements",
       });
     },
     onError: (error: any) => {
@@ -598,10 +571,7 @@ export function AIArticleGenerator({
   });
 
   const generateVersionsMutation = useMutation({
-    mutationFn: async ({
-      baseContent,
-      ...data
-    }: GeneratorFormData & { baseContent: string }) => {
+    mutationFn: async ({ baseContent, ...data }: GeneratorFormData & { baseContent: string }) => {
       const variables = data.variables ? JSON.parse(data.variables) : {};
       const payload = { ...data, variables, baseContent };
       return apiRequest("/api/kb/ai/generate-versions", {
@@ -621,9 +591,7 @@ export function AIArticleGenerator({
 
   // Handlers
   const handleTemplateSelect = (templateId: string) => {
-    const template = (templates as Template[]).find(
-      (t: Template) => t.id === templateId,
-    );
+    const template = (templates as Template[]).find((t: Template) => t.id === templateId);
     setSelectedTemplate(template || null);
     form.setValue("templateType", templateId);
   };
@@ -674,10 +642,9 @@ export function AIArticleGenerator({
     // Just trigger the callback with the article data - modal will handle actual creation
     onArticleGenerated({
       title: formData.title,
-      content: content,
+      content,
       categoryId: formData.categoryId,
-      excerpt:
-        autoExcerpt || "AI-generated article with advanced content analysis",
+      excerpt: autoExcerpt || "AI-generated article with advanced content analysis",
       tags: autoTags.length > 0 ? autoTags : ["ai-generated", "knowledge-base"],
     });
 
@@ -735,9 +702,7 @@ export function AIArticleGenerator({
                 size="sm"
                 onClick={saveSession}
                 disabled={
-                  !generatedContent.outline &&
-                  !generatedContent.draft &&
-                  !generatedContent.polished
+                  !generatedContent.outline && !generatedContent.draft && !generatedContent.polished
                 }
               >
                 <Save className="h-4 w-4 mr-1" />
@@ -790,10 +755,7 @@ export function AIArticleGenerator({
           {/* Setup Tab */}
           <TabsContent value="setup" className="space-y-6">
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(handleGenerateOutline)}
-                className="space-y-6"
-              >
+              <form onSubmit={form.handleSubmit(handleGenerateOutline)} className="space-y-6">
                 {/* Template Selection */}
                 <Card>
                   <CardHeader>
@@ -804,9 +766,7 @@ export function AIArticleGenerator({
                   </CardHeader>
                   <CardContent>
                     {templatesLoading ? (
-                      <div className="text-center py-4">
-                        Loading templates...
-                      </div>
+                      <div className="text-center py-4">Loading templates...</div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {(templates as Template[]).map((template: Template) => (
@@ -821,9 +781,7 @@ export function AIArticleGenerator({
                           >
                             <CardContent className="p-5">
                               <div className="flex items-center gap-2 mb-3">
-                                <h4 className="font-semibold">
-                                  {template.name}
-                                </h4>
+                                <h4 className="font-semibold">{template.name}</h4>
                                 {template.seedStyle && (
                                   <Badge className="bg-orange-100 text-orange-800 text-xs">
                                     Seed Style
@@ -838,19 +796,12 @@ export function AIArticleGenerator({
                                     Main Sections:
                                   </h4>
                                   <div className="text-xs text-gray-600 space-y-1">
-                                    {template.structure.map(
-                                      (section, index) => (
-                                        <div
-                                          key={index}
-                                          className="flex items-start gap-2"
-                                        >
-                                          <div className="w-1 h-1 bg-orange-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                                          <span className="leading-relaxed">
-                                            {section}
-                                          </span>
-                                        </div>
-                                      ),
-                                    )}
+                                    {template.structure.map((section, index) => (
+                                      <div key={index} className="flex items-start gap-2">
+                                        <div className="w-1 h-1 bg-orange-500 rounded-full mt-1.5 flex-shrink-0" />
+                                        <span className="leading-relaxed">{section}</span>
+                                      </div>
+                                    ))}
                                   </div>
                                 </div>
 
@@ -881,40 +832,35 @@ export function AIArticleGenerator({
                                 </div>
 
                                 {/* Template Variables Preview */}
-                                {template.variables &&
-                                  template.variables.length > 0 && (
-                                    <div className="pt-3 border-t border-gray-200">
-                                      <h4 className="font-semibold text-sm text-gray-800 mb-2">
-                                        Can Be Customized:
-                                      </h4>
-                                      <div className="flex flex-wrap gap-1 mb-2">
-                                        {template.variables.map(
-                                          (variable, index) => {
-                                            // Convert variable names to readable format
-                                            const readableName = variable
-                                              .replace(/[{}]/g, "")
-                                              .replace(/_/g, " ")
-                                              .replace(/\b\w/g, (l) =>
-                                                l.toUpperCase(),
-                                              );
-                                            return (
-                                              <Badge
-                                                key={index}
-                                                variant="outline"
-                                                className="text-xs py-0.5 px-2"
-                                              >
-                                                {readableName}
-                                              </Badge>
-                                            );
-                                          },
-                                        )}
-                                      </div>
-                                      <div className="text-xs text-gray-400 italic leading-relaxed">
-                                        These will appear as simple form fields
-                                        below for easy customization
-                                      </div>
+                                {template.variables && template.variables.length > 0 && (
+                                  <div className="pt-3 border-t border-gray-200">
+                                    <h4 className="font-semibold text-sm text-gray-800 mb-2">
+                                      Can Be Customized:
+                                    </h4>
+                                    <div className="flex flex-wrap gap-1 mb-2">
+                                      {template.variables.map((variable, index) => {
+                                        // Convert variable names to readable format
+                                        const readableName = variable
+                                          .replace(/[{}]/g, "")
+                                          .replace(/_/g, " ")
+                                          .replace(/\b\w/g, (l) => l.toUpperCase());
+                                        return (
+                                          <Badge
+                                            key={index}
+                                            variant="outline"
+                                            className="text-xs py-0.5 px-2"
+                                          >
+                                            {readableName}
+                                          </Badge>
+                                        );
+                                      })}
                                     </div>
-                                  )}
+                                    <div className="text-xs text-gray-400 italic leading-relaxed">
+                                      These will appear as simple form fields below for easy
+                                      customization
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </CardContent>
                           </Card>
@@ -956,9 +902,7 @@ export function AIArticleGenerator({
                             <FormLabel>Category</FormLabel>
                             <Select
                               value={field.value?.toString()}
-                              onValueChange={(value) =>
-                                field.onChange(parseInt(value))
-                              }
+                              onValueChange={(value) => field.onChange(parseInt(value))}
                             >
                               <FormControl>
                                 <SelectTrigger>
@@ -967,10 +911,7 @@ export function AIArticleGenerator({
                               </FormControl>
                               <SelectContent>
                                 {categories.map((category) => (
-                                  <SelectItem
-                                    key={category.id}
-                                    value={category.id.toString()}
-                                  >
+                                  <SelectItem key={category.id} value={category.id.toString()}>
                                     {category.name}
                                   </SelectItem>
                                 ))}
@@ -989,25 +930,16 @@ export function AIArticleGenerator({
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Primary Audience</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
+                            <Select value={field.value} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="internal">
-                                  Internal Team
-                                </SelectItem>
-                                <SelectItem value="client">
-                                  Client-Facing
-                                </SelectItem>
-                                <SelectItem value="sales">
-                                  Sales Material
-                                </SelectItem>
+                                <SelectItem value="internal">Internal Team</SelectItem>
+                                <SelectItem value="client">Client-Facing</SelectItem>
+                                <SelectItem value="sales">Sales Material</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -1021,25 +953,16 @@ export function AIArticleGenerator({
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Tone</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
+                            <Select value={field.value} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="professional">
-                                  Professional
-                                </SelectItem>
-                                <SelectItem value="friendly">
-                                  Friendly
-                                </SelectItem>
-                                <SelectItem value="technical">
-                                  Technical
-                                </SelectItem>
+                                <SelectItem value="professional">Professional</SelectItem>
+                                <SelectItem value="friendly">Friendly</SelectItem>
+                                <SelectItem value="technical">Technical</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -1053,10 +976,7 @@ export function AIArticleGenerator({
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Length</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
+                            <Select value={field.value} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue />
@@ -1064,12 +984,8 @@ export function AIArticleGenerator({
                               </FormControl>
                               <SelectContent>
                                 <SelectItem value="brief">Brief</SelectItem>
-                                <SelectItem value="standard">
-                                  Standard
-                                </SelectItem>
-                                <SelectItem value="comprehensive">
-                                  Comprehensive
-                                </SelectItem>
+                                <SelectItem value="standard">Standard</SelectItem>
+                                <SelectItem value="comprehensive">Comprehensive</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -1107,76 +1023,57 @@ export function AIArticleGenerator({
                               Customize Template (Optional)
                             </CardTitle>
                             <p className="text-sm text-gray-600 mt-1">
-                              Fill in any fields you want to customize. Leave
-                              blank for AI to generate automatically.
+                              Fill in any fields you want to customize. Leave blank for AI to
+                              generate automatically.
                             </p>
                           </CardHeader>
                           <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {selectedTemplate.variables.map(
-                                (variable, index) => {
-                                  const fieldName = variable.replace(
-                                    /[{}]/g,
-                                    "",
-                                  );
-                                  const readableName = fieldName
-                                    .replace(/_/g, " ")
-                                    .replace(/\b\w/g, (l) => l.toUpperCase());
+                              {selectedTemplate.variables.map((variable, index) => {
+                                const fieldName = variable.replace(/[{}]/g, "");
+                                const readableName = fieldName
+                                  .replace(/_/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase());
 
-                                  return (
-                                    <FormField
-                                      key={index}
-                                      control={form.control}
-                                      name={`templateVar_${fieldName}`}
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormLabel>{readableName}</FormLabel>
-                                          <FormControl>
-                                            <Input
-                                              placeholder={`e.g., ${
-                                                fieldName.includes("name")
-                                                  ? "Client Onboarding Process"
-                                                  : fieldName.includes(
-                                                        "department",
-                                                      )
-                                                    ? "Sales Department"
-                                                    : fieldName.includes(
-                                                          "tools",
-                                                        )
-                                                      ? "HubSpot, QuickBooks"
-                                                      : fieldName.includes(
-                                                            "industry",
-                                                          )
-                                                        ? "Professional Services"
-                                                        : fieldName.includes(
-                                                              "state",
-                                                            )
-                                                          ? "California"
-                                                          : fieldName.includes(
-                                                                "entity",
-                                                              )
-                                                            ? "LLC"
-                                                            : fieldName.includes(
-                                                                  "level",
-                                                                )
-                                                              ? "Beginner"
-                                                              : "Your custom value"
-                                              }`}
-                                              value={
-                                                (field.value as string) || ""
-                                              }
-                                              onChange={field.onChange}
-                                              onBlur={field.onBlur}
-                                              name={field.name}
-                                            />
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-                                  );
-                                },
-                              )}
+                                return (
+                                  <FormField
+                                    key={index}
+                                    control={form.control}
+                                    name={`templateVar_${fieldName}`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>{readableName}</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            placeholder={`e.g., ${
+                                              fieldName.includes("name")
+                                                ? "Client Onboarding Process"
+                                                : fieldName.includes("department")
+                                                  ? "Sales Department"
+                                                  : fieldName.includes("tools")
+                                                    ? "HubSpot, QuickBooks"
+                                                    : fieldName.includes("industry")
+                                                      ? "Professional Services"
+                                                      : fieldName.includes("state")
+                                                        ? "California"
+                                                        : fieldName.includes("entity")
+                                                          ? "LLC"
+                                                          : fieldName.includes("level")
+                                                            ? "Beginner"
+                                                            : "Your custom value"
+                                            }`}
+                                            value={(field.value as string) || ""}
+                                            onChange={field.onChange}
+                                            onBlur={field.onBlur}
+                                            name={field.name}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                );
+                              })}
                             </div>
                           </CardContent>
                         </Card>
@@ -1188,10 +1085,7 @@ export function AIArticleGenerator({
                       render={({ field }) => (
                         <FormItem className="flex items-center space-x-2">
                           <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
                           <FormLabel className="!mt-0">
                             Include compliance disclaimers and legal notices
@@ -1209,9 +1103,7 @@ export function AIArticleGenerator({
                   <Button
                     type="submit"
                     className="bg-orange-500 hover:bg-orange-600"
-                    disabled={
-                      generateOutlineMutation.isPending || !selectedTemplate
-                    }
+                    disabled={generateOutlineMutation.isPending || !selectedTemplate}
                   >
                     {generateOutlineMutation.isPending ? (
                       <>
@@ -1251,9 +1143,7 @@ export function AIArticleGenerator({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() =>
-                        copyToClipboard(generatedContent.outline || "")
-                      }
+                      onClick={() => copyToClipboard(generatedContent.outline || "")}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -1313,20 +1203,14 @@ export function AIArticleGenerator({
                       <ArrowLeft className="h-4 w-4 mr-1" />
                       Back to Setup
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setCurrentStep("outline")}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => setCurrentStep("outline")}>
                       <Edit className="h-4 w-4 mr-1" />
                       Edit Outline
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() =>
-                        handleAnalyzeContent(generatedContent.draft || "")
-                      }
+                      onClick={() => handleAnalyzeContent(generatedContent.draft || "")}
                       disabled={analyzeContentMutation.isPending}
                     >
                       {analyzeContentMutation.isPending ? (
@@ -1341,9 +1225,7 @@ export function AIArticleGenerator({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() =>
-                        copyToClipboard(generatedContent.draft || "")
-                      }
+                      onClick={() => copyToClipboard(generatedContent.draft || "")}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -1400,82 +1282,72 @@ export function AIArticleGenerator({
                       </div>
 
                       {/* Suggestions Section */}
-                      {contentAnalysis.suggestions &&
-                        contentAnalysis.suggestions.length > 0 && (
-                          <div className="mt-4">
-                            <h5 className="font-semibold text-orange-700 mb-2 flex items-center gap-2">
-                              <Lightbulb className="h-4 w-4" />
-                              Improvement Suggestions
-                            </h5>
-                            <div className="space-y-2">
-                              {contentAnalysis.suggestions.map(
-                                (suggestion, index) => (
-                                  <div
-                                    key={index}
-                                    className="bg-orange-50 border border-orange-200 rounded-md p-3"
+                      {contentAnalysis.suggestions && contentAnalysis.suggestions.length > 0 && (
+                        <div className="mt-4">
+                          <h5 className="font-semibold text-orange-700 mb-2 flex items-center gap-2">
+                            <Lightbulb className="h-4 w-4" />
+                            Improvement Suggestions
+                          </h5>
+                          <div className="space-y-2">
+                            {contentAnalysis.suggestions.map((suggestion, index) => (
+                              <div
+                                key={index}
+                                className="bg-orange-50 border border-orange-200 rounded-md p-3"
+                              >
+                                <div className="flex items-start gap-3">
+                                  <Checkbox
+                                    id={`suggestion-${index}`}
+                                    checked={selectedImprovements.includes(index)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedImprovements((prev) => [...prev, index]);
+                                      } else {
+                                        setSelectedImprovements((prev) =>
+                                          prev.filter((i) => i !== index)
+                                        );
+                                      }
+                                    }}
+                                    className="mt-0.5"
+                                  />
+                                  <label
+                                    htmlFor={`suggestion-${index}`}
+                                    className="flex-1 cursor-pointer"
                                   >
-                                    <div className="flex items-start gap-3">
-                                      <Checkbox
-                                        id={`suggestion-${index}`}
-                                        checked={selectedImprovements.includes(
-                                          index,
-                                        )}
-                                        onCheckedChange={(checked) => {
-                                          if (checked) {
-                                            setSelectedImprovements((prev) => [
-                                              ...prev,
-                                              index,
-                                            ]);
-                                          } else {
-                                            setSelectedImprovements((prev) =>
-                                              prev.filter((i) => i !== index),
-                                            );
-                                          }
-                                        }}
-                                        className="mt-0.5"
-                                      />
-                                      <label
-                                        htmlFor={`suggestion-${index}`}
-                                        className="flex-1 cursor-pointer"
-                                      >
-                                        <span className="bg-orange-500 text-white text-xs rounded-full w-5 h-5 inline-flex items-center justify-center font-semibold mr-2">
-                                          {index + 1}
-                                        </span>
-                                        <span className="text-sm text-gray-700">
-                                          {suggestion}
-                                        </span>
-                                      </label>
-                                    </div>
-                                  </div>
-                                ),
-                              )}
-                            </div>
-
-                            {/* Re-draft Button */}
-                            {selectedImprovements.length > 0 && (
-                              <div className="mt-4 flex justify-center">
-                                <Button
-                                  onClick={handleRedraftWithImprovements}
-                                  disabled={redraftMutation.isPending}
-                                  className="bg-blue-500 hover:bg-blue-600"
-                                >
-                                  {redraftMutation.isPending ? (
-                                    <>
-                                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                      Re-drafting...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Edit3 className="h-4 w-4 mr-2" />
-                                      Re-draft with Selected Improvements (
-                                      {selectedImprovements.length})
-                                    </>
-                                  )}
-                                </Button>
+                                    <span className="bg-orange-500 text-white text-xs rounded-full w-5 h-5 inline-flex items-center justify-center font-semibold mr-2">
+                                      {index + 1}
+                                    </span>
+                                    <span className="text-sm text-gray-700">{suggestion}</span>
+                                  </label>
+                                </div>
                               </div>
-                            )}
+                            ))}
                           </div>
-                        )}
+
+                          {/* Re-draft Button */}
+                          {selectedImprovements.length > 0 && (
+                            <div className="mt-4 flex justify-center">
+                              <Button
+                                onClick={handleRedraftWithImprovements}
+                                disabled={redraftMutation.isPending}
+                                className="bg-blue-500 hover:bg-blue-600"
+                              >
+                                {redraftMutation.isPending ? (
+                                  <>
+                                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                    Re-drafting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Edit3 className="h-4 w-4 mr-2" />
+                                    Re-draft with Selected Improvements (
+                                    {selectedImprovements.length})
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Compliance Checks */}
                       {contentAnalysis.complianceChecks &&
@@ -1486,19 +1358,12 @@ export function AIArticleGenerator({
                               Compliance Status
                             </h5>
                             <div className="grid grid-cols-1 gap-2">
-                              {contentAnalysis.complianceChecks.map(
-                                (check, index) => (
-                                  <div
-                                    key={index}
-                                    className="flex items-center gap-2 text-sm"
-                                  >
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                    <span className="text-gray-700">
-                                      {check}
-                                    </span>
-                                  </div>
-                                ),
-                              )}
+                              {contentAnalysis.complianceChecks.map((check, index) => (
+                                <div key={index} className="flex items-center gap-2 text-sm">
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                  <span className="text-gray-700">{check}</span>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}
@@ -1549,20 +1414,14 @@ export function AIArticleGenerator({
                       <ArrowLeft className="h-4 w-4 mr-1" />
                       Back to Setup
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setCurrentStep("draft")}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => setCurrentStep("draft")}>
                       <FileText className="h-4 w-4 mr-1" />
                       Edit Draft
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() =>
-                        copyToClipboard(generatedContent.polished || "")
-                      }
+                      onClick={() => copyToClipboard(generatedContent.polished || "")}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -1614,19 +1473,11 @@ export function AIArticleGenerator({
                     AI-Generated Versions
                   </span>
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setCurrentStep("setup")}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => setCurrentStep("setup")}>
                       <ArrowLeft className="h-4 w-4 mr-1" />
                       Back to Setup
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setCurrentStep("polish")}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => setCurrentStep("polish")}>
                       <Edit className="h-4 w-4 mr-1" />
                       Back to Polish
                     </Button>
@@ -1648,16 +1499,12 @@ export function AIArticleGenerator({
                 >
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between text-base">
-                      <span className="capitalize font-semibold">
-                        {audience} Version
-                      </span>
+                      <span className="capitalize font-semibold">{audience} Version</span>
                       <div className="flex gap-1">
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() =>
-                            setPreviewingVersion({ audience, content })
-                          }
+                          onClick={() => setPreviewingVersion({ audience, content })}
                           className="h-8 w-8 p-0"
                         >
                           <Eye className="h-3 w-3" />
@@ -1665,9 +1512,7 @@ export function AIArticleGenerator({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() =>
-                            setEditingVersion({ audience, content })
-                          }
+                          onClick={() => setEditingVersion({ audience, content })}
                           className="h-8 w-8 p-0"
                         >
                           <Edit3 className="h-3 w-3" />
@@ -1718,10 +1563,7 @@ export function AIArticleGenerator({
 
             {/* Preview Modal */}
             {previewingVersion && (
-              <Dialog
-                open={!!previewingVersion}
-                onOpenChange={() => setPreviewingVersion(null)}
-              >
+              <Dialog open={!!previewingVersion} onOpenChange={() => setPreviewingVersion(null)}>
                 <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
@@ -1750,10 +1592,7 @@ export function AIArticleGenerator({
                     />
                   </div>
                   <div className="flex justify-end gap-2 pt-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => setPreviewingVersion(null)}
-                    >
+                    <Button variant="outline" onClick={() => setPreviewingVersion(null)}>
                       Close
                     </Button>
                     <Button
@@ -1773,10 +1612,7 @@ export function AIArticleGenerator({
 
             {/* Edit Modal */}
             {editingVersion && (
-              <Dialog
-                open={!!editingVersion}
-                onOpenChange={() => setEditingVersion(null)}
-              >
+              <Dialog open={!!editingVersion} onOpenChange={() => setEditingVersion(null)}>
                 <DialogContent className="max-w-4xl max-h-[80vh]">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
@@ -1791,18 +1627,13 @@ export function AIArticleGenerator({
                     <RichTextEditor
                       content={editingVersion.content}
                       onChange={(content) =>
-                        setEditingVersion((prev) =>
-                          prev ? { ...prev, content } : null,
-                        )
+                        setEditingVersion((prev) => (prev ? { ...prev, content } : null))
                       }
                       placeholder={`Edit your ${editingVersion.audience} version content...`}
                       height={400}
                     />
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setEditingVersion(null)}
-                      >
+                      <Button variant="outline" onClick={() => setEditingVersion(null)}>
                         Cancel
                       </Button>
                       <Button
@@ -1835,18 +1666,13 @@ export function AIArticleGenerator({
 
         {/* Session History Dialog */}
         {showSessionHistory && (
-          <Dialog
-            open={showSessionHistory}
-            onOpenChange={setShowSessionHistory}
-          >
+          <Dialog open={showSessionHistory} onOpenChange={setShowSessionHistory}>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <History className="h-5 w-5" />
                   Session History
-                  <Badge variant="secondary">
-                    {savedSessions.length} saved
-                  </Badge>
+                  <Badge variant="secondary">{savedSessions.length} saved</Badge>
                 </DialogTitle>
               </DialogHeader>
 
@@ -1861,10 +1687,7 @@ export function AIArticleGenerator({
                   </div>
                 ) : (
                   savedSessions.map((session, index) => (
-                    <Card
-                      key={index}
-                      className="hover:shadow-md transition-shadow"
-                    >
+                    <Card key={index} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
@@ -1872,50 +1695,34 @@ export function AIArticleGenerator({
                               {session.formData.title || "Untitled Article"}
                             </h3>
                             <p className="text-sm text-gray-600 mb-2">
-                              Template:{" "}
-                              {session.selectedTemplate?.name || "None"} •
-                              Category:{" "}
-                              {categories.find(
-                                (c) => c.id === session.formData.categoryId,
-                              )?.name || "Unknown"}
+                              Template: {session.selectedTemplate?.name || "None"} • Category:{" "}
+                              {categories.find((c) => c.id === session.formData.categoryId)?.name ||
+                                "Unknown"}
                             </p>
                             <div className="flex gap-2 text-xs">
                               {session.generatedContent.outline && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-green-600"
-                                >
+                                <Badge variant="outline" className="text-green-600">
                                   Outline ✓
                                 </Badge>
                               )}
                               {session.generatedContent.draft && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-blue-600"
-                                >
+                                <Badge variant="outline" className="text-blue-600">
                                   Draft ✓
                                 </Badge>
                               )}
                               {session.generatedContent.polished && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-orange-600"
-                                >
+                                <Badge variant="outline" className="text-orange-600">
                                   Polished ✓
                                 </Badge>
                               )}
                               {session.audienceVersions.internal && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-purple-600"
-                                >
+                                <Badge variant="outline" className="text-purple-600">
                                   Versions ✓
                                 </Badge>
                               )}
                             </div>
                             <p className="text-xs text-gray-500 mt-2">
-                              Saved:{" "}
-                              {new Date(session.timestamp).toLocaleString()}
+                              Saved: {new Date(session.timestamp).toLocaleString()}
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -1931,16 +1738,13 @@ export function AIArticleGenerator({
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const updated = savedSessions.filter(
-                                  (_, i) => i !== index,
-                                );
+                                const updated = savedSessions.filter((_, i) => i !== index);
                                 setSavedSessions(updated);
                                 localStorage.setItem(
                                   "ai-article-sessions",
-                                  JSON.stringify(updated),
+                                  JSON.stringify(updated)
                                 );
-                                if (updated.length === 0)
-                                  setShowSessionHistory(false);
+                                if (updated.length === 0) setShowSessionHistory(false);
                               }}
                             >
                               <AlertCircle className="h-3 w-3" />
@@ -1965,9 +1769,7 @@ export function AIArticleGenerator({
                   >
                     Clear All Sessions
                   </Button>
-                  <Button onClick={() => setShowSessionHistory(false)}>
-                    Close
-                  </Button>
+                  <Button onClick={() => setShowSessionHistory(false)}>Close</Button>
                 </div>
               </div>
             </DialogContent>

@@ -23,9 +23,7 @@ class CacheManager {
       this.initialized = true;
       logger.info("[Cache] Cache manager initialized with Redis");
     } catch (error) {
-      logger.warn(
-        "[Cache] Redis not available, cache operations will be no-ops",
-      );
+      logger.warn("[Cache] Redis not available, cache operations will be no-ops");
     }
   }
 
@@ -48,11 +46,7 @@ class CacheManager {
     }
   }
 
-  async set<T>(
-    key: string,
-    value: T,
-    options: CacheOptions = {},
-  ): Promise<void> {
+  async set<T>(key: string, value: T, options: CacheOptions = {}): Promise<void> {
     await this.initialize();
 
     if (!this.redis) return;
@@ -80,10 +74,7 @@ class CacheManager {
     }
   }
 
-  async invalidatePattern(
-    pattern: string,
-    options: CacheOptions = {},
-  ): Promise<void> {
+  async invalidatePattern(pattern: string, options: CacheOptions = {}): Promise<void> {
     await this.initialize();
 
     if (!this.redis) return;
@@ -95,7 +86,7 @@ class CacheManager {
       if (keys.length > 0) {
         await this.redis.del(...keys);
         logger.info(
-          `[Cache] Invalidated ${keys.length} cache entries matching pattern: ${searchPattern}`,
+          `[Cache] Invalidated ${keys.length} cache entries matching pattern: ${searchPattern}`
         );
       }
     } catch (error) {

@@ -12,11 +12,7 @@ export const debugConfig = {
   api: true,
 };
 
-export function debugLog(
-  category: keyof typeof debugConfig,
-  message: string,
-  data?: any,
-) {
+export function debugLog(category: keyof typeof debugConfig, message: string, data?: any) {
   if (!debugConfig.enabled || !debugConfig[category]) {
     return;
   }
@@ -31,13 +27,8 @@ export function debugLog(
 }
 
 // Convenience functions for common debug categories
-export const redisDebug = (message: string, data?: any) =>
-  debugLog("redis", message, data);
-export const authDebug = (message: string, data?: any) =>
-  debugLog("auth", message, data);
-export const routesDebug = (message: string, data?: any) =>
-  debugLog("routes", message, data);
-export const databaseDebug = (message: string, data?: any) =>
-  debugLog("database", message, data);
-export const apiDebug = (message: string, data?: any) =>
-  debugLog("api", message, data);
+export const redisDebug = (message: string, data?: any) => debugLog("redis", message, data);
+export const authDebug = (message: string, data?: any) => debugLog("auth", message, data);
+export const routesDebug = (message: string, data?: any) => debugLog("routes", message, data);
+export const databaseDebug = (message: string, data?: any) => debugLog("database", message, data);
+export const apiDebug = (message: string, data?: any) => debugLog("api", message, data);

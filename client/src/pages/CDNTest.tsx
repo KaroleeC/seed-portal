@@ -16,10 +16,7 @@ export default function CDNTest() {
         </CardHeader>
         <CardContent>
           <p>If you can see this page, the CDN monitoring route is working!</p>
-          <Button
-            onClick={() => (window.location.href = "/cdn-monitoring")}
-            className="mt-4"
-          >
+          <Button onClick={() => (window.location.href = "/cdn-monitoring")} className="mt-4">
             Go to Full CDN Monitoring
           </Button>
         </CardContent>

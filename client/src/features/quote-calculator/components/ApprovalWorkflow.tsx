@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle, Lock } from "lucide-react";
 
-import { QuoteFormData } from "../types/QuoteTypes";
+import type { QuoteFormData } from "../types/QuoteTypes";
 
 interface ApprovalWorkflowProps {
   formData: QuoteFormData;
@@ -50,8 +50,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
             Approval Required
           </DialogTitle>
           <DialogDescription>
-            This quote requires special approval. Please provide an approval
-            code to proceed.
+            This quote requires special approval. Please provide an approval code to proceed.
           </DialogDescription>
         </DialogHeader>
 
@@ -68,9 +67,7 @@ export const ApprovalWorkflow: React.FC<ApprovalWorkflowProps> = ({
               <option value="">Select reason...</option>
               <option value="complex_cleanup">Complex cleanup project</option>
               <option value="custom_pricing">Custom pricing arrangement</option>
-              <option value="special_client">
-                Special client circumstances
-              </option>
+              <option value="special_client">Special client circumstances</option>
               <option value="other">Other (please specify)</option>
             </select>
           </div>

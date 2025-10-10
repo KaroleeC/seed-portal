@@ -1,11 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,24 +20,8 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Building2,
-  ExternalLink,
-  Filter,
-  Inbox,
-  Calendar,
-  User,
-  X,
-  Search,
-} from "lucide-react";
-import {
-  format,
-  parseISO,
-  isAfter,
-  isBefore,
-  startOfDay,
-  endOfDay,
-} from "date-fns";
+import { Building2, ExternalLink, Filter, Inbox, Calendar, User, X, Search } from "lucide-react";
+import { format, parseISO, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
@@ -107,22 +85,16 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
     enabled: true, // Always fetch to get the total count for button
   });
 
-  const leads: SalesLead[] = (leadsData?.leads || []).sort(
-    (a: SalesLead, b: SalesLead) => {
-      // Sort by assigned date (most recent first) - use this reliable date field
-      const dateA = new Date(
-        a.properties.hubspot_owner_assigneddate ||
-          a.properties.hs_createdate ||
-          "1970-01-01",
-      );
-      const dateB = new Date(
-        b.properties.hubspot_owner_assigneddate ||
-          b.properties.hs_createdate ||
-          "1970-01-01",
-      );
-      return dateB.getTime() - dateA.getTime();
-    },
-  );
+  const leads: SalesLead[] = (leadsData?.leads || []).sort((a: SalesLead, b: SalesLead) => {
+    // Sort by assigned date (most recent first) - use this reliable date field
+    const dateA = new Date(
+      a.properties.hubspot_owner_assigneddate || a.properties.hs_createdate || "1970-01-01"
+    );
+    const dateB = new Date(
+      b.properties.hubspot_owner_assigneddate || b.properties.hs_createdate || "1970-01-01"
+    );
+    return dateB.getTime() - dateA.getTime();
+  });
 
   const allLeads: SalesLead[] = allLeadsData?.leads || [];
   const totalLeadCount = allLeads.length > 0 ? allLeads.length : leads.length;
@@ -138,11 +110,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
       const lastName = (lead.properties.lastname || "").toLowerCase();
       const fullName = `${firstName} ${lastName}`.trim();
 
-      if (
-        !companyName.includes(query) &&
-        !email.includes(query) &&
-        !fullName.includes(query)
-      ) {
+      if (!companyName.includes(query) && !email.includes(query) && !fullName.includes(query)) {
         return false;
       }
     }
@@ -154,9 +122,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
 
     // Date range filter
     if (dateFilter.start || dateFilter.end) {
-      const leadDate =
-        lead.properties.hubspot_owner_assigneddate ||
-        lead.properties.hs_createdate;
+      const leadDate = lead.properties.hubspot_owner_assigneddate || lead.properties.hs_createdate;
       if (!leadDate) return false;
 
       const leadDateObj = parseISO(leadDate);
@@ -176,9 +142,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
   });
 
   // Get unique lead stages for filter dropdown
-  const uniqueStages = Array.from(
-    new Set(allLeads.map((lead) => lead.leadStage)),
-  );
+  const uniqueStages = Array.from(new Set(allLeads.map((lead) => lead.leadStage)));
 
   const clearFilters = () => {
     setDateFilter({ start: "", end: "" });
@@ -219,10 +183,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
     if (lowerStage.includes("new") || lowerStage.includes("lead")) {
       return "bg-blue-100 text-blue-800 border-blue-200";
     }
-    if (
-      lowerStage.includes("qualified") ||
-      lowerStage.includes("opportunity")
-    ) {
+    if (lowerStage.includes("qualified") || lowerStage.includes("opportunity")) {
       return "bg-green-100 text-green-800 border-green-200";
     }
     if (lowerStage.includes("contact") || lowerStage.includes("attempt")) {
@@ -241,9 +202,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
             </div>
             <div>
               <CardTitle className="text-xl text-white">Sales Inbox</CardTitle>
-              <CardDescription className="text-white/80">
-                Loading active leads...
-              </CardDescription>
+              <CardDescription className="text-white/80">Loading active leads...</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -255,13 +214,13 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                 className="flex items-center justify-between p-4 bg-white/20 border border-white/20 rounded-lg animate-pulse"
               >
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-white/30 rounded-full"></div>
+                  <div className="w-12 h-12 bg-white/30 rounded-full" />
                   <div>
-                    <div className="h-4 bg-white/30 rounded w-32 mb-2"></div>
-                    <div className="h-3 bg-white/30 rounded w-48"></div>
+                    <div className="h-4 bg-white/30 rounded w-32 mb-2" />
+                    <div className="h-3 bg-white/30 rounded w-48" />
                   </div>
                 </div>
-                <div className="h-8 bg-white/30 rounded w-24"></div>
+                <div className="h-8 bg-white/30 rounded w-24" />
               </div>
             ))}
           </div>
@@ -280,16 +239,13 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
             </div>
             <div>
               <CardTitle className="text-xl text-white">Sales Inbox</CardTitle>
-              <CardDescription className="text-red-300">
-                Failed to load leads
-              </CardDescription>
+              <CardDescription className="text-red-300">Failed to load leads</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-white/80">
-            Unable to connect to HubSpot. Please check your integration
-            settings.
+            Unable to connect to HubSpot. Please check your integration settings.
           </p>
         </CardContent>
       </Card>
@@ -301,9 +257,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg font-medium text-white">
-              Sales Inbox
-            </CardTitle>
+            <CardTitle className="text-lg font-medium text-white">Sales Inbox</CardTitle>
             <CardDescription className="text-sm text-white/80">
               Active leads requiring attention
             </CardDescription>
@@ -316,9 +270,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
             </DialogTrigger>
             <DialogContent className="max-w-5xl max-h-[90vh]">
               <DialogHeader>
-                <DialogTitle className="text-xl font-semibold">
-                  All Active Leads
-                </DialogTitle>
+                <DialogTitle className="text-xl font-semibold">All Active Leads</DialogTitle>
               </DialogHeader>
 
               {/* Filter Controls */}
@@ -395,16 +347,8 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                     />
                   </div>
 
-                  {(stageFilter !== "all" ||
-                    dateFilter.start ||
-                    dateFilter.end ||
-                    searchQuery) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={clearFilters}
-                      className="h-9"
-                    >
+                  {(stageFilter !== "all" || dateFilter.start || dateFilter.end || searchQuery) && (
+                    <Button variant="outline" size="sm" onClick={clearFilters} className="h-9">
                       <X className="h-4 w-4 mr-1" />
                       Clear
                     </Button>
@@ -425,13 +369,13 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                         className="flex items-center justify-between p-4 bg-gray-50 border rounded-lg animate-pulse"
                       >
                         <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+                          <div className="w-12 h-12 bg-gray-300 rounded-full" />
                           <div>
-                            <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
-                            <div className="h-3 bg-gray-300 rounded w-48"></div>
+                            <div className="h-4 bg-gray-300 rounded w-32 mb-2" />
+                            <div className="h-3 bg-gray-300 rounded w-48" />
                           </div>
                         </div>
-                        <div className="h-8 bg-gray-300 rounded w-24"></div>
+                        <div className="h-8 bg-gray-300 rounded w-24" />
                       </div>
                     ))}
                   </div>
@@ -442,12 +386,12 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                         const dateA = new Date(
                           a.properties.hubspot_owner_assigneddate ||
                             a.properties.hs_createdate ||
-                            "1970-01-01",
+                            "1970-01-01"
                         );
                         const dateB = new Date(
                           b.properties.hubspot_owner_assigneddate ||
                             b.properties.hs_createdate ||
-                            "1970-01-01",
+                            "1970-01-01"
                         );
                         return dateB.getTime() - dateA.getTime();
                       })
@@ -468,7 +412,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                                 {formatContactName(lead)} •{" "}
                                 {formatCreateDate(
                                   lead.properties.hubspot_owner_assigneddate ||
-                                    lead.properties.hs_createdate,
+                                    lead.properties.hs_createdate
                                 )}{" "}
                                 • {lead.leadStage}
                               </p>
@@ -476,9 +420,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                           </div>
                           <Button
                             size="sm"
-                            onClick={() =>
-                              window.open(lead.hubspotContactUrl, "_blank")
-                            }
+                            onClick={() => window.open(lead.hubspotContactUrl, "_blank")}
                             className="bg-orange-500 hover:bg-orange-600 text-white"
                           >
                             <ExternalLink className="h-4 w-4 mr-2" />
@@ -504,8 +446,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                           No active leads
                         </h3>
                         <p className="text-gray-500">
-                          All caught up! No leads requiring attention at the
-                          moment.
+                          All caught up! No leads requiring attention at the moment.
                         </p>
                       </div>
                     )}
@@ -520,9 +461,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
         {leads.length === 0 ? (
           <div className="text-center py-8">
             <Inbox className="h-12 w-12 text-white/40 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">
-              No active leads
-            </h3>
+            <h3 className="text-lg font-semibold text-white mb-2">No active leads</h3>
             <p className="text-white/60">
               All caught up! No leads requiring attention at the moment.
             </p>
@@ -545,8 +484,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
                     <p className="text-xs text-gray-600">
                       {formatContactName(lead)} •{" "}
                       {formatCreateDate(
-                        lead.properties.hubspot_owner_assigneddate ||
-                          lead.properties.hs_createdate,
+                        lead.properties.hubspot_owner_assigneddate || lead.properties.hs_createdate
                       )}{" "}
                       • {lead.leadStage}
                     </p>
@@ -562,9 +500,7 @@ export function SalesInbox({ limit = 8 }: SalesInboxProps) {
               </div>
             ))}
             {/* Fill remaining space for consistent height */}
-            {leads.length < 8 && (
-              <div style={{ height: `${(8 - leads.length) * 80}px` }} />
-            )}
+            {leads.length < 8 && <div style={{ height: `${(8 - leads.length) * 80}px` }} />}
           </>
         )}
       </CardContent>

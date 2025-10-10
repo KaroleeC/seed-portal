@@ -42,8 +42,6 @@ export interface CheckExistingQuotesResponse {
   };
 }
 
-export async function checkExistingQuotes(
-  email: string,
-): Promise<CheckExistingQuotesResponse> {
+export async function checkExistingQuotes(email: string): Promise<CheckExistingQuotesResponse> {
   return await apiRequest("POST", "/api/quotes/check-existing", { email });
 }

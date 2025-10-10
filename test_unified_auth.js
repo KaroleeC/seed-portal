@@ -40,9 +40,7 @@ fetch("/api/login", {
 })
   .then((res) => {
     if (res.status === 400 || res.status === 401) {
-      console.log(
-        "✅ Email login endpoint working (invalid credentials expected)",
-      );
+      console.log("✅ Email login endpoint working (invalid credentials expected)");
     } else {
       console.log("⚠️ Unexpected login response:", res.status);
     }

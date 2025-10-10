@@ -1,9 +1,15 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import type { QueryFunction } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { supabase } from "./supabaseClient";
+
+const DEBUG_HTTP = import.meta.env.VITE_DEBUG_HTTP === "1";
 
 // Get the base API URL from environment variables
 // Prefer relative URLs in development/same-origin to avoid CORS & SSL issues
 const getBaseApiUrl = (): string => {
-  const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
+  const apiUrl = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL) as
+    | string
+    | undefined;
 
   // No explicit API URL -> use relative paths in dev
   if (!apiUrl) return "";
@@ -14,27 +20,29 @@ const getBaseApiUrl = (): string => {
   // If same-origin as current page, prefer relative
   try {
     const current = window.location;
+    // Treat localhost, 127.0.0.1 and ::1 as the same host in dev to avoid CORS/preflight
+    const normalizeLocalHost = (host: string) =>
+      host
+        .replace("127.0.0.1", "localhost")
+        .replace("[::1]", "localhost")
+        .replace("::1", "localhost");
     // On Vercel domains, prefer same-origin so rewrites proxy /api -> server
     if (/\.vercel\.app$/.test(current.hostname)) {
       return "";
     }
     const parsed = new URL(normalized);
-    if (parsed.host === current.host) {
+    if (normalizeLocalHost(parsed.host) === normalizeLocalHost(current.host)) {
       return "";
     }
 
     // Handle local dev misconfig: https://localhost or https://127.0.0.1 without TLS
-    const isLocal =
-      parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+    const isLocal = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
     const isHttps = parsed.protocol === "https:";
     if (isLocal && isHttps) {
       // Downgrade to http to prevent net::ERR_SSL_PROTOCOL_ERROR in local dev
       parsed.protocol = "http:";
       const downgraded = parsed.toString().replace(/\/$/, "");
-      console.warn(
-        "[ApiRequest] Downgrading VITE_API_URL to http for local dev:",
-        downgraded,
-      );
+      console.warn("[ApiRequest] Downgrading VITE_API_URL to http for local dev:", downgraded);
       return downgraded;
     }
 
@@ -44,6 +52,18 @@ const getBaseApiUrl = (): string => {
     return normalized;
   }
 };
+
+// Lightweight CSRF token fetcher used for non-GET requests
+async function getCsrfToken(): Promise<string | undefined> {
+  try {
+    const res = await fetch("/api/csrf-token", { credentials: "include" });
+    if (!res.ok) return undefined;
+    const data = await res.json();
+    return data?.csrfToken;
+  } catch {
+    return undefined;
+  }
+}
 
 // Helper function to construct full API URLs
 const getApiUrl = (path: string): string => {
@@ -59,16 +79,16 @@ async function throwIfResNotOk(res: Response) {
     const clonedRes = res.clone();
     const text = (await clonedRes.text()) || res.statusText;
 
-    // ENHANCED DEBUGGING for authentication issues
-    console.error("[ApiRequest] ❌ HTTP Error:", {
-      status: res.status,
-      statusText: res.statusText,
-      url: res.url,
-      text: text,
-      headers: Object.fromEntries(res.headers.entries()),
-      cookiesInResponse: res.headers.get("set-cookie"),
-      timestamp: new Date().toISOString(),
-    });
+    // ENHANCED DEBUGGING for authentication issues (guarded)
+    if (DEBUG_HTTP) {
+      console.error("[ApiRequest] ❌ HTTP Error:", {
+        status: res.status,
+        statusText: res.statusText,
+        url: res.url,
+        text,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     throw new Error(`${res.status}: ${text}`);
   }
@@ -78,7 +98,7 @@ async function throwIfResNotOk(res: Response) {
 export async function apiRequest<T = any>(
   urlOrMethod: string,
   optionsOrUrl?: any,
-  dataOrUndefined?: any,
+  dataOrUndefined?: any
 ): Promise<T> {
   let method: string;
   let url: string;
@@ -111,6 +131,10 @@ export async function apiRequest<T = any>(
     }
 
     // Build request options with custom headers support
+    // Fetch Supabase access token for Authorization header
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+
     const requestOptions: RequestInit = {
       method,
       mode: "cors",
@@ -123,10 +147,21 @@ export async function apiRequest<T = any>(
       credentials: "include", // This sends session cookies for authentication
     };
 
+    if (accessToken) {
+      (requestOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    // Attach CSRF token for non-GET requests
+    if (method !== "GET") {
+      const csrf = await getCsrfToken();
+      if (csrf) {
+        (requestOptions.headers as Record<string, string>)["x-csrf-token"] = csrf;
+      }
+    }
+
     // Handle body based on whether it's already stringified or not
     if (data && (method === "POST" || method === "PUT" || method === "PATCH")) {
-      requestOptions.body =
-        typeof data === "string" ? data : JSON.stringify(data);
+      requestOptions.body = typeof data === "string" ? data : JSON.stringify(data);
     }
 
     const response = await fetch(url, requestOptions);
@@ -143,13 +178,17 @@ export async function apiRequest<T = any>(
       throw new Error(
         `Unexpected non-JSON response from API: ${response.status} ${response.statusText} at ${response.url}. First 120 chars: ${text.slice(
           0,
-          120,
-        )}`,
+          120
+        )}`
       );
     }
   }
 
   // For new signature calls, build standard request options
+  // Fetch Supabase access token for Authorization header
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+
   const requestOptions: RequestInit = {
     method,
     mode: "cors", // Explicit CORS mode
@@ -161,32 +200,45 @@ export async function apiRequest<T = any>(
     credentials: "include", // This sends session cookies for authentication
   };
 
+  if (accessToken) {
+    (requestOptions.headers as Record<string, string>)["Authorization"] = `Bearer ${accessToken}`;
+  }
+
+  // Attach CSRF token for non-GET requests
+  if (method !== "GET") {
+    const csrf = await getCsrfToken();
+    if (csrf) {
+      (requestOptions.headers as Record<string, string>)["x-csrf-token"] = csrf;
+    }
+  }
+
   if (data && (method === "POST" || method === "PUT" || method === "PATCH")) {
     requestOptions.body = JSON.stringify(data);
   }
 
   // CRITICAL: Log frontend request details for debugging (new signature)
-  console.log("[ApiRequest] 🚀 Frontend request details (new sig):", {
-    url,
-    method,
-    hasCredentials: requestOptions.credentials === "include",
-    headers: requestOptions.headers,
-    cookiesAvailable: document.cookie ? "YES" : "NO",
-    cookieSnippet: document.cookie.substring(0, 100),
-    timestamp: new Date().toISOString(),
-  });
+  if (DEBUG_HTTP) {
+    console.log("[ApiRequest] 🚀 Frontend request details (new sig):", {
+      url,
+      method,
+      hasCredentials: requestOptions.credentials === "include",
+      headers: requestOptions.headers,
+      timestamp: new Date().toISOString(),
+    });
+  }
 
   const response = await fetch(url, requestOptions);
 
   // Log response details for debugging (new signature)
-  console.log("[ApiRequest] 📥 Response details (new sig):", {
-    url,
-    status: response.status,
-    statusText: response.statusText,
-    headers: Object.fromEntries(response.headers.entries()),
-    cookiesSet: response.headers.get("set-cookie"),
-    timestamp: new Date().toISOString(),
-  });
+  if (DEBUG_HTTP) {
+    console.log("[ApiRequest] 📥 Response details (new sig):", {
+      url,
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+      timestamp: new Date().toISOString(),
+    });
+  }
 
   await throwIfResNotOk(response);
   const contentType = response.headers.get("content-type") || "";
@@ -198,7 +250,7 @@ export async function apiRequest<T = any>(
   // If this looks like HTML, provide a helpful message
   if (/<!doctype|<html/i.test(text)) {
     throw new Error(
-      `Unexpected HTML response for ${url}. This usually indicates an auth redirect or proxy served index.html. Status: ${response.status}`,
+      `Unexpected HTML response for ${url}. This usually indicates an auth redirect or proxy served index.html. Status: ${response.status}`
     );
   }
   // Try to parse if it's actually JSON with wrong content-type
@@ -206,33 +258,31 @@ export async function apiRequest<T = any>(
     return JSON.parse(text);
   } catch {
     throw new Error(
-      `Unexpected non-JSON response for ${url}. First 120 chars: ${text.slice(
-        0,
-        120,
-      )}`,
+      `Unexpected non-JSON response for ${url}. First 120 chars: ${text.slice(0, 120)}`
     );
   }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
+export const getQueryFn: <T>(options: { on401: UnauthorizedBehavior }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = getApiUrl(queryKey.join("/") as string);
 
     // CRITICAL: Log query function request details
-    console.log("[QueryFn] 🔍 Query request details:", {
-      url,
-      queryKey,
-      cookiesAvailable: document.cookie ? "YES" : "HttpOnly-Hidden",
-      cookieSnippet:
-        document.cookie.substring(0, 100) || "HttpOnly cookies invisible to JS",
-      timestamp: new Date().toISOString(),
-      location: window.location.href,
-      origin: window.location.origin,
-    });
+    if (DEBUG_HTTP) {
+      console.log("[QueryFn] 🔍 Query request details:", {
+        url,
+        queryKey,
+        timestamp: new Date().toISOString(),
+        location: window.location.href,
+        origin: window.location.origin,
+      });
+    }
+
+    // Attach Supabase access token for authenticated queries
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
 
     const res = await fetch(url, {
       method: "GET",
@@ -242,18 +292,20 @@ export const getQueryFn: <T>(options: {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
     });
 
     // Log query function response details
-    console.log("[QueryFn] 📥 Query response details:", {
-      url,
-      status: res.status,
-      statusText: res.statusText,
-      headers: Object.fromEntries(res.headers.entries()),
-      cookiesSet: res.headers.get("set-cookie"),
-      timestamp: new Date().toISOString(),
-    });
+    if (DEBUG_HTTP) {
+      console.log("[QueryFn] 📥 Query response details:", {
+        url,
+        status: res.status,
+        statusText: res.statusText,
+        headers: Object.fromEntries(res.headers.entries()),
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       console.log("[QueryFn] ⚠️ 401 detected, returning null");
@@ -275,10 +327,7 @@ export const getQueryFn: <T>(options: {
         return null;
       }
       throw new Error(
-        `Unexpected non-JSON response for ${url}. First 120 chars: ${bodyText.slice(
-          0,
-          120,
-        )}`,
+        `Unexpected non-JSON response for ${url}. First 120 chars: ${bodyText.slice(0, 120)}`
       );
     }
 
@@ -296,8 +345,7 @@ export const queryClient = new QueryClient({
       gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
       retry: (failureCount, error) => {
         // Don't retry on authentication errors or client errors
-        if (error instanceof Error && error.message.includes("401"))
-          return false;
+        if (error instanceof Error && error.message.includes("401")) return false;
         if (error instanceof Error && error.message.includes("4")) return false; // Any 4xx error
         return failureCount < 3;
       },
@@ -306,8 +354,7 @@ export const queryClient = new QueryClient({
     mutations: {
       retry: (failureCount, error) => {
         // Only retry network errors, not business logic errors
-        if (error instanceof Error && error.message.includes("Network"))
-          return failureCount < 2;
+        if (error instanceof Error && error.message.includes("Network")) return failureCount < 2;
         return false;
       },
       onError: (error) => {

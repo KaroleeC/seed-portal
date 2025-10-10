@@ -3,17 +3,13 @@ import { logger } from "./logger";
 
 const slackLogger = logger.child({ module: "slack" });
 
-const hasSlackCreds = Boolean(
-  process.env.SLACK_BOT_TOKEN && process.env.SLACK_PA_CHANNEL_ID,
-);
+const hasSlackCreds = Boolean(process.env.SLACK_BOT_TOKEN && process.env.SLACK_PA_CHANNEL_ID);
 let slack: WebClient | null = null;
 if (hasSlackCreds) {
   slack = new WebClient(process.env.SLACK_BOT_TOKEN);
 } else {
   // Do not throw in development or when running locally without Doppler
-  console.warn(
-    "[Slack] Credentials not configured - Slack integration disabled",
-  );
+  console.warn("[Slack] Credentials not configured - Slack integration disabled");
 }
 
 /**
@@ -55,7 +51,7 @@ export async function sendSystemAlert(
   title: string,
   description: string,
   severity: "low" | "medium" | "high" | "critical" = "medium",
-  channel?: string,
+  channel?: string
 ): Promise<void> {
   const severityColors = {
     low: "#36C5F0", // Blue
@@ -73,7 +69,7 @@ export async function sendSystemAlert(
 
   try {
     await sendSlackMessage({
-      channel: channel, // Use custom channel if provided
+      channel, // Use custom channel if provided
       text: `${severityEmojis[severity]} ${title}`,
       attachments: [
         {
@@ -99,10 +95,7 @@ export async function sendSystemAlert(
       ],
     });
   } catch (error) {
-    slackLogger.error(
-      { error, title, description, severity },
-      "Failed to send system alert",
-    );
+    slackLogger.error({ error, title, description, severity }, "Failed to send system alert");
   }
 }
 
@@ -113,7 +106,7 @@ export async function sendJobFailureAlert(
   jobName: string,
   failureCount: number,
   timeWindow: string,
-  errors: string[],
+  errors: string[]
 ): Promise<void> {
   try {
     await sendSlackMessage({
@@ -173,9 +166,6 @@ export async function sendJobFailureAlert(
       ],
     });
   } catch (error) {
-    slackLogger.error(
-      { error, jobName, failureCount },
-      "Failed to send job failure alert",
-    );
+    slackLogger.error({ error, jobName, failureCount }, "Failed to send job failure alert");
   }
 }

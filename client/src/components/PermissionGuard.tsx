@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { usePermissions } from "@/hooks/use-permissions";
 import { type Permission } from "@shared/permissions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -19,12 +19,9 @@ export function PermissionGuard({
   fallback,
   showError = true,
 }: PermissionGuardProps) {
-  const { hasPermission, hasAnyPermission, hasAllPermissions } =
-    usePermissions();
+  const { hasPermission, hasAnyPermission, hasAllPermissions } = usePermissions();
 
-  const permissionList = Array.isArray(permissions)
-    ? permissions
-    : [permissions];
+  const permissionList = Array.isArray(permissions) ? permissions : [permissions];
 
   const hasAccess = Array.isArray(permissions)
     ? requireAll
@@ -45,8 +42,8 @@ export function PermissionGuard({
       <Alert variant="destructive" className="m-4">
         <Lock className="h-4 w-4" />
         <AlertDescription>
-          You don't have permission to access this feature. Contact your
-          administrator if you believe this is an error.
+          You don't have permission to access this feature. Contact your administrator if you
+          believe this is an error.
         </AlertDescription>
       </Alert>
     );

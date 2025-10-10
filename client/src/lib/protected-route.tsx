@@ -29,12 +29,12 @@ export function ProtectedRoute({
     );
   }
 
-  // If no authenticated user, redirect to auth
+  // If no authenticated user, redirect to Supabase login page
   if (!user) {
-    console.log("[ProtectedRoute] No user, redirecting to /auth");
+    console.log("[ProtectedRoute] No user, redirecting to /login");
     return (
       <Route path={path}>
-        <Redirect to="/auth" />
+        <Redirect to="/login" />
       </Route>
     );
   }

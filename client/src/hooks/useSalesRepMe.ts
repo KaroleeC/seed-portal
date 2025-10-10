@@ -17,10 +17,7 @@ export function useSalesRepMe(options?: { enabled?: boolean }) {
     enabled,
     queryFn: async () => {
       try {
-        return await apiRequest<SalesRepMe>(
-          "GET",
-          "/api/apps/seedpay/sales-reps/me",
-        );
+        return await apiRequest<SalesRepMe>("GET", "/api/apps/seedpay/sales-reps/me");
       } catch (e) {
         return null;
       }

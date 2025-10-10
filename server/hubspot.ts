@@ -1,4 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-console */
 // Simple HubSpot integration using fetch API to avoid TypeScript complexity
+// NOTE: This is a legacy file being refactored. New code should use the modular services in server/services/hubspot/
 export interface HubSpotContact {
   id: string;
   properties: {
@@ -36,14 +39,9 @@ export interface HubSpotDeal {
   };
 }
 
-import { cache, CacheTTL, CachePrefix } from "./cache.js";
+// Unused imports removed - cache functionality moved to modular services
 import { getRedisAsync } from "./redis";
-import type {
-  Invoice,
-  InvoiceLineItem,
-  Subscription,
-  SubscriptionPayment,
-} from "@shared/billing";
+import type { Invoice, InvoiceLineItem, Subscription, SubscriptionPayment } from "@shared/billing";
 import { createProductsService } from "./services/hubspot/products.js";
 import { createContactsService } from "./services/hubspot/contacts.js";
 import { createDealsService } from "./services/hubspot/deals.js";
@@ -61,9 +59,10 @@ const HUBSPOT_PRODUCT_IDS = {
   MANAGED_QBO_SUBSCRIPTION: "26213746490", // Managed QBO Subscription
   PRIOR_YEAR_FILINGS: "26354718811", // Prior Years Tax Filing(s)
 
-  // Service Tier Upgrades
-  GUIDED_SERVICE_TIER: "28884795543", // Guided Service Tier Upgrade
-  CONCIERGE_SERVICE_TIER: "28891925782", // Concierge Service Tier Upgrade
+  // Service Tier Upgrades - DEPRECATED (no longer used for pricing)
+  // Kept for historical reference only
+  // GUIDED_SERVICE_TIER: "28884795543",
+  // CONCIERGE_SERVICE_TIER: "28891925782",
 
   // CFO Advisory Services
   CFO_ADVISORY_DEPOSIT: "28945017957", // CFO Advisory Pay-as-you-Go Deposit
@@ -100,25 +99,21 @@ export class HubSpotService {
     }
     this.accessToken = process.env.HUBSPOT_ACCESS_TOKEN;
     // Initialize modular products service with this class's request method
-    this.products = createProductsService(
-      (endpoint: string, options?: RequestInit) =>
-        this.makeRequest(endpoint, options),
+    this.products = createProductsService((endpoint: string, options?: RequestInit) =>
+      this.makeRequest(endpoint, options)
     );
     // Initialize modular contacts service with this class's request method
-    this.contacts = createContactsService(
-      (endpoint: string, options?: RequestInit) =>
-        this.makeRequest(endpoint, options),
+    this.contacts = createContactsService((endpoint: string, options?: RequestInit) =>
+      this.makeRequest(endpoint, options)
     );
     // Initialize modular deals service with this class's request method
     this.deals = createDealsService(
-      (endpoint: string, options?: RequestInit) =>
-        this.makeRequest(endpoint, options),
-      { getSeedSalesPipelineStage: () => this.getSeedSalesPipelineStage() },
+      (endpoint: string, options?: RequestInit) => this.makeRequest(endpoint, options),
+      { getSeedSalesPipelineStage: () => this.getSeedSalesPipelineStage() }
     );
     // Initialize modular quotes service with this class's request method
     this.quotes = createQuotesService(
-      (endpoint: string, options?: RequestInit) =>
-        this.makeRequest(endpoint, options),
+      (endpoint: string, options?: RequestInit) => this.makeRequest(endpoint, options),
       {
         getUserProfile: (email: string) => this.getUserProfile(email),
         getProductsCached: () => this.getProductsCached(),
@@ -130,7 +125,7 @@ export class HubSpotService {
           includesBookkeeping?: boolean,
           includesTaas?: boolean,
           serviceTier?: string,
-          quoteData?: any,
+          quoteData?: any
         ) =>
           this.deals.updateDeal(
             dealId,
@@ -140,18 +135,28 @@ export class HubSpotService {
             includesBookkeeping,
             includesTaas,
             serviceTier,
-            quoteData,
+            quoteData
           ),
         HUBSPOT_PRODUCT_IDS,
-      },
+      }
     );
     // Initialize modular billing service with this class's request method
-    this.billing = createBillingService(
-      (endpoint: string, options?: RequestInit) =>
-        this.makeRequest(endpoint, options),
+    this.billing = createBillingService((endpoint: string, options?: RequestInit) =>
+      this.makeRequest(endpoint, options)
     );
   }
 
+  /**
+   * @deprecated Use the config-based updateQuote() in services/hubspot/quotes.ts instead
+   *
+   * Legacy wrapper maintained for backward compatibility.
+   * This 32-parameter signature is error-prone and will be removed in a future version.
+   *
+   * Prefer using syncQuoteToHubSpot() from services/hubspot/sync.ts for all quote operations.
+   *
+   * @see server/services/hubspot/sync.ts - syncQuoteToHubSpot()
+   * @see server/services/hubspot/quotes.ts - UpdateQuoteConfig interface
+   */
   async updateQuote(
     quoteId: string,
     dealId: string | undefined,
@@ -187,21 +192,21 @@ export class HubSpotService {
     // Calculated service fees for line items
     calculatedBookkeepingMonthlyFee?: number,
     calculatedTaasMonthlyFee?: number,
-    calculatedServiceTierFee?: number,
+    calculatedServiceTierFee?: number
   ): Promise<boolean> {
-    return await this.quotes.updateQuote(
+    // Convert legacy parameters to UpdateQuoteConfig
+    return await this.quotes.updateQuote({
       quoteId,
       dealId,
       companyName,
       monthlyFee,
-      setupFee,
+      oneTimeFees: setupFee,
       userEmail,
       firstName,
       lastName,
       includesBookkeeping,
       includesTaas,
       taasMonthlyFee,
-      taasPriorYearsFee,
       bookkeepingMonthlyFee,
       bookkeepingSetupFee,
       quoteData,
@@ -223,7 +228,7 @@ export class HubSpotService {
       calculatedBookkeepingMonthlyFee,
       calculatedTaasMonthlyFee,
       calculatedServiceTierFee,
-    );
+    });
   }
 
   // Check if a user exists in HubSpot by email (contacts or owners)
@@ -283,39 +288,35 @@ export class HubSpotService {
         const redisConns = await getRedisAsync();
         const cacheRedis: any = redisConns?.cacheRedis;
         if (cacheRedis) {
-          const configuredPipelineId = await cacheRedis.get(
-            "config:hubspot:pipeline_id",
-          );
-          const configuredStageId = await cacheRedis.get(
-            "config:hubspot:qualified_stage_id",
-          );
+          const configuredPipelineId = await cacheRedis.get("config:hubspot:pipeline_id");
+          const configuredStageId = await cacheRedis.get("config:hubspot:qualified_stage_id");
           if (configuredPipelineId && configuredStageId) {
             const selectedPipeline = pipelines.results.find(
-              (p: any) => String(p.id) === String(configuredPipelineId),
+              (p: any) => String(p.id) === String(configuredPipelineId)
             );
             const selectedStage = selectedPipeline?.stages?.find(
-              (s: any) => String(s.id) === String(configuredStageId),
+              (s: any) => String(s.id) === String(configuredStageId)
             );
             if (selectedPipeline && selectedStage) {
               console.log(
-                `Using configured HubSpot pipeline ${selectedPipeline.id} and stage ${selectedStage.id}`,
+                `Using configured HubSpot pipeline ${selectedPipeline.id} and stage ${selectedStage.id}`
               );
               return {
                 pipelineId: selectedPipeline.id,
                 qualifiedStageId: selectedStage.id,
               };
             } else {
-              console.warn(
-                "Configured pipeline/stage not found; falling back to detection",
-                { configuredPipelineId, configuredStageId },
-              );
+              console.warn("Configured pipeline/stage not found; falling back to detection", {
+                configuredPipelineId,
+                configuredStageId,
+              });
             }
           }
         }
       } catch (e) {
         console.warn(
           "Failed reading configured pipeline/stage from Redis; proceeding with fallback",
-          (e as any)?.message,
+          (e as any)?.message
         );
       }
 
@@ -323,39 +324,37 @@ export class HubSpotService {
       let seedPipeline = pipelines.results.find(
         (p: any) =>
           p.label?.toLowerCase().includes("seed sales") ||
-          p.label?.toLowerCase() === "seed sales pipeline",
+          p.label?.toLowerCase() === "seed sales pipeline"
       );
 
       if (!seedPipeline) {
         console.warn(
           "Seed Sales Pipeline not found. Falling back to first available pipeline. Available:",
-          pipelines.results.map((p: any) => p.label),
+          pipelines.results.map((p: any) => p.label)
         );
         seedPipeline = pipelines.results[0];
       }
 
       // Find "Qualified" stage (case-insensitive search)
       let qualifiedStage = seedPipeline.stages?.find((stage: any) =>
-        stage.label?.toLowerCase().includes("qualified"),
+        stage.label?.toLowerCase().includes("qualified")
       );
 
       if (!qualifiedStage) {
         if (Array.isArray(seedPipeline.stages) && seedPipeline.stages.length > 0) {
           console.warn(
             "Qualified stage not found. Falling back to first stage in pipeline. Available stages:",
-            seedPipeline.stages.map((s: any) => s.label),
+            seedPipeline.stages.map((s: any) => s.label)
           );
           qualifiedStage = seedPipeline.stages[0];
         } else {
-          console.error(
-            "No stages available in selected pipeline; cannot determine stage",
-          );
+          console.error("No stages available in selected pipeline; cannot determine stage");
           return null;
         }
       }
 
       console.log(
-        `Found Seed Sales Pipeline: ${seedPipeline.id}, Qualified Stage: ${qualifiedStage.id}`,
+        `Found Seed Sales Pipeline: ${seedPipeline.id}, Qualified Stage: ${qualifiedStage.id}`
       );
       return {
         pipelineId: seedPipeline.id,
@@ -371,10 +370,7 @@ export class HubSpotService {
     return await this.contacts.getOwnerByEmail(email);
   }
 
-  private async makeRequest(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<any> {
+  private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       headers: {
@@ -411,7 +407,7 @@ export class HubSpotService {
             errorResponse: retryErrorText,
           });
           throw new Error(
-            `HubSpot API error: ${retryResponse.status} ${retryResponse.statusText} - ${retryErrorText}`,
+            `HubSpot API error: ${retryResponse.status} ${retryResponse.statusText} - ${retryErrorText}`
           );
         }
 
@@ -438,10 +434,10 @@ export class HubSpotService {
           method: options.method || "GET",
           body: options.body,
           errorResponse: errorText,
-        }),
+        })
       );
       throw new Error(
-        `HubSpot API error: ${response.status} ${response.statusText} - ${errorText}`,
+        `HubSpot API error: ${response.status} ${response.statusText} - ${errorText}`
       );
     }
 
@@ -558,13 +554,10 @@ export class HubSpotService {
             ],
           };
 
-          const companyResult = await this.makeRequest(
-            "/crm/v3/objects/companies/search",
-            {
-              method: "POST",
-              body: JSON.stringify(companySearchBody),
-            },
-          );
+          const companyResult = await this.makeRequest("/crm/v3/objects/companies/search", {
+            method: "POST",
+            body: JSON.stringify(companySearchBody),
+          });
 
           if (companyResult.results && companyResult.results.length > 0) {
             const company = companyResult.results[0];
@@ -573,29 +566,19 @@ export class HubSpotService {
             // Build full address string
             let fullAddress = "";
             if (props.address) fullAddress += props.address;
-            if (props.address2)
-              fullAddress += (fullAddress ? ", " : "") + props.address2;
-            if (props.city)
-              fullAddress += (fullAddress ? ", " : "") + props.city;
-            if (props.state)
-              fullAddress += (fullAddress ? ", " : "") + props.state;
+            if (props.address2) fullAddress += (fullAddress ? ", " : "") + props.address2;
+            if (props.city) fullAddress += (fullAddress ? ", " : "") + props.city;
+            if (props.state) fullAddress += (fullAddress ? ", " : "") + props.state;
             if (props.zip) fullAddress += (fullAddress ? " " : "") + props.zip;
-            if (props.country)
-              fullAddress += (fullAddress ? ", " : "") + props.country;
+            if (props.country) fullAddress += (fullAddress ? ", " : "") + props.country;
 
             // Check if this is actually the correct Seed Financial company
             // If not, force the correct address
-            if (
-              fullAddress.includes("Nepal") ||
-              fullAddress.includes("Kathmandu")
-            ) {
-              console.log(
-                "Found Nepal address, forcing correct Seed Financial address",
-              );
+            if (fullAddress.includes("Nepal") || fullAddress.includes("Kathmandu")) {
+              console.log("Found Nepal address, forcing correct Seed Financial address");
               return {
                 companyName: "Seed Financial",
-                companyAddress:
-                  "4136 Del Rey Ave, Ste 521, Marina Del Rey, CA 90292",
+                companyAddress: "4136 Del Rey Ave, Ste 521, Marina Del Rey, CA 90292",
                 companyAddress2: "Ste 521",
                 companyCity: "Marina Del Rey",
                 companyState: "CA",
@@ -606,9 +589,7 @@ export class HubSpotService {
 
             return {
               companyName: props.name || "Seed Financial",
-              companyAddress:
-                fullAddress ||
-                "4136 Del Rey Ave, Ste 521, Marina Del Rey, CA 90292",
+              companyAddress: fullAddress || "4136 Del Rey Ave, Ste 521, Marina Del Rey, CA 90292",
               companyAddress2: props.address2,
               companyCity: props.city,
               companyState: props.state,
@@ -619,7 +600,7 @@ export class HubSpotService {
         } catch (companyError) {
           console.log(
             "Could not fetch company details, using defaults:",
-            (companyError as Error).message,
+            (companyError as Error).message
           );
         }
 
@@ -637,21 +618,27 @@ export class HubSpotService {
 
       return null;
     } catch (error) {
-      console.log(
-        "Could not fetch company branding, using defaults:",
-        (error as Error).message,
-      );
+      console.log("Could not fetch company branding, using defaults:", (error as Error).message);
       return null;
     }
   }
 
   async verifyContactByEmail(
-    email: string,
+    email: string
   ): Promise<{ verified: boolean; contact?: HubSpotContact }> {
     // Delegated to modular contacts service
     return await this.contacts.verifyContactByEmail(email);
   }
 
+  /**
+   * @deprecated Use createDealsService().createDeal() directly instead
+   *
+   * Legacy wrapper maintained for backward compatibility.
+   * Consider using the unified syncQuoteToHubSpot() for quote+deal operations.
+   *
+   * @see server/services/hubspot/deals.ts - createDealsService()
+   * @see server/services/hubspot/sync.ts - syncQuoteToHubSpot()
+   */
   async createDeal(
     contactId: string,
     companyName: string,
@@ -661,7 +648,7 @@ export class HubSpotService {
     includesBookkeeping?: boolean,
     includesTaas?: boolean,
     serviceTier?: string,
-    quoteData?: any,
+    quoteData?: any
   ): Promise<HubSpotDeal | null> {
     return await this.deals.createDeal(
       contactId,
@@ -672,10 +659,19 @@ export class HubSpotService {
       includesBookkeeping,
       includesTaas,
       serviceTier,
-      quoteData,
+      quoteData
     );
   }
 
+  /**
+   * @deprecated Use createDealsService().updateDeal() directly instead
+   *
+   * Legacy wrapper maintained for backward compatibility.
+   * Consider using the unified syncQuoteToHubSpot() for quote+deal operations.
+   *
+   * @see server/services/hubspot/deals.ts - createDealsService()
+   * @see server/services/hubspot/sync.ts - syncQuoteToHubSpot()
+   */
   async updateDeal(
     dealId: string,
     monthlyFee: number,
@@ -684,7 +680,7 @@ export class HubSpotService {
     includesBookkeeping?: boolean,
     includesTaas?: boolean,
     serviceTier?: string,
-    quoteData?: any,
+    quoteData?: any
   ): Promise<HubSpotDeal | null> {
     return await this.deals.updateDeal(
       dealId,
@@ -694,10 +690,21 @@ export class HubSpotService {
       includesBookkeeping,
       includesTaas,
       serviceTier,
-      quoteData,
+      quoteData
     );
   }
 
+  /**
+   * @deprecated Use the config-based createQuote() in services/hubspot/quotes.ts instead
+   *
+   * Legacy wrapper maintained for backward compatibility.
+   * This 33-parameter signature is error-prone and will be removed in a future version.
+   *
+   * Prefer using syncQuoteToHubSpot() from services/hubspot/sync.ts for all quote operations.
+   *
+   * @see server/services/hubspot/sync.ts - syncQuoteToHubSpot()
+   * @see server/services/hubspot/quotes.ts - QuoteConfig interface
+   */
   async createQuote(
     dealId: string,
     companyName: string,
@@ -732,20 +739,20 @@ export class HubSpotService {
     // Pass the individual calculated service fees for line items
     calculatedBookkeepingMonthlyFee?: number,
     calculatedTaasMonthlyFee?: number,
-    calculatedServiceTierFee?: number,
+    calculatedServiceTierFee?: number
   ): Promise<{ id: string; title: string } | null> {
-    return await this.quotes.createQuote(
+    // Convert legacy parameters to QuoteConfig
+    return await this.quotes.createQuote({
       dealId,
       companyName,
       monthlyFee,
-      setupFee,
+      oneTimeFees: setupFee,
       userEmail,
       firstName,
       lastName,
       includesBookkeeping,
       includesTaas,
       taasMonthlyFee,
-      taasPriorYearsFee,
       bookkeepingMonthlyFee,
       bookkeepingSetupFee,
       quoteData,
@@ -767,7 +774,7 @@ export class HubSpotService {
       calculatedBookkeepingMonthlyFee,
       calculatedTaasMonthlyFee,
       calculatedServiceTierFee,
-    );
+    });
   }
 
   // Verify product IDs and potentially find alternatives
@@ -789,27 +796,18 @@ export class HubSpotService {
       const response = await this.makeRequest("/crm/v3/schemas", {
         method: "GET",
       });
-      console.log(
-        "Custom objects response:",
-        JSON.stringify(response, null, 2),
-      );
+      console.log("Custom objects response:", JSON.stringify(response, null, 2));
 
       // If schemas endpoint returns empty, try properties endpoint for custom objects
       if (!response.results || response.results.length === 0) {
         console.log("No custom schemas found, trying properties endpoint...");
         try {
-          const propertiesResponse = await this.makeRequest(
-            "/crm/v3/properties/p149640503_leads",
-            {
-              method: "GET",
-            },
-          );
+          const propertiesResponse = await this.makeRequest("/crm/v3/properties/p149640503_leads", {
+            method: "GET",
+          });
           console.log("Properties response for leads:", propertiesResponse);
         } catch (propError) {
-          console.log(
-            "Properties endpoint also failed:",
-            (propError as any).message,
-          );
+          console.log("Properties endpoint also failed:", (propError as any).message);
         }
       }
 
@@ -826,17 +824,10 @@ export class HubSpotService {
   }
 
   // Get sales inbox leads - optimized version
-  async getSalesInboxLeads(
-    ownerEmail?: string,
-    limit: number = 20,
-  ): Promise<any[]> {
+  async getSalesInboxLeads(ownerEmail?: string, limit: number = 20): Promise<any[]> {
     try {
       // We know HubSpot uses the standard 'leads' object, so go straight to it
-      const searchResult = await this.searchLeadsObject(
-        "leads",
-        ownerEmail,
-        limit,
-      );
+      const searchResult = await this.searchLeadsObject("leads", ownerEmail, limit);
       return searchResult || [];
     } catch (error) {
       console.error("Error fetching sales inbox leads:", error);
@@ -848,14 +839,14 @@ export class HubSpotService {
   private async searchLeadsObject(
     objectId: string,
     ownerEmail?: string,
-    limit: number = 20,
+    limit: number = 20
   ): Promise<any[] | null> {
     try {
       // Determine if this is a custom object or standard leads object
       const isStandardLeads = objectId === "leads";
 
       // Build search body for Leads object with correct property names
-      let leadsSearchBody: any = {
+      const leadsSearchBody: any = {
         filterGroups: [
           {
             filters: [],
@@ -863,13 +854,11 @@ export class HubSpotService {
         ],
         sorts: [
           {
-            propertyName: isStandardLeads
-              ? "hs_lastmodifieddate"
-              : "hs_lastmodifieddate",
+            propertyName: isStandardLeads ? "hs_lastmodifieddate" : "hs_lastmodifieddate",
             direction: "DESCENDING",
           },
         ],
-        limit: limit,
+        limit,
         properties: isStandardLeads
           ? [
               "hs_lead_name",
@@ -895,9 +884,7 @@ export class HubSpotService {
         const ownerId = await this.getOwnerByEmail(ownerEmail);
         if (ownerId) {
           leadsSearchBody.filterGroups[0].filters.push({
-            propertyName: isStandardLeads
-              ? "hubspot_owner_id"
-              : "hs_lead_owner",
+            propertyName: isStandardLeads ? "hubspot_owner_id" : "hs_lead_owner",
             operator: "EQ",
             value: ownerId,
           });
@@ -907,12 +894,7 @@ export class HubSpotService {
       // Add lead status filter for active leads (exclude Qualified and Disqualified)
       // Use stage IDs for standard leads object
       const stageValues = isStandardLeads
-        ? [
-            "new-stage-id",
-            "attempting-stage-id",
-            "1108719384",
-            "connected-stage-id",
-          ] // Stage IDs for New, Assigned, Contact Attempted, Discovery Call Booked
+        ? ["new-stage-id", "attempting-stage-id", "1108719384", "connected-stage-id"] // Stage IDs for New, Assigned, Contact Attempted, Discovery Call Booked
         : ["New", "Assigned", "Contact Attempted", "Discovery Call Booked"]; // Keep names for custom objects
 
       leadsSearchBody.filterGroups[0].filters.push({
@@ -924,17 +906,14 @@ export class HubSpotService {
       // Only log essential information in production
       if (process.env.NODE_ENV === "development") {
         console.log(
-          `Searching ${objectId} with ${leadsSearchBody.filterGroups[0].filters.length} filters`,
+          `Searching ${objectId} with ${leadsSearchBody.filterGroups[0].filters.length} filters`
         );
       }
 
-      const searchResult = await this.makeRequest(
-        `/crm/v3/objects/${objectId}/search`,
-        {
-          method: "POST",
-          body: JSON.stringify(leadsSearchBody),
-        },
-      );
+      const searchResult = await this.makeRequest(`/crm/v3/objects/${objectId}/search`, {
+        method: "POST",
+        body: JSON.stringify(leadsSearchBody),
+      });
 
       // Get associated contacts for each lead
       const enrichedLeads = await Promise.all(
@@ -949,7 +928,7 @@ export class HubSpotService {
               `/crm/v3/objects/${objectId}/${lead.id}/associations/contacts`,
               {
                 method: "GET",
-              },
+              }
             );
 
             let contactInfo = {
@@ -965,7 +944,7 @@ export class HubSpotService {
                 `/crm/v3/objects/contacts/${contactId}?properties=company,firstname,lastname,email`,
                 {
                   method: "GET",
-                },
+                }
               );
 
               contactInfo = {
@@ -981,8 +960,7 @@ export class HubSpotService {
               properties: {
                 ...contactInfo,
                 hs_createdate: createDate,
-                hubspot_owner_assigneddate:
-                  lead.properties?.hubspot_owner_assigneddate,
+                hubspot_owner_assigneddate: lead.properties?.hubspot_owner_assigneddate,
                 hs_lead_status: leadStatus,
                 hs_object_id: lead.properties?.hs_object_id || lead.id,
               },
@@ -1003,8 +981,7 @@ export class HubSpotService {
                 lastName: "",
                 email: "",
                 hs_createdate: createDate,
-                hubspot_owner_assigneddate:
-                  lead.properties?.hubspot_owner_assigneddate,
+                hubspot_owner_assigneddate: lead.properties?.hubspot_owner_assigneddate,
                 hs_lead_status: leadStatus,
                 hs_object_id: lead.properties?.hs_object_id || lead.id,
               },
@@ -1012,7 +989,7 @@ export class HubSpotService {
               hubspotContactUrl: `https://app.hubspot.com/lead-overview/48880113/?leadId=${lead.id}`,
             };
           }
-        }),
+        })
       );
 
       return enrichedLeads;
@@ -1023,12 +1000,9 @@ export class HubSpotService {
   }
 
   // Fallback method to get leads from contacts when custom Leads object not found
-  async getSalesInboxLeadsFromContacts(
-    ownerEmail?: string,
-    limit: number = 20,
-  ): Promise<any[]> {
+  async getSalesInboxLeadsFromContacts(ownerEmail?: string, limit: number = 20): Promise<any[]> {
     try {
-      let searchBody: any = {
+      const searchBody: any = {
         filterGroups: [
           {
             filters: [
@@ -1050,7 +1024,7 @@ export class HubSpotService {
             direction: "DESCENDING",
           },
         ],
-        limit: limit,
+        limit,
         properties: [
           "email",
           "firstname",
@@ -1083,27 +1057,22 @@ export class HubSpotService {
       }
 
       console.log("Searching contacts with lifecycle stage = lead");
-      const searchResult = await this.makeRequest(
-        "/crm/v3/objects/contacts/search",
-        {
-          method: "POST",
-          body: JSON.stringify(searchBody),
-        },
-      );
+      const searchResult = await this.makeRequest("/crm/v3/objects/contacts/search", {
+        method: "POST",
+        body: JSON.stringify(searchBody),
+      });
 
-      console.log(
-        `Found ${searchResult.results?.length || 0} leads for sales inbox`,
-      );
+      console.log(`Found ${searchResult.results?.length || 0} leads for sales inbox`);
 
       // Enrich each contact with deal information for lead stage
       const enrichedContacts = await Promise.all(
         (searchResult.results || []).map(async (contact: any) => {
           try {
             console.log(
-              `Processing contact: ${contact.properties?.company || "Unknown"} (${contact.properties?.email})`,
+              `Processing contact: ${contact.properties?.company || "Unknown"} (${contact.properties?.email})`
             );
             console.log(
-              `Contact lifecycle stage: ${contact.properties?.lifecyclestage}, Owner ID: ${contact.properties?.hubspot_owner_id}, Lead Status: ${contact.properties?.hs_lead_status}`,
+              `Contact lifecycle stage: ${contact.properties?.lifecyclestage}, Owner ID: ${contact.properties?.hubspot_owner_id}, Lead Status: ${contact.properties?.hs_lead_status}`
             );
 
             // Get associated deals to determine lead stage
@@ -1111,9 +1080,7 @@ export class HubSpotService {
             const activeDeal = deals.find(
               (deal: any) =>
                 deal.properties?.dealstage &&
-                !["closedwon", "closedlost"].includes(
-                  deal.properties.dealstage.toLowerCase(),
-                ),
+                !["closedwon", "closedlost"].includes(deal.properties.dealstage.toLowerCase())
             );
 
             // Get stage name from pipeline info if available
@@ -1123,9 +1090,7 @@ export class HubSpotService {
               "New Lead";
             if (activeDeal?.properties?.dealstage) {
               // Try to get human-readable stage name
-              const stageInfo = await this.getDealStageInfo(
-                activeDeal.properties.dealstage,
-              );
+              const stageInfo = await this.getDealStageInfo(activeDeal.properties.dealstage);
               leadStage = stageInfo?.label || activeDeal.properties.dealstage;
             }
 
@@ -1147,7 +1112,7 @@ export class HubSpotService {
               hubspotContactUrl: `https://app.hubspot.com/contacts/149640503/contact/${contact.id}`,
             };
           }
-        }),
+        })
       );
 
       console.log(`Returning ${enrichedContacts.length} enriched contacts`);
@@ -1159,9 +1124,7 @@ export class HubSpotService {
   }
 
   // Get deal stage information for human-readable stage names
-  async getDealStageInfo(
-    stageId: string,
-  ): Promise<{ label: string; id: string } | null> {
+  async getDealStageInfo(stageId: string): Promise<{ label: string; id: string } | null> {
     try {
       // Get all pipelines to find stage info
       const pipelines = await this.getPipelines();
@@ -1205,13 +1168,9 @@ export class HubSpotService {
   async getDealsClosedInPeriod(
     startDate: string,
     endDate: string,
-    salesRepHubspotId?: string,
+    salesRepHubspotId?: string
   ): Promise<any[]> {
-    return await this.deals.getDealsClosedInPeriod(
-      startDate,
-      endDate,
-      salesRepHubspotId,
-    );
+    return await this.deals.getDealsClosedInPeriod(startDate, endDate, salesRepHubspotId);
   }
 
   // Generic deals search delegation for BFF services
@@ -1229,13 +1188,9 @@ export class HubSpotService {
   async getPaidInvoicesInPeriod(
     startDate: string,
     endDate: string,
-    salesRepHubspotId?: string,
+    salesRepHubspotId?: string
   ): Promise<Invoice[]> {
-    return await this.billing.getPaidInvoicesInPeriod(
-      startDate,
-      endDate,
-      salesRepHubspotId,
-    );
+    return await this.billing.getPaidInvoicesInPeriod(startDate, endDate, salesRepHubspotId);
   }
 
   // Get invoice line items for detailed commission calculations
@@ -1244,9 +1199,7 @@ export class HubSpotService {
   }
 
   // Get active subscriptions for ongoing commission tracking
-  async getActiveSubscriptions(
-    salesRepHubspotId?: string,
-  ): Promise<Subscription[]> {
+  async getActiveSubscriptions(salesRepHubspotId?: string): Promise<Subscription[]> {
     return await this.billing.getActiveSubscriptions(salesRepHubspotId);
   }
 
@@ -1254,13 +1207,9 @@ export class HubSpotService {
   async getSubscriptionPaymentsInPeriod(
     subscriptionId: string,
     startDate: string,
-    endDate: string,
+    endDate: string
   ): Promise<SubscriptionPayment[]> {
-    return await this.billing.getSubscriptionPaymentsInPeriod(
-      subscriptionId,
-      startDate,
-      endDate,
-    );
+    return await this.billing.getSubscriptionPaymentsInPeriod(subscriptionId, startDate, endDate);
   }
 
   // General invoice listing for diagnostics/sync utilities
@@ -1336,18 +1285,11 @@ export class HubSpotService {
       if (companyData.annualrevenue && companyData.annualrevenue.trim()) {
         properties.annualrevenue = companyData.annualrevenue.trim();
       }
-      if (
-        companyData.numberofemployees &&
-        companyData.numberofemployees.trim()
-      ) {
+      if (companyData.numberofemployees && companyData.numberofemployees.trim()) {
         properties.numberofemployees = companyData.numberofemployees.trim();
       }
-      if (
-        companyData.linkedin_company_page &&
-        companyData.linkedin_company_page.trim()
-      ) {
-        properties.linkedin_company_page =
-          companyData.linkedin_company_page.trim();
+      if (companyData.linkedin_company_page && companyData.linkedin_company_page.trim()) {
+        properties.linkedin_company_page = companyData.linkedin_company_page.trim();
       }
       if (companyData.website && companyData.website.trim()) {
         properties.website = companyData.website.trim();
@@ -1364,10 +1306,7 @@ export class HubSpotService {
         properties.hubspot_owner_id = companyData.hubspot_owner_id.trim();
       }
 
-      console.log(
-        "Creating company with properties:",
-        JSON.stringify(properties, null, 2),
-      );
+      console.log("Creating company with properties:", JSON.stringify(properties, null, 2));
 
       const response = await this.makeRequest("/crm/v3/objects/companies", {
         method: "POST",
@@ -1382,13 +1321,10 @@ export class HubSpotService {
 
   async updateCompany(companyId: string, properties: any) {
     try {
-      const response = await this.makeRequest(
-        `/crm/v3/objects/companies/${companyId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ properties }),
-        },
-      );
+      const response = await this.makeRequest(`/crm/v3/objects/companies/${companyId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      });
       return response;
     } catch (error) {
       console.error("Failed to update company:", error);
@@ -1400,16 +1336,13 @@ export class HubSpotService {
     try {
       console.log(
         `Updating contact ${contactId} with properties:`,
-        JSON.stringify(properties, null, 2),
+        JSON.stringify(properties, null, 2)
       );
 
-      const response = await this.makeRequest(
-        `/crm/v3/objects/contacts/${contactId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ properties }),
-        },
-      );
+      const response = await this.makeRequest(`/crm/v3/objects/contacts/${contactId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      });
       return response;
     } catch (error) {
       console.error("Failed to update contact:", error);
@@ -1419,26 +1352,23 @@ export class HubSpotService {
 
   async associateContactWithCompany(contactId: string, companyId: string) {
     try {
-      await this.makeRequest(
-        "/crm/v4/associations/contact/company/batch/create",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            inputs: [
-              {
-                from: { id: contactId },
-                to: { id: companyId },
-                types: [
-                  {
-                    associationCategory: "HUBSPOT_DEFINED",
-                    associationTypeId: 1, // Contact to Company association
-                  },
-                ],
-              },
-            ],
-          }),
-        },
-      );
+      await this.makeRequest("/crm/v4/associations/contact/company/batch/create", {
+        method: "POST",
+        body: JSON.stringify({
+          inputs: [
+            {
+              from: { id: contactId },
+              to: { id: companyId },
+              types: [
+                {
+                  associationCategory: "HUBSPOT_DEFINED",
+                  associationTypeId: 1, // Contact to Company association
+                },
+              ],
+            },
+          ],
+        }),
+      });
       return true;
     } catch (error) {
       console.error("Failed to associate contact with company:", error);
@@ -1449,7 +1379,7 @@ export class HubSpotService {
   async getContactAssociatedCompanies(contactId: string) {
     try {
       const response = await this.makeRequest(
-        `/crm/v4/objects/contacts/${contactId}/associations/companies`,
+        `/crm/v4/objects/contacts/${contactId}/associations/companies`
       );
       return response.results || [];
     } catch (error) {
@@ -1459,10 +1389,7 @@ export class HubSpotService {
   }
 
   // Update existing company from quote data (no company creation)
-  async updateOrCreateCompanyFromQuote(
-    contactId: string,
-    quote: any,
-  ): Promise<void> {
+  async updateOrCreateCompanyFromQuote(contactId: string, quote: any): Promise<void> {
     try {
       const companyName = quote.companyName;
       if (!companyName) {
@@ -1471,13 +1398,10 @@ export class HubSpotService {
       }
 
       // Check if contact has associated company
-      const existingCompanies =
-        await this.getContactAssociatedCompanies(contactId);
+      const existingCompanies = await this.getContactAssociatedCompanies(contactId);
 
       if (existingCompanies.length === 0) {
-        console.log(
-          `Contact ${contactId} has no associated companies - skipping company update`,
-        );
+        console.log(`Contact ${contactId} has no associated companies - skipping company update`);
         return;
       }
 
@@ -1492,21 +1416,17 @@ export class HubSpotService {
       companyUpdateProperties.name = companyName;
 
       // Address fields (2-way sync - moved from contact to company only)
-      if (quote.clientStreetAddress)
-        companyUpdateProperties.address = quote.clientStreetAddress;
+      if (quote.clientStreetAddress) companyUpdateProperties.address = quote.clientStreetAddress;
       if (quote.clientCity) companyUpdateProperties.city = quote.clientCity;
       if (quote.clientState) companyUpdateProperties.state = quote.clientState;
-      if (quote.clientZipCode)
-        companyUpdateProperties.zip = quote.clientZipCode;
-      if (quote.clientCountry)
-        companyUpdateProperties.country = quote.clientCountry;
+      if (quote.clientZipCode) companyUpdateProperties.zip = quote.clientZipCode;
+      if (quote.clientCountry) companyUpdateProperties.country = quote.clientCountry;
 
       // Conditional employee count (only if payroll service is selected)
       if (quote.includesPayroll || quote.servicePayroll) {
         // Add employee count from payroll data if available
         if (quote.numberOfEmployees) {
-          companyUpdateProperties.numberofemployees =
-            quote.numberOfEmployees.toString();
+          companyUpdateProperties.numberofemployees = quote.numberOfEmployees.toString();
         }
       }
 
@@ -1515,10 +1435,7 @@ export class HubSpotService {
 
       // Always update company properties to ensure sync
       await this.updateCompany(companyId, companyUpdateProperties);
-      console.log(
-        "Updated HubSpot company properties (update only):",
-        companyUpdateProperties,
-      );
+      console.log("Updated HubSpot company properties (update only):", companyUpdateProperties);
     } catch (error) {
       console.error("Error updating company from quote:", error);
       throw error;
@@ -1537,7 +1454,7 @@ export class HubSpotService {
 
   // Get user details for profile syncing (name and email only)
   async getUserDetails(
-    email: string,
+    email: string
   ): Promise<{ firstName?: string; lastName?: string; email?: string } | null> {
     try {
       // First try to get from owners (internal team members)
@@ -1545,7 +1462,7 @@ export class HubSpotService {
 
       if (ownersResponse && ownersResponse.results) {
         const owner = ownersResponse.results.find(
-          (o: any) => o.email && o.email.toLowerCase() === email.toLowerCase(),
+          (o: any) => o.email && o.email.toLowerCase() === email.toLowerCase()
         );
 
         if (owner) {
@@ -1588,9 +1505,7 @@ export class HubSpotService {
     }
   }
 
-  async verifyUser(
-    email: string,
-  ): Promise<{ exists: boolean; userData?: any }> {
+  async verifyUser(email: string): Promise<{ exists: boolean; userData?: any }> {
     // Delegated to modular contacts service
     return await this.contacts.verifyUser(email);
     try {
@@ -1605,7 +1520,7 @@ export class HubSpotService {
 
       if (response.results) {
         const user = response.results.find(
-          (owner: any) => owner.email?.toLowerCase() === email.toLowerCase(),
+          (owner: any) => owner.email?.toLowerCase() === email.toLowerCase()
         );
 
         if (user) {
@@ -1632,15 +1547,13 @@ export class HubSpotService {
   async getDashboardMetrics(userEmail: string) {
     try {
       const ownerId = await this.getOwnerByEmail(userEmail);
-      console.log(
-        `Getting dashboard metrics for ${userEmail}, ownerId: ${ownerId}`,
-      );
+      console.log(`Getting dashboard metrics for ${userEmail}, ownerId: ${ownerId}`);
       if (!ownerId) {
         console.log(
-          `No HubSpot owner found for ${userEmail} - this could be why metrics are showing $0`,
+          `No HubSpot owner found for ${userEmail} - this could be why metrics are showing $0`
         );
         console.log(
-          "Available owners can be checked in HubSpot admin or user may need to be assigned as owner",
+          "Available owners can be checked in HubSpot admin or user may need to be assigned as owner"
         );
         return {
           pipelineValue: 0,
@@ -1652,35 +1565,27 @@ export class HubSpotService {
       // Get pipeline information to find the correct Seed Sales Pipeline ID dynamically
       let seedPipelineId = null;
       try {
-        const pipelinesResponse = await this.makeRequest(
-          "/crm/v3/pipelines/deals",
-          {
-            method: "GET",
-          },
-        );
+        const pipelinesResponse = await this.makeRequest("/crm/v3/pipelines/deals", {
+          method: "GET",
+        });
 
         console.log(
           "Available pipelines:",
-          pipelinesResponse.results?.map((p: any) => `${p.id}: ${p.label}`),
+          pipelinesResponse.results?.map((p: any) => `${p.id}: ${p.label}`)
         );
 
         // Find Seed Sales Pipeline ID dynamically
         const seedPipelineEntry = pipelinesResponse.results?.find(
           (p: any) =>
             p.label &&
-            (p.label.toLowerCase().includes("seed") ||
-              p.label.toLowerCase().includes("sales")),
+            (p.label.toLowerCase().includes("seed") || p.label.toLowerCase().includes("sales"))
         );
 
         if (seedPipelineEntry) {
           seedPipelineId = seedPipelineEntry.id;
-          console.log(
-            `Found Seed Sales Pipeline: ${seedPipelineId} (${seedPipelineEntry.label})`,
-          );
+          console.log(`Found Seed Sales Pipeline: ${seedPipelineId} (${seedPipelineEntry.label})`);
         } else {
-          console.log(
-            "Could not find Seed Sales Pipeline, will search all pipelines",
-          );
+          console.log("Could not find Seed Sales Pipeline, will search all pipelines");
         }
       } catch (error) {
         console.log("Could not fetch pipeline info, will search all pipelines");
@@ -1707,24 +1612,21 @@ export class HubSpotService {
       console.log(`Searching deals with filters:`, filters);
 
       // Get deals with dynamic pipeline filtering
-      const allDealsResponse = await this.makeRequest(
-        "/crm/v3/objects/deals/search",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            filterGroups: [{ filters }],
-            properties: [
-              "amount",
-              "dealstage",
-              "dealname",
-              "closedate",
-              "pipeline",
-              "hs_deal_stage_probability",
-            ],
-            limit: 100,
-          }),
-        },
-      );
+      const allDealsResponse = await this.makeRequest("/crm/v3/objects/deals/search", {
+        method: "POST",
+        body: JSON.stringify({
+          filterGroups: [{ filters }],
+          properties: [
+            "amount",
+            "dealstage",
+            "dealname",
+            "closedate",
+            "pipeline",
+            "hs_deal_stage_probability",
+          ],
+          limit: 100,
+        }),
+      });
 
       console.log(
         "All deals found:",
@@ -1732,29 +1634,23 @@ export class HubSpotService {
           name: deal.properties?.dealname,
           stage: deal.properties?.dealstage,
           amount: deal.properties?.amount,
-        })),
+        }))
       );
 
       // Get deal stage information to understand the stage IDs
       let dealStageInfo: any = {};
-      let pipelineInfo: any = {};
+      const pipelineInfo: any = {};
       try {
-        const stagesResponse = await this.makeRequest(
-          "/crm/v3/properties/deals/dealstage",
-          {
-            method: "GET",
-          },
-        );
+        const stagesResponse = await this.makeRequest("/crm/v3/properties/deals/dealstage", {
+          method: "GET",
+        });
         dealStageInfo =
           stagesResponse.options?.reduce((acc: any, option: any) => {
-            acc[option.value] = option.label;
-            return acc;
+            return { ...acc, [option.value]: option.label };
           }, {}) || {};
         console.log("Deal stage mapping:", dealStageInfo);
       } catch (error) {
-        console.log(
-          "Could not fetch deal stage info, will use raw stage values",
-        );
+        console.log("Could not fetch deal stage info, will use raw stage values");
       }
 
       // Also get all deals with more properties to understand the discrepancy
@@ -1762,12 +1658,9 @@ export class HubSpotService {
       allDealsResponse.results?.forEach((deal: any) => {
         const stage = deal.properties?.dealstage || "";
         const stageName = dealStageInfo[stage] || stage;
-        const pipelineName =
-          pipelineInfo[deal.properties?.pipeline] || deal.properties?.pipeline;
+        const pipelineName = pipelineInfo[deal.properties?.pipeline] || deal.properties?.pipeline;
         console.log(`Deal: ${deal.properties?.dealname}`);
-        console.log(
-          `  Pipeline: ${deal.properties?.pipeline} (${pipelineName})`,
-        );
+        console.log(`  Pipeline: ${deal.properties?.pipeline} (${pipelineName})`);
         console.log(`  Stage ID: ${stage}`);
         console.log(`  Stage Name: ${stageName}`);
         console.log(`  Amount: $${deal.properties?.amount || "0"}`);
@@ -1787,32 +1680,24 @@ export class HubSpotService {
           // Exclude closed won and closed lost stages based on actual Seed Sales Pipeline stages
           const closedWonStageIds = ["1108547153"]; // Closed Won from debug
           const closedLostStageIds = ["1108547154"]; // Closed Lost from debug
-          const allClosedStageIds = [
-            ...closedWonStageIds,
-            ...closedLostStageIds,
-          ];
-          const closedStages = [
-            "closedwon",
-            "closedlost",
-            "closed won",
-            "closed lost",
-          ];
+          const allClosedStageIds = [...closedWonStageIds, ...closedLostStageIds];
+          const closedStages = ["closedwon", "closedlost", "closed won", "closed lost"];
           const isClosedStage =
             allClosedStageIds.includes(stage) ||
             closedStages.some(
               (closedStage) =>
                 stage.toLowerCase().includes(closedStage) ||
-                stageName.toLowerCase().includes(closedStage),
+                stageName.toLowerCase().includes(closedStage)
             );
 
           if (!isClosedStage) {
             console.log(
-              `Including in pipeline: ${deal.properties?.dealname} - Stage: ${stage} (${stageName}) - Amount: $${amount}`,
+              `Including in pipeline: ${deal.properties?.dealname} - Stage: ${stage} (${stageName}) - Amount: $${amount}`
             );
             return total + amount;
           } else {
             console.log(
-              `Excluding from pipeline (closed stage): ${deal.properties?.dealname} - Stage: ${stage} (${stageName}) - Amount: $${amount}`,
+              `Excluding from pipeline (closed stage): ${deal.properties?.dealname} - Stage: ${stage} (${stageName}) - Amount: $${amount}`
             );
           }
           return total;
@@ -1828,30 +1713,20 @@ export class HubSpotService {
           // Exclude closed won and closed lost stages based on actual Seed Sales Pipeline stages
           const closedWonStageIds = ["1108547153"]; // Closed Won from debug
           const closedLostStageIds = ["1108547154"]; // Closed Lost from debug
-          const allClosedStageIds = [
-            ...closedWonStageIds,
-            ...closedLostStageIds,
-          ];
-          const closedStages = [
-            "closedwon",
-            "closedlost",
-            "closed won",
-            "closed lost",
-          ];
+          const allClosedStageIds = [...closedWonStageIds, ...closedLostStageIds];
+          const closedStages = ["closedwon", "closedlost", "closed won", "closed lost"];
           const isClosedStage =
             allClosedStageIds.includes(stage) ||
             closedStages.some(
               (closedStage) =>
                 stage.toLowerCase().includes(closedStage) ||
-                stageName.toLowerCase().includes(closedStage),
+                stageName.toLowerCase().includes(closedStage)
             );
 
           return !isClosedStage; // Include only non-closed deals
         })?.length || 0;
 
-      console.log(
-        `Active deals count: ${activeDeals} (deals not in closed won/lost stages)`,
-      );
+      console.log(`Active deals count: ${activeDeals} (deals not in closed won/lost stages)`);
 
       // Get MTD revenue from closed-won deals
       const firstOfMonth = new Date();
@@ -1861,9 +1736,7 @@ export class HubSpotService {
       // Calculate MTD revenue from closed won deals with close date in current month
       // Per user: "Sum of deal value from all Deals in a Closed Won stage, and have a Close Date in the current calendar month"
       console.log("\n=== MTD REVENUE ANALYSIS ===");
-      console.log(
-        `Looking for deals closed since: ${firstOfMonth.toDateString()}`,
-      );
+      console.log(`Looking for deals closed since: ${firstOfMonth.toDateString()}`);
 
       const mtdRevenue =
         allDealsResponse.results?.reduce((total: number, deal: any) => {
@@ -1889,17 +1762,14 @@ export class HubSpotService {
 
           if (isClosedWonStage && closeDate) {
             const dealCloseDate = new Date(closeDate);
-            const isThisMonth =
-              dealCloseDate >= firstOfMonth && dealCloseDate <= new Date();
+            const isThisMonth = dealCloseDate >= firstOfMonth && dealCloseDate <= new Date();
             console.log(`  Close date in current month? ${isThisMonth}`);
 
             if (isThisMonth) {
               console.log(`  ✓ INCLUDING in MTD revenue: $${amount}`);
               return total + amount;
             } else {
-              console.log(
-                `  ✗ Closed won but outside MTD: ${dealCloseDate.toDateString()}`,
-              );
+              console.log(`  ✗ Closed won but outside MTD: ${dealCloseDate.toDateString()}`);
             }
           } else if (!closeDate && isClosedWonStage) {
             console.log(`  ✗ Closed won but no close date`);
@@ -1930,9 +1800,7 @@ export class HubSpotService {
 }
 
 // Only create service if token is available
-export const hubSpotService = process.env.HUBSPOT_ACCESS_TOKEN
-  ? new HubSpotService()
-  : null;
+export const hubSpotService = process.env.HUBSPOT_ACCESS_TOKEN ? new HubSpotService() : null;
 
 // Lightweight helper to check if a HubSpot quote exists by ID
 // Uses the singleton and its internal request method safely.

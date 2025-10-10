@@ -63,9 +63,7 @@ export function ContactSearchModal({
           {isContactSearching && (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-              <span className="ml-2 text-muted-foreground">
-                Searching contacts...
-              </span>
+              <span className="ml-2 text-muted-foreground">Searching contacts...</span>
             </div>
           )}
 
@@ -81,12 +79,9 @@ export function ContactSearchModal({
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-medium text-foreground">
-                          {contact.properties.firstname}{" "}
-                          {contact.properties.lastname}
+                          {contact.properties.firstname} {contact.properties.lastname}
                         </p>
-                        <p className="text-sm text-blue-600">
-                          {contact.properties.email}
-                        </p>
+                        <p className="text-sm text-blue-600">{contact.properties.email}</p>
                         {contact.properties.company && (
                           <p className="text-sm text-muted-foreground">
                             {contact.properties.company}
@@ -101,18 +96,16 @@ export function ContactSearchModal({
             </div>
           )}
 
-          {!isContactSearching &&
-            contactSearchTerm &&
-            hubspotContacts.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">
-                  No contacts found matching "{contactSearchTerm}"
-                </p>
-                <Button onClick={onCreateNewQuote} variant="outline">
-                  Create New Quote for "{triggerEmail}"
-                </Button>
-              </div>
-            )}
+          {!isContactSearching && contactSearchTerm && hubspotContacts.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">
+                No contacts found matching "{contactSearchTerm}"
+              </p>
+              <Button onClick={onCreateNewQuote} variant="outline">
+                Create New Quote for "{triggerEmail}"
+              </Button>
+            </div>
+          )}
 
           {/* Show existing quotes for selected contact is handled separately */}
         </div>

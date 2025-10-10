@@ -10,16 +10,14 @@ import { pool } from "./db";
 export async function safeDbQuery<T>(
   operation: () => Promise<T>,
   operationName: string,
-  maxRetries: number = 3,
+  maxRetries: number = 3
 ): Promise<T> {
   console.log(`🔵 safeDbQuery START - Operation: ${operationName}`);
   let lastError: any;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(
-        `🔵 safeDbQuery - Attempt ${attempt}/${maxRetries} for ${operationName}`,
-      );
+      console.log(`🔵 safeDbQuery - Attempt ${attempt}/${maxRetries} for ${operationName}`);
       const result = await operation();
       console.log(`🟢 safeDbQuery SUCCESS - Operation: ${operationName}`, {
         hasResult: !!result,
@@ -37,7 +35,7 @@ export async function safeDbQuery<T>(
           error: error.message,
           code: error.code,
           stack: error.stack?.split("\n")[0], // Just the first line of stack
-        },
+        }
       );
 
       // Don't retry for certain types of errors
@@ -61,7 +59,7 @@ export async function safeDbQuery<T>(
   // If we get here, all retries failed
   console.error(
     `🚨 safeDbQuery FINAL FAILURE - Operation '${operationName}' failed after ${maxRetries} attempts. Final error:`,
-    lastError,
+    lastError
   );
   throw new Error(`Database operation failed: ${lastError.message}`);
 }
@@ -87,7 +85,7 @@ export async function isDbHealthy(): Promise<boolean> {
  */
 export async function withTransaction<T>(
   operation: (client: any) => Promise<T>,
-  operationName: string = "transaction",
+  operationName: string = "transaction"
 ): Promise<T> {
   if (!pool) throw new Error("Database not initialized");
   const client = await pool.connect();

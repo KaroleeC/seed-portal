@@ -22,7 +22,7 @@ async function initializeWorkerRedis(): Promise<void> {
         keepAlive: 30000, // milliseconds
         family: 4,
         enableReadyCheck: true,
-      } as any,
+      } as any
     );
 
     await workerRedis.ping();
@@ -34,13 +34,9 @@ async function initializeWorkerRedis(): Promise<void> {
 }
 
 // Process AI Insights Job
-async function processAIInsights(
-  job: Job<AIInsightsJobData>,
-): Promise<JobResult> {
+async function processAIInsights(job: Job<AIInsightsJobData>): Promise<JobResult> {
   const startTime = Date.now();
-  console.log(
-    `[Worker] 🔄 Processing AI insights job ${job.id} for contact ${job.data.contactId}`,
-  );
+  console.log(`[Worker] 🔄 Processing AI insights job ${job.id} for contact ${job.data.contactId}`);
 
   try {
     const { clientData } = job.data;
@@ -51,26 +47,19 @@ async function processAIInsights(
     await job.updateProgress(25);
 
     // Generate AI insights using the intelligence engine (expensive operations)
-    console.log(
-      `[Worker] Starting pain points analysis for ${clientData.companyName}:`,
-      {
-        companyName: clientData.companyName,
-        industry: clientData.industry,
-        services: clientData.services,
-      },
-    );
+    console.log(`[Worker] Starting pain points analysis for ${clientData.companyName}:`, {
+      companyName: clientData.companyName,
+      industry: clientData.industry,
+      services: clientData.services,
+    });
     const painPointsPromise = clientIntelEngine.extractPainPoints(clientData);
     await job.updateProgress(50);
 
-    console.log(
-      `[Worker] Starting service gaps analysis for ${clientData.companyName}`,
-    );
+    console.log(`[Worker] Starting service gaps analysis for ${clientData.companyName}`);
     const serviceGapsPromise = clientIntelEngine.detectServiceGaps(clientData);
     await job.updateProgress(75);
 
-    console.log(
-      `[Worker] Starting risk score calculation for ${clientData.companyName}`,
-    );
+    console.log(`[Worker] Starting risk score calculation for ${clientData.companyName}`);
     const riskScorePromise = clientIntelEngine.calculateRiskScore(clientData);
 
     // Wait for all AI operations to complete
@@ -94,8 +83,7 @@ async function processAIInsights(
     const result: JobResult = {
       painPoints,
       upsellOpportunities: serviceGaps.map(
-        (signal: any) =>
-          `${signal.title} - ${signal.estimatedValue || "Pricing TBD"}`,
+        (signal: any) => `${signal.title} - ${signal.estimatedValue || "Pricing TBD"}`
       ),
       riskScore,
       lastAnalyzed: new Date().toISOString(),
@@ -106,17 +94,14 @@ async function processAIInsights(
     updateQueueMetrics(processingTime, false);
 
     console.log(
-      `[Worker] ✅ AI insights completed for contact ${job.data.contactId} in ${processingTime}ms`,
+      `[Worker] ✅ AI insights completed for contact ${job.data.contactId} in ${processingTime}ms`
     );
     return result;
   } catch (error) {
     const processingTime = Date.now() - startTime;
     updateQueueMetrics(processingTime, true);
 
-    console.error(
-      `[Worker] ❌ AI insights failed for contact ${job.data.contactId}:`,
-      error,
-    );
+    console.error(`[Worker] ❌ AI insights failed for contact ${job.data.contactId}:`, error);
     console.error(`[Worker] ❌ Error details:`, {
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,

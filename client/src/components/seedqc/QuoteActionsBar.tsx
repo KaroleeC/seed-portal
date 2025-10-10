@@ -71,8 +71,8 @@ export function QuoteActionsBar({
         <Alert className="border-amber-200 bg-amber-50">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-800">
-            Contact not found in HubSpot. Please verify the email address or add
-            the contact to HubSpot before pushing.
+            Contact not found in HubSpot. Please verify the email address or add the contact to
+            HubSpot before pushing.
           </AlertDescription>
         </Alert>
       )}
@@ -81,8 +81,7 @@ export function QuoteActionsBar({
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Editing existing quote (ID: {editingQuoteId}). Changes will update
-            the original quote.
+            Editing existing quote (ID: {editingQuoteId}). Changes will update the original quote.
           </AlertDescription>
         </Alert>
       )}
@@ -91,8 +90,7 @@ export function QuoteActionsBar({
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            You have unsaved changes. Remember to save your quote before
-            leaving.
+            You have unsaved changes. Remember to save your quote before leaving.
           </AlertDescription>
         </Alert>
       )}

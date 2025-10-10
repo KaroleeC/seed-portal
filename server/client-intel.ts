@@ -4,8 +4,7 @@ import { airtableService } from "./airtable";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const aiDisabled =
-  process.env.DISABLE_AI === "1" ||
-  (process.env.DISABLE_AI || "").toLowerCase() === "true";
+  process.env.DISABLE_AI === "1" || (process.env.DISABLE_AI || "").toLowerCase() === "true";
 const openai: OpenAI | any =
   !aiDisabled && process.env.OPENAI_API_KEY
     ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -54,7 +53,7 @@ export class ClientIntelligenceEngine {
 
   // Generate prospect scoring based on HubSpot data
   async scoreProspect(
-    prospectProfile: ProspectProfile,
+    prospectProfile: ProspectProfile
   ): Promise<{ score: number; tier: string; reasoning: string }> {
     try {
       const prompt = `
@@ -101,9 +100,7 @@ Respond in JSON format:
   }
 
   // Generate pre-call snapshot for SDRs
-  async generatePreCallSnapshot(
-    prospectProfile: ProspectProfile,
-  ): Promise<string> {
+  async generatePreCallSnapshot(prospectProfile: ProspectProfile): Promise<string> {
     try {
       const prompt = `
 You are Seed Financial's SDR assistant. Create a concise pre-call snapshot (≤120 words) for this prospect:
@@ -294,7 +291,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
       const deals = await hubSpotService.getContactDeals(contactId);
       console.log(
         `Contact ${contactId} deals:`,
-        deals.map((d) => d.properties?.dealname || "No name"),
+        deals.map((d) => d.properties?.dealname || "No name")
       );
 
       const services = hubSpotService.determineServicesFromDeals(deals);
@@ -308,18 +305,13 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
   }
 
   // Search HubSpot contacts - fast search without AI analysis
-  async searchHubSpotContacts(
-    query: string,
-    ownerEmail?: string,
-  ): Promise<any[]> {
+  async searchHubSpotContacts(query: string, ownerEmail?: string): Promise<any[]> {
     try {
       if (!hubSpotService) {
         throw new Error("HubSpot not configured");
       }
 
-      console.log(
-        `[ClientIntel] Searching contacts for: "${query}" (owner: ${ownerEmail})`,
-      );
+      console.log(`[ClientIntel] Searching contacts for: "${query}" (owner: ${ownerEmail})`);
 
       // Search contacts in HubSpot with owner filtering
       const contacts = await hubSpotService.searchContacts(query, ownerEmail);
@@ -336,8 +328,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
           revenue: contact.properties.annualrevenue || null,
           employees: parseInt(contact.properties.numemployees) || 0,
           lifecycleStage: contact.properties.lifecyclestage || "lead",
-          lastActivity:
-            contact.properties.lastmodifieddate || new Date().toISOString(),
+          lastActivity: contact.properties.lastmodifieddate || new Date().toISOString(),
           hubspotContact: contact,
           // These will be generated on-demand when insights are requested
           painPoints: [],
@@ -350,9 +341,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
         };
       });
 
-      console.log(
-        `[ClientIntel] Returning ${basicContacts.length} basic contact profiles`,
-      );
+      console.log(`[ClientIntel] Returning ${basicContacts.length} basic contact profiles`);
       return basicContacts;
     } catch (error) {
       console.error("HubSpot contact search failed:", error);
@@ -373,9 +362,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
     // Prevent duplicate enhancements for the same contact
     const lockKey = `${contactId}-${companyName}`;
     if (this.enhancementLocks.has(lockKey)) {
-      console.log(
-        `Enhancement already in progress for ${companyName} (Contact: ${contactId})`,
-      );
+      console.log(`Enhancement already in progress for ${companyName} (Contact: ${contactId})`);
       return;
     }
 
@@ -383,25 +370,20 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
 
     try {
       // Check if contact already has company associations (fresh check)
-      const existingCompanies =
-        await hubSpotService.getContactAssociatedCompanies(contactId);
+      const existingCompanies = await hubSpotService.getContactAssociatedCompanies(contactId);
       if (existingCompanies.length > 0) {
         console.log(
-          `Contact ${contactId} already has ${existingCompanies.length} company association(s)`,
+          `Contact ${contactId} already has ${existingCompanies.length} company association(s)`
         );
         // Contact already has company associations, enhance existing company data
         for (const companyAssoc of existingCompanies) {
-          await this.enhanceCompanyData(
-            companyAssoc.toObjectId,
-            companyName,
-            contact,
-          );
+          await this.enhanceCompanyData(companyAssoc.toObjectId, companyName, contact);
         }
         return;
       }
 
       console.log(
-        `Creating missing company association for ${companyName} (Contact: ${contactId})`,
+        `Creating missing company association for ${companyName} (Contact: ${contactId})`
       );
 
       // Search for existing company by name first (with fresh search)
@@ -413,19 +395,14 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
         console.log(`Found existing company: ${companyName} (${companyId})`);
       } else {
         // Create new company with enhanced data and proper ownership
-        const enhancedCompanyData = await this.generateCompanyData(
-          companyName,
-          contact,
-        );
+        const enhancedCompanyData = await this.generateCompanyData(companyName, contact);
 
         // Set company owner to the contact's owner if available
         if (contact.properties?.hubspot_owner_id) {
-          enhancedCompanyData.hubspot_owner_id =
-            contact.properties.hubspot_owner_id;
+          enhancedCompanyData.hubspot_owner_id = contact.properties.hubspot_owner_id;
         }
 
-        const newCompany =
-          await hubSpotService.createCompany(enhancedCompanyData);
+        const newCompany = await hubSpotService.createCompany(enhancedCompanyData);
 
         if (!newCompany) {
           console.error(`Failed to create company for ${companyName}`);
@@ -434,27 +411,20 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
 
         companyId = newCompany.id;
         console.log(
-          `Created new company: ${companyName} (${companyId}) with owner ${contact.properties?.hubspot_owner_id || "none"}`,
+          `Created new company: ${companyName} (${companyId}) with owner ${contact.properties?.hubspot_owner_id || "none"}`
         );
       }
 
       // Associate contact with company
-      const associated = await hubSpotService.associateContactWithCompany(
-        contactId,
-        companyId,
-      );
+      const associated = await hubSpotService.associateContactWithCompany(contactId, companyId);
       if (associated) {
-        console.log(
-          `Successfully associated contact ${contactId} with company ${companyId}`,
-        );
+        console.log(`Successfully associated contact ${contactId} with company ${companyId}`);
 
         // Enhance the company data with Airtable/AI-generated information
         await this.enhanceCompanyData(companyId, companyName, contact);
 
         // After enhancement, automatically generate sales insights
-        console.log(
-          `Enhanced prospect ${contactId} - ready for insights generation`,
-        );
+        console.log(`Enhanced prospect ${contactId} - ready for insights generation`);
       }
     } catch (error) {
       console.error("Error enhancing prospect data:", error);
@@ -469,33 +439,24 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
     if (!hubSpotService) return null;
 
     try {
-      const searchResult = await this.makeHubSpotRequest(
-        "/crm/v3/objects/companies/search",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            filterGroups: [
-              {
-                filters: [
-                  {
-                    propertyName: "name",
-                    operator: "EQ",
-                    value: companyName,
-                  },
-                ],
-              },
-            ],
-            properties: [
-              "name",
-              "domain",
-              "industry",
-              "annualrevenue",
-              "numberofemployees",
-            ],
-            limit: 1,
-          }),
-        },
-      );
+      const searchResult = await this.makeHubSpotRequest("/crm/v3/objects/companies/search", {
+        method: "POST",
+        body: JSON.stringify({
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: "name",
+                  operator: "EQ",
+                  value: companyName,
+                },
+              ],
+            },
+          ],
+          properties: ["name", "domain", "industry", "annualrevenue", "numberofemployees"],
+          limit: 1,
+        }),
+      });
 
       return searchResult.results?.[0] || null;
     } catch (error) {
@@ -505,19 +466,13 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
   }
 
   // Generate enhanced company data prioritizing Airtable then AI
-  private async generateCompanyData(
-    companyName: string,
-    contact: any,
-  ): Promise<any> {
+  private async generateCompanyData(companyName: string, contact: any): Promise<any> {
     try {
       console.log(`Generating enhanced data for ${companyName}`);
 
       // First priority: Check Airtable for existing enriched data using email-based search
       const contactEmail = contact.properties?.email;
-      const airtableData = await airtableService.getEnrichedCompanyData(
-        companyName,
-        contactEmail,
-      );
+      const airtableData = await airtableService.getEnrichedCompanyData(companyName, contactEmail);
       if (airtableData) {
         console.log(`✅ Found enriched data in Airtable for ${companyName}`);
 
@@ -533,9 +488,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
         return cleanedData;
       }
 
-      console.log(
-        `No Airtable data found for ${companyName}, using AI generation`,
-      );
+      console.log(`No Airtable data found for ${companyName}, using AI generation`);
 
       // Second priority: Use AI to generate missing information
       const prompt = `Generate realistic business information for a company called "${companyName}". 
@@ -593,7 +546,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
 
       if (aiData.industry && !validIndustries.includes(aiData.industry)) {
         console.log(
-          `AI generated invalid industry "${aiData.industry}" for ${companyName}, using COMPUTER_SOFTWARE`,
+          `AI generated invalid industry "${aiData.industry}" for ${companyName}, using COMPUTER_SOFTWARE`
         );
       }
 
@@ -643,9 +596,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
   // Extract domain from website URL
   private extractDomainFromWebsite(website: string): string {
     try {
-      const url = new URL(
-        website.startsWith("http") ? website : `https://${website}`,
-      );
+      const url = new URL(website.startsWith("http") ? website : `https://${website}`);
       return url.hostname.replace("www.", "");
     } catch {
       const host = website.replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
@@ -681,19 +632,14 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
       // Skip invalid values
       if (
         invalidValues.includes(value) ||
-        (typeof value === "string" &&
-          invalidValues.includes(value.toLowerCase().trim()))
+        (typeof value === "string" && invalidValues.includes(value.toLowerCase().trim()))
       ) {
         return;
       }
 
       // Special validation for domain - must be valid domain format
       if (key === "domain" && typeof value === "string") {
-        if (
-          value.includes("Not found") ||
-          value.includes("not found") ||
-          !value.includes(".")
-        ) {
+        if (value.includes("Not found") || value.includes("not found") || !value.includes(".")) {
           return; // Skip invalid domains
         }
       }
@@ -709,10 +655,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
       cleanedData[key] = value;
     });
 
-    console.log(
-      `Sanitized company data for ${data.name}:`,
-      Object.keys(cleanedData).join(", "),
-    );
+    console.log(`Sanitized company data for ${data.name}:`, Object.keys(cleanedData).join(", "));
     return cleanedData;
   }
 
@@ -720,7 +663,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
   private async enhanceCompanyData(
     companyId: string,
     companyName: string,
-    contact: any,
+    contact: any
   ): Promise<void> {
     if (!hubSpotService) return;
 
@@ -744,9 +687,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
         "zip",
       ];
 
-      const missingFields = fieldsToEnhance.filter(
-        (field) => !props[field] || props[field] === "",
-      );
+      const missingFields = fieldsToEnhance.filter((field) => !props[field] || props[field] === "");
 
       if (missingFields.length === 0) {
         console.log(`Company ${companyName} already has complete data`);
@@ -754,7 +695,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
       }
 
       console.log(
-        `Enhancing ${missingFields.length} missing fields for ${companyName}: ${missingFields.join(", ")}`,
+        `Enhancing ${missingFields.length} missing fields for ${companyName}: ${missingFields.join(", ")}`
       );
 
       // Generate missing data using AI with proper HubSpot industry values
@@ -782,11 +723,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
 
       // Only update fields that have actual values (not null) and validate industry
       for (const field of missingFields) {
-        if (
-          enhancedData[field] &&
-          enhancedData[field] !== "null" &&
-          enhancedData[field] !== null
-        ) {
+        if (enhancedData[field] && enhancedData[field] !== "null" && enhancedData[field] !== null) {
           if (field === "industry") {
             // Validate industry against known HubSpot values
             const validIndustries = [
@@ -814,9 +751,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
             if (validIndustries.includes(enhancedData[field])) {
               updates[field] = enhancedData[field];
             } else {
-              console.log(
-                `Skipping invalid industry value: ${enhancedData[field]}`,
-              );
+              console.log(`Skipping invalid industry value: ${enhancedData[field]}`);
               // Use default safe industry value
               updates[field] = "COMPUTER_SOFTWARE";
             }
@@ -829,9 +764,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
       if (Object.keys(updates).length > 0) {
         try {
           await hubSpotService.updateCompany(companyId, updates);
-          console.log(
-            `Enhanced company ${companyName} with: ${Object.keys(updates).join(", ")}`,
-          );
+          console.log(`Enhanced company ${companyName} with: ${Object.keys(updates).join(", ")}`);
         } catch (error) {
           console.error(`Failed to update company ${companyName}:`, error);
           // Try again without industry field if that was the issue
@@ -840,7 +773,7 @@ Return JSON: {"riskScore": 0-100, "riskFactors": ["factor1", "factor2"]}
             if (Object.keys(updates).length > 0) {
               await hubSpotService.updateCompany(companyId, updates);
               console.log(
-                `Enhanced company ${companyName} (without industry) with: ${Object.keys(updates).join(", ")}`,
+                `Enhanced company ${companyName} (without industry) with: ${Object.keys(updates).join(", ")}`
               );
             }
           }

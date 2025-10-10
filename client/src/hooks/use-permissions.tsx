@@ -15,14 +15,10 @@ export function usePermissions() {
 
   return {
     userRole,
-    hasPermission: (permission: Permission) =>
-      hasPermission(userRole, permission),
-    hasAnyPermission: (permissions: Permission[]) =>
-      hasAnyPermission(userRole, permissions),
-    hasAllPermissions: (permissions: Permission[]) =>
-      hasAllPermissions(userRole, permissions),
-    getDefaultDashboard: () =>
-      getDefaultDashboard(userRole, currentUser?.defaultDashboard),
+    hasPermission: (permission: Permission) => hasPermission(userRole, permission),
+    hasAnyPermission: (permissions: Permission[]) => hasAnyPermission(userRole, permissions),
+    hasAllPermissions: (permissions: Permission[]) => hasAllPermissions(userRole, permissions),
+    getDefaultDashboard: () => getDefaultDashboard(userRole, currentUser?.defaultDashboard),
     getAvailableDashboards: () => getAvailableDashboards(userRole),
     isAdmin: userRole === "admin",
     isEmployee: userRole === "employee",

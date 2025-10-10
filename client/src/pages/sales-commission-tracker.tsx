@@ -1,12 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -225,12 +220,9 @@ export function SalesCommissionTracker() {
 
   // Dialog states
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
-  const [commissionHistoryModalOpen, setCommissionHistoryModalOpen] =
-    useState(false);
-  const [commissionDetailsModalOpen, setCommissionDetailsModalOpen] =
-    useState(false);
-  const [selectedCommission, setSelectedCommission] =
-    useState<Commission | null>(null);
+  const [commissionHistoryModalOpen, setCommissionHistoryModalOpen] = useState(false);
+  const [commissionDetailsModalOpen, setCommissionDetailsModalOpen] = useState(false);
+  const [selectedCommission, setSelectedCommission] = useState<Commission | null>(null);
   const [adjustmentAmount, setAdjustmentAmount] = useState("");
   const [adjustmentReason, setAdjustmentReason] = useState("");
   const [submittingAdjustment, setSubmittingAdjustment] = useState(false);
@@ -294,24 +286,18 @@ export function SalesCommissionTracker() {
           salesRepName === userName ||
           salesRepName === `${firstName} ${lastName}` ||
           salesRepName === `${lastName} ${firstName}` ||
-          (firstName &&
-            salesRepName.toLowerCase().includes(firstName.toLowerCase())) ||
-          (lastName &&
-            salesRepName.toLowerCase().includes(lastName.toLowerCase()));
+          (firstName && salesRepName.toLowerCase().includes(firstName.toLowerCase())) ||
+          (lastName && salesRepName.toLowerCase().includes(lastName.toLowerCase()));
         return matchesUser;
       })
       .map(
         (invoice: any): Commission => ({
           id: invoice.id?.toString() || "unknown",
-          dealId:
-            invoice.dealId?.toString() || invoice.id?.toString() || "unknown",
+          dealId: invoice.dealId?.toString() || invoice.id?.toString() || "unknown",
           dealName: invoice.companyName || "Unknown",
           companyName: invoice.companyName || "Unknown Company",
           serviceType: invoice.serviceType || "bookkeeping",
-          type:
-            invoice.type === "First Month"
-              ? ("month_1" as const)
-              : ("residual" as const),
+          type: invoice.type === "First Month" ? ("month_1" as const) : ("residual" as const),
           monthNumber: invoice.monthNumber || 1,
           amount: parseFloat(invoice.amount?.toString() || "0"),
           status: (invoice.status || "pending").toLowerCase() as
@@ -320,12 +306,10 @@ export function SalesCommissionTracker() {
             | "paid"
             | "disputed",
           dateEarned:
-            invoice.dateEarned ||
-            invoice.invoiceDate ||
-            new Date().toISOString().slice(0, 10),
+            invoice.dateEarned || invoice.invoiceDate || new Date().toISOString().slice(0, 10),
           datePaid: invoice.datePaid || undefined,
           salesRep: invoice.salesRep || userName,
-        }),
+        })
       );
   }, [liveCommissions, user?.firstName, user?.lastName, userName]);
 
@@ -335,8 +319,7 @@ export function SalesCommissionTracker() {
   // Filter to only show current period commissions in the main table
   const displayCommissions: Commission[] = processedCommissions.filter(
     (c: Commission) =>
-      c.dateEarned >= currentPeriod.periodStart &&
-      c.dateEarned <= currentPeriod.periodEnd,
+      c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd
   );
 
   // Memoized stats calculation
@@ -355,8 +338,7 @@ export function SalesCommissionTracker() {
     const currentPeriodCommissions = processedCommissions
       .filter(
         (c: Commission) =>
-          c.dateEarned >= currentPeriod.periodStart &&
-          c.dateEarned <= currentPeriod.periodEnd,
+          c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd
       )
       .reduce((sum: number, c: Commission) => sum + c.amount, 0);
 
@@ -365,7 +347,7 @@ export function SalesCommissionTracker() {
       .filter(
         (c: Commission) =>
           (c.status === "approved" || c.status === "paid") &&
-          c.dateEarned < currentPeriod.periodStart,
+          c.dateEarned < currentPeriod.periodStart
       )
       .reduce((sum: number, c: Commission) => sum + c.amount, 0);
 
@@ -374,30 +356,27 @@ export function SalesCommissionTracker() {
       processedCommissions
         .filter(
           (c: Commission) =>
-            c.dateEarned >= currentPeriod.periodStart &&
-            c.dateEarned <= currentPeriod.periodEnd,
+            c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd
         )
-        .map((c: Commission) => c.companyName),
+        .map((c: Commission) => c.companyName)
     ).size;
 
     // Count total clients all time (from all commissions for milestone tracking)
-    const totalClientsAllTime = new Set(
-      processedCommissions.map((c: Commission) => c.companyName),
-    ).size;
+    const totalClientsAllTime = new Set(processedCommissions.map((c: Commission) => c.companyName))
+      .size;
 
     // Calculate projected earnings from pipeline projections
     // With ownerId filtering at the API, include all returned deals
     const projectedFromPipeline = pipelineDeals.reduce(
-      (sum: number, deal: PipelineDeal) =>
-        sum + (deal.projectedCommission || 0),
-      0,
+      (sum: number, deal: PipelineDeal) => sum + (deal.projectedCommission || 0),
+      0
     );
 
     return {
       totalCommissionsEarned: totalPaidEarnings,
       totalClientsClosedMonthly: currentPeriodClients,
       totalClientsClosedAllTime: totalClientsAllTime,
-      currentPeriodCommissions: currentPeriodCommissions,
+      currentPeriodCommissions,
       projectedEarnings: projectedFromPipeline,
     };
   }, [
@@ -417,50 +396,20 @@ export function SalesCommissionTracker() {
   // Helper function - properly memoized as a direct function
   const getStatusBadge = useCallback((status: string) => {
     const variants = {
-      pending: (
-        <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-          Pending
-        </Badge>
-      ),
-      approved: (
-        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-          Approved
-        </Badge>
-      ),
-      paid: (
-        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-          Paid
-        </Badge>
-      ),
-      disputed: (
-        <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
-          Disputed
-        </Badge>
-      ),
+      pending: <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>,
+      approved: <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Approved</Badge>,
+      paid: <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Paid</Badge>,
+      disputed: <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Disputed</Badge>,
     };
 
-    return (
-      variants[status as keyof typeof variants] || (
-        <Badge variant="outline">{status}</Badge>
-      )
-    );
+    return variants[status as keyof typeof variants] || <Badge variant="outline">{status}</Badge>;
   }, []);
 
   // Calculate bonus eligibility using display stats
-  const monthlyBonusEligibility = calculateMonthlyBonus(
-    displayStats.totalClientsClosedMonthly,
-  );
-  const milestoneBonusEligibility = calculateMilestoneBonus(
-    displayStats.totalClientsClosedAllTime,
-  );
-  const nextMilestone = getNextMilestone(
-    displayStats.totalClientsClosedAllTime,
-  );
-  const totalEarnings = calculateTotalEarnings(
-    displayStats.totalCommissionsEarned,
-    [],
-    [],
-  );
+  const monthlyBonusEligibility = calculateMonthlyBonus(displayStats.totalClientsClosedMonthly);
+  const milestoneBonusEligibility = calculateMilestoneBonus(displayStats.totalClientsClosedAllTime);
+  const nextMilestone = getNextMilestone(displayStats.totalClientsClosedAllTime);
+  const totalEarnings = calculateTotalEarnings(displayStats.totalCommissionsEarned, [], []);
 
   // Event handlers - memoized to prevent infinite re-renders
   const handleRequestAdjustment = useCallback((commission: Commission) => {
@@ -498,8 +447,7 @@ export function SalesCommissionTracker() {
       // Show success message
       toast({
         title: "Adjustment Request Submitted",
-        description:
-          "Your commission adjustment request has been submitted for review.",
+        description: "Your commission adjustment request has been submitted for review.",
       });
 
       // Close dialog and reset form
@@ -520,13 +468,7 @@ export function SalesCommissionTracker() {
     } finally {
       setSubmittingAdjustment(false);
     }
-  }, [
-    selectedCommission,
-    adjustmentAmount,
-    adjustmentReason,
-    toast,
-    queryClient,
-  ]); // Dependencies for async function
+  }, [selectedCommission, adjustmentAmount, adjustmentReason, toast, queryClient]); // Dependencies for async function
 
   // Check for authentication errors
   const hasAuthError =
@@ -544,17 +486,15 @@ export function SalesCommissionTracker() {
         <UniversalNavbar />
 
         <div className="container mx-auto px-4 py-8">
-          <KbCard className="max-w-2xl mx-auto">
+          <SurfaceCard className="max-w-2xl mx-auto">
             <CardContent className="p-8 text-center">
               <div className="flex items-center justify-center mb-4">
                 <AlertCircle className="h-12 w-12 text-red-500" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground mb-4">
-                Authentication Required
-              </h2>
+              <h2 className="text-2xl font-bold text-foreground mb-4">Authentication Required</h2>
               <p className="text-muted-foreground mb-6">
-                There was an issue loading your commission data. This usually
-                happens when your session has expired.
+                There was an issue loading your commission data. This usually happens when your
+                session has expired.
               </p>
               <div className="space-y-3">
                 <Button
@@ -572,7 +512,7 @@ export function SalesCommissionTracker() {
                 </Button>
               </div>
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
         </div>
       </div>
     );
@@ -603,23 +543,17 @@ export function SalesCommissionTracker() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <KbCard data-testid="card-current-period">
+          <SurfaceCard data-testid="card-current-period">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Current Period
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Current Period</p>
                   {commissionsLoading ? (
-                    <div className="text-2xl font-bold text-blue-600">
-                      Loading...
-                    </div>
+                    <div className="text-2xl font-bold text-blue-600">Loading...</div>
                   ) : (
                     <p className="text-2xl font-bold text-blue-600">
                       $
-                      {(
-                        displayStats.currentPeriodCommissions || 0
-                      ).toLocaleString("en-US", {
+                      {(displayStats.currentPeriodCommissions || 0).toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -633,25 +567,19 @@ export function SalesCommissionTracker() {
                 <Calendar className="h-8 w-8 text-blue-600" />
               </div>
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
 
-          <KbCard data-testid="card-total-earnings">
+          <SurfaceCard data-testid="card-total-earnings">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Total Earnings
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Total Earnings</p>
                   {commissionsLoading ? (
-                    <div className="text-2xl font-bold text-green-600">
-                      Loading...
-                    </div>
+                    <div className="text-2xl font-bold text-green-600">Loading...</div>
                   ) : (
                     <p className="text-2xl font-bold text-green-600">
                       $
-                      {(
-                        displayStats.totalCommissionsEarned || 0
-                      ).toLocaleString("en-US", {
+                      {(displayStats.totalCommissionsEarned || 0).toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -662,19 +590,15 @@ export function SalesCommissionTracker() {
                 <DollarSign className="h-8 w-8 text-green-600" />
               </div>
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
 
-          <KbCard data-testid="card-pending">
+          <SurfaceCard data-testid="card-pending">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Pending Approval
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Pending Approval</p>
                   {commissionsLoading ? (
-                    <div className="text-2xl font-bold text-orange-600">
-                      Loading...
-                    </div>
+                    <div className="text-2xl font-bold text-orange-600">Loading...</div>
                   ) : (
                     <p className="text-2xl font-bold text-orange-600">
                       $
@@ -688,50 +612,40 @@ export function SalesCommissionTracker() {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    {
-                      displayCommissions.filter((c) => c.status === "pending")
-                        .length
-                    }{" "}
-                    items
+                    {displayCommissions.filter((c) => c.status === "pending").length} items
                   </p>
                 </div>
                 <Clock className="h-8 w-8 text-orange-600" />
               </div>
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
 
-          <KbCard data-testid="card-projected">
+          <SurfaceCard data-testid="card-projected">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Projected Earnings
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Projected Earnings</p>
                   {commissionsLoading ? (
-                    <div className="text-2xl font-bold text-purple-600">
-                      Loading...
-                    </div>
+                    <div className="text-2xl font-bold text-purple-600">Loading...</div>
                   ) : (
                     <p className="text-2xl font-bold text-purple-600">
                       $
-                      {(displayStats.projectedEarnings || 0).toLocaleString(
-                        "en-US",
-                        { minimumFractionDigits: 2, maximumFractionDigits: 2 },
-                      )}
+                      {(displayStats.projectedEarnings || 0).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    Pending commissions
-                  </p>
+                  <p className="text-xs text-muted-foreground">Pending commissions</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-purple-600" />
               </div>
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
         </div>
 
         {/* Commission History - Primary Focus */}
-        <KbCard className="mb-8">
+        <SurfaceCard className="mb-8">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -739,9 +653,7 @@ export function SalesCommissionTracker() {
                   <BarChart3 className="h-5 w-5 text-blue-600" />
                   Commission History
                 </CardTitle>
-                <CardDescription>
-                  View and manage all your commission earnings
-                </CardDescription>
+                <CardDescription>View and manage all your commission earnings</CardDescription>
               </div>
               <Button
                 variant="outline"
@@ -757,9 +669,7 @@ export function SalesCommissionTracker() {
           <CardContent>
             {commissionsLoading ? (
               <div className="flex justify-center items-center h-48">
-                <div className="animate-pulse text-muted-foreground">
-                  Loading commissions...
-                </div>
+                <div className="animate-pulse text-muted-foreground">Loading commissions...</div>
               </div>
             ) : (
               <>
@@ -782,9 +692,7 @@ export function SalesCommissionTracker() {
                         <TableRow key={commission.id}>
                           <TableCell className="font-medium">
                             <div>
-                              <p className="font-semibold">
-                                {commission.dealName}
-                              </p>
+                              <p className="font-semibold">{commission.dealName}</p>
                               <p className="text-sm text-muted-foreground">
                                 {commission.companyName}
                               </p>
@@ -793,40 +701,28 @@ export function SalesCommissionTracker() {
                           <TableCell>
                             <div className="flex items-center gap-2">
                               {getServiceTypeIcon(commission.serviceType)}
-                              <span className="capitalize">
-                                {commission.serviceType}
-                              </span>
+                              <span className="capitalize">{commission.serviceType}</span>
                             </div>
                           </TableCell>
                           <TableCell>
                             <Badge
-                              variant={
-                                commission.type === "month_1"
-                                  ? "default"
-                                  : "secondary"
-                              }
+                              variant={commission.type === "month_1" ? "default" : "secondary"}
                             >
                               {commission.type === "month_1"
                                 ? "First Month"
                                 : `Month ${commission.monthNumber}`}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-center">
-                            {commission.monthNumber}
-                          </TableCell>
+                          <TableCell className="text-center">{commission.monthNumber}</TableCell>
                           <TableCell className="font-semibold">
                             $
                             {commission.amount.toLocaleString(undefined, {
                               minimumFractionDigits: 2,
                             })}
                           </TableCell>
+                          <TableCell>{getStatusBadge(commission.status)}</TableCell>
                           <TableCell>
-                            {getStatusBadge(commission.status)}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(
-                              commission.dateEarned,
-                            ).toLocaleDateString()}
+                            {new Date(commission.dateEarned).toLocaleDateString()}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
@@ -834,9 +730,7 @@ export function SalesCommissionTracker() {
                                 size="sm"
                                 variant="outline"
                                 className="text-xs"
-                                onClick={() =>
-                                  handleViewCommissionDetails(commission)
-                                }
+                                onClick={() => handleViewCommissionDetails(commission)}
                               >
                                 <Eye className="w-3 h-3 mr-1" />
                                 Details
@@ -845,9 +739,7 @@ export function SalesCommissionTracker() {
                                 size="sm"
                                 variant="outline"
                                 className="text-xs"
-                                onClick={() =>
-                                  handleRequestAdjustment(commission)
-                                }
+                                onClick={() => handleRequestAdjustment(commission)}
                               >
                                 Request Adjustment
                               </Button>
@@ -869,12 +761,12 @@ export function SalesCommissionTracker() {
               </>
             )}
           </CardContent>
-        </KbCard>
+        </SurfaceCard>
 
         {/* Bonus Tracking Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Monthly Bonus Tracking */}
-          <KbCard>
+          <SurfaceCard>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Gift className="h-5 w-5 text-orange-600" />
@@ -887,23 +779,17 @@ export function SalesCommissionTracker() {
             <CardContent className="space-y-4">
               {monthlyBonusesLoading ? (
                 <div className="flex justify-center items-center h-32">
-                  <div className="animate-pulse text-muted-foreground">
-                    Loading bonus data...
-                  </div>
+                  <div className="animate-pulse text-muted-foreground">Loading bonus data...</div>
                 </div>
               ) : (
                 <>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Clients Closed This Month</span>
-                      <span className="font-medium">
-                        {displayStats.totalClientsClosedMonthly}
-                      </span>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>5+ Clients Closed This Month</span>
+                      <span className="font-medium">{displayStats.totalClientsClosedMonthly}</span>
                     </div>
                     <Progress
-                      value={
-                        (displayStats.totalClientsClosedMonthly / 15) * 100
-                      }
+                      value={(displayStats.totalClientsClosedMonthly / 15) * 100}
                       className="h-2"
                     />
                   </div>
@@ -912,9 +798,7 @@ export function SalesCommissionTracker() {
                     <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                       <div className="flex items-center gap-2 mb-2">
                         <CheckCircle className="w-5 h-5 text-green-600" />
-                        <span className="font-medium text-green-800">
-                          Bonus Eligible!
-                        </span>
+                        <span className="font-medium text-green-800">Bonus Eligible!</span>
                       </div>
                       <p className="text-sm text-green-700">
                         {monthlyBonusEligibility.description}
@@ -942,18 +826,16 @@ export function SalesCommissionTracker() {
                 </>
               )}
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
 
           {/* Milestone Bonus Tracking */}
-          <KbCard>
+          <SurfaceCard>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-yellow-600" />
-                Milestone Progress
+                Milestone Bonus Progress
               </CardTitle>
-              <CardDescription>
-                Track lifetime client milestones and major bonuses
-              </CardDescription>
+              <CardDescription>Track your all-time client milestones and rewards</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {milestoneBonusesLoading ? (
@@ -966,12 +848,9 @@ export function SalesCommissionTracker() {
                 <>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>
-                        Progress to {nextMilestone.nextMilestone} Clients
-                      </span>
+                      <span>Progress to {nextMilestone.nextMilestone} Clients</span>
                       <span className="font-medium">
-                        {displayStats.totalClientsClosedAllTime}/
-                        {nextMilestone.nextMilestone}
+                        {displayStats.totalClientsClosedAllTime}/{nextMilestone.nextMilestone}
                       </span>
                     </div>
                     <Progress value={nextMilestone.progress} className="h-2" />
@@ -985,16 +864,10 @@ export function SalesCommissionTracker() {
                     <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                       <div className="flex items-center gap-2 mb-2">
                         <Award className="w-5 h-5 text-yellow-600" />
-                        <span className="font-medium text-yellow-800">
-                          Last Achievement
-                        </span>
+                        <span className="font-medium text-yellow-800">Last Achievement</span>
                       </div>
-                      <p className="text-sm text-yellow-700">
-                        25 Client Milestone
-                      </p>
-                      <p className="text-lg font-bold text-yellow-800">
-                        $1,000 Bonus
-                      </p>
+                      <p className="text-sm text-yellow-700">25 Client Milestone</p>
+                      <p className="text-lg font-bold text-yellow-800">$1,000 Bonus</p>
                     </div>
                   )}
 
@@ -1019,14 +892,11 @@ export function SalesCommissionTracker() {
                 </>
               )}
             </CardContent>
-          </KbCard>
+          </SurfaceCard>
         </div>
 
         {/* Commission History Modal */}
-        <Dialog
-          open={commissionHistoryModalOpen}
-          onOpenChange={setCommissionHistoryModalOpen}
-        >
+        <Dialog open={commissionHistoryModalOpen} onOpenChange={setCommissionHistoryModalOpen}>
           <DialogContent className="max-w-6xl max-h-[80vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>Complete Commission History</DialogTitle>
@@ -1055,20 +925,14 @@ export function SalesCommissionTracker() {
                       <TableRow key={commission.id}>
                         <TableCell className="font-medium">
                           <div>
-                            <p className="font-medium">
-                              {commission.companyName}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {commission.dealName}
-                            </p>
+                            <p className="font-medium">{commission.companyName}</p>
+                            <p className="text-sm text-muted-foreground">{commission.dealName}</p>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {getServiceTypeIcon(commission.serviceType)}
-                            <span className="capitalize">
-                              {commission.serviceType}
-                            </span>
+                            <span className="capitalize">{commission.serviceType}</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -1083,9 +947,7 @@ export function SalesCommissionTracker() {
                             minimumFractionDigits: 2,
                           })}
                         </TableCell>
-                        <TableCell>
-                          {getStatusBadge(commission.status)}
-                        </TableCell>
+                        <TableCell>{getStatusBadge(commission.status)}</TableCell>
                         <TableCell>
                           {new Date(commission.dateEarned).toLocaleDateString()}
                         </TableCell>
@@ -1114,28 +976,19 @@ export function SalesCommissionTracker() {
                 <div className="text-sm text-muted-foreground">
                   Total: {processedCommissions.length} commission entries
                 </div>
-                <Button onClick={() => setCommissionHistoryModalOpen(false)}>
-                  Close
-                </Button>
+                <Button onClick={() => setCommissionHistoryModalOpen(false)}>Close</Button>
               </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         {/* Commission Details Modal */}
-        <Dialog
-          open={commissionDetailsModalOpen}
-          onOpenChange={setCommissionDetailsModalOpen}
-        >
-          <DialogContent
-            className="sm:max-w-[700px]"
-            data-testid="dialog-commission-details"
-          >
+        <Dialog open={commissionDetailsModalOpen} onOpenChange={setCommissionDetailsModalOpen}>
+          <DialogContent className="sm:max-w-[700px]" data-testid="dialog-commission-details">
             <DialogHeader>
               <DialogTitle>Commission Details</DialogTitle>
               <DialogDescription>
-                {selectedCommission &&
-                  `Details for ${selectedCommission.dealName}`}
+                {selectedCommission && `Details for ${selectedCommission.dealName}`}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -1144,20 +997,14 @@ export function SalesCommissionTracker() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-sm font-medium text-muted-foreground">
-                          Company
-                        </Label>
-                        <p className="text-lg font-semibold">
-                          {selectedCommission.companyName}
-                        </p>
+                        <Label className="text-sm font-medium text-muted-foreground">Company</Label>
+                        <p className="text-lg font-semibold">{selectedCommission.companyName}</p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-muted-foreground">
                           Deal Name
                         </Label>
-                        <p className="text-lg font-semibold">
-                          {selectedCommission.dealName}
-                        </p>
+                        <p className="text-lg font-semibold">{selectedCommission.dealName}</p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-muted-foreground">
@@ -1177,11 +1024,7 @@ export function SalesCommissionTracker() {
                           Commission Type
                         </Label>
                         <Badge
-                          variant={
-                            selectedCommission.type === "month_1"
-                              ? "default"
-                              : "secondary"
-                          }
+                          variant={selectedCommission.type === "month_1" ? "default" : "secondary"}
                         >
                           {selectedCommission.type === "month_1"
                             ? "First Month"
@@ -1189,20 +1032,14 @@ export function SalesCommissionTracker() {
                         </Badge>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-muted-foreground">
-                          Status
-                        </Label>
+                        <Label className="text-sm font-medium text-muted-foreground">Status</Label>
                         {getStatusBadge(selectedCommission.status)}
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-muted-foreground">
                           Date Earned
                         </Label>
-                        <p>
-                          {new Date(
-                            selectedCommission.dateEarned,
-                          ).toLocaleDateString()}
-                        </p>
+                        <p>{new Date(selectedCommission.dateEarned).toLocaleDateString()}</p>
                       </div>
                     </div>
                   </div>
@@ -1213,9 +1050,7 @@ export function SalesCommissionTracker() {
                     </Label>
                     <div className="grid grid-cols-1 gap-4 mt-2">
                       <div className="p-3 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-muted-foreground">
-                          Commission Amount
-                        </p>
+                        <p className="text-sm text-muted-foreground">Commission Amount</p>
                         <p className="text-xl font-bold text-blue-600">
                           $
                           {selectedCommission.amount.toLocaleString(undefined, {
@@ -1237,13 +1072,9 @@ export function SalesCommissionTracker() {
                         Payment Information
                       </Label>
                       <div className="mt-2">
-                        <p className="text-sm text-muted-foreground">
-                          Date Paid
-                        </p>
+                        <p className="text-sm text-muted-foreground">Date Paid</p>
                         <p className="font-semibold">
-                          {new Date(
-                            selectedCommission.datePaid,
-                          ).toLocaleDateString()}
+                          {new Date(selectedCommission.datePaid).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -1288,10 +1119,7 @@ export function SalesCommissionTracker() {
         </Dialog>
 
         {/* Adjustment Request Dialog */}
-        <Dialog
-          open={adjustmentDialogOpen}
-          onOpenChange={setAdjustmentDialogOpen}
-        >
+        <Dialog open={adjustmentDialogOpen} onOpenChange={setAdjustmentDialogOpen}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Request Commission Adjustment</DialogTitle>
@@ -1303,12 +1131,8 @@ export function SalesCommissionTracker() {
             {selectedCommission && (
               <div className="space-y-4">
                 <div className="p-4 bg-muted rounded-lg border">
-                  <h4 className="font-semibold">
-                    {selectedCommission.companyName}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedCommission.dealName}
-                  </p>
+                  <h4 className="font-semibold">{selectedCommission.companyName}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedCommission.dealName}</p>
                   <p className="text-lg font-bold text-green-600">
                     Current Amount: $
                     {selectedCommission.amount.toLocaleString(undefined, {
@@ -1318,9 +1142,7 @@ export function SalesCommissionTracker() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="adjustment-amount">
-                    Requested Amount (optional)
-                  </Label>
+                  <Label htmlFor="adjustment-amount">Requested Amount (optional)</Label>
                   <Input
                     id="adjustment-amount"
                     type="number"
@@ -1332,9 +1154,7 @@ export function SalesCommissionTracker() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="adjustment-reason">
-                    Reason for Adjustment *
-                  </Label>
+                  <Label htmlFor="adjustment-reason">Reason for Adjustment *</Label>
                   <Textarea
                     id="adjustment-reason"
                     placeholder="Please explain why this adjustment is needed..."
@@ -1347,10 +1167,7 @@ export function SalesCommissionTracker() {
             )}
 
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setAdjustmentDialogOpen(false)}
-              >
+              <Button variant="outline" onClick={() => setAdjustmentDialogOpen(false)}>
                 Cancel
               </Button>
               <Button

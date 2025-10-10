@@ -5,16 +5,35 @@
 import BoxSDK from "box-node-sdk";
 import { logger } from "./logger";
 
-// Initialize Box SDK with Developer Token (for development)
-let sdk: any = null;
+// Initialize Box SDK preferring App Auth (JWT). Fallback to developer token for emergencies.
+let boxClient: any = null;
 try {
-  if (process.env["BOX_ACCESS_TOKEN"]) {
-    sdk = new BoxSDK({
-      clientID: "",
-      clientSecret: "",
+  const hasJwt =
+    !!process.env["BOX_CLIENT_ID"] &&
+    !!process.env["BOX_CLIENT_SECRET"] &&
+    !!process.env["BOX_ENTERPRISE_ID"] &&
+    !!process.env["BOX_KEY_ID"] &&
+    !!process.env["BOX_PRIVATE_KEY"] &&
+    process.env["BOX_PASSPHRASE"] !== undefined;
+
+  if (hasJwt) {
+    // Normalize PEM newlines if stored with escaped \n
+    const rawKey = String(process.env["BOX_PRIVATE_KEY"] || "");
+    const privateKey = rawKey.includes("-----BEGIN") ? rawKey : rawKey.replace(/\\n/g, "\n");
+
+    const sdk = new BoxSDK({
+      clientID: String(process.env["BOX_CLIENT_ID"]),
+      clientSecret: String(process.env["BOX_CLIENT_SECRET"]),
+      appAuth: {
+        keyID: String(process.env["BOX_KEY_ID"]),
+        privateKey,
+        passphrase: String(process.env["BOX_PASSPHRASE"] || ""),
+      },
     });
-    // Use developer token for development
-    sdk = sdk.getBasicClient(process.env["BOX_ACCESS_TOKEN"]);
+    boxClient = sdk.getAppAuthClient("enterprise", String(process.env["BOX_ENTERPRISE_ID"]));
+    logger.info("[Box] Initialized App Auth (JWT) client");
+  } else {
+    logger.warn("[Box] App Auth credentials missing or invalid. Box features will be disabled.");
   }
 } catch (error: any) {
   logger.warn("[Box] Failed to initialize Box SDK:", error);
@@ -24,11 +43,9 @@ export class BoxService {
   private client: any;
 
   constructor() {
-    this.client = sdk;
+    this.client = boxClient;
     if (!this.client) {
-      logger.warn(
-        "[Box] Box client not initialized - Box features will be disabled",
-      );
+      logger.warn("[Box] Box client not initialized - Box features will be disabled");
     }
   }
 
@@ -38,10 +55,7 @@ export class BoxService {
    * @param templateFolderId - Template folder to copy from
    * @returns Created folder information
    */
-  async createClientFolder(
-    clientName: string,
-    templateFolderId?: string,
-  ): Promise<any> {
+  async createClientFolder(clientName: string, templateFolderId?: string): Promise<any> {
     try {
       // Default template folder ID (to be configured)
       const defaultTemplateId = process.env["BOX_TEMPLATE_FOLDER_ID"] || "0";
@@ -56,10 +70,7 @@ export class BoxService {
       const parentFolderId = process.env["BOX_CLIENT_FOLDERS_PARENT_ID"] || "0";
       const sanitizedClientName = this.sanitizeFolderName(clientName);
 
-      const clientFolder = await this.client.folders.create(
-        parentFolderId,
-        sanitizedClientName,
-      );
+      const clientFolder = await this.client.folders.create(parentFolderId, sanitizedClientName);
       logger.info("[Box] Client folder created", {
         folderId: clientFolder.id,
         name: clientFolder.name,
@@ -78,29 +89,21 @@ export class BoxService {
       };
     } catch (error: any) {
       logger.error("[Box] Error creating client folder", error);
-      throw new Error(
-        `Failed to create client folder: ${(error as any)?.message}`,
-      );
+      throw new Error(`Failed to create client folder: ${(error as any)?.message}`);
     }
   }
 
   /**
    * Copy folder structure from template to client folder
    */
-  private async copyFolderStructure(
-    sourceId: string,
-    destinationId: string,
-  ): Promise<void> {
+  private async copyFolderStructure(sourceId: string, destinationId: string): Promise<void> {
     try {
       const sourceItems = await this.client.folders.getItems(sourceId);
 
       for (const item of sourceItems.entries) {
         if (item.type === "folder") {
           // Copy subfolder
-          const newFolder = await this.client.folders.create(
-            destinationId,
-            item.name,
-          );
+          const newFolder = await this.client.folders.create(destinationId, item.name);
           // Recursively copy contents
           await this.copyFolderStructure(item.id, newFolder.id);
         } else if (item.type === "file") {
@@ -125,19 +128,11 @@ export class BoxService {
    * @param msaBuffer - Generated MSA document buffer
    * @param fileName - File name for the MSA
    */
-  async uploadMSA(
-    folderId: string,
-    msaBuffer: Buffer,
-    fileName: string,
-  ): Promise<any> {
+  async uploadMSA(folderId: string, msaBuffer: Buffer, fileName: string): Promise<any> {
     try {
       logger.info("[Box] Uploading MSA document", { folderId, fileName });
 
-      const uploadedFile = await this.client.files.uploadFile(
-        folderId,
-        fileName,
-        msaBuffer,
-      );
+      const uploadedFile = await this.client.files.uploadFile(folderId, fileName, msaBuffer);
 
       logger.info("[Box] MSA document uploaded successfully", {
         fileId: uploadedFile.entries[0].id,
@@ -159,10 +154,7 @@ export class BoxService {
   /**
    * Upload SOW documents for selected services
    */
-  async uploadSOWDocuments(
-    folderId: string,
-    services: string[],
-  ): Promise<any[]> {
+  async uploadSOWDocuments(folderId: string, services: string[]): Promise<any[]> {
     try {
       const results = [];
 
@@ -172,7 +164,7 @@ export class BoxService {
           const result = await this.client.files.uploadFile(
             folderId,
             `${service}_SOW.docx`,
-            sowTemplate,
+            sowTemplate
           );
           results.push({
             service,
@@ -252,9 +244,7 @@ export class BoxService {
   /**
    * List items in a folder (files and subfolders)
    */
-  async listFolderItems(
-    folderId: string,
-  ): Promise<
+  async listFolderItems(folderId: string): Promise<
     Array<{
       id: string;
       name: string;
@@ -268,8 +258,10 @@ export class BoxService {
       return [];
     }
     try {
+      // Request explicit fields for UI and extraction, and a higher limit
       const result = await this.client.folders.getItems(folderId, {
         limit: 1000,
+        fields: "id,name,type,size,modified_at",
       });
       const items = (result?.entries || []).map((e: any) => ({
         id: e.id,
@@ -281,7 +273,7 @@ export class BoxService {
       return items;
     } catch (error) {
       logger.error("[Box] Failed to list folder items", { folderId, error });
-      return [];
+      throw error;
     }
   }
 
@@ -321,9 +313,7 @@ export class BoxService {
   /**
    * Get a readable stream for a file
    */
-  async getFileReadStream(
-    fileId: string,
-  ): Promise<NodeJS.ReadableStream | null> {
+  async getFileReadStream(fileId: string): Promise<NodeJS.ReadableStream | null> {
     if (!this.client) return null;
     try {
       const stream = await this.client.files.getReadStream(fileId);
@@ -337,10 +327,7 @@ export class BoxService {
   /**
    * Validate that a file/folder is within the configured CLIENTS root subtree
    */
-  async isUnderClientsRoot(
-    id: string,
-    type: "file" | "folder",
-  ): Promise<boolean> {
+  async isUnderClientsRoot(id: string, type: "file" | "folder"): Promise<boolean> {
     const rootId = process.env["BOX_CLIENT_FOLDERS_PARENT_ID"];
     if (!rootId) return false;
     if (!this.client) return false;

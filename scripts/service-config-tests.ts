@@ -27,14 +27,8 @@ async function testBuildServiceConfigBasic() {
   assert(cfg.includes.bookkeeping === true, "bookkeeping should be included");
   assert(cfg.includes.taas === false, "taas should not be included");
   assert(cfg.fees.bookkeepingMonthly >= 0, "bk monthly non-negative");
-  assert(
-    cfg.fees.combinedMonthly === calc.combined.monthlyFee,
-    "combined monthly matches",
-  );
-  assert(
-    cfg.fees.combinedSetup === calc.combined.setupFee,
-    "combined setup matches",
-  );
+  assert(cfg.fees.combinedMonthly === calc.combined.monthlyFee, "combined monthly matches");
+  assert(cfg.fees.combinedSetup === calc.combined.setupFee, "combined setup matches");
 }
 
 async function testBuildServiceConfigBundle() {
@@ -62,14 +56,8 @@ async function testBuildServiceConfigBundle() {
   assert(cfg.includes.taas === true, "taas should be included");
   assert(cfg.fees.bookkeepingMonthly >= 0, "bk monthly non-negative");
   assert(cfg.fees.taasMonthly >= 0, "taas monthly non-negative");
-  assert(
-    cfg.fees.combinedMonthly === calc.combined.monthlyFee,
-    "combined monthly matches",
-  );
-  assert(
-    cfg.fees.combinedSetup === calc.combined.setupFee,
-    "combined setup matches",
-  );
+  assert(cfg.fees.combinedMonthly === calc.combined.monthlyFee, "combined monthly matches");
+  assert(cfg.fees.combinedSetup === calc.combined.setupFee, "combined setup matches");
 }
 
 async function run() {

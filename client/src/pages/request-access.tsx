@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useMutation } from "@tanstack/react-query";
@@ -42,8 +36,7 @@ export default function RequestAccess() {
     onError: (error: any) => {
       toast({
         title: "Request Failed",
-        description:
-          error.message || "Failed to send access request. Please try again.",
+        description: error.message || "Failed to send access request. Please try again.",
         variant: "destructive",
       });
     },
@@ -56,9 +49,7 @@ export default function RequestAccess() {
           <div className="mx-auto mb-4 w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
             <Shield className="w-8 h-8 text-orange-600" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">
-            Access Required
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold text-gray-900">Access Required</CardTitle>
           <CardDescription className="text-gray-600">
             You need admin approval to access the Seed Financial portal
           </CardDescription>
@@ -68,9 +59,7 @@ export default function RequestAccess() {
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-center gap-3 mb-2">
               <Mail className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">
-                Your Account
-              </span>
+              <span className="text-sm font-medium text-gray-700">Your Account</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-900">{googleUser?.name}</span>
@@ -84,13 +73,10 @@ export default function RequestAccess() {
             <div className="space-y-4">
               <div className="text-sm text-gray-600 leading-relaxed">
                 <p className="mb-2">
-                  Your Google Workspace account is valid, but you haven't been
-                  granted portal access yet.
+                  Your Google Workspace account is valid, but you haven't been granted portal access
+                  yet.
                 </p>
-                <p>
-                  Click below to notify the admin and request access to the
-                  portal.
-                </p>
+                <p>Click below to notify the admin and request access to the portal.</p>
               </div>
 
               <Button
@@ -118,8 +104,7 @@ export default function RequestAccess() {
                 <div className="text-sm">
                   <p className="font-medium">Request sent successfully!</p>
                   <p className="text-green-600 mt-1">
-                    The admin has been notified via Slack and will review your
-                    request.
+                    The admin has been notified via Slack and will review your request.
                   </p>
                 </div>
               </div>
@@ -138,11 +123,7 @@ export default function RequestAccess() {
           )}
 
           <div className="pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={() => logoutMutation.mutate()}
-              className="w-full"
-            >
+            <Button variant="outline" onClick={() => logoutMutation.mutate()} className="w-full">
               Sign Out
             </Button>
           </div>

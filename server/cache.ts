@@ -24,7 +24,7 @@ export interface CacheStats {
 export class CacheService {
   private getCacheRedis() {
     const redis = getRedis();
-    return redis?.cacheRedis;
+    return (redis as any)?.cacheRedis;
   }
 
   /**
@@ -55,11 +55,7 @@ export class CacheService {
    */
   generateKey(prefix: string, identifier: string | object): string {
     const hash = createHash("md5")
-      .update(
-        typeof identifier === "string"
-          ? identifier
-          : JSON.stringify(identifier),
-      )
+      .update(typeof identifier === "string" ? identifier : JSON.stringify(identifier))
       .digest("hex");
     return `${prefix}:${hash}`;
   }
@@ -139,11 +135,7 @@ export class CacheService {
   /**
    * Wrap a function with caching
    */
-  async wrap<T>(
-    key: string,
-    fn: () => Promise<T>,
-    options: CacheOptions = {},
-  ): Promise<T> {
+  async wrap<T>(key: string, fn: () => Promise<T>, options: CacheOptions = {}): Promise<T> {
     const cacheRedis = this.getCacheRedis();
     // Skip cache if requested or Redis not available
     if (options.skipCache || !cacheRedis) {
@@ -189,9 +181,7 @@ export class CacheService {
     }
 
     const hitRate =
-      this.stats.totalOperations > 0
-        ? (this.stats.hits / this.stats.totalOperations) * 100
-        : 0;
+      this.stats.totalOperations > 0 ? (this.stats.hits / this.stats.totalOperations) * 100 : 0;
 
     return {
       hits: this.stats.hits,
@@ -277,4 +267,9 @@ export const CachePrefix = {
   USER_PROFILE: "user:profile",
   WEATHER: "weather",
   GEOCODING: "geo",
+  // AI/Box helpers
+  AI_BOX_CHECK: "ai:boxcheck",
+  AI_BOX_LIST: "ai:boxlist",
+  AI_BOX_TEXT: "ai:boxtext",
+  AI_BOX_FILE_INFO: "ai:boxfileinfo",
 };

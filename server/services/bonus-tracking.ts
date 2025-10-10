@@ -1,10 +1,5 @@
 import { db } from "../db.js";
-import {
-  commissions,
-  monthlyBonuses,
-  milestoneBonuses,
-  salesReps,
-} from "../../shared/schema.js";
+import { commissions, monthlyBonuses, milestoneBonuses, salesReps } from "../../shared/schema.js";
 import { eq, and, desc } from "drizzle-orm";
 import { logger } from "../logger.js";
 
@@ -20,9 +15,7 @@ export class BonusTrackingService {
   /**
    * Check and award monthly bonuses for all sales reps
    */
-  async checkAndAwardMonthlyBonuses(
-    salesRepMetrics: BonusEligibility[],
-  ): Promise<void> {
+  async checkAndAwardMonthlyBonuses(salesRepMetrics: BonusEligibility[]): Promise<void> {
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
 
     for (const rep of salesRepMetrics) {
@@ -33,27 +26,17 @@ export class BonusTrackingService {
   /**
    * Process monthly bonus for a specific sales rep
    */
-  private async processMonthlyBonus(
-    rep: BonusEligibility,
-    month: string,
-  ): Promise<void> {
+  private async processMonthlyBonus(rep: BonusEligibility, month: string): Promise<void> {
     try {
       // Check if bonus already awarded for this month
       const existingBonus = await db
         .select()
         .from(monthlyBonuses)
-        .where(
-          and(
-            eq(monthlyBonuses.salesRepId, rep.salesRepId),
-            eq(monthlyBonuses.month, month),
-          ),
-        )
+        .where(and(eq(monthlyBonuses.salesRepId, rep.salesRepId), eq(monthlyBonuses.month, month)))
         .limit(1);
 
       if (existingBonus.length > 0) {
-        logger.info(
-          `Monthly bonus already awarded for ${rep.salesRepName} in ${month}`,
-        );
+        logger.info(`Monthly bonus already awarded for ${rep.salesRepName} in ${month}`);
         return;
       }
 
@@ -93,22 +76,17 @@ export class BonusTrackingService {
       });
 
       logger.info(
-        `Monthly bonus awarded: ${rep.salesRepName} earned ${bonusInfo.description} ($${bonusInfo.amount}) for ${rep.clientsClosedThisMonth} clients`,
+        `Monthly bonus awarded: ${rep.salesRepName} earned ${bonusInfo.description} ($${bonusInfo.amount}) for ${rep.clientsClosedThisMonth} clients`
       );
     } catch (error) {
-      logger.error(
-        `Error processing monthly bonus for ${rep.salesRepName}:`,
-        error,
-      );
+      logger.error(`Error processing monthly bonus for ${rep.salesRepName}:`, error);
     }
   }
 
   /**
    * Check and award milestone bonuses for all sales reps
    */
-  async checkAndAwardMilestoneBonuses(
-    salesRepMetrics: BonusEligibility[],
-  ): Promise<void> {
+  async checkAndAwardMilestoneBonuses(salesRepMetrics: BonusEligibility[]): Promise<void> {
     for (const rep of salesRepMetrics) {
       await this.processMilestoneBonuses(rep);
     }
@@ -144,20 +122,14 @@ export class BonusTrackingService {
         }
       }
     } catch (error) {
-      logger.error(
-        `Error processing milestone bonuses for ${rep.salesRepName}:`,
-        error,
-      );
+      logger.error(`Error processing milestone bonuses for ${rep.salesRepName}:`, error);
     }
   }
 
   /**
    * Award a specific milestone bonus if not already awarded
    */
-  private async awardMilestoneBonus(
-    rep: BonusEligibility,
-    milestone: any,
-  ): Promise<void> {
+  private async awardMilestoneBonus(rep: BonusEligibility, milestone: any): Promise<void> {
     try {
       // Check if milestone already awarded
       const existingMilestone = await db
@@ -166,8 +138,8 @@ export class BonusTrackingService {
         .where(
           and(
             eq(milestoneBonuses.salesRepId, rep.salesRepId),
-            eq(milestoneBonuses.milestone, milestone.threshold),
-          ),
+            eq(milestoneBonuses.milestone, milestone.threshold)
+          )
         )
         .limit(1);
 
@@ -203,13 +175,10 @@ export class BonusTrackingService {
       });
 
       logger.info(
-        `Milestone bonus awarded: ${rep.salesRepName} earned ${milestone.description} ($${milestone.amount})`,
+        `Milestone bonus awarded: ${rep.salesRepName} earned ${milestone.description} ($${milestone.amount})`
       );
     } catch (error) {
-      logger.error(
-        `Error awarding milestone bonus for ${rep.salesRepName}:`,
-        error,
-      );
+      logger.error(`Error awarding milestone bonus for ${rep.salesRepName}:`, error);
     }
   }
 
@@ -217,7 +186,7 @@ export class BonusTrackingService {
    * Calculate monthly bonus based on clients closed
    */
   private calculateMonthlyBonus(
-    clientsClosedThisMonth: number,
+    clientsClosedThisMonth: number
   ): { amount: number; type: string; description: string } | null {
     if (clientsClosedThisMonth >= 15) {
       return {

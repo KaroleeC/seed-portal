@@ -1,0 +1,48 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  resource: "quote"
+  rules:
+    # Admin can do everything with quotes
+    - actions: ["*"]
+      effect: EFFECT_ALLOW
+      roles: ["admin"]
+
+    # Sales managers can approve quotes and manage team quotes
+    - actions: ["view", "create", "update", "approve", "delete"]
+      effect: EFFECT_ALLOW
+      roles: ["sales_manager"]
+      condition:
+        match:
+          any:
+            of:
+              - expr: 'has(resource.attr.ownerId) && string(resource.attr.ownerId) == principal.id'
+              - expr: 'principal.attr.isManager == true && has(resource.attr.departmentId) && resource.attr.departmentId in principal.attr.managerOfDepartmentIds'
+              - expr: 'request.action == "approve" && has(resource.attr.approvalRequired) && resource.attr.approvalRequired == true'
+
+    # Sales reps can create and manage their own quotes
+    - actions: ["view", "create", "update"]
+      effect: EFFECT_ALLOW
+      roles: ["sales_rep"]
+      condition:
+        match:
+          any:
+            of:
+              - expr: 'has(resource.attr.ownerId) && string(resource.attr.ownerId) == principal.id'
+              - expr: 'request.action == "create"'
+
+    # Service teams can view quotes for client support
+    - actions: ["view"]
+      effect: EFFECT_ALLOW
+      roles: ["service_manager", "service_rep"]
+
+    # Finance can view quotes for financial analysis
+    - actions: ["view"]
+      effect: EFFECT_ALLOW
+      roles: ["finance"]
+
+    # Viewers can only view quotes
+    - actions: ["view"]
+      effect: EFFECT_ALLOW
+      roles: ["viewer"]

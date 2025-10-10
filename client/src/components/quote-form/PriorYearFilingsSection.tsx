@@ -1,23 +1,15 @@
-import { Control, UseFormReturn } from "react-hook-form";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-} from "@/components/ui/form";
+import type { Control, UseFormReturn } from "react-hook-form";
+import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { KbCard } from "@/components/seedkb/KbCard";
+import { SurfaceCard } from "@/components/ds/SurfaceCard";
 
 interface PriorYearFilingsSectionProps {
   control: Control<any>;
   form: UseFormReturn<any>;
 }
 
-export function PriorYearFilingsSection({
-  control,
-  form,
-}: PriorYearFilingsSectionProps) {
+export function PriorYearFilingsSection({ control, form }: PriorYearFilingsSectionProps) {
   const currentYear = new Date().getFullYear();
   const priorYears = Array.from({ length: 7 }, (_, i) => currentYear - (i + 1));
 
@@ -31,12 +23,12 @@ export function PriorYearFilingsSection({
     if (currentSelected.includes(year)) {
       form.setValue(
         "priorYearFilings",
-        currentSelected.filter((y: number) => y !== year),
+        currentSelected.filter((y: number) => y !== year)
       );
     } else {
       form.setValue(
         "priorYearFilings",
-        [...currentSelected, year].sort((a, b) => b - a),
+        [...currentSelected, year].sort((a, b) => b - a)
       );
     }
     form.trigger("priorYearFilings");
@@ -48,19 +40,12 @@ export function PriorYearFilingsSection({
   }
 
   return (
-    <KbCard className="p-6 mb-8">
-      <div
-        className="cursor-pointer select-none"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
+    <SurfaceCard className="p-6 mb-8">
+      <div className="cursor-pointer select-none" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-center justify-between group p-3 -m-3 rounded-lg transition-colors">
-          <h3 className="text-xl font-semibold text-foreground">
-            Prior Year Filings Details
-          </h3>
+          <h3 className="text-xl font-semibold text-foreground">Prior Year Filings Details</h3>
           <div className="flex items-center gap-2 text-muted-foreground">
-            <span className="text-sm font-medium">
-              {isExpanded ? "Collapse" : "Expand"}
-            </span>
+            <span className="text-sm font-medium">{isExpanded ? "Collapse" : "Expand"}</span>
             {isExpanded ? (
               <ChevronUp className="h-5 w-5 transition-transform" />
             ) : (
@@ -82,12 +67,10 @@ export function PriorYearFilingsSection({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-base font-medium text-gray-700">
-                    Select Prior Years to File{" "}
-                    <span className="text-red-500">*</span>
+                    Select Prior Years to File <span className="text-red-500">*</span>
                   </FormLabel>
                   <p className="text-sm text-gray-600 mb-4">
-                    Each year costs $1,500. Select all years that need tax
-                    filings.
+                    Each year costs $1,500. Select all years that need tax filings.
                   </p>
                   <FormControl>
                     <div className="grid grid-cols-4 gap-3 mt-3">
@@ -105,9 +88,7 @@ export function PriorYearFilingsSection({
                             }`}
                           >
                             <div className="text-lg font-bold text-foreground">{year}</div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              Tax Year
-                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">Tax Year</div>
                           </button>
                         );
                       })}
@@ -119,6 +100,6 @@ export function PriorYearFilingsSection({
           </div>
         </div>
       )}
-    </KbCard>
+    </SurfaceCard>
   );
 }

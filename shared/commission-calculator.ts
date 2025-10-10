@@ -31,7 +31,7 @@ export interface TotalEarnings {
  * Calculate monthly bonus eligibility based on clients closed
  */
 export function calculateMonthlyBonus(
-  clientsClosedThisMonth: number,
+  clientsClosedThisMonth: number
 ): MonthlyBonusEligibility | null {
   if (clientsClosedThisMonth >= 15) {
     return {
@@ -67,7 +67,7 @@ export function calculateMonthlyBonus(
  * Calculate milestone bonus eligibility based on total clients closed
  */
 export function calculateMilestoneBonus(
-  totalClientsAllTime: number,
+  totalClientsAllTime: number
 ): MilestoneBonusEligibility | null {
   const milestones = [
     {
@@ -143,7 +143,7 @@ export function getNextMilestone(totalClientsAllTime: number): NextMilestone {
 export function calculateTotalEarnings(
   commissionEarnings: number,
   monthlyBonuses: Array<{ bonusAmount: number; status: string }>,
-  milestoneBonuses: Array<{ bonusAmount: number; status: string }>,
+  milestoneBonuses: Array<{ bonusAmount: number; status: string }>
 ): TotalEarnings {
   const monthlyBonusEarnings = monthlyBonuses
     .filter((bonus) => bonus.status === "paid" || bonus.status === "approved")
@@ -153,8 +153,7 @@ export function calculateTotalEarnings(
     .filter((bonus) => bonus.status === "paid" || bonus.status === "approved")
     .reduce((sum, bonus) => sum + bonus.bonusAmount, 0);
 
-  const totalEarnings =
-    commissionEarnings + monthlyBonusEarnings + milestoneBonusEarnings;
+  const totalEarnings = commissionEarnings + monthlyBonusEarnings + milestoneBonusEarnings;
 
   return {
     totalEarnings,
@@ -167,10 +166,7 @@ export function calculateTotalEarnings(
 /**
  * Calculate commission rates based on service type and month
  */
-export function calculateCommissionRate(
-  serviceType: string,
-  isFirstMonth: boolean,
-): number {
+export function calculateCommissionRate(serviceType: string, isFirstMonth: boolean): number {
   // Aligned with COMMISSION_BONUS_STRUCTURE.md:
   // - Month 1 Commission: 40% of first month's MRR
   // - Residual Commission: 10% of months 2-12 MRR
@@ -186,7 +182,7 @@ export function calculateCommissionRate(
 export function calculateProjectedCommission(
   setupFee: number,
   monthlyFee: number,
-  serviceType: string,
+  serviceType: string
 ): { firstMonth: number; monthly: number; total: number } {
   // Setup commission: 20% of setup fee
   const setupCommission = setupFee * 0.2;
@@ -210,7 +206,7 @@ export function calculateProjectedCommission(
  */
 export function calculateCommissionFromInvoice(
   lineItem: { description?: string; quantity?: number; price?: number },
-  totalInvoiceAmount: number,
+  totalInvoiceAmount: number
 ): { amount: number; type: "setup" | "monthly" | "other" } {
   const description = lineItem.description?.toLowerCase() || "";
   const amount = (lineItem.quantity || 0) * (lineItem.price || 0);

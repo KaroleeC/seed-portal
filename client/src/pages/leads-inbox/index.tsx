@@ -176,7 +176,12 @@ export default function LeadsInboxPage() {
           )}
 
           {/* Lead Profile Dialog */}
-          <Dialog open={!!selectedId} onOpenChange={(o) => { if (!o) setSelectedId(null); }}>
+          <Dialog
+            open={!!selectedId}
+            onOpenChange={(o) => {
+              if (!o) setSelectedId(null);
+            }}
+          >
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{getDialogTitle(leadDetails)}</DialogTitle>
