@@ -4,21 +4,28 @@ import "./disable-redis-instrumentation";
 import { loadEnv } from "./config/env";
 loadEnv();
 
-import express, { type Request, Response, NextFunction } from "express";
+import type { Response, NextFunction } from "express";
+import express, { type Request } from "express";
 import helmet from "helmet";
-import * as Sentry from "@sentry/node";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { checkDatabaseHealth, closeDatabaseConnections } from "./db";
 import { initializeSentry } from "./sentry";
-import { logger, requestLogger } from "./logger";
-import Redis from "ioredis";
+import { requestLogger } from "./logger";
 import "./jobs"; // Initialize job workers and cron jobs
 
 import { redisDebug } from "./utils/debug-logger";
-import { applyRedisSessionsAtStartup } from "./apply-redis-sessions-startup";
 
 redisDebug("Server initialization starting...");
+
+// Feature flags for CRM integrations (read at boot)
+const FEATURE_FLAGS = {
+  ENABLE_MESSAGING: process.env.ENABLE_MESSAGING === "1",
+  ENABLE_SCHEDULING: process.env.ENABLE_SCHEDULING === "1",
+  ENABLE_ESIGN: process.env.ENABLE_ESIGN === "1",
+  ENABLE_PAYMENTS: process.env.ENABLE_PAYMENTS === "1",
+  DISABLE_HUBSPOT_FALLBACK: process.env.DISABLE_HUBSPOT_FALLBACK === "1",
+};
 
 const app = express();
 
@@ -27,7 +34,7 @@ const app = express();
 app.set("trust proxy", true);
 
 // Initialize Sentry before other middleware
-const sentryInitialized = initializeSentry(app);
+initializeSentry(app);
 
 // Sentry integration is handled in the sentry.ts file during init
 
@@ -43,15 +50,20 @@ app.use(
           "'unsafe-eval'",
           "https://cdn.tiny.cloud",
           "https://accounts.google.com",
+          "https://www.google.com",
           "https://apis.google.com",
           "https://gstatic.com",
+          "https://www.gstatic.com",
           "https://ssl.gstatic.com",
+          "https://www.google.com",
         ],
         styleSrc: [
           "'self'",
           "'unsafe-inline'",
           "https://fonts.googleapis.com",
           "https://cdn.tiny.cloud",
+          "https://accounts.google.com",
+          "https://www.google.com",
         ],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https:", "blob:"],
@@ -63,14 +75,19 @@ app.use(
           "https://api.open-meteo.com",
           "https://nominatim.openstreetmap.org",
           "https://accounts.google.com",
+          "https://oauth2.googleapis.com",
           "https://www.googleapis.com",
           "https://gstatic.com",
           "https://ssl.gstatic.com",
+          // Supabase Auth & REST endpoints
+          "https://*.supabase.co",
+          "https://*.supabase.com",
         ],
         frameSrc: [
           "'self'",
           "https://cdn.tiny.cloud",
           "https://accounts.google.com",
+          "https://www.google.com",
           "https://gstatic.com",
           "https://ssl.gstatic.com",
         ],
@@ -79,60 +96,62 @@ app.use(
       },
     },
     crossOriginEmbedderPolicy: false, // Allow embedding resources
-  }),
+  })
 );
 
-// Add CSRF debugging middleware BEFORE CSRF is applied
-app.use((req, res, next) => {
-  if (req.originalUrl.startsWith("/api/")) {
-    const rawCsrf = req.headers["x-csrf-token"];
-    const csrfValue = Array.isArray(rawCsrf) ? rawCsrf[0] : rawCsrf;
-    const csrfPreview =
-      typeof csrfValue === "string"
-        ? csrfValue.substring(0, 10) + "..."
-        : undefined;
-    console.log(" [CSRF Debug] BEFORE CSRF middleware:", {
-      url: req.originalUrl,
-      method: req.method,
-      hasCsrfToken: !!req.headers["x-csrf-token"],
-      csrfToken: csrfPreview,
-      contentType: req.headers["content-type"],
-      timestamp: new Date().toISOString(),
-    });
-  }
-  next();
-});
-
-// Add response header debugging middleware
-app.use((req, res, next) => {
-  if (req.originalUrl.startsWith("/api/")) {
-    const originalSend = res.send;
-    const originalJson = res.json;
-
-    res.send = function (body) {
-      console.log("📤 [Response Debug] Headers being sent:", {
+// Add CSRF debugging middleware BEFORE CSRF is applied (guarded)
+if (process.env.DEBUG_HTTP === "1") {
+  app.use((req, res, next) => {
+    if (req.originalUrl.startsWith("/api/")) {
+      const rawCsrf = req.headers["x-csrf-token"];
+      const csrfValue = Array.isArray(rawCsrf) ? rawCsrf[0] : rawCsrf;
+      const csrfPreview =
+        typeof csrfValue === "string" ? `${csrfValue.substring(0, 10)}...` : undefined;
+      console.log(" [CSRF Debug] BEFORE CSRF middleware:", {
         url: req.originalUrl,
-        statusCode: res.statusCode,
-        headers: res.getHeaders(),
-        hasCookieHeader: !!res.getHeaders()["set-cookie"],
-        cookieHeaders: res.getHeaders()["set-cookie"],
+        method: req.method,
+        hasCsrfToken: !!req.headers["x-csrf-token"],
+        csrfToken: csrfPreview,
+        contentType: req.headers["content-type"],
+        timestamp: new Date().toISOString(),
       });
-      return originalSend.call(this, body);
-    };
+    }
+    next();
+  });
+}
 
-    res.json = function (body) {
-      console.log("📤 [Response Debug] JSON Headers being sent:", {
-        url: req.originalUrl,
-        statusCode: res.statusCode,
-        headers: res.getHeaders(),
-        hasCookieHeader: !!res.getHeaders()["set-cookie"],
-        cookieHeaders: res.getHeaders()["set-cookie"],
-      });
-      return originalJson.call(this, body);
-    };
-  }
-  next();
-});
+// Add response header debugging middleware (guarded)
+if (process.env.DEBUG_HTTP === "1") {
+  app.use((req, res, next) => {
+    if (req.originalUrl.startsWith("/api/")) {
+      const originalSend = res.send;
+      const originalJson = res.json;
+
+      res.send = function (body) {
+        console.log("📤 [Response Debug] Headers being sent:", {
+          url: req.originalUrl,
+          statusCode: res.statusCode,
+          headers: res.getHeaders(),
+          hasCookieHeader: !!res.getHeaders()["set-cookie"],
+          cookieHeaders: res.getHeaders()["set-cookie"],
+        });
+        return originalSend.call(this, body);
+      };
+
+      res.json = function (body) {
+        console.log("📤 [Response Debug] JSON Headers being sent:", {
+          url: req.originalUrl,
+          statusCode: res.statusCode,
+          headers: res.getHeaders(),
+          hasCookieHeader: !!res.getHeaders()["set-cookie"],
+          cookieHeaders: res.getHeaders()["set-cookie"],
+        });
+        return originalJson.call(this, body);
+      };
+    }
+    next();
+  });
+}
 
 // Enable CORS for production deployments with credentials - VERCEL COMPATIBLE
 app.use((req, res, next) => {
@@ -143,8 +162,12 @@ app.use((req, res, next) => {
     // Development origins
     "http://localhost:3000",
     "http://localhost:5000",
+    "http://localhost:5001",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5000",
+    "http://127.0.0.1:5001",
+    "http://127.0.0.1:5002",
+    "http://127.0.0.1:5003",
 
     // Replit development
     /^https:\/\/[a-f0-9-]+\.replit\.dev$/,
@@ -188,13 +211,10 @@ app.use((req, res, next) => {
   }
 
   // Always set these headers
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET,POST,PUT,DELETE,OPTIONS,PATCH",
-  );
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS,PATCH");
   res.header(
     "Access-Control-Allow-Headers",
-    "Origin,X-Requested-With,Content-Type,Accept,Authorization,x-csrf-token",
+    "Origin,X-Requested-With,Content-Type,Accept,Authorization,x-csrf-token"
   );
 
   // Handle preflight requests
@@ -205,6 +225,10 @@ app.use((req, res, next) => {
   next();
 });
 
+// Stripe webhook needs raw body for signature verification
+// Must be applied BEFORE express.json()
+app.use("/api/webhooks/stripe", express.raw({ type: "application/json" }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -214,7 +238,7 @@ app.use(requestLogger());
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  let capturedJsonResponse: Record<string, unknown> | undefined = undefined;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -231,7 +255,7 @@ app.use((req, res, next) => {
       }
 
       if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+        logLine = `${logLine.slice(0, 79)}…`;
       }
 
       log(logLine);
@@ -245,43 +269,25 @@ app.use((req, res, next) => {
 async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(
-      () =>
-        reject(
-          new Error(`Service initialization timeout after ${timeoutMs}ms`),
-        ),
-      timeoutMs,
+      () => reject(new Error(`Service initialization timeout after ${timeoutMs}ms`)),
+      timeoutMs
     );
   });
 
   const initPromise = async () => {
     try {
-      // Initialize Redis connections with timeout protection (for workers and cache)
-      console.log("[Server] Initializing Redis connections...");
+      // Initialize Graphile Worker (Postgres-backed job queue)
+      console.log("[Server] Initializing Graphile Worker...");
       try {
-        const { initRedis } = await import("./redis");
-        await Promise.race([
-          initRedis(),
-          new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("Redis connection timeout")),
-              8000,
-            ),
-          ),
-        ]);
-        console.log("[Server] Redis connections established");
-      } catch (redisError) {
+        const { initializeWorker } = await import("./workers/graphile-worker");
+        await initializeWorker();
+        console.log("[Server] ✅ Graphile Worker initialized");
+      } catch (workerError) {
         console.warn(
-          "[Server] Redis connection failed, continuing without Redis features:",
-          redisError,
+          "[Server] Graphile Worker initialization failed, continuing without background jobs:",
+          workerError
         );
-        return; // Skip other Redis-dependent services
       }
-
-      // DISABLED: BullMQ queue system (causing Redis timeout issues)
-      // console.log('[Server] Initializing BullMQ queue system...');
-      // const { initializeQueue } = await import('./queue');
-      // await initializeQueue();
-      // console.log('[Server] Queue initialized, starting workers...');
 
       // DISABLED: AI Insights Worker (causing Redis timeout issues)
       // const { startAIInsightsWorker } = await import('./workers/ai-insights-worker');
@@ -311,8 +317,9 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
 
       // Initialize CDN and asset optimization
       console.log("[Server] Initializing CDN and asset optimization...");
-      const { assetOptimization, setCacheHeaders, servePrecompressed } =
-        await import("./middleware/asset-optimization.js");
+      const { assetOptimization, setCacheHeaders, servePrecompressed } = await import(
+        "./middleware/asset-optimization.js"
+      );
       const { cdnService } = await import("./cdn.js");
 
       // Apply asset optimization middleware
@@ -325,17 +332,13 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
       await cdnService.initialize();
       cdnService.setupCDNMiddleware(app);
 
-      console.log(
-        "[Server] CDN and asset optimization initialized successfully",
-      );
-      console.log(
-        "[Server] BullMQ workers and cache pre-warming started successfully",
-      );
+      console.log("[Server] CDN and asset optimization initialized successfully");
+      console.log("[Server] BullMQ workers and cache pre-warming started successfully");
     } catch (error) {
       console.error("[Server] ❌ Service initialization error:", error);
       // Don't crash - continue with basic functionality
       console.log(
-        "[Server] Continuing with basic functionality - some features may be unavailable",
+        "[Server] Continuing with basic functionality - some features may be unavailable"
       );
     }
   };
@@ -343,103 +346,49 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
   try {
     await Promise.race([initPromise(), timeoutPromise]);
   } catch (error) {
-    console.error(
-      "[Server] ❌ Service initialization failed or timed out:",
-      error,
-    );
-    console.log(
-      "[Server] Continuing with basic functionality - some features may be unavailable",
-    );
+    console.error("[Server] ❌ Service initialization failed or timed out:", error);
+    console.log("[Server] Continuing with basic functionality - some features may be unavailable");
   }
 }
 
 (async () => {
   console.log("[Server] ===== SERVER STARTUP BEGIN =====");
   try {
-    // Apply session middleware first (essential for authentication)
-    console.log("[Server] Applying session middleware...");
-    const session = await import("express-session");
-    const { createSessionConfig } = await import("./session-config");
+    // Supabase Auth: stateless JWT – no express-session required
+    console.log("[Server] Skipping session middleware (Supabase JWT)");
 
-    console.log(
-      "[Server] Initializing session configuration with enhanced Redis handling...",
-    );
-    const sessionConfig = await createSessionConfig();
-    const { storeType, ...expressSessionConfig } = sessionConfig;
-
-    // Add session debugging middleware BEFORE session setup
-    app.use((req, res, next) => {
-      const originalUrl = req.originalUrl;
-      if (originalUrl.startsWith("/api/")) {
-        console.log("🔍 [SessionDebug] BEFORE session middleware:", {
-          url: originalUrl,
-          method: req.method,
-          hasCookie: !!req.headers.cookie,
-          cookieSnippet: req.headers.cookie?.substring(0, 50),
-          sessionID: req.sessionID || "NOT_SET",
-          userAgent: req.headers["user-agent"]?.substring(0, 30),
-        });
-      }
-      next();
-    });
-
-    app.use(session.default(expressSessionConfig));
-
-    // Add session debugging middleware AFTER session setup
-    app.use((req, res, next) => {
-      const originalUrl = req.originalUrl;
-      if (originalUrl.startsWith("/api/")) {
-        console.log("🔍 [SessionDebug] AFTER session middleware:", {
-          url: originalUrl,
-          method: req.method,
-          sessionID: req.sessionID,
-          sessionExists: !!req.session,
-          sessionKeys: req.session ? Object.keys(req.session) : [],
-          hasPassport: !!(req.session as any)?.passport,
-          isAuthenticated: req.isAuthenticated
-            ? req.isAuthenticated()
-            : "NO_METHOD",
-          userInSession: req.user ? req.user.email : "NONE",
-        });
-      }
-      next();
-    });
-
-    console.log("[Server] ✅ Session middleware applied successfully");
+    // No session configuration – continue with stateless pipeline
+    const storeType = "none";
+    console.log("[Server] ✅ Session middleware skipped (stateless)");
     console.log("[Server] Session store type:", storeType);
-    console.log(
-      "[Server] Production mode:",
-      expressSessionConfig.cookie?.secure ? "ENABLED" : "DISABLED",
-    );
+    console.log("[Server] Production mode: N/A");
 
-    // Add comprehensive request logging middleware
-    app.use((req, res, next) => {
-      if (req.originalUrl.startsWith("/api/")) {
-        console.log("🎯 [Request Pipeline] Processing API request:", {
-          url: req.originalUrl,
-          method: req.method,
-          timestamp: new Date().toISOString(),
-          sessionID: req.sessionID || "NO_SESSION_ID",
-          hasCookieHeader: !!req.headers.cookie,
-          cookieCount: req.headers.cookie
-            ? req.headers.cookie.split(";").length
-            : 0,
-          userAgent: req.headers["user-agent"]?.substring(0, 40),
-          contentType: req.headers["content-type"],
-        });
-      }
-      next();
-    });
+    // Add comprehensive request logging middleware (guarded)
+    if (process.env.DEBUG_HTTP === "1") {
+      app.use((req, res, next) => {
+        if (req.originalUrl.startsWith("/api/")) {
+          console.log("🎯 [Request Pipeline] Processing API request:", {
+            url: req.originalUrl,
+            method: req.method,
+            timestamp: new Date().toISOString(),
+            sessionID: req.sessionID || "NO_SESSION_ID",
+            hasCookieHeader: !!req.headers.cookie,
+            cookieCount: req.headers.cookie ? req.headers.cookie.split(";").length : 0,
+            userAgent: req.headers["user-agent"]?.substring(0, 40),
+            contentType: req.headers["content-type"],
+          });
+        }
+        next();
+      });
+    }
 
-    // Add API route protection middleware BEFORE route registration
-    app.use("/api/*", (req, res, next) => {
-      // Ensure API routes are always handled by Express, never by static serving
-      console.log(
-        "🛡️ API Route Protection - Ensuring Express handles:",
-        req.originalUrl,
-      );
-      next();
-    });
+    // Add API route protection logging BEFORE route registration (guarded)
+    if (process.env.DEBUG_HTTP === "1") {
+      app.use("/api/*", (req, res, next) => {
+        console.log("🛡️ API Route Protection - Ensuring Express handles:", req.originalUrl);
+        next();
+      });
+    }
 
     // Private Sentry verification endpoint
     // Note: This route is registered before Passport initialize/session middleware.
@@ -454,16 +403,12 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
       }
       try {
         const { captureMessage } = await import("./sentry");
-        const userLabel =
-          authedUser?.email ||
-          (sessionUserId ? `user_id:${sessionUserId}` : "dev");
+        const userLabel = authedUser?.email || (sessionUserId ? `user_id:${sessionUserId}` : "dev");
         captureMessage("sentry_test", "info", { user: userLabel });
         res.json({ status: "ok", timestamp: new Date().toISOString() });
       } catch (e) {
         console.error("Sentry test route error:", e);
-        res
-          .status(500)
-          .json({ status: "error", message: (e as any)?.message || "unknown" });
+        res.status(500).json({ status: "error", message: (e as any)?.message || "unknown" });
       }
     });
 
@@ -474,10 +419,7 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
       server = await registerRoutes(app, null);
       console.log("[Server] ✅ Routes registered successfully");
     } catch (error) {
-      console.error(
-        "[Server] 🚨 CRITICAL ERROR during route registration:",
-        error,
-      );
+      console.error("[Server] 🚨 CRITICAL ERROR during route registration:", error);
       console.error("[Server] Error type:", typeof error);
       console.error("[Server] Error message:", (error as any)?.message);
       console.error("[Server] Error stack:", (error as any)?.stack);
@@ -511,11 +453,9 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
       // In development, never crash on Vite transform or middleware errors.
       const isDev = req.app.get("env") === "development";
       const isLikelyViteError = Boolean(
-        (err?.stack &&
-          /vite|transformIndexHtml|plugin/i.test(String(err.stack))) ||
+        (err?.stack && /vite|transformIndexHtml|plugin/i.test(String(err.stack))) ||
           (err?.message && /vite|pre-transform/i.test(String(err.message))) ||
-          (req?.originalUrl &&
-            /@vite|__vite|\/src\//i.test(String(req.originalUrl))),
+          (req?.originalUrl && /@vite|__vite|\/src\//i.test(String(req.originalUrl)))
       );
       if (!isDev && status >= 500 && !err.message?.includes("connection")) {
         throw err;
@@ -525,16 +465,18 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
     // Add explicit 404 handler for unmatched API routes BEFORE static serving
     app.use("/api/*", (req, res) => {
       console.log("🔴 Unmatched API route hit 404 handler:", req.originalUrl);
-      res
-        .status(404)
-        .json({ message: "API endpoint not found", route: req.originalUrl });
+      res.status(404).json({ message: "API endpoint not found", route: req.originalUrl });
     });
 
-    // importantly only setup vite in development and after
-    // setting up all the other routes so the catch-all route
-    // doesn't interfere with the other routes
+    // In development, only mount Vite into Express when not using split dev.
+    // With split dev (SPLIT_DEV=true), a separate Vite server serves the client on port 5001.
+    // In production, serve prebuilt static assets.
     if (app.get("env") === "development") {
-      await setupVite(app, server);
+      if (process.env.SPLIT_DEV === "true") {
+        console.log("[Server] Split dev enabled - skipping Vite middlewares");
+      } else {
+        await setupVite(app, server);
+      }
     } else {
       serveStatic(app);
     }
@@ -550,9 +492,7 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
     // Check database health on startup (lightweight check)
     const isDbHealthy = await checkDatabaseHealth();
     if (!isDbHealthy) {
-      console.warn(
-        "Database health check failed - continuing with degraded functionality",
-      );
+      console.warn("Database health check failed - continuing with degraded functionality");
     }
 
     // START THE SERVER FIRST - this prevents deployment timeouts
@@ -561,22 +501,25 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
       log(`serving on ${host}:${port}`);
       console.log("[Server] 🚀 HTTP server started successfully");
 
+      // Log feature flags
+      console.log("[Server] Feature flags:");
+      console.log(`  ENABLE_MESSAGING: ${FEATURE_FLAGS.ENABLE_MESSAGING ? "✓" : "✗"}`);
+      console.log(`  ENABLE_SCHEDULING: ${FEATURE_FLAGS.ENABLE_SCHEDULING ? "✓" : "✗"}`);
+      console.log(`  ENABLE_ESIGN: ${FEATURE_FLAGS.ENABLE_ESIGN ? "✓" : "✗"}`);
+      console.log(`  ENABLE_PAYMENTS: ${FEATURE_FLAGS.ENABLE_PAYMENTS ? "✓" : "✗"}`);
+      console.log(
+        `  DISABLE_HUBSPOT_FALLBACK: ${FEATURE_FLAGS.DISABLE_HUBSPOT_FALLBACK ? "✓" : "✗"}`
+      );
+
       // Initialize heavy services AFTER server is listening
       console.log("[Server] Starting background service initialization...");
       initializeServicesWithTimeout(30000)
         .then(() => {
-          console.log(
-            "[Server] ✅ All background services initialized successfully",
-          );
+          console.log("[Server] ✅ All background services initialized successfully");
         })
         .catch((error) => {
-          console.error(
-            "[Server] ❌ Background service initialization failed:",
-            error,
-          );
-          console.log(
-            "[Server] Application will continue with basic functionality",
-          );
+          console.error("[Server] ❌ Background service initialization failed:", error);
+          console.log("[Server] Application will continue with basic functionality");
         });
     });
 
@@ -611,10 +554,7 @@ process.on("unhandledRejection", (reason, promise) => {
 process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);
   // For database errors, try to recover instead of crashing
-  if (
-    error.message?.includes("connection") ||
-    error.message?.includes("timeout")
-  ) {
+  if (error.message?.includes("connection") || error.message?.includes("timeout")) {
     console.log("Database connection error detected - attempting recovery");
     return; // Don't exit
   }
@@ -622,12 +562,8 @@ process.on("uncaughtException", (error) => {
   if (process.env.NODE_ENV !== "production") {
     const msg = String(error?.message || "");
     const stack = String(error?.stack || "");
-    if (
-      /vite|transformIndexHtml|plugin|pre-transform/i.test(msg + " " + stack)
-    ) {
-      console.warn(
-        "[Dev] Non-fatal Vite error encountered. Keeping server alive.",
-      );
+    if (/vite|transformIndexHtml|plugin|pre-transform/i.test(`${msg} ${stack}`)) {
+      console.warn("[Dev] Non-fatal Vite error encountered. Keeping server alive.");
       return;
     }
   }
