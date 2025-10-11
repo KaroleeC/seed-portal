@@ -248,7 +248,7 @@ npm run storybook
 
 ```sql
 -- Send success rate (last 7 days)
-SELECT 
+SELECT
   COUNT(*) FILTER (WHERE status = 'sent') * 100.0 / COUNT(*) as success_rate,
   COUNT(*) FILTER (WHERE status = 'sent') as successful_sends,
   COUNT(*) FILTER (WHERE status IN ('failed', 'bounced')) as failed_sends
@@ -256,7 +256,7 @@ FROM email_send_status
 WHERE created_at > NOW() - INTERVAL '7 days';
 
 -- Bounce rate by type
-SELECT 
+SELECT
   bounce_type,
   COUNT(*) as count,
   COUNT(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
@@ -265,7 +265,7 @@ WHERE status = 'bounced'
 GROUP BY bounce_type;
 
 -- Retry effectiveness
-SELECT 
+SELECT
   retry_count,
   COUNT(*) FILTER (WHERE status = 'sent') as successful_retries,
   COUNT(*) FILTER (WHERE status IN ('failed', 'bounced')) as failed_retries,
@@ -276,7 +276,7 @@ GROUP BY retry_count
 ORDER BY retry_count;
 
 -- Auto-retry candidates (emails ready for retry)
-SELECT 
+SELECT
   COUNT(*) as ready_for_retry
 FROM email_send_status
 WHERE status = 'failed'
@@ -284,7 +284,7 @@ WHERE status = 'failed'
   AND next_retry_at <= NOW();
 
 -- Average time to first open (for tracked emails)
-SELECT 
+SELECT
   AVG(EXTRACT(EPOCH FROM (first_opened_at - sent_at))) / 60 as avg_minutes_to_open,
   COUNT(*) FILTER (WHERE first_opened_at IS NOT NULL) as opened_count,
   COUNT(*) as total_tracked

@@ -86,10 +86,10 @@ console.log("🔍 APPROVAL CHECK - Contact Email:", contactEmail);
 console.log("User:", req.user?.email, "ID:", req.user?.id);
 
 // ✅ Good
-logger.info("Approval check started", { 
-  contactEmail, 
+logger.info("Approval check started", {
+  contactEmail,
   userId: req.user?.id,
-  userEmail: req.user?.email 
+  userEmail: req.user?.email,
 });
 ```
 
@@ -117,11 +117,11 @@ logger.info("Approval check started", {
 
 ```typescript
 await hubSpotService.updateQuote(
-  quote.hubspotQuoteId,           // 1
+  quote.hubspotQuoteId, // 1
   quote.hubspotDealId || undefined, // 2
   quote.companyName || "Unknown Company", // 3
-  parseFloat(quote.monthlyFee),   // 4
-  parseFloat(quote.setupFee),     // 5
+  parseFloat(quote.monthlyFee), // 4
+  parseFloat(quote.setupFee) // 5
   // ... 15 more positional parameters
 );
 ```
@@ -206,7 +206,7 @@ Property 'user' does not exist on type 'Request<...>'
 
 ```typescript
 // server/types/express.d.ts
-import { User } from '@shared/schema';
+import { User } from "@shared/schema";
 
 declare global {
   namespace Express {
@@ -272,19 +272,28 @@ server/routes/__tests__/
 {
   "rules": {
     "no-console": "error",
-    "no-param-reassign": ["error", { 
-      "props": true,
-      "ignorePropertyModificationsFor": ["req", "res"]
-    }],
+    "no-param-reassign": [
+      "error",
+      {
+        "props": true,
+        "ignorePropertyModificationsFor": ["req", "res"]
+      }
+    ],
     "@typescript-eslint/no-explicit-any": "error",
-    "@typescript-eslint/explicit-function-return-type": ["warn", {
-      "allowExpressions": true
-    }],
-    "max-lines-per-function": ["warn", {
-      "max": 150,
-      "skipBlankLines": true,
-      "skipComments": true
-    }],
+    "@typescript-eslint/explicit-function-return-type": [
+      "warn",
+      {
+        "allowExpressions": true
+      }
+    ],
+    "max-lines-per-function": [
+      "warn",
+      {
+        "max": 150,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
     "complexity": ["warn", 15]
   }
 }

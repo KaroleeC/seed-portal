@@ -1,6 +1,6 @@
 /**
  * useFormActions Tests
- * 
+ *
  * Comprehensive tests for form actions hook.
  * Tests reset, clear, new quote, load quote, and duplicate quote actions.
  */

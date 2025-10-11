@@ -1,9 +1,9 @@
 /**
  * Approval Codes Router
- * 
+ *
  * Handles approval code generation and validation for cleanup overrides
  * and duplicate quote flows.
- * 
+ *
  * Routes:
  * - POST /api/approval/request - Generate a new approval code
  * - POST /api/approval-request - Legacy alias for above
@@ -21,10 +21,10 @@ const router = Router();
 /**
  * POST /api/approval/request
  * Create an approval code for this contact email
- * 
+ *
  * Used for cleanup override or duplicate quotes
  * Code expires in 30 minutes
- * 
+ *
  * @body contactEmail - Email address to associate with code
  * @returns { success: true, code: string }
  */
@@ -65,7 +65,7 @@ router.post("/api/approval/request", requireAuth, async (req: any, res: Response
 /**
  * POST /api/approval-request
  * Legacy alias for /api/approval/request
- * 
+ *
  * @deprecated Use /api/approval/request instead
  */
 router.post("/api/approval-request", requireAuth, async (req: any, res: Response) => {
@@ -104,7 +104,7 @@ router.post("/api/approval-request", requireAuth, async (req: any, res: Response
 /**
  * POST /api/approval/validate
  * Validate a code without consuming it
- * 
+ *
  * @body code - 4-digit approval code
  * @body contactEmail - Email associated with the code
  * @returns { valid: boolean, message: string }
@@ -113,7 +113,7 @@ router.post("/api/approval/validate", requireAuth, async (req: Request, res: Res
   try {
     const code = (req.body?.code || "").toString().trim();
     const contactEmail = (req.body?.contactEmail || req.body?.email || "").toString().trim();
-    
+
     if (!code || !contactEmail) {
       return res.status(400).json({
         valid: false,

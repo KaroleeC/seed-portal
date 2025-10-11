@@ -71,7 +71,7 @@ class PricingConfigService {
     const cacheKey = CACHE_KEYS.BASE_PRICING;
 
     // Try in-memory cache first
-    let cached = this.cache.get(cacheKey);
+    const cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
     // Load from database
@@ -92,7 +92,7 @@ class PricingConfigService {
   async getRevenueMultipliers(): Promise<Record<string, number>> {
     const cacheKey = CACHE_KEYS.REVENUE_MULTIPLIERS;
 
-    let cached = this.cache.get(cacheKey);
+    const cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
     const multipliers = await storage.getAllRevenueMultipliers();
@@ -111,7 +111,7 @@ class PricingConfigService {
   async getTransactionSurcharges(): Promise<Record<string, number>> {
     const cacheKey = CACHE_KEYS.TRANSACTION_SURCHARGES;
 
-    let cached = this.cache.get(cacheKey);
+    const cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
     const surcharges = await storage.getAllTransactionSurcharges();
@@ -130,7 +130,7 @@ class PricingConfigService {
   async getIndustryMultipliers(): Promise<Record<string, { monthly: number; cleanup: number }>> {
     const cacheKey = CACHE_KEYS.INDUSTRY_MULTIPLIERS;
 
-    let cached = this.cache.get(cacheKey);
+    const cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
     const multipliers = await storage.getAllIndustryMultipliers();
@@ -152,7 +152,7 @@ class PricingConfigService {
   async getServiceSettings(): Promise<Record<string, Record<string, number>>> {
     const cacheKey = CACHE_KEYS.SERVICE_SETTINGS;
 
-    let cached = this.cache.get(cacheKey);
+    const cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
     const settings = await storage.getAllServiceSettings();
@@ -175,7 +175,7 @@ class PricingConfigService {
   > {
     const cacheKey = CACHE_KEYS.PRICING_TIERS;
 
-    let cached = this.cache.get(cacheKey);
+    const cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
     const tiers = await storage.getAllPricingTiers();

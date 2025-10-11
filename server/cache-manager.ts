@@ -30,15 +30,15 @@ class CacheManager {
     try {
       const cacheKey = this.getKey(key, options.namespace);
       const entry = this.memoryCache.get(cacheKey);
-      
+
       if (!entry) return null;
-      
+
       // Check expiration
       if (Date.now() > entry.expiresAt) {
         this.memoryCache.delete(cacheKey);
         return null;
       }
-      
+
       return entry.value;
     } catch (error) {
       logger.error("[Cache] Error getting cache value:", error);
@@ -52,7 +52,7 @@ class CacheManager {
     try {
       const cacheKey = this.getKey(key, options.namespace);
       const ttl = options.ttl || 300; // Default 5 minutes
-      const expiresAt = Date.now() + (ttl * 1000);
+      const expiresAt = Date.now() + ttl * 1000;
 
       this.memoryCache.set(cacheKey, { value, expiresAt });
     } catch (error) {
@@ -77,18 +77,18 @@ class CacheManager {
     try {
       const searchPattern = this.getKey(pattern, options.namespace);
       let deletedCount = 0;
-      
+
       // Convert glob pattern to regex (simple implementation)
-      const regexPattern = searchPattern.replace(/\*/g, '.*');
+      const regexPattern = searchPattern.replace(/\*/g, ".*");
       const regex = new RegExp(`^${regexPattern}$`);
-      
+
       for (const key of this.memoryCache.keys()) {
         if (regex.test(key)) {
           this.memoryCache.delete(key);
           deletedCount++;
         }
       }
-      
+
       if (deletedCount > 0) {
         logger.info(
           `[Cache] Invalidated ${deletedCount} cache entries matching pattern: ${searchPattern}`

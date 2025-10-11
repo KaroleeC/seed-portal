@@ -1,6 +1,6 @@
 /**
  * Quote Validator Tests
- * 
+ *
  * Comprehensive test coverage for quote validation logic.
  * Uses Vitest for unit testing.
  */
@@ -188,7 +188,7 @@ describe("quote-validator", () => {
       const feeCalc = { includesTaas: true } as FeeCalculation;
 
       const result = validateQuoteForSync(values as QuoteFormFields, feeCalc);
-      
+
       expect(result.isValid).toBe(true);
       expect(result.missingFields).toEqual([]);
       expect(result.errors).toEqual([]);
@@ -201,7 +201,7 @@ describe("quote-validator", () => {
       const feeCalc = { includesTaas: true } as FeeCalculation;
 
       const result = validateQuoteForSync(values as QuoteFormFields, feeCalc);
-      
+
       expect(result.isValid).toBe(false);
       expect(result.missingFields.length).toBeGreaterThan(0);
       expect(result.errors.length).toBeGreaterThan(0);
@@ -214,7 +214,7 @@ describe("quote-validator", () => {
       const feeCalc = { includesTaas: true } as FeeCalculation;
 
       const result = validateQuoteForSync(values as QuoteFormFields, feeCalc);
-      
+
       expect(result.errors[0]).toContain("Missing required fields:");
     });
   });

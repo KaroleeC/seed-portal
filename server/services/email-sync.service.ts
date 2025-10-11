@@ -1,9 +1,9 @@
 /**
  * Email Sync Service
- * 
+ *
  * Handles background synchronization of Gmail messages with local database.
  * Supports both full sync (initial) and incremental sync (using Gmail historyId).
- * 
+ *
  * Features:
  * - Incremental sync via Gmail History API
  * - Efficient batching and deduplication
@@ -54,11 +54,7 @@ export class EmailSyncService {
   private accountId: string;
   private accountEmail: string;
 
-  constructor(
-    gmail: GmailService,
-    accountId: string,
-    accountEmail: string
-  ) {
+  constructor(gmail: GmailService, accountId: string, accountEmail: string) {
     this.gmail = gmail;
     this.accountId = accountId;
     this.accountEmail = accountEmail;
@@ -70,8 +66,11 @@ export class EmailSyncService {
    */
   async sync(options: SyncOptions = {}): Promise<SyncResult> {
     const startTime = Date.now();
-    
-    logger.info({ accountId: this.accountId, accountEmail: this.accountEmail }, "Starting email sync");
+
+    logger.info(
+      { accountId: this.accountId, accountEmail: this.accountEmail },
+      "Starting email sync"
+    );
 
     try {
       // Get current sync state
@@ -91,7 +90,10 @@ export class EmailSyncService {
         logger.info({ accountId: this.accountId }, "Performing FULL sync");
         result = await this.performFullSync(options);
       } else {
-        logger.info({ accountId: this.accountId, historyId: syncState.historyId }, "Performing INCREMENTAL sync");
+        logger.info(
+          { accountId: this.accountId, historyId: syncState.historyId },
+          "Performing INCREMENTAL sync"
+        );
         try {
           result = await this.performIncrementalSync(syncState.historyId, options);
         } catch (error) {
@@ -169,7 +171,7 @@ export class EmailSyncService {
 
     // Get profile to update historyId
     const profile = await this.gmail.getProfile();
-    
+
     // Note: Gmail profile doesn't return historyId, we need to get it from a message
     // We'll store the latest message's historyId if available
     if (messages.length > 0) {
@@ -197,7 +199,7 @@ export class EmailSyncService {
     options: SyncOptions
   ): Promise<SyncResult> {
     const historyResponse = await this.gmail.getHistory(startHistoryId, options.maxResults || 100);
-    
+
     logger.info(
       { accountId: this.accountId, historyItems: historyResponse.history.length },
       "Fetched history changes"
@@ -205,7 +207,7 @@ export class EmailSyncService {
 
     // Extract changed message IDs from history
     const changedMessageIds = new Set<string>();
-    
+
     for (const historyItem of historyResponse.history) {
       // messagesAdded - new messages
       if (historyItem.messagesAdded) {
@@ -270,12 +272,12 @@ export class EmailSyncService {
    * Process messages and insert/update in database
    */
   private async processMessages(
-    messages: Awaited<ReturnType<GmailService['listMessages']>>
+    messages: Awaited<ReturnType<GmailService["listMessages"]>>
   ): Promise<{ threadsProcessed: number; messagesProcessed: number }> {
     // Group by thread
-    type Message = typeof messages[number];
+    type Message = (typeof messages)[number];
     const threadMap = new Map<string, Message[]>();
-    
+
     for (const msg of messages) {
       if (!threadMap.has(msg.threadId)) {
         threadMap.set(msg.threadId, []);
@@ -436,9 +438,7 @@ export class EmailSyncService {
 /**
  * Factory function to create EmailSyncService with credentials
  */
-export async function createEmailSyncService(
-  accountId: string
-): Promise<EmailSyncService> {
+export async function createEmailSyncService(accountId: string): Promise<EmailSyncService> {
   // Get account with credentials
   const [account] = await db
     .select()

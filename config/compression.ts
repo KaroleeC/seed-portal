@@ -1,6 +1,6 @@
 /**
  * Compression Configuration
- * 
+ *
  * Shared configuration for build-time and runtime compression.
  * DRY: All compression settings reference these constants.
  */
@@ -14,14 +14,7 @@ export const COMPRESSION_THRESHOLD = 1024; // 1KB
 /**
  * File extensions that should be compressed.
  */
-export const COMPRESSIBLE_EXTENSIONS = [
-  "js",
-  "mjs",
-  "json",
-  "css",
-  "html",
-  "svg",
-] as const;
+export const COMPRESSIBLE_EXTENSIONS = ["js", "mjs", "json", "css", "html", "svg"] as const;
 
 /**
  * Regular expression pattern for compressible files.
@@ -37,4 +30,4 @@ export const COMPRESSIBLE_FILE_PATTERN = new RegExp(
  */
 export const COMPRESSION_ALGORITHMS = ["br", "gzip"] as const;
 
-export type CompressionAlgorithm = typeof COMPRESSION_ALGORITHMS[number];
+export type CompressionAlgorithm = (typeof COMPRESSION_ALGORITHMS)[number];

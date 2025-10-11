@@ -1,9 +1,9 @@
 /**
  * Email-Lead Auto-Link Background Worker
- * 
+ *
  * Automatically links email threads to leads based on participant email addresses
  * Runs after email sync completes
- * 
+ *
  * Job Payload:
  * - threadIds: string[] - Array of thread IDs to process
  */
@@ -21,9 +21,7 @@ export interface EmailLeadAutoLinkPayload {
  * Process email threads for auto-linking to leads
  * Links threads to leads based on participant email addresses
  */
-export async function emailLeadAutoLinkTask(
-  payload: EmailLeadAutoLinkPayload
-): Promise<void> {
+export async function emailLeadAutoLinkTask(payload: EmailLeadAutoLinkPayload): Promise<void> {
   const { threadIds } = payload;
 
   if (!threadIds || threadIds.length === 0) {
@@ -40,21 +38,15 @@ export async function emailLeadAutoLinkTask(
   for (const threadId of threadIds) {
     try {
       const links = await autoLinkThreadToLeads(threadId);
-      
+
       if (links.length > 0) {
         successCount++;
         totalLinksCreated += links.length;
-        workerLogger.debug(
-          { threadId, linkCount: links.length },
-          "Auto-linked thread to leads"
-        );
+        workerLogger.debug({ threadId, linkCount: links.length }, "Auto-linked thread to leads");
       }
     } catch (error) {
       failCount++;
-      workerLogger.error(
-        { error, threadId },
-        "Failed to auto-link thread"
-      );
+      workerLogger.error({ error, threadId }, "Failed to auto-link thread");
       // Continue processing other threads even if one fails
     }
   }

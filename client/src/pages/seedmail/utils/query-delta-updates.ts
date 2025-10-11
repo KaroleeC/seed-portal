@@ -1,9 +1,9 @@
 /**
  * Query Delta Update Utilities
- * 
+ *
  * Utilities for applying delta updates to React Query cache.
  * Prevents full query invalidation and refetch - updates cache directly.
- * 
+ *
  * Performance: 95%+ reduction in unnecessary API calls.
  * DRY Principle: Centralized cache mutation logic.
  */
@@ -64,24 +64,24 @@ export function applyThreadCreated(
   event: ThreadCreatedEvent
 ): void {
   const queryKey = ["/api/email/threads", accountId];
-  
+
   queryClient.setQueryData<EmailThread[]>(queryKey, (oldThreads) => {
     if (!oldThreads) return [event.thread as EmailThread];
-    
+
     // Check if thread already exists (prevent duplicates)
     const exists = oldThreads.some(
       (t) => t.id === event.thread.id || t.gmailThreadId === event.thread.gmailThreadId
     );
-    
+
     if (exists) {
       console.warn("[Delta] Thread already exists, skipping create:", event.thread.id);
       return oldThreads;
     }
-    
+
     // Add new thread to the beginning (most recent first)
     return [event.thread as EmailThread, ...oldThreads];
   });
-  
+
   console.log("[Delta] Thread created:", event.thread.id);
 }
 
@@ -94,13 +94,13 @@ export function applyThreadUpdated(
   event: ThreadUpdatedEvent
 ): void {
   const queryKey = ["/api/email/threads", accountId];
-  
+
   queryClient.setQueryData<EmailThread[]>(queryKey, (oldThreads) => {
     if (!oldThreads) return oldThreads;
-    
+
     return oldThreads.map((thread) => {
       if (thread.id !== event.threadId) return thread;
-      
+
       // Apply changes
       return {
         ...thread,
@@ -108,7 +108,7 @@ export function applyThreadUpdated(
       };
     });
   });
-  
+
   console.log("[Delta] Thread updated:", event.threadId, event.changes);
 }
 
@@ -121,16 +121,16 @@ export function applyThreadDeleted(
   event: ThreadDeletedEvent
 ): void {
   const queryKey = ["/api/email/threads", accountId];
-  
+
   queryClient.setQueryData<EmailThread[]>(queryKey, (oldThreads) => {
     if (!oldThreads) return oldThreads;
-    
+
     // Remove deleted thread
     return oldThreads.filter(
       (thread) => thread.id !== event.threadId && thread.gmailThreadId !== event.gmailThreadId
     );
   });
-  
+
   console.log("[Delta] Thread deleted:", event.threadId);
 }
 
@@ -143,13 +143,17 @@ export function applyUnreadCountUpdated(
   event: UnreadCountUpdatedEvent
 ): void {
   const queryKey = ["/api/email/unread-count", accountId];
-  
+
   queryClient.setQueryData<UnreadCount>(queryKey, () => ({
     count: event.unreadCount,
     updatedAt: event.timestamp,
   }));
-  
-  console.log("[Delta] Unread count updated:", event.unreadCount, `(${event.delta >= 0 ? '+' : ''}${event.delta})`);
+
+  console.log(
+    "[Delta] Unread count updated:",
+    event.unreadCount,
+    `(${event.delta >= 0 ? "+" : ""}${event.delta})`
+  );
 }
 
 /**
@@ -162,13 +166,13 @@ export function applyMessageCreated(
 ): void {
   // Update thread list to reflect new message in thread
   const threadsQueryKey = ["/api/email/threads", accountId];
-  
+
   queryClient.setQueryData<EmailThread[]>(threadsQueryKey, (oldThreads) => {
     if (!oldThreads) return oldThreads;
-    
+
     return oldThreads.map((thread) => {
       if (thread.id !== event.message.threadId) return thread;
-      
+
       // Update thread with new message info
       return {
         ...thread,
@@ -179,11 +183,11 @@ export function applyMessageCreated(
       };
     });
   });
-  
+
   // Also invalidate specific thread messages if cached
   const messagesQueryKey = ["/api/email/messages", event.message.threadId];
   queryClient.invalidateQueries({ queryKey: messagesQueryKey, exact: true });
-  
+
   console.log("[Delta] Message created in thread:", event.message.threadId);
 }
 
@@ -196,17 +200,17 @@ export function applyDraftSaved(
   event: DraftSavedEvent
 ): void {
   const queryKey = ["/api/email/drafts", accountId];
-  
+
   queryClient.setQueryData<Draft[]>(queryKey, (oldDrafts) => {
     const newDraft = { ...event.draft, createdAt: event.timestamp } as Draft;
-    
+
     if (!oldDrafts) {
       return [newDraft];
     }
-    
+
     // Check if draft already exists (update) or is new (create)
     const existingIndex = oldDrafts.findIndex((d) => d.id === event.draft.id);
-    
+
     if (existingIndex >= 0) {
       // Update existing draft
       const updated = [...oldDrafts];
@@ -221,7 +225,7 @@ export function applyDraftSaved(
       return [newDraft, ...oldDrafts];
     }
   });
-  
+
   console.log("[Delta] Draft saved:", event.draft.id);
 }
 
@@ -234,14 +238,14 @@ export function applyDraftDeleted(
   event: DraftDeletedEvent
 ): void {
   const queryKey = ["/api/email/drafts", accountId];
-  
+
   queryClient.setQueryData<Draft[]>(queryKey, (oldDrafts) => {
     if (!oldDrafts) return oldDrafts;
-    
+
     // Remove deleted draft
     return oldDrafts.filter((draft) => draft.id !== event.draftId);
   });
-  
+
   console.log("[Delta] Draft deleted:", event.draftId);
 }
 

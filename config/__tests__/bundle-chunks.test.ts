@@ -24,7 +24,7 @@ describe("Bundle Chunks Configuration", () => {
     it("separates editor libraries", () => {
       expect(VENDOR_CHUNKS["editor-tiptap"]).toContain("@tiptap/react");
       expect(VENDOR_CHUNKS["editor-tinymce"]).toContain("@tinymce/tinymce-react");
-      
+
       // Editors should be in separate chunks
       expect(VENDOR_CHUNKS["editor-tiptap"]).not.toEqual(VENDOR_CHUNKS["editor-tinymce"]);
     });
@@ -46,7 +46,7 @@ describe("Bundle Chunks Configuration", () => {
     });
 
     it("all vendor chunks are arrays", () => {
-      Object.values(VENDOR_CHUNKS).forEach(chunk => {
+      Object.values(VENDOR_CHUNKS).forEach((chunk) => {
         expect(Array.isArray(chunk)).toBe(true);
         expect(chunk.length).toBeGreaterThan(0);
       });
@@ -67,7 +67,7 @@ describe("Bundle Chunks Configuration", () => {
     });
 
     it("all route chunks are arrays", () => {
-      Object.values(ROUTE_CHUNKS).forEach(chunk => {
+      Object.values(ROUTE_CHUNKS).forEach((chunk) => {
         expect(Array.isArray(chunk)).toBe(true);
         expect(chunk.length).toBeGreaterThan(0);
       });
@@ -171,14 +171,14 @@ describe("Bundle Chunks Configuration", () => {
   describe("getAllChunkNames()", () => {
     it("returns array of all chunk names", () => {
       const chunks = getAllChunkNames();
-      
+
       expect(Array.isArray(chunks)).toBe(true);
       expect(chunks.length).toBeGreaterThan(0);
     });
 
     it("includes vendor chunks", () => {
       const chunks = getAllChunkNames();
-      
+
       expect(chunks).toContain("react");
       expect(chunks).toContain("radix-ui");
       expect(chunks).toContain("icons");
@@ -186,21 +186,21 @@ describe("Bundle Chunks Configuration", () => {
 
     it("includes route chunks", () => {
       const chunks = getAllChunkNames();
-      
+
       expect(chunks).toContain("seedmail");
       expect(chunks).toContain("sales-cadence");
     });
 
     it("includes catch-all vendor chunk", () => {
       const chunks = getAllChunkNames();
-      
+
       expect(chunks).toContain("vendor");
     });
 
     it("has no duplicate chunk names", () => {
       const chunks = getAllChunkNames();
       const uniqueChunks = [...new Set(chunks)];
-      
+
       expect(chunks.length).toBe(uniqueChunks.length);
     });
   });
@@ -214,7 +214,7 @@ describe("Bundle Chunks Configuration", () => {
     });
 
     it("size estimates are strings with KB suffix", () => {
-      Object.values(ESTIMATED_CHUNK_SIZES).forEach(size => {
+      Object.values(ESTIMATED_CHUNK_SIZES).forEach((size) => {
         expect(typeof size).toBe("string");
         expect(size).toMatch(/~\d+KB/);
       });
@@ -225,29 +225,29 @@ describe("Bundle Chunks Configuration", () => {
     it("no duplicate packages across vendor chunks", () => {
       const allPackages = new Set<string>();
       const duplicates: string[] = [];
-      
-      Object.values(VENDOR_CHUNKS).forEach(packages => {
-        packages.forEach(pkg => {
+
+      Object.values(VENDOR_CHUNKS).forEach((packages) => {
+        packages.forEach((pkg) => {
           if (allPackages.has(pkg)) {
             duplicates.push(pkg);
           }
           allPackages.add(pkg);
         });
       });
-      
+
       expect(duplicates).toEqual([]);
     });
 
     it("vendor chunks are mutually exclusive", () => {
       const chunkEntries = Object.entries(VENDOR_CHUNKS);
-      
+
       for (let i = 0; i < chunkEntries.length; i++) {
         for (let j = i + 1; j < chunkEntries.length; j++) {
           const [name1, packages1] = chunkEntries[i];
           const [name2, packages2] = chunkEntries[j];
-          
-          const intersection = packages1.filter(pkg => packages2.includes(pkg));
-          
+
+          const intersection = packages1.filter((pkg) => packages2.includes(pkg));
+
           expect(intersection).toEqual([]);
         }
       }
@@ -256,7 +256,7 @@ describe("Bundle Chunks Configuration", () => {
     it("route patterns are unique", () => {
       const allPatterns = Object.values(ROUTE_CHUNKS).flat();
       const uniquePatterns = [...new Set(allPatterns)];
-      
+
       expect(allPatterns.length).toBe(uniquePatterns.length);
     });
   });
@@ -270,15 +270,15 @@ describe("Bundle Chunks Configuration", () => {
         "/project/client/src/pages/seedmail/index.tsx",
         "/project/client/src/components/Button.tsx",
       ];
-      
+
       const start = Date.now();
-      
+
       for (let i = 0; i < 1000; i++) {
-        testPaths.forEach(path => manualChunks(path));
+        testPaths.forEach((path) => manualChunks(path));
       }
-      
+
       const duration = Date.now() - start;
-      
+
       // Should complete 4000 iterations in < 100ms
       expect(duration).toBeLessThan(100);
     });

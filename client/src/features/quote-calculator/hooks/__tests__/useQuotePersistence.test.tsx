@@ -1,6 +1,6 @@
 /**
  * useQuotePersistence Tests
- * 
+ *
  * Comprehensive test coverage for quote persistence hook.
  * Tests save/update logic, unsaved changes tracking, and error handling.
  */
@@ -72,25 +72,27 @@ describe("useQuotePersistence", () => {
   const createTestHook = (editingQuoteId: number | null = null) => {
     const setEditingQuoteId = vi.fn();
     const refetchQuotes = vi.fn();
-    
+
     const { result: formResult } = renderHook(
-      () => useForm<QuoteFormFields>({
-        defaultValues: {
-          contactEmail: "test@example.com",
-          companyName: "Test Company",
-        },
-      }),
+      () =>
+        useForm<QuoteFormFields>({
+          defaultValues: {
+            contactEmail: "test@example.com",
+            companyName: "Test Company",
+          },
+        }),
       { wrapper }
     );
 
     const { result } = renderHook(
-      () => useQuotePersistence({
-        form: formResult.current,
-        mappedPricingConfig: undefined,
-        editingQuoteId,
-        setEditingQuoteId,
-        refetchQuotes,
-      }),
+      () =>
+        useQuotePersistence({
+          form: formResult.current,
+          mappedPricingConfig: undefined,
+          editingQuoteId,
+          setEditingQuoteId,
+          refetchQuotes,
+        }),
       { wrapper }
     );
 
@@ -243,9 +245,7 @@ describe("useQuotePersistence", () => {
 
   describe("Error Handling", () => {
     it("should handle create error gracefully", async () => {
-      vi.mocked(quotesService.createQuote).mockRejectedValue(
-        new Error("Network error")
-      );
+      vi.mocked(quotesService.createQuote).mockRejectedValue(new Error("Network error"));
 
       const { result, formResult } = createTestHook();
 
@@ -259,9 +259,7 @@ describe("useQuotePersistence", () => {
     });
 
     it("should handle update error gracefully", async () => {
-      vi.mocked(quotesService.updateQuote).mockRejectedValue(
-        new Error("Update failed")
-      );
+      vi.mocked(quotesService.updateQuote).mockRejectedValue(new Error("Update failed"));
 
       const { result, formResult } = createTestHook(123);
 
@@ -279,7 +277,7 @@ describe("useQuotePersistence", () => {
     it("should handle create → modify → update flow", async () => {
       // Initial create
       vi.mocked(quotesService.createQuote).mockResolvedValue({ id: 111 });
-      
+
       const { result, formResult, setEditingQuoteId } = createTestHook();
 
       // Create

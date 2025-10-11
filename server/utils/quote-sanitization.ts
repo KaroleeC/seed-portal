@@ -1,6 +1,6 @@
 /**
  * Quote Data Sanitization Utilities
- * 
+ *
  * Shared sanitization logic for quote creation and updates.
  * Ensures consistent handling of empty strings and undefined values.
  */
@@ -11,11 +11,11 @@ export interface SanitizedQuoteData {
 
 /**
  * Sanitize quote numeric fields
- * 
+ *
  * Converts empty strings to appropriate default values:
  * - Fee fields → "0" (schema expects strings)
  * - Integer fields → null
- * 
+ *
  * @param body - Raw request body
  * @returns Sanitized body with proper defaults
  */
@@ -60,10 +60,10 @@ export function sanitizeQuoteFields(body: any): SanitizedQuoteData {
 
 /**
  * Prepare quote data for validation
- * 
+ *
  * Adds required fallback values for validation schema.
  * Used primarily for TaaS-only quotes that don't have bookkeeping fields.
- * 
+ *
  * @param sanitized - Already sanitized body
  * @returns Data ready for Zod validation
  */

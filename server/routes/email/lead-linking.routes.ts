@@ -1,6 +1,6 @@
 /**
  * Email-Lead Linking API Routes
- * 
+ *
  * Endpoints for managing relationships between SEEDMAIL threads and LEADIQ leads
  */
 
@@ -68,11 +68,11 @@ router.post("/link", requireAuth, async (req, res) => {
     res.json({ success: true, link });
   } catch (error) {
     routeLogger.error({ error }, "Failed to link thread to lead");
-    
+
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request", details: error.errors });
     }
-    
+
     res.status(500).json({ error: "Failed to link thread to lead" });
   }
 });
@@ -96,11 +96,11 @@ router.post("/unlink", requireAuth, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     routeLogger.error({ error }, "Failed to unlink thread from lead");
-    
+
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request", details: error.errors });
     }
-    
+
     res.status(500).json({ error: "Failed to unlink thread from lead" });
   }
 });
@@ -120,11 +120,11 @@ router.post("/auto-link", requireAuth, async (req, res) => {
     res.json({ success: true, links });
   } catch (error) {
     routeLogger.error({ error }, "Failed to auto-link thread");
-    
+
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request", details: error.errors });
     }
-    
+
     res.status(500).json({ error: "Failed to auto-link thread" });
   }
 });
@@ -184,11 +184,11 @@ router.post("/find-by-email", requireAuth, async (req, res) => {
     res.json({ matches });
   } catch (error) {
     routeLogger.error({ error }, "Failed to find leads by email");
-    
+
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request", details: error.errors });
     }
-    
+
     res.status(500).json({ error: "Failed to find leads by email" });
   }
 });
@@ -208,11 +208,11 @@ router.post("/sync-lead-emails", requireAuth, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     routeLogger.error({ error }, "Failed to sync lead emails");
-    
+
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: "Invalid request", details: error.errors });
     }
-    
+
     res.status(500).json({ error: "Failed to sync lead emails" });
   }
 });

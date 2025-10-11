@@ -265,7 +265,7 @@ if (shouldLogResponses()) {
 
     next();
   });
-  
+
   console.log("[Server] ⚠️  Heavy response logging ENABLED (DEBUG_HTTP=1)");
 } else {
   console.log("[Server] Response logging disabled (set DEBUG_HTTP=1 to enable in development)");
@@ -370,7 +370,7 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
     console.log("[Server] Initializing Postgres session store...");
     const { sessionMiddleware } = await import("./session-store");
     app.use(sessionMiddleware);
-    
+
     const storeType = "PostgresSessionStore";
     console.log("[Server] ✅ Session middleware configured (Postgres)");
     console.log("[Server] Session store type:", storeType);
@@ -547,7 +547,7 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
 // Graceful shutdown handlers
 process.on("SIGINT", async () => {
   console.log("Received SIGINT, shutting down gracefully");
-  
+
   // Stop email retry scheduler
   try {
     const { stopEmailRetryScheduler } = await import("./services/email-retry-scheduler");
@@ -555,14 +555,14 @@ process.on("SIGINT", async () => {
   } catch (error) {
     console.warn("Failed to stop email retry scheduler:", error);
   }
-  
+
   await closeDatabaseConnections();
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
   console.log("Received SIGTERM, shutting down gracefully");
-  
+
   // Stop email retry scheduler
   try {
     const { stopEmailRetryScheduler } = await import("./services/email-retry-scheduler");
@@ -570,7 +570,7 @@ process.on("SIGTERM", async () => {
   } catch (error) {
     console.warn("Failed to stop email retry scheduler:", error);
   }
-  
+
   await closeDatabaseConnections();
   process.exit(0);
 });

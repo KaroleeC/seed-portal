@@ -1,9 +1,9 @@
 /**
  * Quote Provider Interface (Server-Side)
- * 
+ *
  * Abstract interface for quote sync operations on the backend.
  * Mirrors the client-side IQuoteProvider for consistency.
- * 
+ *
  * Migration Strategy:
  * - Current: HubSpotQuoteProvider
  * - Future: SeedPayQuoteProvider
@@ -32,7 +32,7 @@ export interface QuoteSyncOptions {
 
 /**
  * Abstract Quote Provider Interface (Server-Side)
- * 
+ *
  * All CRM integrations (HubSpot, SeedPay, etc.) must implement this interface.
  * This ensures consistent behavior across different providers.
  */
@@ -51,7 +51,10 @@ export interface IQuoteProvider {
    * @param options - Sync options
    * @returns Job ID for status tracking
    */
-  queueSync(quoteId: number, options?: QuoteSyncOptions): Promise<{
+  queueSync(
+    quoteId: number,
+    options?: QuoteSyncOptions
+  ): Promise<{
     queued: boolean;
     jobId?: string;
     result?: QuoteSyncResult;

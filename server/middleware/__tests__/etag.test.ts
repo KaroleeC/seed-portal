@@ -14,23 +14,23 @@ describe("ETag Middleware", () => {
       const data = { foo: "bar", baz: 123 };
       const etag1 = generateETag(data);
       const etag2 = generateETag(data);
-      
+
       expect(etag1).toBe(etag2);
     });
 
     it("generates different ETags for different data", () => {
       const data1 = { foo: "bar" };
       const data2 = { foo: "baz" };
-      
+
       const etag1 = generateETag(data1);
       const etag2 = generateETag(data2);
-      
+
       expect(etag1).not.toBe(etag2);
     });
 
     it("handles string data", () => {
       const etag = generateETag("test string");
-      
+
       expect(etag).toMatch(/^"[a-f0-9]{32}"$/);
     });
 
@@ -40,7 +40,7 @@ describe("ETag Middleware", () => {
         items: [1, 2, 3],
         metadata: { created: "2024-01-01" },
       };
-      
+
       const etag = generateETag(data);
       expect(etag).toMatch(/^"[a-f0-9]{32}"$/);
     });
@@ -49,10 +49,10 @@ describe("ETag Middleware", () => {
       // JSON.stringify maintains property insertion order
       const data1 = { a: 1, b: 2 };
       const data2 = { b: 2, a: 1 };
-      
+
       const etag1 = generateETag(data1);
       const etag2 = generateETag(data2);
-      
+
       // These will be different due to key order
       expect(etag1).not.toBe(etag2);
     });
@@ -63,7 +63,7 @@ describe("ETag Middleware", () => {
       const req = {
         headers: { "if-none-match": '"abc123"' },
       } as Request;
-      
+
       expect(hasMatchingETag(req, '"abc123"')).toBe(true);
     });
 
@@ -71,7 +71,7 @@ describe("ETag Middleware", () => {
       const req = {
         headers: { "if-none-match": '"abc123"' },
       } as Request;
-      
+
       expect(hasMatchingETag(req, '"def456"')).toBe(false);
     });
 
@@ -79,7 +79,7 @@ describe("ETag Middleware", () => {
       const req = {
         headers: {},
       } as Request;
-      
+
       expect(hasMatchingETag(req, '"abc123"')).toBe(false);
     });
 
@@ -87,7 +87,7 @@ describe("ETag Middleware", () => {
       const req = {
         headers: { "if-none-match": '"abc123", "def456", "ghi789"' },
       } as Request;
-      
+
       expect(hasMatchingETag(req, '"def456"')).toBe(true);
       expect(hasMatchingETag(req, '"xyz999"')).toBe(false);
     });
@@ -96,7 +96,7 @@ describe("ETag Middleware", () => {
       const req = {
         headers: { "if-none-match": "*" },
       } as Request;
-      
+
       expect(hasMatchingETag(req, '"anything"')).toBe(true);
     });
   });
@@ -115,13 +115,13 @@ describe("ETag Middleware", () => {
       endSpy = vi.fn();
       setHeaderSpy = vi.fn();
       statusSpy = vi.fn().mockReturnThis();
-      
+
       req = {
         method: "GET",
         path: "/api/test",
         headers: {},
       };
-      
+
       res = {
         json: jsonSpy,
         send: vi.fn(),
@@ -130,14 +130,14 @@ describe("ETag Middleware", () => {
         end: endSpy,
         statusCode: 200,
       };
-      
+
       next = vi.fn();
     });
 
     it("calls next() for GET requests", () => {
       const middleware = withETag();
       middleware(req as Request, res as Response, next);
-      
+
       expect(next).toHaveBeenCalled();
     });
 
@@ -145,7 +145,7 @@ describe("ETag Middleware", () => {
       req.method = "POST";
       const middleware = withETag();
       middleware(req as Request, res as Response, next);
-      
+
       expect(next).toHaveBeenCalled();
       // Original json method should be unchanged
       expect(res.json).toBe(jsonSpy);
@@ -154,26 +154,23 @@ describe("ETag Middleware", () => {
     it("generates ETag and sets header on response", () => {
       const middleware = withETag();
       middleware(req as Request, res as Response, next);
-      
+
       const data = { test: "data" };
       (res as any).json(data);
-      
-      expect(setHeaderSpy).toHaveBeenCalledWith(
-        "ETag",
-        expect.stringMatching(/^"[a-f0-9]{32}"$/)
-      );
+
+      expect(setHeaderSpy).toHaveBeenCalledWith("ETag", expect.stringMatching(/^"[a-f0-9]{32}"$/));
     });
 
     it("returns 304 when ETag matches", () => {
       const data = { test: "data" };
       const etag = generateETag(data);
       req.headers!["if-none-match"] = etag;
-      
+
       const middleware = withETag();
       middleware(req as Request, res as Response, next);
-      
+
       (res as any).json(data);
-      
+
       expect(statusSpy).toHaveBeenCalledWith(304);
       expect(endSpy).toHaveBeenCalled();
       expect(jsonSpy).not.toHaveBeenCalled();
@@ -181,13 +178,13 @@ describe("ETag Middleware", () => {
 
     it("returns 200 with data when ETag doesn't match", () => {
       req.headers!["if-none-match"] = '"different-etag"';
-      
+
       const middleware = withETag();
       middleware(req as Request, res as Response, next);
-      
+
       const data = { test: "data" };
       (res as any).json(data);
-      
+
       expect(jsonSpy).toHaveBeenCalledWith(data);
       expect(statusSpy).not.toHaveBeenCalledWith(304);
     });
@@ -195,23 +192,20 @@ describe("ETag Middleware", () => {
     it("sets Cache-Control header when maxAge provided", () => {
       const middleware = withETag({ maxAge: 3600 });
       middleware(req as Request, res as Response, next);
-      
+
       const data = { test: "data" };
       (res as any).json(data);
-      
-      expect(setHeaderSpy).toHaveBeenCalledWith(
-        "Cache-Control",
-        "public, max-age=3600"
-      );
+
+      expect(setHeaderSpy).toHaveBeenCalledWith("Cache-Control", "public, max-age=3600");
     });
 
     it("supports weak ETags", () => {
       const middleware = withETag({ weak: true });
       middleware(req as Request, res as Response, next);
-      
+
       const data = { test: "data" };
       (res as any).json(data);
-      
+
       expect(setHeaderSpy).toHaveBeenCalledWith(
         "ETag",
         expect.stringMatching(/^W\/"[a-f0-9]{32}"$/)
@@ -222,7 +216,7 @@ describe("ETag Middleware", () => {
   describe("createETagFromMetadata()", () => {
     it("creates ETag from version", () => {
       const etag = createETagFromMetadata({ version: "1.0.0" });
-      
+
       expect(etag).toMatch(/^"[a-f0-9]{32}"$/);
     });
 
@@ -230,13 +224,13 @@ describe("ETag Middleware", () => {
       const etag = createETagFromMetadata({
         updatedAt: new Date("2024-01-01"),
       });
-      
+
       expect(etag).toMatch(/^"[a-f0-9]{32}"$/);
     });
 
     it("creates ETag from count", () => {
       const etag = createETagFromMetadata({ count: 42 });
-      
+
       expect(etag).toMatch(/^"[a-f0-9]{32}"$/);
     });
 
@@ -246,7 +240,7 @@ describe("ETag Middleware", () => {
         updatedAt: new Date("2024-01-01"),
         count: 100,
       });
-      
+
       expect(etag).toMatch(/^"[a-f0-9]{32}"$/);
     });
 
@@ -255,17 +249,17 @@ describe("ETag Middleware", () => {
         version: "1.0.0",
         updatedAt: new Date("2024-01-01"),
       };
-      
+
       const etag1 = createETagFromMetadata(metadata);
       const etag2 = createETagFromMetadata(metadata);
-      
+
       expect(etag1).toBe(etag2);
     });
 
     it("generates different ETags for different versions", () => {
       const etag1 = createETagFromMetadata({ version: "1.0.0" });
       const etag2 = createETagFromMetadata({ version: "1.0.1" });
-      
+
       expect(etag1).not.toBe(etag2);
     });
   });
@@ -295,11 +289,11 @@ describe("ETag Middleware", () => {
           data: Array.from({ length: 100 }, (_, j) => j),
         })),
       };
-      
+
       const start = Date.now();
       const etag = generateETag(largeData);
       const duration = Date.now() - start;
-      
+
       expect(etag).toMatch(/^"[a-f0-9]{32}"$/);
       expect(duration).toBeLessThan(100); // Should complete in < 100ms
     });

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router } from "express";
 import { z } from "zod";
-import { asyncHandler } from "./_shared";
+import { asyncHandler, requirePermission } from "./_shared";
 import { requireAuth } from "../middleware/supabase-auth";
 import { storage } from "../storage";
 import { db } from "../db";
@@ -209,21 +209,15 @@ function getUserId(req: any): number | undefined {
   return undefined;
 }
 
-function ensureAdmin(req: any, res: any): boolean {
-  const role = req?.user?.role || req?.principal?.role;
-  if (role !== "admin") {
-    res.status(403).json({ message: "Admin only" });
-    return false;
-  }
-  return true;
-}
+// REMOVED: ensureAdmin guard function
+// Now using requirePermission middleware instead (see AUTHORIZATION_PATTERN.md)
 
 // Create article
 router.post(
   "/api/kb/articles",
   requireAuth,
+  requirePermission("kb.create", "kb_article"),
   asyncHandler(async (req, res) => {
-    if (!ensureAdmin(req, res)) return;
     // Accept body and validate minimal fields; authorId enforced from session
     const schema = insertKbArticleSchema.pick({
       title: true,
@@ -256,8 +250,8 @@ router.post(
 router.patch(
   "/api/kb/articles/:id",
   requireAuth,
+  requirePermission("kb.update", "kb_article"),
   asyncHandler(async (req, res) => {
-    if (!ensureAdmin(req, res)) return;
     const id = parseInt(String(req.params.id), 10);
     if (!Number.isFinite(id)) {
       return res.status(400).json({ message: "Invalid id" });
@@ -276,11 +270,11 @@ router.patch(
 );
 
 // Archive article
-router.patch(
+router.post(
   "/api/kb/articles/:id/archive",
   requireAuth,
+  requirePermission("kb.archive", "kb_article"),
   asyncHandler(async (req, res) => {
-    if (!ensureAdmin(req, res)) return;
     const id = parseInt(String(req.params.id), 10);
     if (!Number.isFinite(id)) {
       return res.status(400).json({ message: "Invalid id" });
@@ -294,8 +288,8 @@ router.patch(
 router.delete(
   "/api/kb/articles/:id",
   requireAuth,
+  requirePermission("kb.delete", "kb_article"),
   asyncHandler(async (req, res) => {
-    if (!ensureAdmin(req, res)) return;
     const id = parseInt(String(req.params.id), 10);
     if (!Number.isFinite(id)) {
       return res.status(400).json({ message: "Invalid id" });
@@ -305,12 +299,12 @@ router.delete(
   })
 );
 
-// AI metadata generation (lightweight heuristic; no external calls)
+// Generate AI metadata
 router.post(
   "/api/kb/ai/generate-metadata",
   requireAuth,
+  requirePermission("kb.ai_generate", "kb_article"),
   asyncHandler(async (req, res) => {
-    if (!ensureAdmin(req, res)) return;
     const content = String(req.body?.content || "");
     const title = String(req.body?.title || "");
     if (!content || !title) {
@@ -372,12 +366,12 @@ router.post(
   })
 );
 
-// Admin-only demo content seeder (articles)
+// Admin: Seed demo articles
 router.post(
   "/api/admin/kb/seed-demo-articles",
   requireAuth,
+  requirePermission("kb.seed_demo", "kb_article"),
   asyncHandler(async (req, res) => {
-    if (!ensureAdmin(req, res)) return;
     const userId = getUserId(req) || 1;
     const cats = await storage.getKbCategories();
 

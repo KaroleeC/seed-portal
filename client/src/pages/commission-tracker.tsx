@@ -1511,7 +1511,7 @@ export default function CommissionTracker() {
                   </div>
 
                   <div>
-                    <Label>Reason for Adjustment:</Label>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Reason for Adjustment:</p>
                     <div className="p-3 bg-gray-50 rounded-md mt-1">
                       <p className="text-sm text-gray-700">{selectedAdjustmentRequest.reason}</p>
                     </div>
@@ -1568,17 +1568,17 @@ export default function CommissionTracker() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Company</Label>
+                        <p className="text-sm font-medium text-gray-600 mb-1">Company</p>
                         <p className="text-lg font-semibold">{selectedDeal.companyName}</p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Deal Value</Label>
+                        <p className="text-sm font-medium text-gray-600 mb-1">Deal Value</p>
                         <p className="text-lg font-semibold">
                           ${selectedDeal.amount.toLocaleString()}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Service Type</Label>
+                        <p className="text-sm font-medium text-gray-600 mb-1">Service Type</p>
                         <div className="flex items-center gap-2">
                           {getServiceTypeIcon(selectedDeal.serviceType)}
                           <span className="capitalize">
@@ -1589,11 +1589,11 @@ export default function CommissionTracker() {
                     </div>
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Sales Rep</Label>
+                        <p className="text-sm font-medium text-gray-600 mb-1">Sales Rep</p>
                         <p className="text-lg font-semibold">{selectedDeal.salesRep}</p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Status</Label>
+                        <p className="text-sm font-medium text-gray-600 mb-1">Status</p>
                         <Badge
                           variant={selectedDeal.status === "closed_won" ? "default" : "secondary"}
                         >
@@ -1601,7 +1601,7 @@ export default function CommissionTracker() {
                         </Badge>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-gray-600">Close Date</Label>
+                        <p className="text-sm font-medium text-gray-600 mb-1">Close Date</p>
                         <p>
                           {selectedDeal.closedDate
                             ? new Date(selectedDeal.closedDate).toLocaleDateString()
@@ -1612,9 +1612,7 @@ export default function CommissionTracker() {
                   </div>
 
                   <div className="border-t pt-4">
-                    <Label className="text-sm font-medium text-gray-600">
-                      Commission Breakdown
-                    </Label>
+                    <p className="text-sm font-medium text-gray-600 mb-2">Commission Breakdown</p>
                     <div className="grid grid-cols-2 gap-4 mt-2">
                       <div className="p-3 bg-green-50 rounded-lg">
                         <p className="text-sm text-gray-600">Setup Fee Commission (20%)</p>
@@ -1649,9 +1647,7 @@ export default function CommissionTracker() {
 
                   {selectedDeal.status === "open" && selectedDeal.probability && (
                     <div className="border-t pt-4">
-                      <Label className="text-sm font-medium text-gray-600">
-                        Pipeline Information
-                      </Label>
+                      <p className="text-sm font-medium text-gray-600 mb-2">Pipeline Information</p>
                       <div className="grid grid-cols-2 gap-4 mt-2">
                         <div>
                           <p className="text-sm text-gray-600">Pipeline Stage</p>

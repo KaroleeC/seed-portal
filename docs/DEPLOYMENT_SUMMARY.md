@@ -135,13 +135,13 @@ Run SQL queries to track:
 
 ```sql
 -- Send success rate
-SELECT 
+SELECT
   COUNT(*) FILTER (WHERE status = 'sent') * 100.0 / COUNT(*) as success_rate
 FROM email_send_status
 WHERE created_at > NOW() - INTERVAL '24 hours';
 
 -- Retry effectiveness
-SELECT 
+SELECT
   retry_count,
   COUNT(*) FILTER (WHERE status = 'sent') as successful,
   COUNT(*) FILTER (WHERE status IN ('failed', 'bounced')) as failed

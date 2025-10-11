@@ -411,7 +411,7 @@ export default function AdminCalculatorSettings() {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div className="flex flex-col gap-2">
-                  <Label>Pipeline</Label>
+                  <p className="text-sm font-medium">Pipeline</p>
                   <Select value={hsPipelineId} onValueChange={setHsPipelineId}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a pipeline" />
@@ -426,7 +426,7 @@ export default function AdminCalculatorSettings() {
                   </Select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label>Stage</Label>
+                  <p className="text-sm font-medium">Stage</p>
                   <Select value={hsStageId} onValueChange={setHsStageId} disabled={!hsPipelineId}>
                     <SelectTrigger className="w-full">
                       <SelectValue
@@ -480,7 +480,7 @@ export default function AdminCalculatorSettings() {
               </CardHeader>
               <CardContent className="flex flex-col md:flex-row md:items-center gap-4">
                 <div className="flex items-center gap-3 w-full md:w-1/2">
-                  <Label className="min-w-[70px]">Search</Label>
+                  <p className="text-sm font-medium min-w-[70px]">Search</p>
                   <Input
                     value={serviceFilter}
                     onChange={(e) => setServiceFilter(e.target.value)}
@@ -488,7 +488,7 @@ export default function AdminCalculatorSettings() {
                   />
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-1/2">
-                  <Label className="min-w-[70px]">Service</Label>
+                  <p className="text-sm font-medium min-w-[70px]">Service</p>
                   <Select value={activeService} onValueChange={setActiveService}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a service">

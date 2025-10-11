@@ -27,7 +27,7 @@ export class CacheService {
    */
   async keys(pattern: string): Promise<string[]> {
     try {
-      const regexPattern = pattern.replace(/\*/g, '.*');
+      const regexPattern = pattern.replace(/\*/g, ".*");
       const regex = new RegExp(`^${regexPattern}$`);
       const matchingKeys: string[] = [];
       for (const key of this.memoryCache.keys()) {
@@ -90,7 +90,7 @@ export class CacheService {
   async set<T>(key: string, value: T, ttl?: number): Promise<void> {
     try {
       const expiryTime = ttl || this.defaultTTL;
-      const expiresAt = Date.now() + (expiryTime * 1000);
+      const expiresAt = Date.now() + expiryTime * 1000;
       this.memoryCache.set(key, { value, expiresAt });
       cacheLogger.debug({ key, ttl: expiryTime }, "Cache set");
     } catch (error) {
@@ -103,7 +103,7 @@ export class CacheService {
    */
   async del(pattern: string): Promise<void> {
     try {
-      const regexPattern = `cache:${pattern}*`.replace(/\*/g, '.*');
+      const regexPattern = `cache:${pattern}*`.replace(/\*/g, ".*");
       const regex = new RegExp(`^${regexPattern}$`);
       let deletedCount = 0;
       for (const key of this.memoryCache.keys()) {

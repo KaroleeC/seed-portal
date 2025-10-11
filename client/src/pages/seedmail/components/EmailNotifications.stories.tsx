@@ -1,10 +1,10 @@
 /**
  * SeedMail Email Notifications Stories
- * 
+ *
  * Demonstrates toast notifications for email events
  */
 
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
 import { within, expect, waitFor } from "storybook/test";
 import { useToast } from "@/hooks/use-toast";
@@ -283,9 +283,7 @@ export const DraftSaved: Story = {
         <div className="min-h-screen bg-background p-8">
           <div className="max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-4">Draft Saved Notification</h1>
-            <p className="text-muted-foreground">
-              Quick confirmation toast (3 second duration)
-            </p>
+            <p className="text-muted-foreground">Quick confirmation toast (3 second duration)</p>
           </div>
           <Toaster />
         </div>
@@ -387,9 +385,7 @@ export const EmailDeleted: Story = {
         <div className="min-h-screen bg-background p-8">
           <div className="max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-4">Email Deleted Notification</h1>
-            <p className="text-muted-foreground">
-              Confirmation when email is moved to trash
-            </p>
+            <p className="text-muted-foreground">Confirmation when email is moved to trash</p>
           </div>
           <Toaster />
         </div>

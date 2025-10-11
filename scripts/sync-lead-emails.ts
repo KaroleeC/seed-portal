@@ -1,9 +1,9 @@
 /**
  * Sync Lead Emails Script
- * 
+ *
  * One-time script to populate email columns on crm_leads table
  * Extracts emails from payload and contact records
- * 
+ *
  * Run with: NODE_ENV=development tsx scripts/sync-lead-emails.ts
  */
 
@@ -21,7 +21,6 @@ async function main() {
     console.log("  1. Test auto-linking with: npm run dev");
     console.log("  2. Send/receive emails to test");
     console.log("  3. Check Leads folder in SEEDMAIL");
-
   } catch (error) {
     console.error("❌ Sync failed:", error);
     process.exit(1);

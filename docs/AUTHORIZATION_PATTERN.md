@@ -10,11 +10,11 @@
 
 ```typescript
 // ✅ CORRECT: Use middleware
-import { requireAuth, requirePermission } from './_shared';
+import { requireAuth, requirePermission } from "./_shared";
 
 router.post(
   "/api/resource",
-  requireAuth,                                    // Always required
+  requireAuth, // Always required
   requirePermission("resource.action", "resource"), // For protected routes
   asyncHandler(async (req, res) => {
     // Business logic only - no auth checks here
@@ -25,7 +25,8 @@ router.post(
 ```typescript
 // ❌ WRONG: Inline auth check (ESLint will error)
 router.post("/api/resource", requireAuth, async (req, res) => {
-  if (req.user?.role !== 'admin') {  // ⚠️ ESLint error: Use requirePermission instead
+  if (req.user?.role !== "admin") {
+    // ⚠️ ESLint error: Use requirePermission instead
     return res.status(403).json({ message: "Forbidden" });
   }
 });
@@ -45,12 +46,7 @@ router.post("/api/resource", requireAuth, async (req, res) => {
 ### Protected Routes (Default)
 
 ```typescript
-router.post(
-  "/api/quotes",
-  requireAuth,
-  requirePermission("quotes.create", "quote"),
-  handler
-);
+router.post("/api/quotes", requireAuth, requirePermission("quotes.create", "quote"), handler);
 ```
 
 ### Public Routes (Rare)
@@ -80,15 +76,15 @@ Format: `{resource}.{action}`
 
 ```typescript
 // Standard CRUD
-"quotes.view"       // Read/list
-"quotes.create"     // Create new
-"quotes.update"     // Modify
-"quotes.delete"     // Remove
+"quotes.view"; // Read/list
+"quotes.create"; // Create new
+"quotes.update"; // Modify
+"quotes.delete"; // Remove
 
 // Custom actions
-"quotes.approve"        // Workflows
-"commissions.sync"      // Integrations
-"deals.manage_team"     // Team ops
+"quotes.approve"; // Workflows
+"commissions.sync"; // Integrations
+"deals.manage_team"; // Team ops
 ```
 
 ## Current State
@@ -165,12 +161,13 @@ These trigger errors:
 
 ```typescript
 // ❌ All caught by ESLint
-req.user?.role === 'admin'
-req.user.role !== 'employee'
-req.user?.permissionLevel >= 5
+req.user?.role === "admin";
+req.user.role !== "employee";
+req.user?.permissionLevel >= 5;
 ```
 
 **Error Message:**
+
 > Avoid inline auth checks like req.user.role. Use requirePermission() middleware instead. See docs/AUTHORIZATION_PATTERN.md
 
 ## Examples
@@ -196,6 +193,48 @@ if (req.user && req.user.role === "admin") { ... }
 // ❌ Role-based logic
 const type = req.user.role === "admin" ? "direct" : "request";
 ```
+
+## Migrating Legacy Guard Functions
+
+### Before (❌ Anti-pattern)
+
+```typescript
+function ensureAdmin(req: any, res: any): boolean {
+  const role = req?.user?.role; // ⚠️ ESLint error
+  if (role !== "admin") {
+    res.status(403).json({ message: "Admin only" });
+    return false;
+  }
+  return true;
+}
+
+router.post("/api/resource", requireAuth, async (req, res) => {
+  if (!ensureAdmin(req, res)) return; // ❌ Guard function anti-pattern
+  // logic
+});
+```
+
+### After (✅ Correct Pattern)
+
+```typescript
+// No guard function needed!
+router.post(
+  "/api/resource",
+  requireAuth,
+  requirePermission("resource.create", "resource"), // ✅ Middleware handles it
+  async (req, res) => {
+    // logic - no auth checks needed
+  }
+);
+```
+
+### Why Guard Functions Are An Anti-Pattern
+
+1. **Not composable** - Can't combine multiple permission checks easily
+2. **Mixed concerns** - Business logic + auth logic in same handler
+3. **Hard to test** - Can't test auth independently from handler
+4. **Not auditable** - Permissions scattered throughout codebase
+5. **ESLint violations** - Use of `req.user.role` triggers errors
 
 ## See Also
 

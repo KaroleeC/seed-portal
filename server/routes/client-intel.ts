@@ -98,7 +98,8 @@ router.post("/api/client-intel/generate-insights", requireAuth, async (req: any,
     if (existingJobId) {
       const mod: any = await import("../queue.js");
       const getAIInsightsQueue = mod.getAIInsightsQueue as any;
-      const aiInsightsQueue = typeof getAIInsightsQueue === "function" ? getAIInsightsQueue() : null;
+      const aiInsightsQueue =
+        typeof getAIInsightsQueue === "function" ? getAIInsightsQueue() : null;
       let job: any = null;
       if (aiInsightsQueue) {
         job = await aiInsightsQueue.getJob(existingJobId);
@@ -152,7 +153,12 @@ router.post("/api/client-intel/generate-insights", requireAuth, async (req: any,
 
     console.log(`[Queue] 🔄 Queued AI insights job ${job.id} for client ${clientId}`);
 
-    res.json({ status: "queued", jobId: job.id, progress: 0, message: "AI insights queued for processing. Check back shortly." });
+    res.json({
+      status: "queued",
+      jobId: job.id,
+      progress: 0,
+      message: "AI insights queued for processing. Check back shortly.",
+    });
   } catch (error) {
     console.error("Insight generation error:", error);
     res.status(500).json({ message: "Failed to generate insights" });

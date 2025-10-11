@@ -17,17 +17,17 @@
 
 ## 📊 Complete Extraction Inventory
 
-| Module | Lines | Tests | Pass Rate | Purpose |
-|--------|-------|-------|-----------|---------|
-| **quote-validator** | 118 | 19 | ✅ 100% | Field validation rules |
-| **useQuoteSync** | 344 | 13 | ✅ 100% | Provider-agnostic sync |
-| **useQuotePersistence** | 82 | 11 | ✅ 100% | Save/update/errors |
-| **quote-loader** | 145 | 23 | ✅ 100% | Quote → form mapping |
-| **approval-service** | 210 | 44 | ✅ 100% | Approval validation |
-| **useContactVerification** | 190 | 17 | 🚧 29% | Debounced verification |
-| **useFormActions** | 385 | 19 | ✅ 100% | Form actions (reset, load, duplicate) |
-| **schema** | N/A | 3 | ✅ 100% | Form schema validation |
-| **TOTAL** | **1,474** | **149** | **92%** | **Full calculator extraction** |
+| Module                     | Lines     | Tests   | Pass Rate | Purpose                               |
+| -------------------------- | --------- | ------- | --------- | ------------------------------------- |
+| **quote-validator**        | 118       | 19      | ✅ 100%   | Field validation rules                |
+| **useQuoteSync**           | 344       | 13      | ✅ 100%   | Provider-agnostic sync                |
+| **useQuotePersistence**    | 82        | 11      | ✅ 100%   | Save/update/errors                    |
+| **quote-loader**           | 145       | 23      | ✅ 100%   | Quote → form mapping                  |
+| **approval-service**       | 210       | 44      | ✅ 100%   | Approval validation                   |
+| **useContactVerification** | 190       | 17      | 🚧 29%    | Debounced verification                |
+| **useFormActions**         | 385       | 19      | ✅ 100%   | Form actions (reset, load, duplicate) |
+| **schema**                 | N/A       | 3       | ✅ 100%   | Form schema validation                |
+| **TOTAL**                  | **1,474** | **149** | **92%**   | **Full calculator extraction**        |
 
 **Note:** `useContactVerification` has 12 failing tests due to async/timer complexity (acceptable for v1)
 
@@ -36,6 +36,7 @@
 ## 🚀 What We Extracted (Session by Session)
 
 ### **Session 1: Core Logic** (Oct 10, Morning)
+
 - ✅ Quote validation (19 tests)
 - ✅ Quote sync with providers (13 tests)
 - ✅ Persistence logic (11 tests)
@@ -43,11 +44,13 @@
 - **Result:** 66 tests passing
 
 ### **Session 2: Approval & Verification** (Oct 10, Afternoon)
+
 - ✅ Approval service (44 tests)
 - 🚧 Contact verification (17 tests, 5 passing)
 - **Result:** +49 tests (44 passing)
 
 ### **Session 3: Form Actions** (Oct 10, Evening)
+
 - ✅ Form actions hook (19 tests)
 - ✅ Form reset, clear, load, duplicate
 - **Result:** +34 tests (19 passing)
@@ -94,6 +97,7 @@ client/src/features/quote-calculator/
 ### **1. Quote Loading: 81% Reduction**
 
 **Before (80+ lines in Calculator):**
+
 ```typescript
 const loadQuoteIntoForm = (quote: Quote) => {
   const formData = {
@@ -104,14 +108,14 @@ const loadQuoteIntoForm = (quote: Quote) => {
     // ... complex conversion logic
   };
   form.reset(formData);
-  
+
   // Set numeric fields twice (React Hook Form quirk)
   setTimeout(() => {
     if (quote.entityType) form.setValue("entityType", quote.entityType);
     if (quote.numEntities) form.setValue("numEntities", Number(quote.numEntities));
     // ... 5+ more fields
   }, 100);
-  
+
   // Determine form view
   setTimeout(() => {
     // 30 lines of view selection logic
@@ -120,6 +124,7 @@ const loadQuoteIntoForm = (quote: Quote) => {
 ```
 
 **After (15 lines with services):**
+
 ```typescript
 import { useFormActions } from "@/hooks/useFormActions";
 
@@ -137,6 +142,7 @@ loadQuote(quote); // ← That's it!
 ### **2. Approval Validation: 92% Reduction**
 
 **Before (60 lines):**
+
 ```typescript
 const validateApprovalCode = async () => {
   if (!approvalCode || approvalCode.length !== 4) {
@@ -148,6 +154,7 @@ const validateApprovalCode = async () => {
 ```
 
 **After (5 lines):**
+
 ```typescript
 import { validateApprovalCode } from "@/services/approval-service";
 
@@ -158,17 +165,24 @@ if (!result.valid) toast({ title: "Invalid", description: result.error });
 ### **3. Contact Verification: 83% Reduction**
 
 **Before (60+ lines):**
+
 ```typescript
 const [verificationTimeoutId, setVerificationTimeoutId] = useState<NodeJS.Timeout | null>(null);
 const [status, setStatus] = useState<"idle" | "verifying" | "verified" | "not-found">("idle");
 
-const verifyEmail = useCallback((email) => {
-  if (verificationTimeoutId) clearTimeout(verificationTimeoutId);
-  // ... 50+ more lines of debouncing, timeouts, cleanup
-}, [/* dependencies */]);
+const verifyEmail = useCallback(
+  (email) => {
+    if (verificationTimeoutId) clearTimeout(verificationTimeoutId);
+    // ... 50+ more lines of debouncing, timeouts, cleanup
+  },
+  [
+    /* dependencies */
+  ]
+);
 ```
 
 **After (10 lines):**
+
 ```typescript
 import { useContactVerification } from "@/hooks/useContactVerification";
 
@@ -198,23 +212,27 @@ const { status, contact, verifyEmail, reset } = useContactVerification({
 ### **Comprehensive Coverage**
 
 **Quote Validator (19 tests):**
+
 - ✅ All field validations
 - ✅ Error messages
 - ✅ Edge cases
 
 **Quote Sync (13 tests):**
+
 - ✅ HubSpot provider
 - ✅ Mock provider
 - ✅ Provider selection
 - ✅ Error handling
 
 **Persistence (11 tests):**
+
 - ✅ Create quote
 - ✅ Update quote
 - ✅ Unsaved changes tracking
 - ✅ Error handling
 
 **Quote Loader (23 tests):**
+
 - ✅ Form view determination
 - ✅ Field mapping
 - ✅ Numeric conversions
@@ -222,6 +240,7 @@ const { status, contact, verifyEmail, reset } = useContactVerification({
 - ✅ Service-specific fields
 
 **Approval Service (44 tests):**
+
 - ✅ Format validation (12 tests)
 - ✅ Email validation (11 tests)
 - ✅ Server integration (8 tests)
@@ -229,6 +248,7 @@ const { status, contact, verifyEmail, reset } = useContactVerification({
 - ✅ Edge cases (7 tests)
 
 **Form Actions (19 tests):**
+
 - ✅ Reset/clear operations
 - ✅ Quote loading with numeric fields
 - ✅ Quote duplication
@@ -240,18 +260,21 @@ const { status, contact, verifyEmail, reset } = useContactVerification({
 ## 🐛 Bugs Found & Fixed
 
 ### **1. Zero Value Handling** (Critical!)
+
 **Bug:** `quote.numEntities ? Number(quote.numEntities) : undefined`  
 **Issue:** Treats 0 as falsy, returns undefined  
 **Fix:** Explicit null/undefined checks  
 **Impact:** Would have caused data loss!
 
 ### **2. React Hook Form Numeric Fields**
+
 **Bug:** Numeric fields not registering as numbers  
 **Issue:** React Hook Form type coercion quirk  
 **Fix:** Two-step field setting (reset + setTimeout)  
 **Impact:** Form validation failures
 
 ### **3. Form Reset Behavior**
+
 **Bug:** Misunderstanding of `form.reset()` behavior  
 **Issue:** Resets to last reset() values, not defaults  
 **Fix:** Documented behavior in tests  
@@ -263,13 +286,13 @@ const { status, contact, verifyEmail, reset } = useContactVerification({
 
 ### **Code Quality**
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Calculator Size** | 1,029 lines | ~850 lines | 17% reduction |
-| **Inline Logic** | 250+ lines | ~50 lines | 80% reduction |
-| **Test Coverage** | 3 tests | 149 tests | **4,967% increase** |
-| **Reusable Services** | 0 | 7 | ∞ |
-| **DRY Violations** | Many | Few | 85% reduction |
+| Metric                | Before      | After      | Improvement         |
+| --------------------- | ----------- | ---------- | ------------------- |
+| **Calculator Size**   | 1,029 lines | ~850 lines | 17% reduction       |
+| **Inline Logic**      | 250+ lines  | ~50 lines  | 80% reduction       |
+| **Test Coverage**     | 3 tests     | 149 tests  | **4,967% increase** |
+| **Reusable Services** | 0           | 7          | ∞                   |
+| **DRY Violations**    | Many        | Few        | 85% reduction       |
 
 ### **Developer Experience**
 
@@ -305,13 +328,15 @@ const { status, contact, verifyEmail, reset } = useContactVerification({
 All services are **production-ready** and can be integrated into Calculator:
 
 ### **High Priority (Immediate)**
+
 1. ✅ `useQuotePersistence` - Already being used
-2. ✅ `useQuoteSync` - Already being used  
+2. ✅ `useQuoteSync` - Already being used
 3. ✅ `quote-loader` - Ready to replace inline loading logic
 4. ✅ `approval-service` - Ready to replace inline validation
 5. ✅ `useFormActions` - Ready to replace inline actions
 
 ### **Medium Priority (Soon)**
+
 6. 🚧 `useContactVerification` - Works but needs async test fixes
 7. ✅ `quote-validator` - Ready for form validation
 
@@ -320,22 +345,26 @@ All services are **production-ready** and can be integrated into Calculator:
 ## 🚀 Next Steps
 
 ### **Option A: Integration** ✅ **Recommended**
+
 - Update Calculator to use new services
 - Remove old inline logic
 - Verify UI unchanged (DRY principle #1)
 - Ship to production
 
 ### **Option B: Continue Extraction**
+
 - Field visibility rules (~50 lines)
 - Pricing display formatting (~40 lines)
 - More UI component extraction
 
 ### **Option C: Fix Async Tests**
+
 - Adjust `useContactVerification` tests
 - Use `vi.runAllTimers()` properly
 - Or switch to real timers
 
 ### **Option D: Move to Phase 2C**
+
 - Routes extraction to hit 25-30% goal
 - Extract commissions routes (~800 lines)
 
@@ -359,7 +388,7 @@ All services are **production-ready** and can be integrated into Calculator:
 **DRY Improvement:** 80-92% reduction in inline logic  
 **Bugs Found:** 3 critical bugs prevented  
 **Services Created:** 7 reusable modules  
-**UI Changes:** 0 (mechanical rewiring only)  
+**UI Changes:** 0 (mechanical rewiring only)
 
 ---
 
@@ -371,7 +400,7 @@ All services are **production-ready** and can be integrated into Calculator:
 ✅ **DRY principles** - 80-92% reduction  
 ✅ **Reusable services** - 7 modules  
 ✅ **Type-safe** - Full TypeScript  
-✅ **Production-ready** - Can integrate today  
+✅ **Production-ready** - Can integrate today
 
 ---
 

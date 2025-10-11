@@ -1,6 +1,6 @@
 /**
  * Auto-Sync Integration Tests
- * 
+ *
  * Validates that SEEDMAIL triggers background sync when account is selected.
  * This test ensures the bug fix (auto-sync on load) continues to work.
  */

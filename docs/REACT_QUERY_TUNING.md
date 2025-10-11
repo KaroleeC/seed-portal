@@ -31,23 +31,23 @@ Implements intelligent caching and refetch strategies based on resource change f
 // client/src/lib/queryConfig.ts
 
 export enum ResourceType {
-  STATIC = "static",    // 15 min staleTime
-  SLOW = "slow",        // 5 min staleTime
-  MEDIUM = "medium",    // 2 min staleTime
-  FAST = "fast",        // 30 sec staleTime
+  STATIC = "static", // 15 min staleTime
+  SLOW = "slow", // 5 min staleTime
+  MEDIUM = "medium", // 2 min staleTime
+  FAST = "fast", // 30 sec staleTime
   INFINITE = "infinite", // Never stale
 }
 ```
 
 ### Timing by Resource Type
 
-| Type | Examples | staleTime | gcTime | Rationale |
-|------|----------|-----------|--------|-----------|
-| **STATIC** | Pricing config, roles, permissions | 15 min | 1 hour | Rarely changes |
-| **SLOW** | User profile, deals, quotes | 5 min | 30 min | Changes infrequently |
-| **MEDIUM** | Commissions, pipeline data | 2 min | 10 min | Updates moderately |
-| **FAST** | Stripe transactions, notifications | 30 sec | 5 min | Real-time data |
-| **INFINITE** | Search results, paginated lists | ∞ | 1 hour | Manual invalidation |
+| Type         | Examples                           | staleTime | gcTime | Rationale            |
+| ------------ | ---------------------------------- | --------- | ------ | -------------------- |
+| **STATIC**   | Pricing config, roles, permissions | 15 min    | 1 hour | Rarely changes       |
+| **SLOW**     | User profile, deals, quotes        | 5 min     | 30 min | Changes infrequently |
+| **MEDIUM**   | Commissions, pipeline data         | 2 min     | 10 min | Updates moderately   |
+| **FAST**     | Stripe transactions, notifications | 30 sec    | 5 min  | Real-time data       |
+| **INFINITE** | Search results, paginated lists    | ∞         | 1 hour | Manual invalidation  |
 
 ### Automatic Pattern Matching
 
@@ -75,19 +75,19 @@ export const RESOURCE_TYPE_PATTERNS = {
   "rbac.roles": ResourceType.STATIC,
   "rbac.permissions": ResourceType.STATIC,
   "core.user.me": ResourceType.STATIC,
-  
+
   // Slow-changing resources
   "seedpay.deals": ResourceType.SLOW,
-  "quotes": ResourceType.SLOW,
+  quotes: ResourceType.SLOW,
   "seedqc.content": ResourceType.SLOW,
-  
+
   // Medium-changing resources
   "seedpay.commissions": ResourceType.MEDIUM,
   "seedpay.bonuses": ResourceType.MEDIUM,
-  
+
   // Fast-changing resources
   "stripe.transactions": ResourceType.FAST,
-  
+
   // Infinite (manual invalidation)
   "crm.contacts.search": ResourceType.INFINITE,
 };
@@ -102,17 +102,17 @@ import { usePrefetchQuery } from "@/hooks/usePrefetchQuery";
 
 function Navigation() {
   const { prefetchCalculator, prefetchCommissionTracker } = usePrefetchQuery();
-  
+
   return (
     <>
-      <Link 
+      <Link
         to="/calculator"
         onMouseEnter={() => prefetchCalculator()} // ← Load data on hover
       >
         Calculator
       </Link>
-      
-      <Link 
+
+      <Link
         to="/commissions"
         onMouseEnter={() => prefetchCommissionTracker()} // ← Load data on hover
       >
@@ -240,29 +240,29 @@ npm test -- client/src/lib/__tests__/queryConfig.test.ts
 
 ### Refetch Reduction
 
-| Scenario | Before | After | Improvement |
-|----------|--------|-------|-------------|
-| Tab switch | 12 refetches | 0 refetches | **100%** |
-| Navigation to calculator (2nd time) | 3 refetches | 0 refetches | **100%** |
-| Navigation to commissions (2nd time) | 5 refetches | 0 refetches | **100%** |
-| 1-hour session (typical user) | ~500 requests | ~100 requests | **80%** |
+| Scenario                             | Before        | After         | Improvement |
+| ------------------------------------ | ------------- | ------------- | ----------- |
+| Tab switch                           | 12 refetches  | 0 refetches   | **100%**    |
+| Navigation to calculator (2nd time)  | 3 refetches   | 0 refetches   | **100%**    |
+| Navigation to commissions (2nd time) | 5 refetches   | 0 refetches   | **100%**    |
+| 1-hour session (typical user)        | ~500 requests | ~100 requests | **80%**     |
 
 ### Load Time Improvement
 
-| Navigation | Without Prefetch | With Prefetch | Improvement |
-|------------|------------------|---------------|-------------|
-| Calculator (hover → click) | 800ms | 50ms | **94%** |
-| Commissions (hover → click) | 1200ms | 80ms | **93%** |
-| Deals list (hover → click) | 600ms | 40ms | **93%** |
+| Navigation                  | Without Prefetch | With Prefetch | Improvement |
+| --------------------------- | ---------------- | ------------- | ----------- |
+| Calculator (hover → click)  | 800ms            | 50ms          | **94%**     |
+| Commissions (hover → click) | 1200ms           | 80ms          | **93%**     |
+| Deals list (hover → click)  | 600ms            | 40ms          | **93%**     |
 
 ### Cache Hit Rates
 
-| Resource Type | Cache Hit Rate |
-|---------------|----------------|
-| Static (pricing, config) | 95% |
-| Slow (deals, quotes) | 85% |
-| Medium (commissions) | 70% |
-| Fast (transactions) | 45% |
+| Resource Type            | Cache Hit Rate |
+| ------------------------ | -------------- |
+| Static (pricing, config) | 95%            |
+| Slow (deals, quotes)     | 85%            |
+| Medium (commissions)     | 70%            |
+| Fast (transactions)      | 45%            |
 
 ## Usage Examples
 
@@ -274,7 +274,7 @@ npm test -- client/src/lib/__tests__/queryConfig.test.ts
 // client/src/lib/queryConfig.ts
 export const RESOURCE_TYPE_PATTERNS = {
   // ... existing patterns
-  "invoices": ResourceType.SLOW,
+  invoices: ResourceType.SLOW,
   "analytics.dashboard": ResourceType.MEDIUM,
 };
 ```
@@ -308,13 +308,13 @@ import { useQueryClient } from "@tanstack/react-query";
 
 function UpdateButton() {
   const queryClient = useQueryClient();
-  
+
   const handleUpdate = async () => {
     await updateData();
-    
+
     // Invalidate specific query
     queryClient.invalidateQueries({ queryKey: ["pricing", "config"] });
-    
+
     // Invalidate all pricing queries
     queryClient.invalidateQueries({ queryKey: ["pricing"] });
   };
@@ -330,7 +330,7 @@ function UpdateButton() {
 const queryCache = queryClient.getQueryCache();
 console.log("Active queries:", queryCache.getAll().length);
 
-queryCache.getAll().forEach(query => {
+queryCache.getAll().forEach((query) => {
   console.log({
     key: query.queryKey,
     state: query.state.status,

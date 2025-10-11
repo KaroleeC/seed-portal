@@ -4,13 +4,13 @@
 
 ### Color Variants
 
-| Variant | Color | Use Case | Theme-Aware |
-|---------|-------|----------|-------------|
-| **Default** (Primary) | 🔥 Seed Orange | Primary actions, CTAs | No - consistent |
-| **Secondary** | 🌊 Seed Teal | Secondary actions, alternatives | Yes - adapts |
-| **Destructive** | 🔴 Red | Delete, dangerous actions | No |
-| **Outline** | Border only | Tertiary actions | Yes |
-| **Ghost** | Transparent | Subtle actions | Yes |
+| Variant               | Color          | Use Case                        | Theme-Aware     |
+| --------------------- | -------------- | ------------------------------- | --------------- |
+| **Default** (Primary) | 🔥 Seed Orange | Primary actions, CTAs           | No - consistent |
+| **Secondary**         | 🌊 Seed Teal   | Secondary actions, alternatives | Yes - adapts    |
+| **Destructive**       | 🔴 Red         | Delete, dangerous actions       | No              |
+| **Outline**           | Border only    | Tertiary actions                | Yes             |
+| **Ghost**             | Transparent    | Subtle actions                  | Yes             |
 
 ---
 
@@ -147,7 +147,7 @@
 - **Primary (Orange)**: Deep fire gradient
 - **Secondary (Teal)**: Dark teal → Light teal
 
-### Dark Mode  
+### Dark Mode
 
 - **Primary (Orange)**: Same deep fire gradient
 - **Secondary (Teal)**: Light teal → Dark teal (reversed & softer)

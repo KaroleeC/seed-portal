@@ -107,13 +107,13 @@ client/src/features/quote-calculator/
 
 ## 📊 Metrics
 
-| Category | Before | After | Status |
-|----------|--------|-------|--------|
-| **Test Coverage** | 3 tests | **35 tests** | ✅ **+1067%** |
-| **Provider Coupling** | Tight (HubSpot) | Loose (interface) | ✅ **Decoupled** |
-| **Validation** | Duplicated 3x | Single source | ✅ **DRY** |
-| **Testability** | Low | High | ✅ **Pure functions** |
-| **Migration Ready** | No | Yes | ✅ **1 line change** |
+| Category              | Before          | After             | Status                |
+| --------------------- | --------------- | ----------------- | --------------------- |
+| **Test Coverage**     | 3 tests         | **35 tests**      | ✅ **+1067%**         |
+| **Provider Coupling** | Tight (HubSpot) | Loose (interface) | ✅ **Decoupled**      |
+| **Validation**        | Duplicated 3x   | Single source     | ✅ **DRY**            |
+| **Testability**       | Low             | High              | ✅ **Pure functions** |
+| **Migration Ready**   | No              | Yes               | ✅ **1 line change**  |
 
 ---
 

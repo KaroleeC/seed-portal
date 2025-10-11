@@ -43,11 +43,11 @@ export function FailedSendAlert({
           title: "Email sent!",
           description: "Your email was successfully sent on retry.",
         });
-        
+
         // Invalidate queries to refresh the UI
         queryClient.invalidateQueries({ queryKey: ["/api/email/threads"] });
         queryClient.invalidateQueries({ queryKey: ["/api/email/send-status"] });
-        
+
         if (onDismiss) onDismiss();
       } else {
         throw new Error(response.message || "Retry failed");
@@ -80,9 +80,7 @@ export function FailedSendAlert({
     <Alert variant="destructive" className="border-destructive/50">
       <AlertTriangle className="h-4 w-4" />
       <AlertTitle className="flex items-center justify-between">
-        <span>
-          {bounceType ? getBounceTypeLabel(bounceType) : "Send Failed"}
-        </span>
+        <span>{bounceType ? getBounceTypeLabel(bounceType) : "Send Failed"}</span>
         {canRetry && (
           <span className="text-xs font-normal text-muted-foreground">
             Attempt {retryCount + 1}/{maxRetries}
@@ -90,22 +88,22 @@ export function FailedSendAlert({
         )}
       </AlertTitle>
       <AlertDescription className="space-y-3">
-        <p className="text-sm">
-          {bounceReason || errorMessage || "Failed to send email"}
-        </p>
-        
+        <p className="text-sm">{bounceReason || errorMessage || "Failed to send email"}</p>
+
         {bounceType === "hard" && (
           <p className="text-xs text-muted-foreground">
-            This email address appears to be invalid or doesn't exist. Please verify the recipient address.
+            This email address appears to be invalid or doesn't exist. Please verify the recipient
+            address.
           </p>
         )}
-        
+
         {bounceType === "soft" && (
           <p className="text-xs text-muted-foreground">
-            This is a temporary issue. The retry will happen automatically, or you can retry manually.
+            This is a temporary issue. The retry will happen automatically, or you can retry
+            manually.
           </p>
         )}
-        
+
         {bounceType === "complaint" && (
           <p className="text-xs text-muted-foreground">
             Your email was marked as spam. Please review your content and recipient list.
@@ -125,13 +123,13 @@ export function FailedSendAlert({
               {isRetrying ? "Retrying..." : "Retry Send"}
             </Button>
           )}
-          
+
           {!canRetry && (
             <p className="text-xs text-muted-foreground">
               Maximum retry attempts reached. Please compose a new email.
             </p>
           )}
-          
+
           {onDismiss && (
             <Button size="sm" variant="ghost" onClick={onDismiss}>
               Dismiss

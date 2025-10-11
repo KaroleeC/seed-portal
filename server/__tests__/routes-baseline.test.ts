@@ -1,9 +1,9 @@
 /**
  * Routes Baseline Test
- * 
+ *
  * Validates ALL routes work BEFORE refactoring.
  * This test must pass before and after each refactor phase.
- * 
+ *
  * If this test fails after refactor, we broke something!
  */
 
@@ -110,7 +110,8 @@ describe("Routes Baseline (Pre-Refactor)", () => {
 
     approvalRoutes.forEach(({ method, path }) => {
       it(`${method} ${path} should be accessible`, async () => {
-        const response = await request(app)[method.toLowerCase() as any](path)
+        const response = await request(app)
+          [method.toLowerCase() as any](path)
           .send({ contactEmail: "test@test.com", code: "1234" });
         expect(response.status).not.toBe(404);
       });
@@ -151,9 +152,7 @@ describe("Routes Baseline (Pre-Refactor)", () => {
 
   describe("Webhook Routes", () => {
     it("POST /api/webhooks/stripe should be accessible", async () => {
-      const response = await request(app)
-        .post("/api/webhooks/stripe")
-        .send({});
+      const response = await request(app).post("/api/webhooks/stripe").send({});
       expect(response.status).not.toBe(404);
     });
   });

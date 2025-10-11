@@ -72,16 +72,16 @@
 
 ## 📊 Phase 2B Complete Status
 
-| Module | Lines | Tests | Status |
-|--------|-------|-------|--------|
-| **quote-validator** | 118 | 19 | ✅ Passing |
-| **useQuoteSync** | 344 | 13 | ✅ Passing |
-| **useQuotePersistence** | 82 | 11 | ✅ Passing |
-| **quote-loader** | 145 | 23 | ✅ Passing |
-| **approval-service** | 210 | 44 | ✅ **Passing** |
-| **useContactVerification** | 190 | 17 | 🚧 Complex async |
-| **schema** | N/A | 3 | ✅ Passing |
-| **TOTAL** | **1,089** | **130** | **113/130 passing** |
+| Module                     | Lines     | Tests   | Status              |
+| -------------------------- | --------- | ------- | ------------------- |
+| **quote-validator**        | 118       | 19      | ✅ Passing          |
+| **useQuoteSync**           | 344       | 13      | ✅ Passing          |
+| **useQuotePersistence**    | 82        | 11      | ✅ Passing          |
+| **quote-loader**           | 145       | 23      | ✅ Passing          |
+| **approval-service**       | 210       | 44      | ✅ **Passing**      |
+| **useContactVerification** | 190       | 17      | 🚧 Complex async    |
+| **schema**                 | N/A       | 3       | ✅ Passing          |
+| **TOTAL**                  | **1,089** | **130** | **113/130 passing** |
 
 **Pass Rate:** 86.9% (up from 100% - async testing complexity)
 
@@ -160,13 +160,7 @@ const verifyEmailImmediate = async (email: string) => {
 ```typescript
 import { useContactVerification } from "@/hooks/useContactVerification";
 
-const {
-  status,
-  contact,
-  existingQuotes,
-  verifyEmail,
-  reset,
-} = useContactVerification({
+const { status, contact, existingQuotes, verifyEmail, reset } = useContactVerification({
   debounceMs: 1000,
   timeoutMs: 10000,
   onVerified: (contact) => setHubspotContact(contact),
@@ -190,17 +184,17 @@ const {
 
 ```typescript
 // Format validation
-validateApprovalCodeFormat("1234") 
+validateApprovalCodeFormat("1234");
 // → { valid: true }
 
-validateApprovalCodeFormat("abc")  
+validateApprovalCodeFormat("abc");
 // → { valid: false, error: "Must contain only digits" }
 
 // Email validation
-validateContactEmail("test@example.com")
+validateContactEmail("test@example.com");
 // → { valid: true }
 
-validateContactEmail("invalid")
+validateContactEmail("invalid");
 // → { valid: false, error: "Invalid email format" }
 ```
 
@@ -332,7 +326,7 @@ if (request.success) {
 ✅ **190 lines** of reusable contact verification  
 ✅ **92% reduction** in Calculator validation code  
 ✅ **83% reduction** in Calculator verification code  
-✅ **Single source of truth** for both services  
+✅ **Single source of truth** for both services
 
 ---
 

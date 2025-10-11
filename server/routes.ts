@@ -134,19 +134,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(conditionalCsrf);
   app.use(provideCsrfToken);
 
-  // Minimal admin guard for routes defined in this module (mirrors admin-routes behavior)
-  const requireAdminGuard = (req: any, res: any, next: any) => {
-    // Optional allowlist for break-glass admin (comma-separated emails)
-    const allowlist = (process.env.ADMIN_EMAIL_ALLOWLIST || "")
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-    const email = String(req.user?.email || "").toLowerCase();
-    if ((email && allowlist.includes(email)) || req.user?.role === "admin") {
-      return next();
-    }
-    return res.status(403).json({ message: "Admin access required" });
-  };
+  // Note: Admin authorization handled by requirePermission middleware
+  // See docs/AUTHORIZATION_PATTERN.md for details
 
   // Apply rate limiting to all API routes
   app.use("/api", apiRateLimit);
@@ -209,7 +198,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // - GET /api/deals
   // - GET /api/deals/by-owner
 
-
   // =============================
   // AI Assistant Endpoints (Option B)
   // =============================
@@ -265,259 +253,299 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Removed duplicate logout endpoint - using /api/logout from auth.ts instead
 
   // Quote routes with structured logging
-  app.post(
-    "/api/quotes",
-    requireAuth,
-    async (req, res) => {
-      const requestId = req.headers['x-request-id'] || 'unknown';
-      
-      try {
-        quoteLogger.info({
+  app.post("/api/quotes", requireAuth, async (req, res) => {
+    const requestId = req.headers["x-request-id"] || "unknown";
+
+    try {
+      quoteLogger.info(
+        {
           requestId,
           userId: req.user?.id,
           userEmail: req.user?.email,
           contactEmail: req.body?.contactEmail,
-        }, "Quote creation request received");
+        },
+        "Quote creation request received"
+      );
 
-        if (!req.user) {
-          return res.status(401).json({ message: "Authentication required" });
-        }
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
 
-        // Extract service flags with defaults
-        const includesBookkeeping = req.body.includesBookkeeping !== false; // Default to true
-        const includesTaas = req.body.includesTaas === true;
+      // Extract service flags with defaults
+      const includesBookkeeping = req.body.includesBookkeeping !== false; // Default to true
+      const includesTaas = req.body.includesTaas === true;
 
-        // Sanitize numeric fields using shared utility
-        const sanitizedBody = sanitizeQuoteFields(req.body);
-        const validationData = prepareQuoteForValidation(sanitizedBody);
+      // Sanitize numeric fields using shared utility
+      const sanitizedBody = sanitizeQuoteFields(req.body);
+      const validationData = prepareQuoteForValidation(sanitizedBody);
 
-        // Check for existing quotes - use approval system if needed
-        const { contactEmail, approvalCode } = req.body;
-        quoteLogger.debug({
+      // Check for existing quotes - use approval system if needed
+      const { contactEmail, approvalCode } = req.body;
+      quoteLogger.debug(
+        {
           requestId,
           contactEmail,
           hasApprovalCode: !!approvalCode,
-        }, "Checking approval requirements");
+        },
+        "Checking approval requirements"
+      );
 
-        if (contactEmail) {
-          const existingQuotes = await storage.getQuotesByEmail(contactEmail);
-          quoteLogger.debug({
+      if (contactEmail) {
+        const existingQuotes = await storage.getQuotesByEmail(contactEmail);
+        quoteLogger.debug(
+          {
             requestId,
             contactEmail,
             count: existingQuotes.length,
-          }, "Existing quotes found");
+          },
+          "Existing quotes found"
+        );
 
-          // Only block if there are quotes that still exist in HubSpot
-          // Quotes that no longer exist in HubSpot should NOT require approval
-          let liveInHubSpotCount = 0;
-          try {
-            const verifications = await Promise.all(
-              existingQuotes.map(async (q: any) => {
-                const hq = q?.hubspotQuoteId ? String(q.hubspotQuoteId) : null;
-                if (!hq) return false;
-                try {
-                  return await doesHubSpotQuoteExist(hq);
-                } catch {
-                  return false;
-                }
-              })
-            );
-            liveInHubSpotCount = verifications.filter(Boolean).length;
-          } catch (e) {
-            // In case of verification failure, be conservative: treat as zero to avoid blocking valid flows
-            quoteLogger.warn({
+        // Only block if there are quotes that still exist in HubSpot
+        // Quotes that no longer exist in HubSpot should NOT require approval
+        let liveInHubSpotCount = 0;
+        try {
+          const verifications = await Promise.all(
+            existingQuotes.map(async (q: any) => {
+              const hq = q?.hubspotQuoteId ? String(q.hubspotQuoteId) : null;
+              if (!hq) return false;
+              try {
+                return await doesHubSpotQuoteExist(hq);
+              } catch {
+                return false;
+              }
+            })
+          );
+          liveInHubSpotCount = verifications.filter(Boolean).length;
+        } catch (e) {
+          // In case of verification failure, be conservative: treat as zero to avoid blocking valid flows
+          quoteLogger.warn(
+            {
               requestId,
               contactEmail,
               error: getErrorMessage(e),
-            }, "HubSpot existence verification failed, allowing creation");
-            liveInHubSpotCount = 0;
-          }
+            },
+            "HubSpot existence verification failed, allowing creation"
+          );
+          liveInHubSpotCount = 0;
+        }
 
-          if (liveInHubSpotCount > 0) {
-            // There are active HubSpot quotes; require approval code
-            if (!approvalCode) {
-              quoteLogger.warn({
+        if (liveInHubSpotCount > 0) {
+          // There are active HubSpot quotes; require approval code
+          if (!approvalCode) {
+            quoteLogger.warn(
+              {
                 requestId,
                 contactEmail,
                 liveQuotesCount: liveInHubSpotCount,
-              }, "Approval code required but not provided");
-              res.status(400).json({
-                message: "Approval code required for creating additional quotes",
-                requiresApproval: true,
-                existingQuotesCount: liveInHubSpotCount,
-              });
-              return;
-            }
-
-            quoteLogger.debug({ requestId, contactEmail }, "Validating approval code");
-            const isValidCode = await storage.validateApprovalCode(approvalCode, contactEmail);
-            
-            if (!isValidCode) {
-              quoteLogger.warn({ requestId, contactEmail }, "Invalid approval code provided");
-              res.status(400).json({
-                message: "Invalid or expired approval code",
-                requiresApproval: true,
-              });
-              return;
-            }
-
-            await storage.markApprovalCodeUsed(approvalCode, contactEmail);
-            quoteLogger.info({ requestId, contactEmail }, "Approval code validated and used");
-          } else {
-            quoteLogger.debug({ requestId, contactEmail }, "No approval required");
+              },
+              "Approval code required but not provided"
+            );
+            res.status(400).json({
+              message: "Approval code required for creating additional quotes",
+              requiresApproval: true,
+              existingQuotesCount: liveInHubSpotCount,
+            });
+            return;
           }
-        }
 
-        // Validate the data first (without ownerId)
-        quoteLogger.debug({
+          quoteLogger.debug({ requestId, contactEmail }, "Validating approval code");
+          const isValidCode = await storage.validateApprovalCode(approvalCode, contactEmail);
+
+          if (!isValidCode) {
+            quoteLogger.warn({ requestId, contactEmail }, "Invalid approval code provided");
+            res.status(400).json({
+              message: "Invalid or expired approval code",
+              requiresApproval: true,
+            });
+            return;
+          }
+
+          await storage.markApprovalCodeUsed(approvalCode, contactEmail);
+          quoteLogger.info({ requestId, contactEmail }, "Approval code validated and used");
+        } else {
+          quoteLogger.debug({ requestId, contactEmail }, "No approval required");
+        }
+      }
+
+      // Validate the data first (without ownerId)
+      quoteLogger.debug(
+        {
           requestId,
           contactEmail: validationData.contactEmail,
           industry: validationData.industry,
           monthlyRevenueRange: validationData.monthlyRevenueRange,
-        }, "Validating quote data");
-        const validationResult = insertQuoteSchema.safeParse(validationData);
+        },
+        "Validating quote data"
+      );
+      const validationResult = insertQuoteSchema.safeParse(validationData);
 
-        if (!validationResult.success) {
-          quoteLogger.error({
+      if (!validationResult.success) {
+        quoteLogger.error(
+          {
             requestId,
             contactEmail: req.body.contactEmail,
             errors: validationResult.error.errors,
-          }, "Quote validation failed");
+          },
+          "Quote validation failed"
+        );
 
-          throw validationResult.error;
-        }
+        throw validationResult.error;
+      }
 
-        const validatedQuoteData = validationResult.data;
-        quoteLogger.debug({ requestId }, "Quote validation passed");
+      const validatedQuoteData = validationResult.data;
+      quoteLogger.debug({ requestId }, "Quote validation passed");
 
-        // Compute canonical pricing totals on the server
-        // Do NOT trust client-provided totals; derive from validated inputs
-        let quote;
-        try {
-          const calc: PricingCalculation = calculateCombinedFees(validatedQuoteData as any);
-          quoteLogger.debug({
+      // Compute canonical pricing totals on the server
+      // Do NOT trust client-provided totals; derive from validated inputs
+      let quote;
+      try {
+        const calc: PricingCalculation = calculateCombinedFees(validatedQuoteData as any);
+        quoteLogger.debug(
+          {
             requestId,
             monthlyFee: calc.combined.monthlyFee,
             setupFee: calc.combined.setupFee,
-          }, "Pricing calculated");
+          },
+          "Pricing calculated"
+        );
 
-          // Add ownerId and override totals from server calc
-          const quoteData = {
-            ...validatedQuoteData,
-            ownerId: req.user.id,
-            monthlyFee: calc.combined.monthlyFee.toFixed(2),
-            setupFee: calc.combined.setupFee.toFixed(2),
-            taasMonthlyFee: calc.taas.monthlyFee.toFixed(2),
-            taasPriorYearsFee: calc.priorYearFilingsFee.toFixed(2),
-          } as QuoteCreationData;
+        // Add ownerId and override totals from server calc
+        const quoteData = {
+          ...validatedQuoteData,
+          ownerId: req.user.id,
+          monthlyFee: calc.combined.monthlyFee.toFixed(2),
+          setupFee: calc.combined.setupFee.toFixed(2),
+          taasMonthlyFee: calc.taas.monthlyFee.toFixed(2),
+          taasPriorYearsFee: calc.priorYearFilingsFee.toFixed(2),
+        } as QuoteCreationData;
 
-          quoteLogger.debug({ requestId }, "Creating quote in database");
-          quote = await storage.createQuote(quoteData);
-        } catch (calcError) {
-          quoteLogger.error({
+        quoteLogger.debug({ requestId }, "Creating quote in database");
+        quote = await storage.createQuote(quoteData);
+      } catch (calcError) {
+        quoteLogger.error(
+          {
             requestId,
             error: getErrorMessage(calcError),
-          }, "Pricing calculation failed");
-          return res.status(400).json({
-            message: "Pricing calculation failed",
-            reason: (calcError as any)?.message,
-          });
-        }
-        
-        if (!quote) {
-          quoteLogger.error({ requestId }, "Quote creation returned null");
-          return res.status(500).json({ message: "Quote creation failed - no data returned" });
-        }
+          },
+          "Pricing calculation failed"
+        );
+        return res.status(400).json({
+          message: "Pricing calculation failed",
+          reason: (calcError as any)?.message,
+        });
+      }
 
-        quoteLogger.info({
+      if (!quote) {
+        quoteLogger.error({ requestId }, "Quote creation returned null");
+        return res.status(500).json({ message: "Quote creation failed - no data returned" });
+      }
+
+      quoteLogger.info(
+        {
           requestId,
           quoteId: quote.id,
           contactEmail: quote.contactEmail,
           monthlyFee: quote.monthlyFee,
           setupFee: quote.setupFee,
-        }, "Quote created successfully");
-        res.json(quote);
-      } catch (error: unknown) {
-        quoteLogger.error({
+        },
+        "Quote created successfully"
+      );
+      res.json(quote);
+    } catch (error: unknown) {
+      quoteLogger.error(
+        {
           requestId,
           error: getErrorMessage(error),
           userId: req.user?.id,
-        }, "Quote creation failed");
-        if (error instanceof z.ZodError) {
-          return res.status(400).json({ message: "Invalid quote data", errors: error.errors });
-        }
-        return res.status(500).json({
-          message: "Failed to create quote",
-          debug: getErrorMessage(error),
-        });
+        },
+        "Quote creation failed"
+      );
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid quote data", errors: error.errors });
       }
+      return res.status(500).json({
+        message: "Failed to create quote",
+        debug: getErrorMessage(error),
+      });
     }
-  );
+  });
 
   // Get all quotes with optional search and sort (protected)
-  app.get(
-    "/api/quotes",
-    requireAuth,
-    async (req, res) => {
-      const requestId = req.headers['x-request-id'] || 'unknown';
-      
-      try {
-        const email = req.query.email as string;
-        const search = req.query.search as string;
-        const sortField = req.query.sortField as string;
-        const sortOrder = req.query.sortOrder as "asc" | "desc";
+  app.get("/api/quotes", requireAuth, async (req, res) => {
+    const requestId = req.headers["x-request-id"] || "unknown";
 
-        quoteLogger.debug({
+    try {
+      const email = req.query.email as string;
+      const search = req.query.search as string;
+      const sortField = req.query.sortField as string;
+      const sortOrder = req.query.sortOrder as "asc" | "desc";
+
+      quoteLogger.debug(
+        {
           requestId,
           userId: req.user?.id,
           email,
           search,
           sortField,
           sortOrder,
-        }, "Fetching quotes");
+        },
+        "Fetching quotes"
+      );
 
-        if (!req.user) {
-          return res.status(401).json({ message: "Authentication required" });
-        }
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
 
-        if (email) {
-          const quotes = await storage.getQuotesByEmail(email);
-          const userQuotes = quotes.filter((quote) => quote.ownerId === req.user!.id);
-          quoteLogger.debug({
+      if (email) {
+        const quotes = await storage.getQuotesByEmail(email);
+        const userQuotes = quotes.filter((quote) => quote.ownerId === req.user!.id);
+        quoteLogger.debug(
+          {
             requestId,
             email,
             count: userQuotes.length,
-          }, "Quotes fetched by email");
-          res.json(userQuotes);
-        } else if (search) {
-          const quotes = await storage.getAllQuotes(req.user.id, search, sortField, sortOrder);
-          quoteLogger.debug({
+          },
+          "Quotes fetched by email"
+        );
+        res.json(userQuotes);
+      } else if (search) {
+        const quotes = await storage.getAllQuotes(req.user.id, search, sortField, sortOrder);
+        quoteLogger.debug(
+          {
             requestId,
             search,
             count: quotes.length,
-          }, "Quotes fetched by search");
-          res.json(quotes);
-        } else {
-          const quotes = await storage.getAllQuotes(req.user.id, undefined, sortField, sortOrder);
-          quoteLogger.debug({
+          },
+          "Quotes fetched by search"
+        );
+        res.json(quotes);
+      } else {
+        const quotes = await storage.getAllQuotes(req.user.id, undefined, sortField, sortOrder);
+        quoteLogger.debug(
+          {
             requestId,
             count: quotes.length,
-          }, "All quotes fetched");
-          res.json(quotes);
-        }
-      } catch (error: any) {
-        quoteLogger.error({
+          },
+          "All quotes fetched"
+        );
+        res.json(quotes);
+      }
+    } catch (error: any) {
+      quoteLogger.error(
+        {
           requestId,
           userId: req.user?.id,
           error: getErrorMessage(error),
-        }, "Failed to fetch quotes");
-        res.status(500).json({
-          message: "Failed to fetch quotes",
-          error: getErrorMessage(error),
-        });
-      }
+        },
+        "Failed to fetch quotes"
+      );
+      res.status(500).json({
+        message: "Failed to fetch quotes",
+        error: getErrorMessage(error),
+      });
     }
-  );
+  });
 
   // Update a quote (protected)
   app.put("/api/quotes/:id", requireAuth, async (req, res) => {
@@ -550,7 +578,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } as any;
         quote = await storage.updateQuote(quoteData);
       } catch (calcErr) {
-        quoteLogger.error({ quoteId: id, error: getErrorMessage(calcErr) }, "Pricing calculation failed on update");
+        quoteLogger.error(
+          { quoteId: id, error: getErrorMessage(calcErr) },
+          "Pricing calculation failed on update"
+        );
         return res.status(400).json({
           message: "Pricing calculation failed on update",
           reason: (calcErr as any)?.message,
@@ -559,11 +590,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update HubSpot when quote is updated
       if (quote.hubspotQuoteId && hubSpotService) {
-        quoteLogger.debug({
-          requestId: req.headers['x-request-id'] || 'unknown',
-          quoteId: id,
-          hubspotQuoteId: quote.hubspotQuoteId,
-        }, "Syncing quote to HubSpot");
+        quoteLogger.debug(
+          {
+            requestId: req.headers["x-request-id"] || "unknown",
+            quoteId: id,
+            hubspotQuoteId: quote.hubspotQuoteId,
+          },
+          "Syncing quote to HubSpot"
+        );
         try {
           const feeCalculation = calculateCombinedFees(toPricingData(quote));
           await hubSpotService.updateQuote(
@@ -609,26 +643,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
             Number(feeCalculation.taas.monthlyFee || 0),
             Number(feeCalculation.serviceTierFee || 0)
           );
-          quoteLogger.info({
-            quoteId: id,
-            hubspotQuoteId: quote.hubspotQuoteId,
-          }, "Quote synced to HubSpot");
+          quoteLogger.info(
+            {
+              quoteId: id,
+              hubspotQuoteId: quote.hubspotQuoteId,
+            },
+            "Quote synced to HubSpot"
+          );
         } catch (hubspotError) {
-          quoteLogger.warn({
-            quoteId: id,
-            hubspotQuoteId: quote.hubspotQuoteId,
-            error: getErrorMessage(hubspotError),
-          }, "Failed to sync quote to HubSpot");
+          quoteLogger.warn(
+            {
+              quoteId: id,
+              hubspotQuoteId: quote.hubspotQuoteId,
+              error: getErrorMessage(hubspotError),
+            },
+            "Failed to sync quote to HubSpot"
+          );
           // Don't fail the entire request - quote was updated in database
         }
       }
 
       res.json(quote);
     } catch (error: unknown) {
-      quoteLogger.error({
-        quoteId: parseInt(req.params.id),
-        error: getErrorMessage(error),
-      }, "Quote update failed");
+      quoteLogger.error(
+        {
+          quoteId: parseInt(req.params.id),
+          error: getErrorMessage(error),
+        },
+        "Quote update failed"
+      );
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid quote data", errors: error.errors });
       } else {
@@ -835,7 +878,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // - GET /api/commissions/current-period-summary
   // Note: HubSpot sync routes remain in Diagnostics section below
 
-
   // =============================
   // Diagnostics Routes (Admin Only)
   // =============================
@@ -844,7 +886,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post(
     "/api/commissions/sync-hubspot",
     requireAuth,
-    requireAdminGuard,
     requirePermission("commissions.sync", "commission"),
     async (req, res) => {
       try {
@@ -868,7 +909,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(
     "/api/_version",
     requireAuth,
-    requireAdminGuard,
     requirePermission("diagnostics.view", "system"),
     (req, res) => {
       try {
@@ -897,7 +937,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(
     "/api/_schema-health",
     requireAuth,
-    requireAdminGuard,
     requirePermission("diagnostics.view", "system"),
     async (req, res) => {
       try {
@@ -980,142 +1019,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // Authorization diagnostics endpoint (admin-only)
-  app.get("/api/_authz-check", requireAuth, requireAdminGuard, async (req, res) => {
-    try {
-      const { authorize, getUserAuthzInfo } = await import("./services/authz/authorize");
+  app.get(
+    "/api/_authz-check",
+    requireAuth,
+    requirePermission("admin.debug", "system"),
+    async (req, res) => {
+      try {
+        const { authorize, getUserAuthzInfo } = await import("./services/authz/authorize");
 
-      const action = req.query.action as string;
-      const resourceType = req.query.resource as string;
-      const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : req.user?.id;
+        const action = req.query.action as string;
+        const resourceType = req.query.resource as string;
+        const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : req.user?.id;
 
-      if (!action) {
-        return res.status(400).json({
-          message: "action parameter is required",
+        if (!action) {
+          return res.status(400).json({
+            message: "action parameter is required",
+          });
+        }
+
+        if (!userId) {
+          return res.status(400).json({
+            message: "userId parameter is required or user not authenticated",
+          });
+        }
+
+        // Get user's authorization info
+        const authzInfo = await getUserAuthzInfo(userId);
+
+        // Create principal for authorization check
+        const principal = {
+          userId,
+          email: req.user?.email || "unknown",
+          roles: authzInfo.roles,
+          permissions: authzInfo.permissions,
+        };
+
+        // Perform authorization check
+        const resource = resourceType ? { type: resourceType } : undefined;
+        const authzResult = await authorize(principal, action, resource);
+
+        res.json({
+          userId,
+          action,
+          resource: resourceType || null,
+          result: authzResult,
+          userInfo: {
+            email: principal.email,
+            legacyRole: principal.role,
+            roles: authzInfo.roles.map((r) => ({ id: r.id, name: r.name })),
+            permissions: authzInfo.permissions.map((p) => ({
+              id: p.id,
+              key: p.key,
+              category: p.category,
+            })),
+          },
+          timestamp: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error("Authorization check error:", error);
+        res.status(500).json({
+          message: "Authorization check failed",
+          error: getErrorMessage(error),
+          timestamp: new Date().toISOString(),
         });
       }
-
-      if (!userId) {
-        return res.status(400).json({
-          message: "userId parameter is required or user not authenticated",
-        });
-      }
-
-      // Get user's authorization info
-      const authzInfo = await getUserAuthzInfo(userId);
-
-      // Create principal for authorization check
-      const principal = {
-        userId,
-        email: req.user?.email || "unknown",
-        role: req.user?.role,
-        roles: authzInfo.roles,
-        permissions: authzInfo.permissions,
-      };
-
-      // Perform authorization check
-      const resource = resourceType ? { type: resourceType } : undefined;
-      const authzResult = await authorize(principal, action, resource);
-
-      res.json({
-        userId,
-        action,
-        resource: resourceType || null,
-        result: authzResult,
-        userInfo: {
-          email: principal.email,
-          legacyRole: principal.role,
-          roles: authzInfo.roles.map((r) => ({ id: r.id, name: r.name })),
-          permissions: authzInfo.permissions.map((p) => ({
-            id: p.id,
-            key: p.key,
-            category: p.category,
-          })),
-        },
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error("Authorization check error:", error);
-      res.status(500).json({
-        message: "Authorization check failed",
-        error: getErrorMessage(error),
-        timestamp: new Date().toISOString(),
-      });
     }
-  });
+  );
 
   // Cerbos decision explanation endpoint (admin-only)
-  app.get("/api/_cerbos-explain", requireAuth, requireAdminGuard, async (req, res) => {
-    try {
-      const { explainDecision } = await import("./services/authz/cerbos-client");
-      const { loadPrincipalAttributes, loadResourceAttributes } = await import(
-        "./services/authz/attribute-loader"
-      );
-      const { toCerbosPrincipal, toCerbosResource } = await import(
-        "./services/authz/cerbos-client"
-      );
+  app.get(
+    "/api/_cerbos-explain",
+    requireAuth,
+    requirePermission("admin.debug", "system"),
+    async (req, res) => {
+      try {
+        const { explainDecision } = await import("./services/authz/cerbos-client");
+        const { loadPrincipalAttributes, loadResourceAttributes } = await import(
+          "./services/authz/attribute-loader"
+        );
+        const { toCerbosPrincipal, toCerbosResource } = await import(
+          "./services/authz/cerbos-client"
+        );
 
-      const action = req.query.action as string;
-      const resourceType = req.query.resourceType as string;
-      const resourceId = req.query.resourceId as string;
-      const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : req.user?.id;
+        const action = req.query.action as string;
+        const resourceType = req.query.resourceType as string;
+        const resourceId = req.query.resourceId as string;
+        const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : req.user?.id;
 
-      if (!action || !resourceType) {
-        return res.status(400).json({
-          message: "action and resourceType parameters are required",
+        if (!action || !resourceType) {
+          return res.status(400).json({
+            message: "action and resourceType parameters are required",
+          });
+        }
+
+        if (!userId) {
+          return res.status(400).json({
+            message: "userId parameter is required or user not authenticated",
+          });
+        }
+
+        // Create principal
+        const principal = {
+          userId,
+          email: req.user?.email || "unknown",
+        };
+
+        // Load enriched attributes
+        const principalAttributes = await loadPrincipalAttributes(principal);
+        const cerbosPrincipal = toCerbosPrincipal(principal, principalAttributes);
+
+        // Create resource
+        const resource = { type: resourceType, id: resourceId, attrs: {} };
+        const resourceAttributes = await loadResourceAttributes(resource);
+        const cerbosResource = toCerbosResource(resource, resourceAttributes);
+
+        // Get decision explanation
+        const explanation = await explainDecision(cerbosPrincipal, cerbosResource, action);
+
+        res.json({
+          userId,
+          action,
+          resource: {
+            type: resourceType,
+            id: resourceId,
+            attributes: resourceAttributes,
+          },
+          principal: {
+            id: cerbosPrincipal.id,
+            roles: cerbosPrincipal.roles,
+            departments: cerbosPrincipal.departments,
+            isManager: cerbosPrincipal.isManager,
+          },
+          explanation,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error("Cerbos explanation error:", error);
+        res.status(500).json({
+          message: "Failed to get Cerbos decision explanation",
+          error: getErrorMessage(error),
+          timestamp: new Date().toISOString(),
         });
       }
-
-      if (!userId) {
-        return res.status(400).json({
-          message: "userId parameter is required or user not authenticated",
-        });
-      }
-
-      // Create principal
-      const principal = {
-        userId,
-        email: req.user?.email || "unknown",
-        role: req.user?.role,
-      };
-
-      // Load enriched attributes
-      const principalAttributes = await loadPrincipalAttributes(principal);
-      const cerbosPrincipal = toCerbosPrincipal(principal, principalAttributes);
-
-      // Create resource
-      const resource = { type: resourceType, id: resourceId, attrs: {} };
-      const resourceAttributes = await loadResourceAttributes(resource);
-      const cerbosResource = toCerbosResource(resource, resourceAttributes);
-
-      // Get decision explanation
-      const explanation = await explainDecision(cerbosPrincipal, cerbosResource, action);
-
-      res.json({
-        userId,
-        action,
-        resource: {
-          type: resourceType,
-          id: resourceId,
-          attributes: resourceAttributes,
-        },
-        principal: {
-          id: cerbosPrincipal.id,
-          roles: cerbosPrincipal.roles,
-          departments: cerbosPrincipal.departments,
-          isManager: cerbosPrincipal.isManager,
-        },
-        explanation,
-        timestamp: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error("Cerbos explanation error:", error);
-      res.status(500).json({
-        message: "Failed to get Cerbos decision explanation",
-        error: getErrorMessage(error),
-        timestamp: new Date().toISOString(),
-      });
     }
-  });
+  );
 
   // Migration endpoint (development only)
   if (process.env.NODE_ENV === "development") {

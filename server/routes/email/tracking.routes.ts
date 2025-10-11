@@ -186,7 +186,7 @@ router.post("/api/email/retry-send/:statusId", requireAuth, async (req: any, res
 
     // Check retry count
     if (sendStatus.retryCount >= sendStatus.maxRetries) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "Maximum retry attempts exceeded",
         retryCount: sendStatus.retryCount,
         maxRetries: sendStatus.maxRetries,
@@ -267,14 +267,16 @@ router.post("/api/email/retry-send/:statusId", requireAuth, async (req: any, res
         })
         .where(eq(emailSendStatus.id, statusId));
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         retryCount: sendStatus.retryCount + 1,
         messageId: result.messageId,
       });
     } catch (error: any) {
       // Update status to failed again
-      const { determineBounceType, calculateNextRetry } = await import("../../services/email-tracking");
+      const { determineBounceType, calculateNextRetry } = await import(
+        "../../services/email-tracking"
+      );
       const { type: bounceType, reason } = determineBounceType(error.message || String(error));
 
       await db
@@ -290,12 +292,12 @@ router.post("/api/email/retry-send/:statusId", requireAuth, async (req: any, res
         })
         .where(eq(emailSendStatus.id, statusId));
 
-      res.status(500).json({ 
+      res.status(500).json({
         success: false,
         error: "Retry failed",
         message: error.message,
         retryCount: sendStatus.retryCount + 1,
-        canRetry: (sendStatus.retryCount + 1) < sendStatus.maxRetries,
+        canRetry: sendStatus.retryCount + 1 < sendStatus.maxRetries,
       });
     }
   } catch (error) {

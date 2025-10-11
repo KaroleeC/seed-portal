@@ -34,14 +34,14 @@ describe('SeedMail Smoke Tests', () => {
     render(<SeedMailPage />);
     // If we get here, no import errors!
   });
-  
+
   it('should fetch lead emails without 500', async () => {
     const response = await fetch('/api/crm/leads/emails', {
       headers: { Authorization: `Bearer ${testToken}` }
     });
     expect(response.status).not.toBe(500);
   });
-  
+
   it('should fetch threads without 404', async () => {
     const response = await fetch('/api/email/threads?accountId=test');
     expect(response.status).not.toBe(404);
@@ -67,13 +67,13 @@ describe('SeedMail Smoke Tests', () => {
 **Purpose:** Test full user workflows with Playwright
 
 ```typescript
-test('can link email to lead', async ({ page }) => {
-  await page.goto('/apps/seedmail');
+test("can link email to lead", async ({ page }) => {
+  await page.goto("/apps/seedmail");
   await page.click('[data-testid="thread-menu"]');
-  await page.click('text=Associate with Existing Lead');
-  await page.fill('[placeholder="Search leads..."]', 'test');
-  await page.click('text=Test Lead');
-  await expect(page.locator('.lead-badge')).toBeVisible();
+  await page.click("text=Associate with Existing Lead");
+  await page.fill('[placeholder="Search leads..."]', "test");
+  await page.click("text=Test Lead");
+  await expect(page.locator(".lead-badge")).toBeVisible();
 });
 ```
 

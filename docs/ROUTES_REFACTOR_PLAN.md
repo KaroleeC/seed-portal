@@ -18,18 +18,18 @@
 
 ### Route Categories (from grep analysis)
 
-| Category | Routes | Current Location | Target Location |
-|----------|--------|------------------|-----------------|
-| **User Management** | `/api/user/*` (5 routes) | routes.ts | `routes/user.ts` |
-| **Approvals** | `/api/approval/*` (3 routes) | routes.ts | `routes/approval.ts` ✅ (exists) |
-| **Calculator** | `/api/calculator/*` (10+ routes) | routes.ts | `routes/calculator.ts` ✅ (exists) |
-| **Deals** | `/api/deals/*` (5+ routes) | routes.ts | `routes/deals.ts` ✅ (exists) |
-| **AI Assistant** | `/api/ai/*` (15+ routes) | routes.ts | `routes/ai.ts` ✅ (exists) |
-| **Webhooks** | `/api/webhooks/*` (2 routes) | routes.ts | `routes/webhooks.ts` |
-| **App Aliases** | `/api/apps/*` (15+ redirects) | routes.ts | `routes/app-aliases.ts` |
-| **Admin** | Already extracted | admin-routes.ts | ✅ Done |
-| **HubSpot** | Already extracted | hubspot-routes.ts | ✅ Done |
-| **Email** | Already extracted | routes/email.ts | ✅ Done |
+| Category            | Routes                           | Current Location  | Target Location                    |
+| ------------------- | -------------------------------- | ----------------- | ---------------------------------- |
+| **User Management** | `/api/user/*` (5 routes)         | routes.ts         | `routes/user.ts`                   |
+| **Approvals**       | `/api/approval/*` (3 routes)     | routes.ts         | `routes/approval.ts` ✅ (exists)   |
+| **Calculator**      | `/api/calculator/*` (10+ routes) | routes.ts         | `routes/calculator.ts` ✅ (exists) |
+| **Deals**           | `/api/deals/*` (5+ routes)       | routes.ts         | `routes/deals.ts` ✅ (exists)      |
+| **AI Assistant**    | `/api/ai/*` (15+ routes)         | routes.ts         | `routes/ai.ts` ✅ (exists)         |
+| **Webhooks**        | `/api/webhooks/*` (2 routes)     | routes.ts         | `routes/webhooks.ts`               |
+| **App Aliases**     | `/api/apps/*` (15+ redirects)    | routes.ts         | `routes/app-aliases.ts`            |
+| **Admin**           | Already extracted                | admin-routes.ts   | ✅ Done                            |
+| **HubSpot**         | Already extracted                | hubspot-routes.ts | ✅ Done                            |
+| **Email**           | Already extracted                | routes/email.ts   | ✅ Done                            |
 
 ---
 
@@ -84,7 +84,7 @@ app.post("/api/user/signature", requireAuth, userController.updateSignature);
 **Domains**:
 
 - `controllers/user.ts`
-- `controllers/approval.ts`  
+- `controllers/approval.ts`
 - `controllers/calculator.ts`
 - `controllers/ai.ts`
 
@@ -146,11 +146,11 @@ For each phase:
 
 ### Test Types
 
-| Test Type | Coverage | Location |
-|-----------|----------|----------|
-| **Smoke Tests** | All routes accessible | `server/__tests__/routes-smoke.test.ts` |
-| **Integration Tests** | End-to-end workflows | `server/__tests__/*-integration.test.ts` |
-| **Unit Tests** | Controllers, services, utils | `server/**/__tests__/*.test.ts` |
+| Test Type             | Coverage                     | Location                                 |
+| --------------------- | ---------------------------- | ---------------------------------------- |
+| **Smoke Tests**       | All routes accessible        | `server/__tests__/routes-smoke.test.ts`  |
+| **Integration Tests** | End-to-end workflows         | `server/__tests__/*-integration.test.ts` |
+| **Unit Tests**        | Controllers, services, utils | `server/**/__tests__/*.test.ts`          |
 
 ### Test Baseline (Before Refactor)
 
@@ -194,10 +194,11 @@ export function createRedirect(from: string, to: string) {
 }
 
 // Usage
-app.get("/api/apps/seedqc/content", requireAuth, createRedirect(
+app.get(
   "/api/apps/seedqc/content",
-  "/api/calculator/content"
-));
+  requireAuth,
+  createRedirect("/api/apps/seedqc/content", "/api/calculator/content")
+);
 ```
 
 ### 2. Error Handling (duplicated everywhere)
@@ -218,11 +219,15 @@ export const errorHandler = (err, req, res, next) => {
 };
 
 // Usage
-app.get("/api/user", requireAuth, asyncHandler(async (req, res) => {
-  // No try/catch needed!
-  const user = await getUserData(req.user.id);
-  res.json(user);
-}));
+app.get(
+  "/api/user",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    // No try/catch needed!
+    const user = await getUserData(req.user.id);
+    res.json(user);
+  })
+);
 ```
 
 ### 3. Query Parameter Parsing (repeated pattern)
@@ -236,10 +241,13 @@ export function parseQueryParams<T>(query: any, schema: z.ZodSchema<T>): T {
 }
 
 // Usage
-const params = parseQueryParams(req.query, z.object({
-  accountId: z.string(),
-  limit: z.number().optional(),
-}));
+const params = parseQueryParams(
+  req.query,
+  z.object({
+    accountId: z.string(),
+    limit: z.number().optional(),
+  })
+);
 ```
 
 ---
@@ -262,7 +270,7 @@ rules: {
 rules: {
   // Already added
   "@typescript-eslint/no-floating-promises": "error",
-  
+
   // Add
   "require-await": "error", // Disallow async functions with no await
 }
@@ -341,15 +349,14 @@ rules: {
 ### ✅ Completed
 
 **Phase 1: Route Extraction** (Completed 2025-10-10)
+
 - ✅ **User Routes** (`routes/user.ts`) - 6 endpoints, 15 tests passing
   - GET /api/user
   - GET/PUT /api/user/preferences/:scope
   - GET/PUT /api/user/signature
   - POST /api/upload/signature-image
-  
 - ✅ **Webhook Routes** (`routes/webhooks.ts`) - 1 endpoint
   - POST /api/webhooks/stripe
-  
 - ✅ **App Namespace Aliases** (`routes/app-aliases.ts`) - 13+ redirects (DRY'd)
   - Eliminated 3 sets of duplicate code (180 lines)
   - Created reusable `createRedirect()` utility
@@ -357,34 +364,32 @@ rules: {
   - SeedPay commission tracker aliases
 
 **Phase 2: Utilities Extraction** (Completed 2025-10-10)
+
 - ✅ **Routing Utils** (`utils/routing.ts`)
   - `createRedirect()` - DRY redirect handler with query preservation
-  
 - ✅ **Approval Utils** (`utils/approval.ts`)
   - `generateApprovalCode()` - 4-digit code generation
-  
 - ✅ **Error Handling Utils** (`utils/error-handling.ts`)
   - `getErrorMessage()` - Safe error message extraction
-  
 - ✅ **Pricing Normalization** (`utils/pricing-normalization.ts`)
   - `toPricingData()` - Normalize quote data
 
 **Phase 3: Additional Route Extraction** (Completed 2025-10-10)
+
 - ✅ **Calculator Content & Config** (`routes/calculator.ts`)
   - GET /api/calculator/content
   - GET /api/pricing/config
-  
 - ✅ **Deals Routes** (`routes/deals.ts`)
   - GET /api/deals
   - GET /api/deals/by-owner
   - POST /api/deals/cache/invalidate
-  
 - ✅ **Approval Codes** (`routes/approval-codes.ts`)
   - POST /api/approval/request
   - POST /api/approval-request (legacy)
   - POST /api/approval/validate
 
 **Phase 4: Final Route Extraction** (Completed 2025-10-10)
+
 - ✅ **Sales Reps & Bonuses** (`routes/sales-reps.ts`)
   - GET /api/sales-reps
   - GET /api/sales-reps/me
@@ -404,6 +409,7 @@ rules: {
 ### 🔄 In Progress
 
 **Phase 5: Final Push to 25-30% Target**
+
 - Commissions routes (massive: ~800 lines for core commission logic)
 - Consider extracting or STOP and shift to Calculator
 

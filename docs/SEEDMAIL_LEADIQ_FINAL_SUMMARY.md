@@ -112,7 +112,7 @@ psql $DATABASE_URL -f db/migrations/0028_email_lead_linking.sql
 
 ```typescript
 // Run once to populate email columns
-import { syncAllLeadEmails } from './server/services/email-lead-linking.service';
+import { syncAllLeadEmails } from "./server/services/email-lead-linking.service";
 
 await syncAllLeadEmails();
 // Returns: number of leads synced
@@ -149,7 +149,7 @@ const [associateModalOpen, setAssociateModalOpen] = useState(false);
 In email sync service, after syncing:
 
 ```typescript
-import { queueJob } from './workers/graphile-worker';
+import { queueJob } from "./workers/graphile-worker";
 
 // After sync completes
 await queueJob("email-lead-auto-link", {
@@ -267,13 +267,13 @@ curl -X POST http://localhost:5001/api/email/lead-linking/auto-link \
 SELECT COUNT(*) FROM email_thread_leads;
 
 -- Links by source
-SELECT link_source, COUNT(*) 
-FROM email_thread_leads 
+SELECT link_source, COUNT(*)
+FROM email_thread_leads
 GROUP BY link_source;
 
 -- Average confidence score
-SELECT AVG(confidence_score) 
-FROM email_thread_leads 
+SELECT AVG(confidence_score)
+FROM email_thread_leads
 WHERE confidence_score IS NOT NULL;
 
 -- Leads with most email threads
@@ -406,7 +406,7 @@ await autoLinkThreadToLeads(threadId);
 
 ```sql
 -- Total links by type
-SELECT 
+SELECT
   link_source,
   COUNT(*) as count,
   ROUND(AVG(confidence_score), 2) as avg_confidence
@@ -414,7 +414,7 @@ FROM email_thread_leads
 GROUP BY link_source;
 
 -- Recent linking activity
-SELECT 
+SELECT
   DATE(created_at) as date,
   COUNT(*) as links_created
 FROM email_thread_leads
@@ -423,7 +423,7 @@ GROUP BY DATE(created_at)
 ORDER BY date DESC;
 
 -- Leads with email activity
-SELECT 
+SELECT
   l.id,
   l.primary_email,
   COUNT(etl.thread_id) as thread_count,
@@ -492,7 +492,7 @@ LIMIT 20;
 **API Endpoints:** 7 endpoints  
 **Components:** 2 components  
 **Hooks:** 2 hooks  
-**Workers:** 1 background task  
+**Workers:** 1 background task
 
 **Status:** ✅ **READY FOR PRODUCTION**
 

@@ -121,24 +121,27 @@ export default function PublicSchedulerPage() {
             {!loading && !error && (
               <div className="space-y-3">
                 <div>
-                  <Label>Your Name</Label>
+                  <Label htmlFor="scheduler-name">Your Name</Label>
                   <Input
+                    id="scheduler-name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Jane Doe"
                   />
                 </div>
                 <div>
-                  <Label>Your Email</Label>
+                  <Label htmlFor="scheduler-email">Your Email</Label>
                   <Input
+                    id="scheduler-email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="jane@example.com"
                   />
                 </div>
                 <div>
-                  <Label>Meeting Type</Label>
+                  <Label htmlFor="scheduler-meeting-type">Meeting Type</Label>
                   <select
+                    id="scheduler-meeting-type"
                     className="border rounded-md h-9 px-3"
                     value={meetingMode}
                     onChange={(e) => setMeetingMode(e.target.value)}
@@ -149,15 +152,16 @@ export default function PublicSchedulerPage() {
                   </select>
                 </div>
                 <div>
-                  <Label>Start (ISO datetime)</Label>
+                  <Label htmlFor="scheduler-start">Start (ISO datetime)</Label>
                   <Input
+                    id="scheduler-start"
                     value={startAt}
                     onChange={(e) => setStartAt(e.target.value)}
                     placeholder="Click a slot below or paste ISO time"
                   />
                 </div>
                 <div>
-                  <Label>Available Slots (next 14 days)</Label>
+                  <p className="text-sm font-medium mb-2">Available Slots (next 14 days)</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-1">
                     {slots?.slots?.length ? (
                       slots.slots.slice(0, 64).map((s) => (

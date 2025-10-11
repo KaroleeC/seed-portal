@@ -7,12 +7,14 @@ Heavy response logging (capturing and logging full JSON responses) is now gated 
 ## Performance Impact
 
 ### Before (Always On)
+
 - **JSON.stringify()** called on every API response
 - String concatenation and truncation on every request
 - Additional memory allocation for captured responses
 - Performance degradation with high request volumes
 
 ### After (Gated)
+
 - **Zero overhead in production** (middleware not registered)
 - Opt-in only in development with `DEBUG_HTTP=1`
 - Explicit console warnings when enabled
@@ -35,7 +37,7 @@ export function shouldLogResponses(): boolean {
   if (IS_PRODUCTION || IS_TEST) {
     return false;
   }
-  
+
   // In development, require explicit opt-in
   return DEBUG_HTTP_ENABLED;
 }
@@ -57,7 +59,7 @@ if (shouldLogResponses()) {
   app.use((req, res, next) => {
     // ... expensive logging ...
   });
-  
+
   console.log("[Server] ⚠️  Heavy response logging ENABLED (DEBUG_HTTP=1)");
 } else {
   console.log("[Server] Response logging disabled (set DEBUG_HTTP=1 to enable in development)");
@@ -122,6 +124,7 @@ Added ESLint rule to prevent direct `process.env.DEBUG_HTTP` checks:
 ```
 
 **❌ BAD:**
+
 ```typescript
 if (process.env.DEBUG_HTTP === "1") {
   // ESLint error!
@@ -129,6 +132,7 @@ if (process.env.DEBUG_HTTP === "1") {
 ```
 
 **✅ GOOD:**
+
 ```typescript
 import { shouldDebugRequests } from "./config/environment";
 
@@ -141,13 +145,15 @@ if (shouldDebugRequests()) {
 
 ### Unit Tests (27 passing)
 
-**server/config/__tests__/environment.test.ts:**
+**server/config/**tests**/environment.test.ts:**
+
 - ✅ Production safety (always disabled)
 - ✅ Test safety (always disabled)
 - ✅ Development opt-in (requires DEBUG_HTTP=1)
 - ✅ Environment constants validation
 
-**server/__tests__/response-logging.test.ts:**
+**server/**tests**/response-logging.test.ts:**
+
 - ✅ Middleware properly gated
 - ✅ No unguarded DEBUG_HTTP checks
 - ✅ DRY principle compliance
@@ -163,6 +169,7 @@ npm test -- server/__tests__/response-logging.test.ts
 ## Migration Guide
 
 ### Before
+
 ```typescript
 // Multiple places with duplicate checks
 if (process.env.DEBUG_HTTP === "1") {
@@ -175,6 +182,7 @@ if (process.env.NODE_ENV === "production") {
 ```
 
 ### After
+
 ```typescript
 // Import shared config once
 import { shouldDebugRequests, IS_PRODUCTION } from "./config/environment";
@@ -193,20 +201,20 @@ if (IS_PRODUCTION) {
 ### Response Logging Overhead (Development)
 
 | Requests/sec | Without Logging | With Logging | Overhead |
-|--------------|-----------------|--------------|----------|
-| 100          | ~50ms avg      | ~75ms avg    | +50%     |
-| 1000         | ~55ms avg      | ~120ms avg   | +118%    |
-| 10000        | ~60ms avg      | ~200ms avg   | +233%    |
+| ------------ | --------------- | ------------ | -------- |
+| 100          | ~50ms avg       | ~75ms avg    | +50%     |
+| 1000         | ~55ms avg       | ~120ms avg   | +118%    |
+| 10000        | ~60ms avg       | ~200ms avg   | +233%    |
 
-*Note: Actual impact varies by response size*
+_Note: Actual impact varies by response size_
 
 ### Production Impact
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Memory overhead | 5-10MB | 0MB | -100% |
-| CPU overhead | 2-5% | 0% | -100% |
-| Logging volume | High | None | -100% |
+| Metric          | Before | After | Improvement |
+| --------------- | ------ | ----- | ----------- |
+| Memory overhead | 5-10MB | 0MB   | -100%       |
+| CPU overhead    | 2-5%   | 0%    | -100%       |
+| Logging volume  | High   | None  | -100%       |
 
 ## Troubleshooting
 
@@ -227,12 +235,14 @@ This should never happen. If it does:
 ## Best Practices
 
 ✅ **DO:**
+
 - Use shared environment config functions
 - Keep debug logging opt-in only
 - Document performance impact
 - Test production safety
 
 ❌ **DON'T:**
+
 - Use direct `process.env.DEBUG_HTTP` checks
 - Enable debug logging by default
 - Log full responses in production

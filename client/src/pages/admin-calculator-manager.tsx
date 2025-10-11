@@ -465,6 +465,14 @@ export default function AdminCalculatorManager() {
                                 variant="secondary"
                                 className="cursor-pointer"
                                 onClick={() => insertToken(t)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    insertToken(t);
+                                  }
+                                }}
+                                role="button"
+                                tabIndex={0}
                               >
                                 {t}
                               </Badge>
@@ -495,8 +503,10 @@ export default function AdminCalculatorManager() {
                                 <Checkbox
                                   checked={!!currentIncluded.bookkeeping?.includeIndustry}
                                   onCheckedChange={toggleIncluded("bookkeeping.includeIndustry")}
-                                />{" "}
-                                <Label>Industry</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Industry
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
@@ -504,8 +514,10 @@ export default function AdminCalculatorManager() {
                                   onCheckedChange={toggleIncluded(
                                     "bookkeeping.includeTransactions"
                                   )}
-                                />{" "}
-                                <Label>Transactions</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Transactions
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
@@ -513,8 +525,10 @@ export default function AdminCalculatorManager() {
                                   onCheckedChange={toggleIncluded(
                                     "bookkeeping.includeCleanupMonths"
                                   )}
-                                />{" "}
-                                <Label>Cleanup Months</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Cleanup Months
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -526,29 +540,37 @@ export default function AdminCalculatorManager() {
                                 <Checkbox
                                   checked={!!currentIncluded.taas?.includeEntities}
                                   onCheckedChange={toggleIncluded("taas.includeEntities")}
-                                />{" "}
-                                <Label>Entities</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Entities
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={!!currentIncluded.taas?.includeStatesFiled}
                                   onCheckedChange={toggleIncluded("taas.includeStatesFiled")}
-                                />{" "}
-                                <Label>States Filed</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  States Filed
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={!!currentIncluded.taas?.includeInternational}
                                   onCheckedChange={toggleIncluded("taas.includeInternational")}
-                                />{" "}
-                                <Label>International Filing</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  International Filing
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={!!currentIncluded.taas?.includeOwners}
                                   onCheckedChange={toggleIncluded("taas.includeOwners")}
-                                />{" "}
-                                <Label>Business Owners</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Business Owners
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -560,22 +582,28 @@ export default function AdminCalculatorManager() {
                                 <Checkbox
                                   checked={!!currentIncluded.ap?.includeTier}
                                   onCheckedChange={toggleIncluded("ap.includeTier")}
-                                />{" "}
-                                <Label>Tier</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Tier
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={!!currentIncluded.ap?.includeVolumeBand}
                                   onCheckedChange={toggleIncluded("ap.includeVolumeBand")}
-                                />{" "}
-                                <Label>Volume Band</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Volume Band
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={!!currentIncluded.ap?.includeVendorCount}
                                   onCheckedChange={toggleIncluded("ap.includeVendorCount")}
-                                />{" "}
-                                <Label>Vendor Count</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Vendor Count
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -587,22 +615,28 @@ export default function AdminCalculatorManager() {
                                 <Checkbox
                                   checked={!!currentIncluded.ar?.includeTier}
                                   onCheckedChange={toggleIncluded("ar.includeTier")}
-                                />{" "}
-                                <Label>Tier</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Tier
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={!!currentIncluded.ar?.includeInvoicesBand}
                                   onCheckedChange={toggleIncluded("ar.includeInvoicesBand")}
-                                />{" "}
-                                <Label>Invoices Band</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Invoices Band
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={!!currentIncluded.ar?.includeCustomerCount}
                                   onCheckedChange={toggleIncluded("ar.includeCustomerCount")}
-                                />{" "}
-                                <Label>Customer Count</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Customer Count
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -614,15 +648,19 @@ export default function AdminCalculatorManager() {
                                 <Checkbox
                                   checked={!!currentIncluded.payroll?.includeEmployeeCount}
                                   onCheckedChange={toggleIncluded("payroll.includeEmployeeCount")}
-                                />{" "}
-                                <Label>Employee Count</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Employee Count
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
                                   checked={!!currentIncluded.payroll?.includeStateCount}
                                   onCheckedChange={toggleIncluded("payroll.includeStateCount")}
-                                />{" "}
-                                <Label>State Count</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  State Count
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -638,8 +676,10 @@ export default function AdminCalculatorManager() {
                                   onCheckedChange={toggleIncluded(
                                     "agentOfService.includeAdditionalStates"
                                   )}
-                                />{" "}
-                                <Label>Additional States</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Additional States
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Checkbox
@@ -647,8 +687,10 @@ export default function AdminCalculatorManager() {
                                   onCheckedChange={toggleIncluded(
                                     "agentOfService.includeComplexCase"
                                   )}
-                                />{" "}
-                                <Label>Complex Case</Label>
+                                />
+                                <span className="text-sm font-medium cursor-pointer select-none">
+                                  Complex Case
+                                </span>
                               </div>
                             </div>
                           </div>

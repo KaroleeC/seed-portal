@@ -9,7 +9,8 @@ const router = Router();
 router.get("/api/queue/metrics", requireAuth, async (req, res) => {
   try {
     const mod: any = await import("../queue.js");
-    const metrics = typeof mod.getQueueMetrics === "function" ? mod.getQueueMetrics() : { enabled: false };
+    const metrics =
+      typeof mod.getQueueMetrics === "function" ? mod.getQueueMetrics() : { enabled: false };
     res.json(metrics);
   } catch (error) {
     console.error("Queue metrics error:", getErrorMessage(error));
@@ -61,7 +62,11 @@ router.get("/api/jobs/:jobId/status", requireAuth, async (req, res) => {
       return res.status(500).json({ status: "failed", error: job.failedReason });
     }
 
-    res.json({ status: state, progress, message: state === "active" ? "Processing AI insights..." : "Job in queue" });
+    res.json({
+      status: state,
+      progress,
+      message: state === "active" ? "Processing AI insights..." : "Job in queue",
+    });
   } catch (error) {
     console.error("Job status error:", error);
     res.status(500).json({ message: "Failed to get job status" });

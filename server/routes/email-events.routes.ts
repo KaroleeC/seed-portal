@@ -1,6 +1,6 @@
 /**
  * Email Events SSE Router
- * 
+ *
  * Server-Sent Events endpoint for real-time email sync notifications
  */
 
@@ -15,16 +15,18 @@ const router = Router();
 
 // Initialize Supabase client for token verification
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+const supabaseServiceKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
-const supabase = supabaseUrl && supabaseServiceKey 
-  ? createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
-  : null;
+const supabase =
+  supabaseUrl && supabaseServiceKey
+    ? createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      })
+    : null;
 
 /**
  * Auth middleware for SSE that accepts token from query params
@@ -44,7 +46,10 @@ async function requireAuthSSE(req: any, res: Response, next: NextFunction) {
     }
 
     // Verify token with Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
 
     if (error || !user) {
       return res.status(401).json({ error: "Invalid token" });
@@ -74,12 +79,12 @@ async function requireAuthSSE(req: any, res: Response, next: NextFunction) {
 
 /**
  * GET /api/email/events/:accountId
- * 
+ *
  * SSE endpoint for real-time email sync notifications
- * 
+ *
  * Events:
  * - sync-completed: Fired when background email sync completes
- * 
+ *
  * Client usage:
  * ```typescript
  * const eventSource = new EventSource('/api/email/events/account-123');

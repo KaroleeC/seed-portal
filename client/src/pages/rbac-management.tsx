@@ -511,11 +511,11 @@ export default function RBACManagement() {
                 {/* Create Department */}
                 <div className="flex gap-2 items-end">
                   <div className="flex-1">
-                    <Label>Name</Label>
+                    <Label htmlFor="dept-name">Name</Label>
                     <Input id="dept-name" placeholder="e.g. Sales" />
                   </div>
                   <div className="flex-1">
-                    <Label>Description</Label>
+                    <Label htmlFor="dept-desc">Description</Label>
                     <Input id="dept-desc" placeholder="Optional" />
                   </div>
                   <Button
@@ -555,11 +555,11 @@ export default function RBACManagement() {
               <CardContent className="space-y-4">
                 <div className="flex gap-2 items-end">
                   <div className="flex-1">
-                    <Label>Manager User ID</Label>
+                    <Label htmlFor="mgr-manager">Manager User ID</Label>
                     <Input id="mgr-manager" placeholder="e.g. 1" />
                   </div>
                   <div className="flex-1">
-                    <Label>Member User ID</Label>
+                    <Label htmlFor="mgr-member">Member User ID</Label>
                     <Input id="mgr-member" placeholder="e.g. 7" />
                   </div>
                   <Button
@@ -646,8 +646,8 @@ export default function RBACManagement() {
                           </div>
 
                           {/* Default Dashboard Selector */}
-                          <div className="flex items-center gap-2">
-                            <Label className="text-sm">Default Dashboard:</Label>
+                          <div className="flex items-center gap-4">
+                            <p className="text-sm font-medium">Default Dashboard:</p>
                             <Select
                               value={user.defaultDashboard || "sales"}
                               onValueChange={(newDashboard) =>
@@ -779,8 +779,9 @@ export default function RBACManagement() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label>User Email</Label>
+                    <Label htmlFor="test-user-email">User Email</Label>
                     <Input
+                      id="test-user-email"
                       placeholder="user@seedfinancial.io"
                       value={testScenario.userEmail}
                       onChange={(e) =>
@@ -789,7 +790,7 @@ export default function RBACManagement() {
                     />
                   </div>
                   <div>
-                    <Label>Action</Label>
+                    <p className="text-sm font-medium mb-1">Action</p>
                     <Select
                       value={testScenario.action}
                       onValueChange={(value) => setTestScenario({ ...testScenario, action: value })}
@@ -810,7 +811,7 @@ export default function RBACManagement() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Resource Type</Label>
+                    <p className="text-sm font-medium mb-1">Resource Type</p>
                     <Select
                       value={testScenario.resourceType}
                       onValueChange={(value) =>
@@ -828,8 +829,9 @@ export default function RBACManagement() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Resource ID (Optional)</Label>
+                    <Label htmlFor="test-resource-id">Resource ID (Optional)</Label>
                     <Input
+                      id="test-resource-id"
                       placeholder="123"
                       value={testScenario.resourceId}
                       onChange={(e) =>
@@ -913,7 +915,7 @@ export default function RBACManagement() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <Label>Policy:</Label>
+                  <p className="text-sm font-medium">Policy:</p>
                   <Select value={selectedPolicy} onValueChange={setSelectedPolicy}>
                     <SelectTrigger className="w-48">
                       <SelectValue />
@@ -935,8 +937,9 @@ export default function RBACManagement() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Policy Content (YAML)</Label>
+                  <Label htmlFor="policy-content">Policy Content (YAML)</Label>
                   <Textarea
+                    id="policy-content"
                     value={policyContent}
                     onChange={(e) => setPolicyContent(e.target.value)}
                     className="font-mono text-sm min-h-[400px]"

@@ -1,9 +1,9 @@
 /**
  * Impersonation E2E Tests
- * 
+ *
  * End-to-end tests for user impersonation feature with Postgres sessions.
  * These tests verify the full impersonation flow works after Redis migration.
- * 
+ *
  * NOTE: These tests are SKIPPED because the app uses Google OAuth,
  * which cannot be easily automated in E2E tests. To test impersonation:
  * 1. Use the integration tests (test/integration/postgres-sessions.test.ts)
@@ -41,7 +41,7 @@ test.describe.skip("User Impersonation (Postgres Sessions)", () => {
     // Verify session contains impersonation data
     const cookies = await page.context().cookies();
     const sessionCookie = cookies.find((c) => c.name === "seedos.sid");
-    
+
     expect(sessionCookie).toBeDefined();
     expect(sessionCookie?.value).toBeTruthy();
   });
@@ -86,14 +86,14 @@ test.describe.skip("User Impersonation (Postgres Sessions)", () => {
 
     // Should be back to admin account
     await expect(page.locator("text=/impersonating|signed in as/i")).not.toBeVisible();
-    
+
     // Should see admin features again
     await expect(page.locator("text=/admin|settings/i")).toBeVisible();
   });
 
   test("impersonation session data is stored in Postgres", async ({ page, request }) => {
     // This test verifies session is in Postgres, not Redis
-    
+
     // Login as admin
     await page.fill('input[name="email"]', "admin@example.com");
     await page.fill('input[name="password"]', "admin-password");
@@ -126,15 +126,13 @@ test.describe.skip("User Impersonation (Postgres Sessions)", () => {
     await page.goto("/admin/users");
 
     // Should be redirected or see access denied
-    await expect(
-      page.locator("text=/access denied|unauthorized|forbidden/i")
-    ).toBeVisible();
+    await expect(page.locator("text=/access denied|unauthorized|forbidden/i")).toBeVisible();
   });
 
   test("impersonation session expires correctly", async ({ page }) => {
     // This would test session expiration, but requires waiting 7 days (maxAge)
     // For practical testing, we'll just verify the session cookie has correct attributes
-    
+
     await page.fill('input[name="email"]', "admin@example.com");
     await page.fill('input[name="password"]', "admin-password");
     await page.click('button[type="submit"]');
@@ -146,7 +144,7 @@ test.describe.skip("User Impersonation (Postgres Sessions)", () => {
     expect(sessionCookie).toBeDefined();
     expect(sessionCookie?.httpOnly).toBe(true); // Security: HttpOnly
     expect(sessionCookie?.sameSite).toBe("Lax"); // CSRF protection
-    
+
     // In production, should be secure
     if (process.env.NODE_ENV === "production") {
       expect(sessionCookie?.secure).toBe(true);

@@ -1,9 +1,9 @@
 /**
  * useFormActions Hook
- * 
+ *
  * Manages form actions (reset, clear, new quote, load quote).
  * Extracted from QuoteCalculator.tsx for DRY and testability.
- * 
+ *
  * Features:
  * - Form reset with confirmation
  * - Clear all fields
@@ -33,7 +33,7 @@ export interface UseFormActionsOptions {
 
 /**
  * Hook for managing form actions
- * 
+ *
  * DRY: Single hook for all form manipulation
  */
 export function useFormActions(options: UseFormActionsOptions) {
@@ -49,7 +49,7 @@ export function useFormActions(options: UseFormActionsOptions) {
 
   /**
    * Reset form to default values
-   * 
+   *
    * DRY: Single reset function
    */
   const resetForm = useCallback(() => {
@@ -61,7 +61,7 @@ export function useFormActions(options: UseFormActionsOptions) {
 
   /**
    * Clear all form fields (same as reset)
-   * 
+   *
    * DRY: Alias for consistency with UI terminology
    */
   const clearForm = useCallback(() => {
@@ -70,7 +70,7 @@ export function useFormActions(options: UseFormActionsOptions) {
 
   /**
    * Start a new quote
-   * 
+   *
    * DRY: Reset + navigate to placeholder view
    */
   const startNewQuote = useCallback(() => {
@@ -81,9 +81,9 @@ export function useFormActions(options: UseFormActionsOptions) {
 
   /**
    * Load an existing quote into the form
-   * 
+   *
    * DRY: Single quote loading function with proper React Hook Form handling
-   * 
+   *
    * Why two-step field setting:
    * React Hook Form has quirks with numeric fields. Setting them twice
    * (once in reset, once in setTimeout) ensures proper type coercion.
@@ -125,7 +125,7 @@ export function useFormActions(options: UseFormActionsOptions) {
 
   /**
    * Duplicate a quote (load quote but clear ID)
-   * 
+   *
    * DRY: Load quote + clear editing state
    */
   const duplicateQuote = useCallback(
@@ -164,7 +164,7 @@ export function useFormActions(options: UseFormActionsOptions) {
 
   /**
    * Check if form has any data (to show reset confirmation)
-   * 
+   *
    * DRY: Single check function
    */
   const hasFormData = useCallback((): boolean => {

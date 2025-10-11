@@ -111,7 +111,7 @@
 
 - Missing `req.principal` type augmentation (lines 55, 163, 241)
 - Missing `InsertEmailAccount` import (line 110)  
-**Impact:** None - code functions correctly despite type errors
+  **Impact:** None - code functions correctly despite type errors
 
 ---
 

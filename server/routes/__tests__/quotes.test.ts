@@ -1,6 +1,6 @@
 /**
  * Quote Routes Tests
- * 
+ *
  * Comprehensive test coverage for POST, PUT, and GET /api/quotes endpoints.
  * Tests validation, approval flow, pricing calculation, and HubSpot sync.
  */
@@ -88,9 +88,7 @@ describe("POST /api/quotes", () => {
       vi.spyOn(storage, "createQuote").mockResolvedValue(mockCreatedQuote as any);
 
       // Act
-      const response = await request(app)
-        .post("/api/quotes")
-        .send(quoteData);
+      const response = await request(app).post("/api/quotes").send(quoteData);
 
       // Assert
       expect(response.status).toBe(200);
@@ -127,9 +125,7 @@ describe("POST /api/quotes", () => {
       } as any);
       vi.spyOn(storage, "createQuote").mockResolvedValue({ id: 1 } as any);
 
-      const response = await request(app)
-        .post("/api/quotes")
-        .send(quoteData);
+      const response = await request(app).post("/api/quotes").send(quoteData);
 
       expect(response.status).toBe(200);
       expect(storage.createQuote).toHaveBeenCalledWith(
@@ -161,9 +157,7 @@ describe("POST /api/quotes", () => {
       };
 
       // Act
-      const response = await request(app)
-        .post("/api/quotes")
-        .send(quoteData);
+      const response = await request(app).post("/api/quotes").send(quoteData);
 
       // Assert
       expect(response.status).toBe(400);
@@ -202,9 +196,7 @@ describe("POST /api/quotes", () => {
       };
 
       // Act
-      const response = await request(app)
-        .post("/api/quotes")
-        .send(quoteData);
+      const response = await request(app).post("/api/quotes").send(quoteData);
 
       // Assert
       expect(response.status).toBe(200);
@@ -244,14 +236,18 @@ describe("POST /api/quotes", () => {
       };
 
       // Act
-      const response = await request(app)
-        .post("/api/quotes")
-        .send(quoteData);
+      const response = await request(app).post("/api/quotes").send(quoteData);
 
       // Assert
       expect(response.status).toBe(200);
-      expect(storage.validateApprovalCode).toHaveBeenCalledWith("VALID_CODE_123", "existing@example.com");
-      expect(storage.markApprovalCodeUsed).toHaveBeenCalledWith("VALID_CODE_123", "existing@example.com");
+      expect(storage.validateApprovalCode).toHaveBeenCalledWith(
+        "VALID_CODE_123",
+        "existing@example.com"
+      );
+      expect(storage.markApprovalCodeUsed).toHaveBeenCalledWith(
+        "VALID_CODE_123",
+        "existing@example.com"
+      );
     });
 
     it("should reject invalid approval code", async () => {
@@ -274,9 +270,7 @@ describe("POST /api/quotes", () => {
       };
 
       // Act
-      const response = await request(app)
-        .post("/api/quotes")
-        .send(quoteData);
+      const response = await request(app).post("/api/quotes").send(quoteData);
 
       // Assert
       expect(response.status).toBe(400);
@@ -296,9 +290,7 @@ describe("POST /api/quotes", () => {
       vi.spyOn(storage, "getQuotesByEmail").mockResolvedValue([]);
 
       // Act
-      const response = await request(app)
-        .post("/api/quotes")
-        .send(incompleteData);
+      const response = await request(app).post("/api/quotes").send(incompleteData);
 
       // Assert
       expect(response.status).toBe(400);
@@ -317,9 +309,7 @@ describe("POST /api/quotes", () => {
       vi.spyOn(storage, "getQuotesByEmail").mockResolvedValue([]);
 
       // Act
-      const response = await request(app)
-        .post("/api/quotes")
-        .send(invalidData);
+      const response = await request(app).post("/api/quotes").send(invalidData);
 
       // Assert
       expect(response.status).toBe(400);
@@ -352,9 +342,7 @@ describe("POST /api/quotes", () => {
       vi.spyOn(storage, "createQuote").mockResolvedValue({ id: 1 } as any);
 
       // Act
-      const response = await request(app)
-        .post("/api/quotes")
-        .send(quoteData);
+      const response = await request(app).post("/api/quotes").send(quoteData);
 
       // Assert
       expect(response.status).toBe(200);
@@ -381,9 +369,7 @@ describe("POST /api/quotes", () => {
       });
 
       // Act
-      const response = await request(app)
-        .post("/api/quotes")
-        .send(quoteData);
+      const response = await request(app).post("/api/quotes").send(quoteData);
 
       // Assert
       expect(response.status).toBe(400);
@@ -396,7 +382,7 @@ describe("POST /api/quotes", () => {
       // Override requireAuth mock for this test
       const appNoAuth = express();
       appNoAuth.use(express.json());
-      
+
       vi.mock("../middleware/supabase-auth", () => ({
         requireAuth: (req: any, res: any, next: any) => {
           res.status(401).json({ message: "Unauthorized" });
@@ -408,9 +394,7 @@ describe("POST /api/quotes", () => {
         monthlyRevenueRange: "$100K-$500K",
       };
 
-      const response = await request(app)
-        .post("/api/quotes")
-        .send(quoteData);
+      const response = await request(app).post("/api/quotes").send(quoteData);
 
       // Either 401 from middleware or validation error
       expect([401, 400]).toContain(response.status);
@@ -448,9 +432,7 @@ describe("GET /api/quotes", () => {
 
   it("should filter quotes by email", async () => {
     // Arrange
-    const mockQuotes = [
-      { id: 1, contactEmail: "client1@example.com", ownerId: 1 },
-    ];
+    const mockQuotes = [{ id: 1, contactEmail: "client1@example.com", ownerId: 1 }];
 
     vi.spyOn(storage, "getQuotesByEmail").mockResolvedValue(mockQuotes as any);
 
@@ -465,9 +447,7 @@ describe("GET /api/quotes", () => {
 
   it("should search quotes", async () => {
     // Arrange
-    const mockQuotes = [
-      { id: 1, contactEmail: "client1@example.com", ownerId: 1 },
-    ];
+    const mockQuotes = [{ id: 1, contactEmail: "client1@example.com", ownerId: 1 }];
 
     vi.spyOn(storage, "getAllQuotes").mockResolvedValue(mockQuotes as any);
 
@@ -526,9 +506,7 @@ describe("PUT /api/quotes/:id", () => {
     vi.spyOn(storage, "updateQuote").mockResolvedValue(updatedQuote as any);
 
     // Act
-    const response = await request(app)
-      .put("/api/quotes/1")
-      .send(updateData);
+    const response = await request(app).put("/api/quotes/1").send(updateData);
 
     // Assert
     expect(response.status).toBe(200);
@@ -542,9 +520,7 @@ describe("PUT /api/quotes/:id", () => {
     vi.spyOn(storage, "getQuote").mockResolvedValue(null);
 
     // Act
-    const response = await request(app)
-      .put("/api/quotes/999")
-      .send({ companyName: "Test" });
+    const response = await request(app).put("/api/quotes/999").send({ companyName: "Test" });
 
     // Assert
     expect(response.status).toBe(404);
@@ -567,9 +543,7 @@ describe("PUT /api/quotes/:id", () => {
     vi.spyOn(hubSpotService as any, "updateQuote").mockResolvedValue(undefined);
 
     // Act
-    const response = await request(app)
-      .put("/api/quotes/1")
-      .send({ companyName: "Updated LLC" });
+    const response = await request(app).put("/api/quotes/1").send({ companyName: "Updated LLC" });
 
     // Assert
     expect(response.status).toBe(200);
@@ -578,9 +552,7 @@ describe("PUT /api/quotes/:id", () => {
 
   it("should handle invalid quote ID", async () => {
     // Act
-    const response = await request(app)
-      .put("/api/quotes/invalid")
-      .send({ companyName: "Test" });
+    const response = await request(app).put("/api/quotes/invalid").send({ companyName: "Test" });
 
     // Assert
     expect(response.status).toBe(400);

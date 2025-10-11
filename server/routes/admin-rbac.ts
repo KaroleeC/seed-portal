@@ -37,7 +37,11 @@ router.get("/api/admin/rbac/roles", requireAuth, async (req, res) => {
           id: r.id,
           name: r.name,
           description: (r as any).description,
-          permissions: perms.map((p: any) => ({ id: p.id, key: p.key, category: (p as any).category })),
+          permissions: perms.map((p: any) => ({
+            id: p.id,
+            key: p.key,
+            category: (p as any).category,
+          })),
         };
       })
     );

@@ -4,7 +4,8 @@
  * API endpoints for managing background jobs using Graphile Worker
  */
 
-import { Router, Request, Response } from "express";
+import type { Request, Response } from "express";
+import { Router } from "express";
 import { queueJob, getWorkerRunner } from "../workers/graphile-worker";
 import { logger } from "../logger";
 

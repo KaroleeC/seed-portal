@@ -36,15 +36,15 @@ const preview: Preview = {
         light: {
           name: "light",
           value: "hsl(0 0% 100%)",
-        }
-      }
+        },
+      },
     },
   },
 
   decorators: [
     (Story, context) => {
       const theme = context.globals.theme || "dark";
-      
+
       React.useEffect(() => {
         const root = document.documentElement;
         root.classList.remove("light", "dark");
@@ -81,9 +81,9 @@ const preview: Preview = {
 
   initialGlobals: {
     backgrounds: {
-      value: "dark"
-    }
-  }
+      value: "dark",
+    },
+  },
 };
 
 export default preview;

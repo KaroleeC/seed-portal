@@ -1,14 +1,14 @@
 /**
  * App Namespace Aliases
- * 
+ *
  * Provides backward-compatible redirect routes for app-namespaced endpoints.
  * These allow clients to use /api/apps/{app-name}/* paths that redirect to
  * the canonical API paths.
- * 
+ *
  * Apps:
  * - SeedQC (Calculator): /api/apps/seedqc/* → /api/calculator/*
  * - SeedPay (Commission Tracker): /api/apps/seedpay/* → /api/commissions/*
- * 
+ *
  * Note: All redirects preserve query strings and use 307 (Temporary Redirect)
  * to maintain the HTTP method (GET).
  */
@@ -27,21 +27,13 @@ const router = Router();
  * GET /api/apps/seedqc/content
  * Redirects to canonical calculator content endpoint
  */
-router.get(
-  "/api/apps/seedqc/content",
-  requireAuth,
-  createRedirect("/api/calculator/content")
-);
+router.get("/api/apps/seedqc/content", requireAuth, createRedirect("/api/calculator/content"));
 
 /**
  * GET /api/apps/seedqc/pricing/config
  * Redirects to canonical pricing config endpoint
  */
-router.get(
-  "/api/apps/seedqc/pricing/config",
-  requireAuth,
-  createRedirect("/api/pricing/config")
-);
+router.get("/api/apps/seedqc/pricing/config", requireAuth, createRedirect("/api/pricing/config"));
 
 // Admin calculator aliases
 router.get(
@@ -50,23 +42,15 @@ router.get(
   createRedirect("/api/admin/calculator/content")
 );
 
-router.get(
-  "/api/admin/apps/seedqc/content/:service",
-  requireAuth,
-  (req, res) => {
-    const service = encodeURIComponent(req.params.service);
-    createRedirect(`/api/admin/calculator/content/${service}`)(req, res, () => {});
-  }
-);
+router.get("/api/admin/apps/seedqc/content/:service", requireAuth, (req, res) => {
+  const service = encodeURIComponent(req.params.service);
+  createRedirect(`/api/admin/calculator/content/${service}`)(req, res, () => {});
+});
 
-router.put(
-  "/api/admin/apps/seedqc/content/:service",
-  requireAuth,
-  (req, res) => {
-    const service = encodeURIComponent(req.params.service);
-    createRedirect(`/api/admin/calculator/content/${service}`)(req, res, () => {});
-  }
-);
+router.put("/api/admin/apps/seedqc/content/:service", requireAuth, (req, res) => {
+  const service = encodeURIComponent(req.params.service);
+  createRedirect(`/api/admin/calculator/content/${service}`)(req, res, () => {});
+});
 
 // =============================
 // SeedPay (Commission Tracker) Aliases
@@ -76,41 +60,25 @@ router.put(
  * GET /api/apps/seedpay/deals
  * Redirects to canonical deals endpoint
  */
-router.get(
-  "/api/apps/seedpay/deals",
-  requireAuth,
-  createRedirect("/api/deals")
-);
+router.get("/api/apps/seedpay/deals", requireAuth, createRedirect("/api/deals"));
 
 /**
  * GET /api/apps/seedpay/deals/by-owner
  * Redirects to canonical deals by owner endpoint
  */
-router.get(
-  "/api/apps/seedpay/deals/by-owner",
-  requireAuth,
-  createRedirect("/api/deals/by-owner")
-);
+router.get("/api/apps/seedpay/deals/by-owner", requireAuth, createRedirect("/api/deals/by-owner"));
 
 /**
  * GET /api/apps/seedpay/sales-reps/me
  * Redirects to canonical sales rep profile endpoint
  */
-router.get(
-  "/api/apps/seedpay/sales-reps/me",
-  requireAuth,
-  createRedirect("/api/sales-reps/me")
-);
+router.get("/api/apps/seedpay/sales-reps/me", requireAuth, createRedirect("/api/sales-reps/me"));
 
 /**
  * GET /api/apps/seedpay/commissions
  * Redirects to canonical commissions endpoint
  */
-router.get(
-  "/api/apps/seedpay/commissions",
-  requireAuth,
-  createRedirect("/api/commissions")
-);
+router.get("/api/apps/seedpay/commissions", requireAuth, createRedirect("/api/commissions"));
 
 /**
  * GET /api/apps/seedpay/commissions/current-period-summary

@@ -1,8 +1,8 @@
 /**
  * Commissions Router
- * 
+ *
  * Handles commission tracking, approval, and HubSpot sync.
- * 
+ *
  * Routes:
  * - GET /api/commissions - Get commissions (filtered by role)
  * - GET /api/commissions/:id - Get single commission
@@ -16,7 +16,7 @@
  * - GET /api/commissions/hubspot/current-period - Get HubSpot period
  * - GET /api/commission-adjustments - Get adjustments
  * - GET /api/pipeline-projections - Get projections
- * 
+ *
  * Authorization Pattern:
  * ✅ All routes use requirePermission middleware
  * ❌ No inline auth checks (ESLint enforced)
@@ -49,25 +49,30 @@ router.get(
       return res.status(400).json({ message: "Invalid salesRepId" });
     }
 
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     // Determine which commissions to fetch based on filters
     let commissionsData: commissionsService.Commission[];
 
     if (requestedSalesRepId) {
       // Authorization check: Can this user access this sales rep's data?
       // This is handled by Cerbos/RBAC via requirePermission with resource attributes
-      commissionsData = await commissionsService.getCommissions({ salesRepId: requestedSalesRepId });
-    } else if (req.user) {
-      // Check if user has admin-level access (Cerbos will determine this)
-      // For now, use a simple role check as fallback until Cerbos is enabled
-      const isAdmin = req.user.role === "admin";
-      
-      if (isAdmin) {
+      commissionsData = await commissionsService.getCommissions({
+        salesRepId: requestedSalesRepId,
+      });
+    } else {
+      // Check if user has 'commissions.view' permission (for all commissions)
+      // If not, they have 'commissions.view_own' and can only see their own
+      const userPermissions = await storage.getUserPermissions(req.user.id);
+      const hasViewAll = userPermissions.some((p) => p.key === "commissions.view" && p.isActive);
+
+      if (hasViewAll) {
         commissionsData = await commissionsService.getCommissions({ includeAll: true });
       } else {
         commissionsData = await commissionsService.getCommissions({ userId: req.user.id });
       }
-    } else {
-      return res.status(401).json({ message: "Unauthorized" });
     }
 
     // Group by invoice
@@ -214,7 +219,7 @@ router.get(
  * GET /api/pipeline-projections
  * Action: commissions.view_projections
  * Get pipeline projections
- * 
+ *
  * Note: This endpoint returns placeholder data. Real implementation
  * would calculate projections based on deals in pipeline.
  */
@@ -236,7 +241,7 @@ router.get(
  * POST /api/commissions/sync-hubspot
  * Action: commissions.sync
  * Sync commissions from HubSpot
- * 
+ *
  * Note: Implementation delegated to HubSpot sync service
  */
 router.post(
@@ -247,7 +252,7 @@ router.post(
     // This route is a placeholder for the HubSpot sync logic
     // The actual implementation is in routes.ts and should be moved here
     // during full migration
-    
+
     res.status(501).json({
       message: "HubSpot sync not yet implemented in extracted router",
       note: "Use legacy route in routes.ts for now",
@@ -267,7 +272,7 @@ router.get(
   asyncHandler(async (req, res) => {
     // Get user's sales rep
     const salesRep = await storage.getSalesRepByUserId(req.user!.id);
-    
+
     if (!salesRep) {
       return res.json({
         totalCommissions: 0,

@@ -1,6 +1,6 @@
 /**
  * Express Type Augmentation
- * 
+ *
  * Extends Express Request type to include custom properties
  * added by authentication middleware.
  */

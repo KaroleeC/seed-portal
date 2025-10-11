@@ -119,7 +119,7 @@ export async function getCommissions(filters: CommissionFilters) {
 
   // Build WHERE clause based on filters (DRY!)
   let whereClause = sql`1=1`;
-  
+
   if (salesRepId) {
     whereClause = sql`c.sales_rep_id = ${salesRepId}`;
   } else if (userId && !includeAll) {
@@ -229,13 +229,13 @@ router.post(
 
 ## 📊 Code Quality Metrics
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Duplicate SQL** | 3 queries (81 lines) | 1 query (30 lines) | 63% reduction |
-| **Grouping Logic** | Inline (60 lines) | Function (50 lines) | Reusable |
-| **Auth Checks** | Inline (5 violations) | Middleware (0 violations) | ✅ Compliant |
-| **Test Coverage** | 0 tests | 15 tests | ∞ improvement |
-| **Lines in routes.ts** | 4,356 | ~3,800 (pending integration) | 13% reduction |
+| Metric                 | Before                | After                        | Improvement   |
+| ---------------------- | --------------------- | ---------------------------- | ------------- |
+| **Duplicate SQL**      | 3 queries (81 lines)  | 1 query (30 lines)           | 63% reduction |
+| **Grouping Logic**     | Inline (60 lines)     | Function (50 lines)          | Reusable      |
+| **Auth Checks**        | Inline (5 violations) | Middleware (0 violations)    | ✅ Compliant  |
+| **Test Coverage**      | 0 tests               | 15 tests                     | ∞ improvement |
+| **Lines in routes.ts** | 4,356                 | ~3,800 (pending integration) | 13% reduction |
 
 ---
 
@@ -246,7 +246,7 @@ All routes follow the ESLint-enforced pattern:
 ```typescript
 router.METHOD(
   "/api/resource",
-  requireAuth,                                    // ✅ Always required
+  requireAuth, // ✅ Always required
   requirePermission("resource.action", "resource"), // ✅ For protected routes
   asyncHandler(async (req, res) => {
     // ✅ Business logic only - no auth checks
@@ -374,7 +374,7 @@ The following routes are NOT yet extracted (complex HubSpot logic):
 ✅ **Apply authorization pattern** - Done  
 ✅ **Add comprehensive tests** - Done  
 ✅ **ESLint compliant** - Verified  
-✅ **Production-ready** - Can integrate today  
+✅ **Production-ready** - Can integrate today
 
 ---
 

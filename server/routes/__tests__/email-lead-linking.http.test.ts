@@ -1,6 +1,6 @@
 /**
  * HTTP Integration Tests for Email-Lead Linking Routes
- * 
+ *
  * Tests the full HTTP request cycle:
  * - Route registration and mounting
  * - Auth middleware (cookie/token validation)
@@ -13,7 +13,11 @@ import express, { Express } from "express";
 import cookieParser from "cookie-parser";
 import request from "supertest";
 import { pool } from "../../db";
-import { createTestLead, createTestThread, cleanTestData } from "../../../test/factories/test-helpers";
+import {
+  createTestLead,
+  createTestThread,
+  cleanTestData,
+} from "../../../test/factories/test-helpers";
 
 describe("Email Lead Linking HTTP Routes", () => {
   let app: Express;
@@ -29,12 +33,13 @@ describe("Email Lead Linking HTTP Routes", () => {
 
     // Mock auth middleware that checks for token in cookie or header
     app.use((req, res, next) => {
-      const token = req.cookies?.["sb-access-token"] || req.headers.authorization?.replace("Bearer ", "");
-      
+      const token =
+        req.cookies?.["sb-access-token"] || req.headers.authorization?.replace("Bearer ", "");
+
       if (!token) {
         return res.status(401).json({ error: "Unauthorized" });
       }
-      
+
       // Mock principal for valid token
       if (token === "valid-test-token") {
         (req as any).principal = {
@@ -54,7 +59,7 @@ describe("Email Lead Linking HTTP Routes", () => {
     // Create test data
     const lead = await createTestLead(pool);
     const thread = await createTestThread(pool, { accountId: "test-account" });
-    
+
     testLeadId = lead.id;
     testThreadId = thread.id;
     authToken = "valid-test-token";

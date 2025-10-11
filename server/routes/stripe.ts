@@ -27,10 +27,15 @@ router.get("/api/stripe/revenue", requireAuth, async (req, res) => {
       let hasMore = true;
       let startingAfter: string | undefined = undefined;
       while (hasMore) {
-        const response: any = await stripe.charges.list({ ...params, limit: 100, starting_after: startingAfter });
+        const response: any = await stripe.charges.list({
+          ...params,
+          limit: 100,
+          starting_after: startingAfter,
+        });
         allCharges.push(...response.data);
         hasMore = response.has_more;
-        if (hasMore && response.data.length > 0) startingAfter = response.data[response.data.length - 1].id;
+        if (hasMore && response.data.length > 0)
+          startingAfter = response.data[response.data.length - 1].id;
       }
       return { data: allCharges };
     };
@@ -68,25 +73,45 @@ router.get("/api/stripe/revenue", requireAuth, async (req, res) => {
     const yearToDateRevenue = calculateRevenue(yearToDateCharges);
     const lastMonthRevenue = calculateRevenue(lastMonthCharges);
 
-    const monthOverMonthGrowth = lastMonthRevenue > 0 ? ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
+    const monthOverMonthGrowth =
+      lastMonthRevenue > 0
+        ? ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
+        : 0;
 
     res.json({
-      currentMonth: { revenue: currentMonthRevenue, transactions: calculateTransactionCount(currentMonthCharges) },
-      lastMonth: { revenue: lastMonthRevenue, transactions: calculateTransactionCount(lastMonthCharges) },
-      yearToDate: { revenue: yearToDateRevenue, transactions: calculateTransactionCount(yearToDateCharges) },
+      currentMonth: {
+        revenue: currentMonthRevenue,
+        transactions: calculateTransactionCount(currentMonthCharges),
+      },
+      lastMonth: {
+        revenue: lastMonthRevenue,
+        transactions: calculateTransactionCount(lastMonthCharges),
+      },
+      yearToDate: {
+        revenue: yearToDateRevenue,
+        transactions: calculateTransactionCount(yearToDateCharges),
+      },
       growth: { monthOverMonth: monthOverMonthGrowth },
       lastUpdated: new Date().toISOString(),
     });
   } catch (error: any) {
     console.error("Stripe revenue fetch error:", getErrorMessage(error));
-    res.status(500).json({ status: "error", message: "Failed to fetch revenue data from Stripe", error: getErrorMessage(error) });
+    res
+      .status(500)
+      .json({
+        status: "error",
+        message: "Failed to fetch revenue data from Stripe",
+        error: getErrorMessage(error),
+      });
   }
 });
 
 router.get("/api/stripe/recent-transactions", requireAuth, async (req, res) => {
   try {
     if (!process.env.STRIPE_SECRET_KEY) {
-      return res.status(503).json({ status: "error", message: "Stripe not configured - missing STRIPE_SECRET_KEY" });
+      return res
+        .status(503)
+        .json({ status: "error", message: "Stripe not configured - missing STRIPE_SECRET_KEY" });
     }
     const Stripe = await import("stripe");
     const stripe = new Stripe.default(process.env.STRIPE_SECRET_KEY as string);
@@ -106,7 +131,13 @@ router.get("/api/stripe/recent-transactions", requireAuth, async (req, res) => {
     res.json({ transactions, lastUpdated: new Date().toISOString() });
   } catch (error: any) {
     console.error("Stripe transactions fetch error:", getErrorMessage(error));
-    res.status(500).json({ status: "error", message: "Failed to fetch recent transactions from Stripe", error: getErrorMessage(error) });
+    res
+      .status(500)
+      .json({
+        status: "error",
+        message: "Failed to fetch recent transactions from Stripe",
+        error: getErrorMessage(error),
+      });
   }
 });
 

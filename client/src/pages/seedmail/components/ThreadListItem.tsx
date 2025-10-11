@@ -33,7 +33,7 @@ export function ThreadListItem({
   const isUnread = thread.unreadCount > 0;
   const sender = thread.participants?.[0];
   const initials = getInitials(sender?.name, sender?.email);
-  
+
   // Fetch send status for sent emails
   const isSentEmail = thread.labels?.includes("SENT");
   const { data: sendStatus } = useSendStatus(latestMessageId, isSentEmail);

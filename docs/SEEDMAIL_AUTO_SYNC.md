@@ -7,10 +7,11 @@ This document describes the implementation of automatic email synchronization fo
 **Status:**
 
 - ✅ Phase 1 Complete (Server-Side Background Sync)
-- ✅ Phase 2 Complete (Client-Side Adaptive Polling)  
+- ✅ Phase 2 Complete (Client-Side Adaptive Polling)
 - ✅ Phase 3 Complete (SSE Push Notifications) 🎉
 
 See detailed documentation:
+
 - [Phase 2: Adaptive Polling](./SEEDMAIL_PHASE_2_ADAPTIVE_POLLING.md)
 - [Phase 3: SSE Push Notifications](./SEEDMAIL_PHASE_3_SSE.md)
 
@@ -105,50 +106,50 @@ Trigger manual sync via API:
 
 ```typescript
 // Client code
-await apiRequest('/api/email/sync', {
-  method: 'POST',
-  body: { 
-    accountId: 'account-123',
-    forceFullSync: false  // Optional: force full sync instead of incremental
-  }
+await apiRequest("/api/email/sync", {
+  method: "POST",
+  body: {
+    accountId: "account-123",
+    forceFullSync: false, // Optional: force full sync instead of incremental
+  },
 });
 ```
 
 ### Programmatic Usage
 
 ```typescript
-import { syncEmailAccount } from './server/services/email-sync.service';
+import { syncEmailAccount } from "./server/services/email-sync.service";
 
 // Sync a specific account
-const result = await syncEmailAccount('account-id', {
-  forceFullSync: false,  // Use incremental sync if historyId exists
-  maxResults: 50,         // Max messages to fetch
-  labelIds: ['INBOX'],    // Optional: filter by labels
+const result = await syncEmailAccount("account-id", {
+  forceFullSync: false, // Use incremental sync if historyId exists
+  maxResults: 50, // Max messages to fetch
+  labelIds: ["INBOX"], // Optional: filter by labels
 });
 
 console.log({
   success: result.success,
-  syncType: result.syncType,        // 'full' | 'incremental'
+  syncType: result.syncType, // 'full' | 'incremental'
   threadsProcessed: result.threadsProcessed,
   messagesProcessed: result.messagesProcessed,
-  duration: result.duration,        // milliseconds
-  error: result.error                // undefined if success
+  duration: result.duration, // milliseconds
+  error: result.error, // undefined if success
 });
 ```
 
 ### Scheduling Syncs
 
 ```typescript
-import { scheduleEmailSync } from './server/workers/graphile-worker';
+import { scheduleEmailSync } from "./server/workers/graphile-worker";
 
 // Schedule sync for a specific account
-await scheduleEmailSync('account-id', {
-  intervalMinutes: 5,      // Run in 5 minutes
+await scheduleEmailSync("account-id", {
+  intervalMinutes: 5, // Run in 5 minutes
   forceFullSync: false,
 });
 
 // Schedule syncs for all active accounts
-import { scheduleAllEmailSyncs } from './server/workers/graphile-worker';
+import { scheduleAllEmailSyncs } from "./server/workers/graphile-worker";
 await scheduleAllEmailSyncs();
 ```
 
@@ -245,20 +246,26 @@ Structured logs with Pino logger:
 logger.info({ accountId, accountEmail }, "Starting email sync");
 
 // Sync complete
-logger.info({ 
-  accountId, 
-  syncType, 
-  threadsProcessed, 
-  messagesProcessed, 
-  duration 
-}, "Email sync completed successfully");
+logger.info(
+  {
+    accountId,
+    syncType,
+    threadsProcessed,
+    messagesProcessed,
+    duration,
+  },
+  "Email sync completed successfully"
+);
 
 // Sync failed
-logger.error({ 
-  accountId, 
-  error: errorMessage, 
-  duration 
-}, "Email sync failed");
+logger.error(
+  {
+    accountId,
+    error: errorMessage,
+    duration,
+  },
+  "Email sync failed"
+);
 ```
 
 ### Sync Status
@@ -266,7 +273,7 @@ logger.error({
 Query sync status from database:
 
 ```sql
-SELECT 
+SELECT
   ea.email,
   ess.sync_status,
   ess.last_synced_at,
@@ -282,7 +289,7 @@ WHERE ea.user_id = 'user-123';
 Check Graphile Worker job queue:
 
 ```sql
-SELECT * FROM graphile_worker.jobs 
+SELECT * FROM graphile_worker.jobs
 WHERE task_identifier = 'email-sync'
 ORDER BY run_at DESC;
 ```

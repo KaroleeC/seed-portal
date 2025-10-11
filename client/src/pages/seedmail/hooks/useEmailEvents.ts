@@ -33,17 +33,17 @@ interface EmailDeletedEvent {
 
 /**
  * Hook to listen for real-time email sync events via Server-Sent Events (SSE)
- * 
+ *
  * Features:
  * - Automatic reconnection on connection loss
  * - Invalidates React Query cache on sync completion
  * - Falls back gracefully if SSE not supported
  * - Cleans up connection on unmount
- * 
+ *
  * Usage:
  * ```tsx
- * const { isConnected, lastSync } = useEmailEvents({ 
- *   accountId: selectedAccount?.id 
+ * const { isConnected, lastSync } = useEmailEvents({
+ *   accountId: selectedAccount?.id
  * });
  * ```
  */
@@ -83,89 +83,91 @@ export function useEmailEvents({ accountId, enabled = true }: UseEmailEventsOpti
       }
 
       // Create SSE connection with token in query param (EventSource doesn't support headers)
-      const eventSource = new EventSource(`/api/email/events/${accountId}?token=${encodeURIComponent(accessToken)}`);
+      const eventSource = new EventSource(
+        `/api/email/events/${accountId}?token=${encodeURIComponent(accessToken)}`
+      );
       eventSourceRef.current = eventSource;
 
-    // Connection established
-    eventSource.addEventListener("connected", (event: MessageEvent<string>) => {
-      const data = JSON.parse(event.data);
-      console.log("[SSE] Connected:", data);
-      setIsConnected(true);
-      setError(null);
-    });
+      // Connection established
+      eventSource.addEventListener("connected", (event: MessageEvent<string>) => {
+        const data = JSON.parse(event.data);
+        console.log("[SSE] Connected:", data);
+        setIsConnected(true);
+        setError(null);
+      });
 
-    // Sync completed event
-    eventSource.addEventListener("sync-completed", (event: MessageEvent<string>) => {
-      const data: SyncCompletedEvent = JSON.parse(event.data);
-      console.log("[SSE] Sync completed:", data);
-      
-      setLastSync(data);
+      // Sync completed event
+      eventSource.addEventListener("sync-completed", (event: MessageEvent<string>) => {
+        const data: SyncCompletedEvent = JSON.parse(event.data);
+        console.log("[SSE] Sync completed:", data);
 
-      // Invalidate queries to refetch fresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/email/threads", accountId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/email/drafts", accountId] });
-      
-      console.log("[SSE] Invalidated email queries after sync completion");
-    });
+        setLastSync(data);
 
-    // Email received event (Phase 3.1)
-    eventSource.addEventListener("email-received", (event: MessageEvent<string>) => {
-      const data: EmailReceivedEvent = JSON.parse(event.data);
-      console.log("[SSE] New email received:", data);
-      
-      setLastEmailReceived(data);
+        // Invalidate queries to refetch fresh data
+        queryClient.invalidateQueries({ queryKey: ["/api/email/threads", accountId] });
+        queryClient.invalidateQueries({ queryKey: ["/api/email/drafts", accountId] });
 
-      // Invalidate queries to show new email
-      queryClient.invalidateQueries({ queryKey: ["/api/email/threads", accountId] });
-      
-      console.log("[SSE] Invalidated queries after new email");
-    });
+        console.log("[SSE] Invalidated email queries after sync completion");
+      });
 
-    // Draft saved event (Phase 3.1)
-    eventSource.addEventListener("draft-saved", (event: MessageEvent<string>) => {
-      const data: DraftSavedEvent = JSON.parse(event.data);
-      console.log("[SSE] Draft saved:", data);
-      
-      setLastDraftSaved(data);
+      // Email received event (Phase 3.1)
+      eventSource.addEventListener("email-received", (event: MessageEvent<string>) => {
+        const data: EmailReceivedEvent = JSON.parse(event.data);
+        console.log("[SSE] New email received:", data);
 
-      // Invalidate drafts query
-      queryClient.invalidateQueries({ queryKey: ["/api/email/drafts", accountId] });
-      
-      console.log("[SSE] Invalidated drafts after save");
-    });
+        setLastEmailReceived(data);
 
-    // Email deleted event (Phase 3.1)
-    eventSource.addEventListener("email-deleted", (event: MessageEvent<string>) => {
-      const data: EmailDeletedEvent = JSON.parse(event.data);
-      console.log("[SSE] Email deleted:", data);
+        // Invalidate queries to show new email
+        queryClient.invalidateQueries({ queryKey: ["/api/email/threads", accountId] });
 
-      // Invalidate queries to remove deleted email
-      queryClient.invalidateQueries({ queryKey: ["/api/email/threads", accountId] });
-      
-      console.log("[SSE] Invalidated queries after email deletion");
-    });
+        console.log("[SSE] Invalidated queries after new email");
+      });
 
-    // Connection opened
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    eventSource.onopen = (_event) => {
-      console.log("[SSE] Connection opened");
-      setIsConnected(true);
-      setError(null);
-    };
+      // Draft saved event (Phase 3.1)
+      eventSource.addEventListener("draft-saved", (event: MessageEvent<string>) => {
+        const data: DraftSavedEvent = JSON.parse(event.data);
+        console.log("[SSE] Draft saved:", data);
 
-    // Error handling
-    eventSource.onerror = (err: Event) => {
-      console.error("[SSE] Connection error:", err);
-      setIsConnected(false);
-      
-      // EventSource automatically reconnects, but we track state
-      if (eventSource.readyState === EventSource.CLOSED) {
-        setError("Connection closed");
-        console.log("[SSE] Connection closed, will attempt to reconnect...");
-      } else if (eventSource.readyState === EventSource.CONNECTING) {
-        console.log("[SSE] Reconnecting...");
-      }
-    };
+        setLastDraftSaved(data);
+
+        // Invalidate drafts query
+        queryClient.invalidateQueries({ queryKey: ["/api/email/drafts", accountId] });
+
+        console.log("[SSE] Invalidated drafts after save");
+      });
+
+      // Email deleted event (Phase 3.1)
+      eventSource.addEventListener("email-deleted", (event: MessageEvent<string>) => {
+        const data: EmailDeletedEvent = JSON.parse(event.data);
+        console.log("[SSE] Email deleted:", data);
+
+        // Invalidate queries to remove deleted email
+        queryClient.invalidateQueries({ queryKey: ["/api/email/threads", accountId] });
+
+        console.log("[SSE] Invalidated queries after email deletion");
+      });
+
+      // Connection opened
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      eventSource.onopen = (_event) => {
+        console.log("[SSE] Connection opened");
+        setIsConnected(true);
+        setError(null);
+      };
+
+      // Error handling
+      eventSource.onerror = (err: Event) => {
+        console.error("[SSE] Connection error:", err);
+        setIsConnected(false);
+
+        // EventSource automatically reconnects, but we track state
+        if (eventSource.readyState === EventSource.CLOSED) {
+          setError("Connection closed");
+          console.log("[SSE] Connection closed, will attempt to reconnect...");
+        } else if (eventSource.readyState === EventSource.CONNECTING) {
+          console.log("[SSE] Reconnecting...");
+        }
+      };
 
       // Cleanup on unmount or account change
       return () => {

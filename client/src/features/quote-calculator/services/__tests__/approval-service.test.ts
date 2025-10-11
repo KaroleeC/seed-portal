@@ -1,6 +1,6 @@
 /**
  * Approval Service Tests
- * 
+ *
  * Comprehensive tests for approval code validation service.
  * Tests format validation, email validation, and server integration.
  */

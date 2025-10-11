@@ -1,6 +1,6 @@
 /**
  * Email Threads Routes Tests
- * 
+ *
  * Tests for thread deletion and SSE event broadcasting
  */
 
@@ -157,9 +157,7 @@ describe("Email Threads Routes", () => {
     });
 
     it("should return 401 when unauthenticated", async () => {
-      const response = await request(app)
-        .delete("/api/email/threads/thread-123")
-        .expect(401);
+      const response = await request(app).delete("/api/email/threads/thread-123").expect(401);
 
       expect(response.body).toEqual({ error: "Unauthorized" });
       expect(mockBroadcastEmailDeleted).not.toHaveBeenCalled();

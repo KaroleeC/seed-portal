@@ -1,6 +1,6 @@
 /**
  * HTTP Auth Test for Lead Linking Routes
- * 
+ *
  * This test would have caught the missing Authorization header issue
  */
 
@@ -15,14 +15,13 @@ describe("Lead Linking - HTTP Auth", () => {
   beforeAll(() => {
     app = express();
     app.use(express.json());
-    
+
     // Mount email routes at root (routes use absolute paths like /api/email/...)
     app.use(emailRoutes);
   });
 
   it("should route to lead-linking endpoints (not 404)", async () => {
-    const response = await request(app)
-      .get("/api/email/lead-linking/thread/test-thread-123/leads");
+    const response = await request(app).get("/api/email/lead-linking/thread/test-thread-123/leads");
 
     // Validates route is registered correctly (not 404)
     // In test env without Supabase, we expect 500 (auth service unavailable)

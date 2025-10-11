@@ -122,9 +122,7 @@ export const gmailHandlers = [
     // Filter messages by labels if specified
     let messages = mockGmailMessages;
     if (labelIds.length > 0) {
-      messages = messages.filter((msg) =>
-        labelIds.some((label) => msg.labelIds.includes(label))
-      );
+      messages = messages.filter((msg) => labelIds.some((label) => msg.labelIds.includes(label)));
     }
 
     return HttpResponse.json({

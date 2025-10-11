@@ -55,7 +55,7 @@ describe("Email Sync Integration Tests", () => {
     it("should sync account with Gmail API", async () => {
       // Mock database responses
       const { db } = await import("../../server/db");
-      
+
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -99,7 +99,7 @@ describe("Email Sync Integration Tests", () => {
 
     it("should handle sync errors gracefully", async () => {
       const { db } = await import("../../server/db");
-      
+
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -118,7 +118,7 @@ describe("Email Sync Integration Tests", () => {
     it("should process email-sync job successfully", async () => {
       // Setup mocks
       const { db } = await import("../../server/db");
-      
+
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -168,7 +168,7 @@ describe("Email Sync Integration Tests", () => {
   describe("Error Handling", () => {
     it("should handle account not found errors", async () => {
       const { db } = await import("../../server/db");
-      
+
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -186,7 +186,7 @@ describe("Email Sync Integration Tests", () => {
 
     it("should handle missing credentials", async () => {
       const { db } = await import("../../server/db");
-      
+
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -214,7 +214,7 @@ describe("Email Sync Integration Tests", () => {
     it("should interact with Gmail API via MSW mocks", async () => {
       // Verify MSW server is intercepting Gmail API calls
       const { db } = await import("../../server/db");
-      
+
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -243,7 +243,7 @@ describe("Email Sync Integration Tests", () => {
       // Verify Gmail service can be created and configured
       const { createGmailService } = await import("../../server/services/gmail-service");
       const gmail = createGmailService();
-      
+
       expect(gmail).toBeDefined();
       expect(typeof gmail.setCredentials).toBe("function");
       expect(typeof gmail.listMessages).toBe("function");

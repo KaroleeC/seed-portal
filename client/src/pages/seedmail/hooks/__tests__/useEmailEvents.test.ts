@@ -1,6 +1,6 @@
 /**
  * useEmailEvents Hook Unit Tests
- * 
+ *
  * Tests the SSE event hook with mocked EventSource
  */
 
@@ -105,12 +105,12 @@ describe("useEmailEvents", () => {
       mockEventSourceInstance = new MockEventSource(url);
       return mockEventSourceInstance as any;
     }) as any;
-    
+
     // Add static constants that the hook relies on
     MockedEventSource.CONNECTING = MockEventSource.CONNECTING;
     MockedEventSource.OPEN = MockEventSource.OPEN;
     MockedEventSource.CLOSED = MockEventSource.CLOSED;
-    
+
     global.EventSource = MockedEventSource;
 
     // Mock console methods to reduce noise
@@ -135,20 +135,16 @@ describe("useEmailEvents", () => {
   });
 
   it("should not connect when accountId is null", () => {
-    const { result } = renderHook(
-      () => useEmailEvents({ accountId: null, enabled: true }),
-      { wrapper }
-    );
+    const { result } = renderHook(() => useEmailEvents({ accountId: null, enabled: true }), {
+      wrapper,
+    });
 
     expect(result.current.isConnected).toBe(false);
     expect(global.EventSource).not.toHaveBeenCalled();
   });
 
   it("should create EventSource connection with correct URL", () => {
-    renderHook(
-      () => useEmailEvents({ accountId: "test-account-123", enabled: true }),
-      { wrapper }
-    );
+    renderHook(() => useEmailEvents({ accountId: "test-account-123", enabled: true }), { wrapper });
 
     expect(global.EventSource).toHaveBeenCalledWith("/api/email/events/test-account-123");
   });
@@ -273,10 +269,7 @@ describe("useEmailEvents", () => {
   it("should invalidate threads on 'email-deleted' event", async () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
-    renderHook(
-      () => useEmailEvents({ accountId: "test-account", enabled: true }),
-      { wrapper }
-    );
+    renderHook(() => useEmailEvents({ accountId: "test-account", enabled: true }), { wrapper });
 
     await waitFor(() => {
       expect(mockEventSourceInstance).not.toBeNull();

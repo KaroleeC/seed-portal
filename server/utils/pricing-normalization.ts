@@ -1,6 +1,6 @@
 /**
  * Pricing Normalization Utilities
- * 
+ *
  * Helper functions for normalizing pricing data from various sources.
  */
 
@@ -8,15 +8,15 @@ import type { PricingData } from "@shared/pricing";
 
 /**
  * Normalizes arbitrary quote-like objects into PricingData
- * 
+ *
  * Handles:
  * - Null/undefined → undefined
  * - String numbers → parsed numbers
  * - Invalid numbers → undefined
- * 
+ *
  * @param input - Raw quote data (from DB, API, etc.)
  * @returns Normalized PricingData object
- * 
+ *
  * @example
  * const raw = { monthlyRevenueRange: "10000-50000", cleanupMonths: "3" };
  * const normalized = toPricingData(raw);

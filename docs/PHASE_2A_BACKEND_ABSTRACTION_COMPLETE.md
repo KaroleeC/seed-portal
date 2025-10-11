@@ -105,7 +105,7 @@ router.post("/api/hubspot/queue-sync", async (req, res) => {
 // deals.ts
 import { syncQuoteToHubSpot } from "../services/hubspot/sync";
 
-// admin.ts  
+// admin.ts
 import { syncQuoteToHubSpot } from "../services/hubspot/sync";
 
 // 2 files, same coupling
@@ -175,7 +175,7 @@ export class SeedPayQuoteProvider implements IQuoteProvider {
       method: "POST",
       body: JSON.stringify({ quoteId, ...options }),
     });
-    
+
     return {
       success: true,
       quoteId,
@@ -183,7 +183,7 @@ export class SeedPayQuoteProvider implements IQuoteProvider {
       externalDealId: result.seedpayDealId,
     };
   }
-  
+
   // Implement queueSync, checkSyncStatus...
 }
 ```
@@ -196,7 +196,7 @@ import { seedpayProvider } from "./seedpay-provider"; // ← Add this
 
 export function getQuoteProvider(): IQuoteProvider {
   const provider = process.env.QUOTE_PROVIDER || "hubspot";
-  
+
   switch (provider) {
     case "seedpay":
       return seedpayProvider; // ← Add this case
@@ -225,12 +225,12 @@ QUOTE_PROVIDER=seedpay  # ← Change this ONE variable
 
 ## 📊 Code Quality Metrics
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Provider Coupling** | 5 routes → HubSpot | 5 routes → interface | ✅ **100% decoupled** |
-| **Code Reuse** | Duplicated queue logic | Single provider method | ✅ **DRY** |
-| **Migration Effort** | Rewrite 5 routes | Change 1 line | ✅ **98% reduction** |
-| **Test Isolation** | Mock HubSpot directly | Mock IQuoteProvider | ✅ **Easier testing** |
+| Metric                | Before                 | After                  | Improvement           |
+| --------------------- | ---------------------- | ---------------------- | --------------------- |
+| **Provider Coupling** | 5 routes → HubSpot     | 5 routes → interface   | ✅ **100% decoupled** |
+| **Code Reuse**        | Duplicated queue logic | Single provider method | ✅ **DRY**            |
+| **Migration Effort**  | Rewrite 5 routes       | Change 1 line          | ✅ **98% reduction**  |
+| **Test Isolation**    | Mock HubSpot directly  | Mock IQuoteProvider    | ✅ **Easier testing** |
 
 ---
 

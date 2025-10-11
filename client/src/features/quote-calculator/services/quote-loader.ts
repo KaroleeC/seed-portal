@@ -1,9 +1,9 @@
 /**
  * Quote Loader Service
- * 
+ *
  * Handles loading quotes into form state.
  * Extracted from QuoteCalculator.tsx for DRY and testability.
- * 
+ *
  * Responsibilities:
  * - Map quote data to form format
  * - Handle numeric field conversions
@@ -18,12 +18,12 @@ import { currentMonth } from "@/features/quote-calculator/schema";
 
 /**
  * Determine which form view to show based on selected services
- * 
+ *
  * Priority:
  * 1. Bookkeeping services → "bookkeeping"
  * 2. TaaS services → "taas"
  * 3. Other services only → "bookkeeping" (default)
- * 
+ *
  * DRY: Single source of truth for view selection logic
  */
 export function determineFormView(quote: Quote): "bookkeeping" | "taas" | "placeholder" {
@@ -32,7 +32,7 @@ export function determineFormView(quote: Quote): "bookkeeping" | "taas" | "place
 
   const hasBookkeepingServices =
     selectedServices.serviceMonthlyBookkeeping || selectedServices.serviceCleanupProjects;
-  
+
   const hasTaasServices =
     selectedServices.serviceTaasMonthly || selectedServices.servicePriorYearFilings;
 
@@ -63,13 +63,13 @@ export function determineFormView(quote: Quote): "bookkeeping" | "taas" | "place
 
 /**
  * Map quote data to form fields format
- * 
+ *
  * Handles:
  * - Numeric conversions
  * - Default values
  * - Service mapping
  * - Type coercion
- * 
+ *
  * DRY: Single mapping function used everywhere
  */
 export function mapQuoteToFormFields(quote: Quote): Partial<QuoteFormFields> {
@@ -126,27 +126,31 @@ export function mapQuoteToFormFields(quote: Quote): Partial<QuoteFormFields> {
 
 /**
  * Get critical numeric fields that need explicit type coercion
- * 
+ *
  * These fields are set twice in the original code (once in reset, once in setTimeout)
  * to ensure React Hook Form properly recognizes them as numbers.
- * 
+ *
  * DRY: Single list of fields needing special handling
  */
 export function getCriticalNumericFields(quote: Quote): Partial<QuoteFormFields> {
   return {
     entityType: quote.entityType || undefined,
-    numEntities: quote.numEntities !== undefined && quote.numEntities !== null 
-      ? Number(quote.numEntities) 
-      : undefined,
-    statesFiled: quote.statesFiled !== undefined && quote.statesFiled !== null
-      ? Number(quote.statesFiled) 
-      : undefined,
-    numBusinessOwners: quote.numBusinessOwners !== undefined && quote.numBusinessOwners !== null
-      ? Number(quote.numBusinessOwners) 
-      : undefined,
-    priorYearsUnfiled: quote.priorYearsUnfiled !== undefined && quote.priorYearsUnfiled !== null
-      ? Number(quote.priorYearsUnfiled) 
-      : undefined,
+    numEntities:
+      quote.numEntities !== undefined && quote.numEntities !== null
+        ? Number(quote.numEntities)
+        : undefined,
+    statesFiled:
+      quote.statesFiled !== undefined && quote.statesFiled !== null
+        ? Number(quote.statesFiled)
+        : undefined,
+    numBusinessOwners:
+      quote.numBusinessOwners !== undefined && quote.numBusinessOwners !== null
+        ? Number(quote.numBusinessOwners)
+        : undefined,
+    priorYearsUnfiled:
+      quote.priorYearsUnfiled !== undefined && quote.priorYearsUnfiled !== null
+        ? Number(quote.priorYearsUnfiled)
+        : undefined,
     bookkeepingQuality: quote.bookkeepingQuality || undefined,
   };
 }

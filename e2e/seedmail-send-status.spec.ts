@@ -9,7 +9,7 @@ test.describe("SEEDMAIL Send Status & Retry", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to SEEDMAIL and authenticate
     await page.goto("/apps/seedmail");
-    
+
     // Wait for page to load
     await page.waitForSelector('[data-testid="seedmail-page"]', { timeout: 10000 });
   });
@@ -17,26 +17,26 @@ test.describe("SEEDMAIL Send Status & Retry", () => {
   test("should show 'Sent' badge for successfully sent emails", async ({ page }) => {
     // Open compose modal
     await page.click('button:has-text("Compose")');
-    
+
     // Fill in email details
     await page.fill('input[placeholder*="recipient"]', "test@example.com");
     await page.fill('input[placeholder*="subject"]', "Test Email");
-    
+
     // Fill in body (assuming RichTextEditor)
     await page.fill('[contenteditable="true"]', "This is a test email");
-    
+
     // Send email
     await page.click('button:has-text("Send")');
-    
+
     // Wait for send confirmation toast
     await expect(page.locator('text="Sent!"')).toBeVisible({ timeout: 5000 });
-    
+
     // Navigate to Sent folder
     await page.click('text="Sent"');
-    
+
     // Wait for sent items to load
     await page.waitForSelector('[data-testid="thread-list-item"]', { timeout: 5000 });
-    
+
     // Verify "Sent" badge is visible
     await expect(page.locator('text="Sent"').first()).toBeVisible();
   });
@@ -56,15 +56,15 @@ test.describe("SEEDMAIL Send Status & Retry", () => {
 
     // Open compose modal
     await page.click('button:has-text("Compose")');
-    
+
     // Fill in email details
     await page.fill('input[placeholder*="recipient"]', "test@example.com");
     await page.fill('input[placeholder*="subject"]', "Test Failed Email");
     await page.fill('[contenteditable="true"]', "This will fail");
-    
+
     // Send email
     await page.click('button:has-text("Send")');
-    
+
     // Wait for error toast
     await expect(page.locator('text="Failed to send email"')).toBeVisible({ timeout: 5000 });
   });
@@ -72,17 +72,17 @@ test.describe("SEEDMAIL Send Status & Retry", () => {
   test("should show failed send alert in email detail view", async ({ page }) => {
     // Navigate to a sent email with failed status
     await page.click('text="Sent"');
-    
+
     // Click on a thread
     await page.click('[data-testid="thread-list-item"]');
-    
+
     // If there's a failed send alert, it should be visible
     const failedAlert = page.locator('[role="alert"]:has-text("Failed")');
-    
+
     if (await failedAlert.isVisible()) {
       // Verify alert contains expected elements
       await expect(failedAlert).toContainText("Failed");
-      
+
       // Verify retry button exists
       const retryButton = failedAlert.locator('button:has-text("Retry")');
       await expect(retryButton).toBeVisible();
@@ -92,7 +92,7 @@ test.describe("SEEDMAIL Send Status & Retry", () => {
   test("should retry a failed send successfully", async ({ page }) => {
     // Set up route mocking
     let sendAttempts = 0;
-    
+
     // First send fails
     await page.route("**/api/email/send", async (route) => {
       sendAttempts++;
@@ -130,19 +130,19 @@ test.describe("SEEDMAIL Send Status & Retry", () => {
     await page.fill('input[placeholder*="subject"]', "Retry Test");
     await page.fill('[contenteditable="true"]', "Retry test content");
     await page.click('button:has-text("Send")');
-    
+
     // Wait for failure
     await expect(page.locator('text="Failed"')).toBeVisible({ timeout: 5000 });
-    
+
     // Navigate to sent items
     await page.click('text="Sent"');
     await page.click('[data-testid="thread-list-item"]:has-text("Retry Test")');
-    
+
     // Click retry button
     const retryButton = page.locator('button:has-text("Retry")');
     if (await retryButton.isVisible()) {
       await retryButton.click();
-      
+
       // Wait for success toast
       await expect(page.locator('text="Email sent!"')).toBeVisible({ timeout: 5000 });
     }
@@ -152,13 +152,13 @@ test.describe("SEEDMAIL Send Status & Retry", () => {
     // Navigate to an email with failed status
     await page.click('text="Sent"');
     await page.click('[data-testid="thread-list-item"]');
-    
+
     const failedAlert = page.locator('[role="alert"]:has-text("Failed")');
-    
+
     if (await failedAlert.isVisible()) {
       // Check for retry count indicator (e.g., "Attempt 2/3")
-      const retryCount = failedAlert.locator('text=/Attempt \\d+\\/\\d+/');
-      
+      const retryCount = failedAlert.locator("text=/Attempt \\d+\\/\\d+/");
+
       if (await retryCount.isVisible()) {
         const text = await retryCount.textContent();
         expect(text).toMatch(/Attempt \d+\/\d+/);
@@ -185,14 +185,14 @@ test.describe("SEEDMAIL Send Status & Retry", () => {
     // Navigate to failed email
     await page.click('text="Sent"');
     await page.click('[data-testid="thread-list-item"]');
-    
+
     const failedAlert = page.locator('[role="alert"]:has-text("Failed")');
-    
+
     if (await failedAlert.isVisible()) {
       // Retry button should NOT be visible
       const retryButton = failedAlert.locator('button:has-text("Retry")');
       await expect(retryButton).not.toBeVisible();
-      
+
       // Should show max retries message
       await expect(failedAlert).toContainText(/maximum retry attempts/i);
     }
@@ -218,13 +218,13 @@ test.describe("SEEDMAIL Send Status & Retry", () => {
     // Navigate to bounced email
     await page.click('text="Sent"');
     await page.click('[data-testid="thread-list-item"]');
-    
+
     const failedAlert = page.locator('[role="alert"]');
-    
+
     if (await failedAlert.isVisible()) {
       // Should show bounce type
       await expect(failedAlert).toContainText(/permanent failure/i);
-      
+
       // Should show helpful message
       await expect(failedAlert).toContainText(/email address appears to be invalid/i);
     }
@@ -233,14 +233,14 @@ test.describe("SEEDMAIL Send Status & Retry", () => {
   test("should enable tracking toggle in compose modal", async ({ page }) => {
     // Open compose modal
     await page.click('button:has-text("Compose")');
-    
+
     // Verify tracking checkbox exists
     const trackingCheckbox = page.locator('label:has-text("Enable read receipts")');
     await expect(trackingCheckbox).toBeVisible();
-    
+
     // Toggle tracking on
     await trackingCheckbox.click();
-    
+
     // Checkbox should be checked
     const checkbox = trackingCheckbox.locator('input[type="checkbox"]');
     await expect(checkbox).toBeChecked();
@@ -250,10 +250,10 @@ test.describe("SEEDMAIL Send Status & Retry", () => {
     // Navigate to sent email with tracking enabled
     await page.click('text="Sent"');
     await page.click('[data-testid="thread-list-item"]');
-    
+
     // Look for tracking status indicator
-    const trackingStatus = page.locator('text=/Opened|Not opened/');
-    
+    const trackingStatus = page.locator("text=/Opened|Not opened/");
+
     if (await trackingStatus.isVisible()) {
       const status = await trackingStatus.textContent();
       expect(status).toMatch(/(Opened|Not opened)/);

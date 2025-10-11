@@ -1,6 +1,6 @@
 /**
  * useContactVerification Tests
- * 
+ *
  * Comprehensive tests for contact verification hook.
  * Tests debouncing, timeout, state management, and callbacks.
  */
@@ -58,9 +58,7 @@ describe("useContactVerification", () => {
       });
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue([]);
 
-      const { result } = renderHook(() => 
-        useContactVerification({ debounceMs: 500 })
-      );
+      const { result } = renderHook(() => useContactVerification({ debounceMs: 500 }));
 
       // Call multiple times rapidly
       act(() => {
@@ -90,9 +88,7 @@ describe("useContactVerification", () => {
       });
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue([]);
 
-      const { result } = renderHook(() => 
-        useContactVerification({ debounceMs: 500 })
-      );
+      const { result } = renderHook(() => useContactVerification({ debounceMs: 500 }));
 
       act(() => {
         result.current.verifyEmail("test1@example.com");
@@ -139,9 +135,7 @@ describe("useContactVerification", () => {
       });
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue(mockQuotes as any);
 
-      const { result } = renderHook(() => 
-        useContactVerification({ debounceMs: 100 })
-      );
+      const { result } = renderHook(() => useContactVerification({ debounceMs: 100 }));
 
       act(() => {
         result.current.verifyEmail("test@example.com");
@@ -179,9 +173,7 @@ describe("useContactVerification", () => {
       });
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue([]);
 
-      const { result } = renderHook(() => 
-        useContactVerification({ debounceMs: 100, onVerified })
-      );
+      const { result } = renderHook(() => useContactVerification({ debounceMs: 100, onVerified }));
 
       act(() => {
         result.current.verifyEmail("test@example.com");
@@ -205,9 +197,7 @@ describe("useContactVerification", () => {
       });
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue([]);
 
-      const { result } = renderHook(() => 
-        useContactVerification({ debounceMs: 100 })
-      );
+      const { result } = renderHook(() => useContactVerification({ debounceMs: 100 }));
 
       act(() => {
         result.current.verifyEmail("notfound@example.com");
@@ -233,9 +223,7 @@ describe("useContactVerification", () => {
       });
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue([]);
 
-      const { result } = renderHook(() => 
-        useContactVerification({ debounceMs: 100, onNotFound })
-      );
+      const { result } = renderHook(() => useContactVerification({ debounceMs: 100, onNotFound }));
 
       act(() => {
         result.current.verifyEmail("notfound@example.com");
@@ -258,7 +246,7 @@ describe("useContactVerification", () => {
       );
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue([]);
 
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useContactVerification({ debounceMs: 100, timeoutMs: 500 })
       );
 
@@ -290,14 +278,10 @@ describe("useContactVerification", () => {
 
   describe("Error Handling", () => {
     it("should handle verification error gracefully", async () => {
-      vi.mocked(hubspotService.verifyContact).mockRejectedValue(
-        new Error("Network error")
-      );
+      vi.mocked(hubspotService.verifyContact).mockRejectedValue(new Error("Network error"));
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue([]);
 
-      const { result } = renderHook(() => 
-        useContactVerification({ debounceMs: 100 })
-      );
+      const { result } = renderHook(() => useContactVerification({ debounceMs: 100 }));
 
       act(() => {
         result.current.verifyEmail("test@example.com");
@@ -322,9 +306,7 @@ describe("useContactVerification", () => {
       });
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue([{ id: 1 }] as any);
 
-      const { result } = renderHook(() => 
-        useContactVerification({ debounceMs: 100 })
-      );
+      const { result } = renderHook(() => useContactVerification({ debounceMs: 100 }));
 
       // Verify
       act(() => {
@@ -383,9 +365,7 @@ describe("useContactVerification", () => {
       });
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue([]);
 
-      const { result } = renderHook(() => 
-        useContactVerification({ debounceMs: 100 })
-      );
+      const { result } = renderHook(() => useContactVerification({ debounceMs: 100 }));
 
       // First verification
       act(() => {
@@ -437,9 +417,7 @@ describe("useContactVerification", () => {
       });
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue([]);
 
-      const { result } = renderHook(() => 
-        useContactVerification({ debounceMs: 100 })
-      );
+      const { result } = renderHook(() => useContactVerification({ debounceMs: 100 }));
 
       act(() => {
         result.current.verifyEmail("test@example.com");
@@ -461,9 +439,7 @@ describe("useContactVerification", () => {
       });
       vi.mocked(quotesService.checkExistingQuotes).mockResolvedValue([]);
 
-      const { result } = renderHook(() => 
-        useContactVerification({ debounceMs: 100 })
-      );
+      const { result } = renderHook(() => useContactVerification({ debounceMs: 100 }));
 
       // Verify first email
       act(() => {

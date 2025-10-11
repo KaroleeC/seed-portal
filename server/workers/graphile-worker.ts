@@ -55,7 +55,11 @@ const tasks: TaskList = {
 
     try {
       const { syncQuoteToHubSpot } = await import("../services/hubspot/sync.js");
-      const result = await syncQuoteToHubSpot(quoteId, action || "auto", actorEmail || "system@seedfinancial.io");
+      const result = await syncQuoteToHubSpot(
+        quoteId,
+        action || "auto",
+        actorEmail || "system@seedfinancial.io"
+      );
 
       if (!result?.success) {
         throw new Error(result?.error || "HubSpot quote sync failed");
@@ -131,8 +135,8 @@ const tasks: TaskList = {
       // Import worker logic (if exists)
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const worker = await import("./hubspot-sync-worker") as any;
-        if (typeof worker.processHubSpotSync === 'function') {
+        const worker = (await import("./hubspot-sync-worker")) as any;
+        if (typeof worker.processHubSpotSync === "function") {
           await worker.processHubSpotSync({ dealId, userId });
         } else {
           logger.warn("processHubSpotSync not implemented yet");
@@ -159,8 +163,8 @@ const tasks: TaskList = {
       // Import worker logic (if exists)
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const worker = await import("./cache-prewarming-worker") as any;
-        if (typeof worker.prewarmCaches === 'function') {
+        const worker = (await import("./cache-prewarming-worker")) as any;
+        if (typeof worker.prewarmCaches === "function") {
           await worker.prewarmCaches();
         } else {
           logger.warn("prewarmCaches not implemented yet");
@@ -238,7 +242,7 @@ const tasks: TaskList = {
     try {
       const { emailAutoRetry } = await import("./tasks/email-auto-retry");
       await emailAutoRetry(payload, helpers);
-      
+
       logger.info("Email auto-retry job completed");
     } catch (error: unknown) {
       logger.error({ error }, "Email auto-retry job failed");
@@ -257,7 +261,7 @@ const tasks: TaskList = {
     try {
       const { emailLeadAutoLinkTask } = await import("./tasks/email-lead-auto-link");
       await emailLeadAutoLinkTask(payload as any);
-      
+
       logger.info("Email-lead auto-link job completed");
     } catch (error: unknown) {
       logger.error({ error }, "Email-lead auto-link job failed");
@@ -437,10 +441,7 @@ export async function scheduleEmailSync(
       }
     );
 
-    logger.info(
-      { accountId, runAt: runAt.toISOString(), intervalMinutes },
-      "Email sync scheduled"
-    );
+    logger.info({ accountId, runAt: runAt.toISOString(), intervalMinutes }, "Email sync scheduled");
   } catch (error: unknown) {
     logger.error({ error, accountId }, "Failed to schedule email sync");
     throw error;

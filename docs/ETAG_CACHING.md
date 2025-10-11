@@ -35,7 +35,7 @@ Implements HTTP ETag (Entity Tag) caching with 304 Not Modified responses for ca
    ```http
    GET /api/pricing/config
    If-None-Match: "a3f5b2c8d1e9..."
-   
+
    Response: 304 Not Modified
    ETag: "a3f5b2c8d1e9..."
    (no body - reuse cached data)
@@ -46,7 +46,7 @@ Implements HTTP ETag (Entity Tag) caching with 304 Not Modified responses for ca
    ```http
    GET /api/pricing/config
    If-None-Match: "a3f5b2c8d1e9..."
-   
+
    Response: 200 OK
    ETag: "d4e7f1a2b8..."  ← New ETag
    Body: {...updated config...}
@@ -64,7 +64,7 @@ import { withETag } from "../middleware/etag";
 // Simple usage with 5-minute cache
 router.get("/api/resource", requireAuth, withETag({ maxAge: 300 }), async (req, res) => {
   const data = await fetchData();
-  res.json(data);  // ETag automatically generated and 304 handled
+  res.json(data); // ETag automatically generated and 304 handled
 });
 
 // Weak ETag (semantic equivalence)
@@ -77,12 +77,12 @@ router.get("/api/resource", requireAuth, withETag({ weak: true }), async (req, r
 
 **Configured Routes:**
 
-| Endpoint | Cache Duration | Rationale |
-|----------|----------------|-----------|
-| `/api/pricing/config` | 5 minutes | Config changes infrequently |
-| `/api/calculator/content` | 5 minutes | Templates rarely change |
-| `/api/deals` | 2 minutes | Deal data updates moderately |
-| `/api/email/threads` | 1 minute | Email data updates frequently |
+| Endpoint                  | Cache Duration | Rationale                     |
+| ------------------------- | -------------- | ----------------------------- |
+| `/api/pricing/config`     | 5 minutes      | Config changes infrequently   |
+| `/api/calculator/content` | 5 minutes      | Templates rarely change       |
+| `/api/deals`              | 2 minutes      | Deal data updates moderately  |
+| `/api/email/threads`      | 1 minute       | Email data updates frequently |
 
 ### ETag Generation
 
@@ -169,13 +169,13 @@ router.get("/api/config", requireAuth, withETag({ maxAge: 600 }), async (req, re
 router.get("/api/data", requireAuth, async (req, res) => {
   const data = await loadData();
   const version = await getDataVersion();
-  
+
   const etag = createETagFromMetadata({ version, updatedAt: data.updatedAt });
-  
+
   if (req.headers["if-none-match"] === etag) {
     return res.status(304).end();
   }
-  
+
   res.setHeader("ETag", etag);
   res.json(data);
 });
@@ -187,11 +187,11 @@ router.get("/api/data", requireAuth, async (req, res) => {
 // Client sends If-Match for optimistic concurrency control
 router.put("/api/resource/:id", requireAuth, async (req, res) => {
   const currentETag = generateETag(await fetchResource(req.params.id));
-  
+
   if (req.headers["if-match"] && req.headers["if-match"] !== currentETag) {
     return res.status(412).json({ error: "Resource modified by another user" });
   }
-  
+
   // Proceed with update
   await updateResource(req.params.id, req.body);
   res.json({ success: true });
@@ -202,19 +202,19 @@ router.put("/api/resource/:id", requireAuth, async (req, res) => {
 
 ### Bandwidth Savings
 
-| Endpoint | Full Response | 304 Response | Savings |
-|----------|--------------|--------------|---------|
-| `/api/pricing/config` | 350KB | 0.5KB | 99.9% |
-| `/api/calculator/content` | 125KB | 0.5KB | 99.6% |
-| `/api/deals` | 220KB | 0.5KB | 99.8% |
+| Endpoint                  | Full Response | 304 Response | Savings |
+| ------------------------- | ------------- | ------------ | ------- |
+| `/api/pricing/config`     | 350KB         | 0.5KB        | 99.9%   |
+| `/api/calculator/content` | 125KB         | 0.5KB        | 99.6%   |
+| `/api/deals`              | 220KB         | 0.5KB        | 99.8%   |
 
 ### Response Times
 
-| Scenario | Before | After | Improvement |
-|----------|--------|-------|-------------|
-| Unchanged data | 150ms | 2ms | **98.7%** |
-| Changed data | 150ms | 150ms | 0% (expected) |
-| Cache hit rate | N/A | ~70% | N/A |
+| Scenario       | Before | After | Improvement   |
+| -------------- | ------ | ----- | ------------- |
+| Unchanged data | 150ms  | 2ms   | **98.7%**     |
+| Changed data   | 150ms  | 150ms | 0% (expected) |
+| Cache hit rate | N/A    | ~70%  | N/A           |
 
 **Typical cache hit rate:** 60-80% (most requests return 304)
 

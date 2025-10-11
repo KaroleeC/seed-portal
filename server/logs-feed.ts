@@ -29,7 +29,7 @@ export async function appendModuleLog(
     message,
     context,
   };
-  
+
   // Use in-memory storage only (Redis removed)
   const list = memBuffers.get(moduleName) ?? [];
   list.unshift(entry);

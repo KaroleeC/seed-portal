@@ -16,113 +16,122 @@ const router = Router();
 /**
  * GET /api/email/threads
  * List email threads for an account
- * 
+ *
  * Cacheable: ETag enabled with 1-minute cache
  */
-router.get("/api/email/threads", requireAuth, withETag({ maxAge: 60 }), async (req: any, res: Response) => {
-  try {
-    const accountId = req.query.accountId as string;
-    const label = req.query.label as string | undefined;
-    const limit = parseInt(req.query.limit as string) || 50;
+router.get(
+  "/api/email/threads",
+  requireAuth,
+  withETag({ maxAge: 60 }),
+  async (req: any, res: Response) => {
+    try {
+      const accountId = req.query.accountId as string;
+      const label = req.query.label as string | undefined;
+      const limit = parseInt(req.query.limit as string) || 50;
 
-    if (!accountId) {
-      return res.status(400).json({ error: "accountId required" });
-    }
+      if (!accountId) {
+        return res.status(400).json({ error: "accountId required" });
+      }
 
-    // Base query
-    const query = db
-      .select()
-      .from(emailThreads)
-      .where(eq(emailThreads.accountId, accountId))
-      .orderBy(desc(emailThreads.lastMessageAt))
-      .limit(limit);
+      // Base query
+      const query = db
+        .select()
+        .from(emailThreads)
+        .where(eq(emailThreads.accountId, accountId))
+        .orderBy(desc(emailThreads.lastMessageAt))
+        .limit(limit);
 
-    // Filter threads based on label
-    const threads = await query;
+      // Filter threads based on label
+      const threads = await query;
 
-    // Apply label filtering (Gmail labels are stored in the labels array)
-    let filteredThreads = threads;
+      // Apply label filtering (Gmail labels are stored in the labels array)
+      let filteredThreads = threads;
 
-    if (label) {
-      switch (label) {
-        case "INBOX":
-          // Threads that have INBOX label and are not in trash
-          filteredThreads = threads.filter(
-            (t) => t.labels?.includes("INBOX") && !t.labels?.includes("TRASH")
-          );
-          break;
+      if (label) {
+        switch (label) {
+          case "INBOX":
+            // Threads that have INBOX label and are not in trash
+            filteredThreads = threads.filter(
+              (t) => t.labels?.includes("INBOX") && !t.labels?.includes("TRASH")
+            );
+            break;
 
-        case "SENT":
-          // Threads with SENT label
-          filteredThreads = threads.filter((t) => t.labels?.includes("SENT"));
-          break;
+          case "SENT":
+            // Threads with SENT label
+            filteredThreads = threads.filter((t) => t.labels?.includes("SENT"));
+            break;
 
-        case "STARRED":
-          // Starred threads (any folder)
-          filteredThreads = threads.filter((t) => t.isStarred === true);
-          break;
+          case "STARRED":
+            // Starred threads (any folder)
+            filteredThreads = threads.filter((t) => t.isStarred === true);
+            break;
 
-        case "TRASH":
-          // Threads in trash
-          filteredThreads = threads.filter((t) => t.labels?.includes("TRASH"));
-          break;
+          case "TRASH":
+            // Threads in trash
+            filteredThreads = threads.filter((t) => t.labels?.includes("TRASH"));
+            break;
 
-        case "ARCHIVE":
-          // Threads that don't have INBOX but aren't in TRASH or SENT
-          filteredThreads = threads.filter(
-            (t) =>
-              !t.labels?.includes("INBOX") &&
-              !t.labels?.includes("TRASH") &&
-              !t.labels?.includes("SENT") &&
-              !t.labels?.includes("DRAFT")
-          );
-          break;
+          case "ARCHIVE":
+            // Threads that don't have INBOX but aren't in TRASH or SENT
+            filteredThreads = threads.filter(
+              (t) =>
+                !t.labels?.includes("INBOX") &&
+                !t.labels?.includes("TRASH") &&
+                !t.labels?.includes("SENT") &&
+                !t.labels?.includes("DRAFT")
+            );
+            break;
 
-        case "LEADS":
-          // Threads linked to leads in LEADIQ
-          // Query email_thread_leads to get linked thread IDs
-          const linkedThreadsQuery = await db.query(`
+          case "LEADS": {
+            // Threads linked to leads in LEADIQ
+            // Query email_thread_leads to get linked thread IDs
+            const linkedThreadsQuery = await db.query(
+              `
             SELECT DISTINCT thread_id
             FROM email_thread_leads
             WHERE thread_id = ANY($1)
-          `, [threads.map(t => t.id)]);
-          
-          const linkedThreadIds = new Set(linkedThreadsQuery.rows.map(r => r.thread_id));
-          filteredThreads = threads.filter((t) => linkedThreadIds.has(t.id));
-          break;
+          `,
+              [threads.map((t) => t.id)]
+            );
 
-        case "INBOX_LEADS":
-          // Custom filter for leads (example: emails with certain labels/tags)
-          filteredThreads = threads.filter(
-            (t) =>
-              t.labels?.includes("INBOX") &&
-              !t.labels?.includes("TRASH") &&
-              t.labels?.includes("CATEGORY_PROMOTIONS") // Customize based on your needs
-          );
-          break;
+            const linkedThreadIds = new Set(linkedThreadsQuery.rows.map((r) => r.thread_id));
+            filteredThreads = threads.filter((t) => linkedThreadIds.has(t.id));
+            break;
+          }
 
-        case "INBOX_CLIENTS":
-          // Custom filter for clients
-          filteredThreads = threads.filter(
-            (t) =>
-              t.labels?.includes("INBOX") &&
-              !t.labels?.includes("TRASH") &&
-              t.labels?.includes("IMPORTANT") // Customize based on your needs
-          );
-          break;
+          case "INBOX_LEADS":
+            // Custom filter for leads (example: emails with certain labels/tags)
+            filteredThreads = threads.filter(
+              (t) =>
+                t.labels?.includes("INBOX") &&
+                !t.labels?.includes("TRASH") &&
+                t.labels?.includes("CATEGORY_PROMOTIONS") // Customize based on your needs
+            );
+            break;
 
-        default:
-          // Custom label filtering
-          filteredThreads = threads.filter((t) => t.labels?.includes(label));
+          case "INBOX_CLIENTS":
+            // Custom filter for clients
+            filteredThreads = threads.filter(
+              (t) =>
+                t.labels?.includes("INBOX") &&
+                !t.labels?.includes("TRASH") &&
+                t.labels?.includes("IMPORTANT") // Customize based on your needs
+            );
+            break;
+
+          default:
+            // Custom label filtering
+            filteredThreads = threads.filter((t) => t.labels?.includes(label));
+        }
       }
-    }
 
-    res.json(filteredThreads);
-  } catch (error) {
-    console.error("[Email] Failed to fetch threads:", error);
-    res.status(500).json({ error: "Failed to fetch threads" });
+      res.json(filteredThreads);
+    } catch (error) {
+      console.error("[Email] Failed to fetch threads:", error);
+      res.status(500).json({ error: "Failed to fetch threads" });
+    }
   }
-});
+);
 
 /**
  * GET /api/email/threads/:threadId

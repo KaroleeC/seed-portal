@@ -1,6 +1,6 @@
 /**
  * useQuoteSync Tests
- * 
+ *
  * Comprehensive test coverage for provider-agnostic quote sync hook.
  * Tests business logic without coupling to specific CRM.
  */
@@ -187,9 +187,9 @@ describe("useQuoteSync", () => {
     it("should handle decimal values correctly", () => {
       const formValues = {} as QuoteFormFields;
       const feeCalc: Partial<FeeCalculation> = {
-        combined: { monthlyFee: 1500.50, setupFee: 500.75 } as any,
+        combined: { monthlyFee: 1500.5, setupFee: 500.75 } as any,
         bookkeeping: { monthlyFee: 800.25 } as any,
-        taas: { monthlyFee: 700.10, setupFee: 500.99 } as any,
+        taas: { monthlyFee: 700.1, setupFee: 500.99 } as any,
       };
 
       const result = buildEnhancedFormData(formValues, feeCalc as FeeCalculation);

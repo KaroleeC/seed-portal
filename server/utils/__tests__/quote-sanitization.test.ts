@@ -1,6 +1,6 @@
 /**
  * Quote Sanitization Utilities Tests
- * 
+ *
  * Tests for sanitizeQuoteFields and prepareQuoteForValidation
  */
 

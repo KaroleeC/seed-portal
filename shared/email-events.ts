@@ -1,9 +1,9 @@
 /**
  * Email SSE Event Types
- * 
+ *
  * Centralized event definitions for Server-Sent Events.
  * Shared between server (emitter) and client (consumer).
- * 
+ *
  * DRY Principle: Single source of truth for all SSE event shapes.
  */
 
@@ -153,12 +153,7 @@ export enum SSEEventType {
  * Type guard for SSE events
  */
 export function isSSEEvent(event: any): event is SSEEvent {
-  return (
-    event &&
-    typeof event === "object" &&
-    "accountId" in event &&
-    "timestamp" in event
-  );
+  return event && typeof event === "object" && "accountId" in event && "timestamp" in event;
 }
 
 /**

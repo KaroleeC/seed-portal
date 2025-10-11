@@ -25,7 +25,7 @@ describe("Query Configuration", () => {
       const slowTime = RESOURCE_TIMING[ResourceType.SLOW].staleTime;
       const mediumTime = RESOURCE_TIMING[ResourceType.MEDIUM].staleTime;
       const fastTime = RESOURCE_TIMING[ResourceType.FAST].staleTime;
-      
+
       expect(staticTime).toBeGreaterThan(slowTime);
       expect(slowTime).toBeGreaterThan(mediumTime);
       expect(mediumTime).toBeGreaterThan(fastTime);
@@ -36,7 +36,7 @@ describe("Query Configuration", () => {
     });
 
     it("all timings have descriptions", () => {
-      Object.values(RESOURCE_TIMING).forEach(timing => {
+      Object.values(RESOURCE_TIMING).forEach((timing) => {
         expect(timing.description).toBeTruthy();
         expect(typeof timing.description).toBe("string");
       });
@@ -120,42 +120,42 @@ describe("Query Configuration", () => {
   describe("getQueryTiming()", () => {
     it("returns static timing for pricing config", () => {
       const timing = getQueryTiming(["pricing", "config"]);
-      
+
       expect(timing.staleTime).toBe(RESOURCE_TIMING[ResourceType.STATIC].staleTime);
       expect(timing.gcTime).toBe(RESOURCE_TIMING[ResourceType.STATIC].gcTime);
     });
 
     it("returns slow timing for deals", () => {
       const timing = getQueryTiming(["seedpay", "deals", "list"]);
-      
+
       expect(timing.staleTime).toBe(RESOURCE_TIMING[ResourceType.SLOW].staleTime);
       expect(timing.gcTime).toBe(RESOURCE_TIMING[ResourceType.SLOW].gcTime);
     });
 
     it("returns medium timing for commissions", () => {
       const timing = getQueryTiming(["seedpay", "commissions", "all"]);
-      
+
       expect(timing.staleTime).toBe(RESOURCE_TIMING[ResourceType.MEDIUM].staleTime);
       expect(timing.gcTime).toBe(RESOURCE_TIMING[ResourceType.MEDIUM].gcTime);
     });
 
     it("returns fast timing for stripe transactions", () => {
       const timing = getQueryTiming(["stripe", "transactions"]);
-      
+
       expect(timing.staleTime).toBe(RESOURCE_TIMING[ResourceType.FAST].staleTime);
       expect(timing.gcTime).toBe(RESOURCE_TIMING[ResourceType.FAST].gcTime);
     });
 
     it("returns default timing for unknown resources", () => {
       const timing = getQueryTiming(["unknown", "resource"]);
-      
+
       expect(timing.staleTime).toBe(RESOURCE_TIMING[ResourceType.MEDIUM].staleTime);
       expect(timing.gcTime).toBe(RESOURCE_TIMING[ResourceType.MEDIUM].gcTime);
     });
 
     it("handles empty query keys gracefully", () => {
       const timing = getQueryTiming([]);
-      
+
       expect(timing.staleTime).toBe(RESOURCE_TIMING[ResourceType.MEDIUM].staleTime);
       expect(timing.gcTime).toBe(RESOURCE_TIMING[ResourceType.MEDIUM].gcTime);
     });
@@ -231,33 +231,29 @@ describe("Query Configuration", () => {
   describe("getStaticResourceKeys()", () => {
     it("returns array of static resource keys", () => {
       const keys = getStaticResourceKeys();
-      
+
       expect(Array.isArray(keys)).toBe(true);
       expect(keys.length).toBeGreaterThan(0);
     });
 
     it("includes pricing config", () => {
       const keys = getStaticResourceKeys();
-      const hasPricingConfig = keys.some(key => 
-        key.join(".").includes("pricing.config")
-      );
-      
+      const hasPricingConfig = keys.some((key) => key.join(".").includes("pricing.config"));
+
       expect(hasPricingConfig).toBe(true);
     });
 
     it("includes RBAC resources", () => {
       const keys = getStaticResourceKeys();
-      const hasRbac = keys.some(key => 
-        key.join(".").includes("rbac")
-      );
-      
+      const hasRbac = keys.some((key) => key.join(".").includes("rbac"));
+
       expect(hasRbac).toBe(true);
     });
 
     it("only includes STATIC resources", () => {
       const keys = getStaticResourceKeys();
-      
-      keys.forEach(key => {
+
+      keys.forEach((key) => {
         const pattern = key.join(".");
         const resourceType = RESOURCE_TYPE_PATTERNS[pattern];
         expect(resourceType).toBe(ResourceType.STATIC);
@@ -273,15 +269,15 @@ describe("Query Configuration", () => {
         ["seedpay", "commissions", "all"],
         ["unknown", "resource"],
       ];
-      
+
       const start = Date.now();
-      
+
       for (let i = 0; i < 1000; i++) {
-        testKeys.forEach(key => getResourceType(key));
+        testKeys.forEach((key) => getResourceType(key));
       }
-      
+
       const duration = Date.now() - start;
-      
+
       // Should complete 4000 iterations in < 50ms
       expect(duration).toBeLessThan(50);
     });
@@ -293,15 +289,15 @@ describe("Query Configuration", () => {
         ["seedpay", "commissions", "all"],
         ["unknown", "resource"],
       ];
-      
+
       const start = Date.now();
-      
+
       for (let i = 0; i < 1000; i++) {
-        testKeys.forEach(key => getQueryTiming(key));
+        testKeys.forEach((key) => getQueryTiming(key));
       }
-      
+
       const duration = Date.now() - start;
-      
+
       // Should complete 4000 iterations in < 50ms
       expect(duration).toBeLessThan(50);
     });
@@ -311,12 +307,12 @@ describe("Query Configuration", () => {
     it("no duplicate patterns in RESOURCE_TYPE_PATTERNS", () => {
       const patterns = Object.keys(RESOURCE_TYPE_PATTERNS);
       const uniquePatterns = [...new Set(patterns)];
-      
+
       expect(patterns.length).toBe(uniquePatterns.length);
     });
 
     it("all resource types have timing configuration", () => {
-      Object.values(ResourceType).forEach(type => {
+      Object.values(ResourceType).forEach((type) => {
         expect(RESOURCE_TIMING[type]).toBeDefined();
         expect(RESOURCE_TIMING[type].staleTime).toBeDefined();
         expect(RESOURCE_TIMING[type].gcTime).toBeDefined();
@@ -324,7 +320,7 @@ describe("Query Configuration", () => {
     });
 
     it("timing values are consistent (gcTime >= staleTime)", () => {
-      Object.values(RESOURCE_TIMING).forEach(timing => {
+      Object.values(RESOURCE_TIMING).forEach((timing) => {
         if (timing.staleTime !== Infinity) {
           expect(timing.gcTime).toBeGreaterThanOrEqual(timing.staleTime);
         }

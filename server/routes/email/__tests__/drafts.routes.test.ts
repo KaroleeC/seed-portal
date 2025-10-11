@@ -1,6 +1,6 @@
 /**
  * Email Drafts Routes Tests
- * 
+ *
  * Tests for draft creation/update and SSE event broadcasting
  */
 
@@ -20,16 +20,18 @@ vi.mock("../../../db", () => ({
     limit: vi.fn().mockResolvedValue([]),
     insert: vi.fn().mockReturnThis(),
     values: vi.fn().mockReturnThis(),
-    returning: vi.fn().mockResolvedValue([{
-      id: "draft-123",
-      accountId: "account-456",
-      subject: "Test Draft",
-      to: [{ email: "recipient@example.com", name: "Recipient" }],
-      bodyHtml: "<p>Draft body</p>",
-      bodyText: "Draft body",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }]),
+    returning: vi.fn().mockResolvedValue([
+      {
+        id: "draft-123",
+        accountId: "account-456",
+        subject: "Test Draft",
+        to: [{ email: "recipient@example.com", name: "Recipient" }],
+        bodyHtml: "<p>Draft body</p>",
+        bodyText: "Draft body",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]),
     update: vi.fn().mockReturnThis(),
     set: vi.fn().mockReturnThis(),
     delete: vi.fn().mockReturnThis(),
@@ -74,14 +76,12 @@ describe("Email Drafts Routes", () => {
   describe("POST /api/email/drafts - Create Draft", () => {
     it("should create draft and broadcast SSE event", async () => {
       const { db } = await import("../../../db");
-      
+
       // Mock account verification
       vi.mocked(db.select).mockReturnValueOnce({
         from: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValueOnce([
-          { id: "account-456", userId: "test-user-123" },
-        ]),
+        limit: vi.fn().mockResolvedValueOnce([{ id: "account-456", userId: "test-user-123" }]),
       } as any);
 
       // Mock draft insertion
@@ -130,9 +130,7 @@ describe("Email Drafts Routes", () => {
       vi.mocked(db.select).mockReturnValueOnce({
         from: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValueOnce([
-          { id: "account-456", userId: "test-user-123" },
-        ]),
+        limit: vi.fn().mockResolvedValueOnce([{ id: "account-456", userId: "test-user-123" }]),
       } as any);
 
       // Mock draft update
@@ -210,9 +208,7 @@ describe("Email Drafts Routes", () => {
       vi.mocked(db.select).mockReturnValueOnce({
         from: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValueOnce([
-          { id: "account-456", userId: "test-user-123" },
-        ]),
+        limit: vi.fn().mockResolvedValueOnce([{ id: "account-456", userId: "test-user-123" }]),
       } as any);
 
       // Mock draft insertion

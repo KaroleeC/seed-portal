@@ -6,6 +6,7 @@
  */
 
 import BoxSDK from "box-node-sdk";
+import { PassThrough } from "stream";
 import { logger } from "../logger";
 import type { ServiceHealthResult } from "./index";
 
@@ -155,8 +156,7 @@ export class StorageService {
         size: fileContent.length,
       });
 
-      const stream = require("stream");
-      const fileStream = new stream.PassThrough();
+      const fileStream = new PassThrough();
       fileStream.end(fileContent);
 
       const file = await this.serviceAccountClient.files.uploadFile(folderId, fileName, fileStream);

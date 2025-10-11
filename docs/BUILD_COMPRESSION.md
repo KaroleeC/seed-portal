@@ -26,9 +26,9 @@ plugins: [
   viteCompression({
     algorithm: "gzip",
     ext: ".gz",
-    threshold: COMPRESSION_THRESHOLD,      // 1KB
-    deleteOriginFile: false,                // Keep originals
-    filter: COMPRESSIBLE_FILE_PATTERN,     // .js, .css, .html, etc.
+    threshold: COMPRESSION_THRESHOLD, // 1KB
+    deleteOriginFile: false, // Keep originals
+    filter: COMPRESSIBLE_FILE_PATTERN, // .js, .css, .html, etc.
     verbose: false,
   }),
   // Brotli compression (better compression ratio)
@@ -40,7 +40,7 @@ plugins: [
     filter: COMPRESSIBLE_FILE_PATTERN,
     verbose: false,
   }),
-]
+];
 ```
 
 ### 2. Shared Configuration (`config/compression.ts`)
@@ -156,8 +156,14 @@ export const COMPRESSION_THRESHOLD = 2048; // 2KB instead of 1KB
 
 // Add/remove file types
 export const COMPRESSIBLE_EXTENSIONS = [
-  "js", "mjs", "json", "css", "html", "svg",
-  "xml", "txt", // Add more types
+  "js",
+  "mjs",
+  "json",
+  "css",
+  "html",
+  "svg",
+  "xml",
+  "txt", // Add more types
 ];
 ```
 

@@ -41,7 +41,20 @@ export function PriorYearFilingsSection({ control, form }: PriorYearFilingsSecti
 
   return (
     <SurfaceCard className="p-6 mb-8">
-      <div className="cursor-pointer select-none" onClick={() => setIsExpanded(!isExpanded)}>
+      <div
+        className="cursor-pointer select-none"
+        onClick={() => setIsExpanded(!isExpanded)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        aria-label="Toggle prior year filings details"
+      >
         <div className="flex items-center justify-between group p-3 -m-3 rounded-lg transition-colors">
           <h3 className="text-xl font-semibold text-foreground">Prior Year Filings Details</h3>
           <div className="flex items-center gap-2 text-muted-foreground">

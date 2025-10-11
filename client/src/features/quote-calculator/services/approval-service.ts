@@ -1,9 +1,9 @@
 /**
  * Approval Service
- * 
+ *
  * Handles approval code validation for cleanup overrides and duplicate quotes.
  * Extracted from QuoteCalculator.tsx for DRY and testability.
- * 
+ *
  * Business Rules:
  * - Code must be exactly 4 digits
  * - Contact email is required
@@ -31,13 +31,15 @@ export interface ApprovalCodeFormatValidation {
 
 /**
  * Validate approval code format (client-side)
- * 
+ *
  * DRY: Single validation function used everywhere
- * 
+ *
  * @param code - Approval code to validate
  * @returns Validation result
  */
-export function validateApprovalCodeFormat(code: string | null | undefined): ApprovalCodeFormatValidation {
+export function validateApprovalCodeFormat(
+  code: string | null | undefined
+): ApprovalCodeFormatValidation {
   if (!code) {
     return {
       valid: false,
@@ -74,13 +76,15 @@ export function validateApprovalCodeFormat(code: string | null | undefined): App
 
 /**
  * Validate contact email format
- * 
+ *
  * DRY: Consistent email validation across app
- * 
+ *
  * @param email - Email to validate
  * @returns Validation result
  */
-export function validateContactEmail(email: string | null | undefined): ApprovalCodeFormatValidation {
+export function validateContactEmail(
+  email: string | null | undefined
+): ApprovalCodeFormatValidation {
   if (!email) {
     return {
       valid: false,
@@ -111,9 +115,9 @@ export function validateContactEmail(email: string | null | undefined): Approval
 
 /**
  * Validate approval code against backend
- * 
+ *
  * DRY: Single API call for validation
- * 
+ *
  * @param request - Validation request
  * @returns Validation result from server
  */
@@ -143,9 +147,9 @@ export async function validateApprovalCodeWithServer(
 
 /**
  * Complete approval validation (format + server)
- * 
+ *
  * DRY: Single validation pipeline
- * 
+ *
  * @param code - Approval code
  * @param contactEmail - Contact email
  * @returns Combined validation result
@@ -181,9 +185,9 @@ export async function validateApprovalCode(
 
 /**
  * Request a new approval code
- * 
+ *
  * DRY: Single request function
- * 
+ *
  * @param contactEmail - Email to request code for
  * @returns Success status and code (in production, code is sent via email/Slack)
  */

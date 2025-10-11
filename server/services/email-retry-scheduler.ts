@@ -34,7 +34,7 @@ export function startEmailRetryScheduler(): void {
 
     try {
       const { queueJob } = await import("../workers/graphile-worker");
-      
+
       await queueJob(
         "email-auto-retry",
         {},

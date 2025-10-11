@@ -172,5 +172,14 @@ module.exports = {
         'vitest/expect-expect': 'warn',
       },
     },
+    // Server/middleware files - allow Express patterns
+    {
+      files: ['server/**/*.ts', 'server/**/*.js'],
+      rules: {
+        // Express middleware commonly mutates req/res properties (e.g., req.user, res.locals)
+        // This is an intentional and standard pattern in Express
+        'no-param-reassign': ['error', { props: false }],
+      },
+    },
   ],
 };

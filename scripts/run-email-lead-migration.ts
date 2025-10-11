@@ -1,6 +1,6 @@
 /**
  * Run Email-Lead Linking Migration
- * 
+ *
  * This script runs the database migration for email-lead linking functionality
  * Run with: NODE_ENV=development tsx scripts/run-email-lead-migration.ts
  */
@@ -43,7 +43,9 @@ async function runMigration() {
     `);
 
     console.log("📋 Verification:");
-    console.log(`  - email_thread_leads table: ${tablesCheck.rows.length > 0 ? "✓ Created" : "✗ Not found"}`);
+    console.log(
+      `  - email_thread_leads table: ${tablesCheck.rows.length > 0 ? "✓ Created" : "✗ Not found"}`
+    );
 
     // Check indexes
     const indexCheck = await pool.query(`
@@ -65,7 +67,6 @@ async function runMigration() {
     console.log(`  - crm_leads email columns: ${columnsCheck.rows.length}/2 added`);
 
     console.log("\n🎉 Migration complete! Ready to sync lead emails.");
-
   } catch (error) {
     console.error("❌ Migration failed:", error);
     process.exit(1);

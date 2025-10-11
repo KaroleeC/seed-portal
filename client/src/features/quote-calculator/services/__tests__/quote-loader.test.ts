@@ -1,16 +1,12 @@
 /**
  * Quote Loader Tests
- * 
+ *
  * Comprehensive tests for quote loading service.
  * Tests form view determination, data mapping, and numeric conversions.
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  determineFormView,
-  mapQuoteToFormFields,
-  getCriticalNumericFields,
-} from "../quote-loader";
+import { determineFormView, mapQuoteToFormFields, getCriticalNumericFields } from "../quote-loader";
 import type { Quote } from "@shared/schema";
 
 describe("quote-loader", () => {

@@ -2,10 +2,10 @@ import path from "path";
 
 /**
  * Asset Path Configuration
- * 
+ *
  * This module defines the canonical build paths for static assets.
  * All asset-serving code MUST reference these constants to ensure consistency.
- * 
+ *
  * Files that use these constants:
  * - server/vite.ts (serveStatic)
  * - server/middleware/asset-optimization.ts (servePrecompressed)

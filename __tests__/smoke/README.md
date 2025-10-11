@@ -68,10 +68,10 @@ Tests that all API endpoints exist and don't immediately 500.
 # .github/workflows/test.yml
 test:
   steps:
-    - run: npm run lint          # Fast fail #1
-    - run: npm run test:smoke    # Fast fail #2 ← NEW
-    - run: npm run test:run      # Full test suite
-    - run: npm run test:e2e      # Slowest tests
+    - run: npm run lint # Fast fail #1
+    - run: npm run test:smoke # Fast fail #2 ← NEW
+    - run: npm run test:run # Full test suite
+    - run: npm run test:e2e # Slowest tests
 ```
 
 ## Speed
@@ -85,8 +85,8 @@ test:
 ### For a new page
 
 ```typescript
-it('should import MyNewPage without errors', async () => {
-  const module = await import('../../client/src/pages/my-page/index');
+it("should import MyNewPage without errors", async () => {
+  const module = await import("../../client/src/pages/my-page/index");
   expect(module.default).toBeDefined();
 });
 ```
@@ -94,7 +94,7 @@ it('should import MyNewPage without errors', async () => {
 ### For a new API endpoint
 
 ```typescript
-it('GET /api/my-endpoint should not 404 or 500', async () => {
+it("GET /api/my-endpoint should not 404 or 500", async () => {
   const response = await fetch(`${server.url}/api/my-endpoint`, {
     headers: { Authorization: `Bearer ${server.testToken}` },
   });

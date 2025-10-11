@@ -100,7 +100,7 @@ describe("EmailSyncService", () => {
 
       vi.mocked(db.insert).mockReturnValue({
         values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{ id: 'test-id', threadId: 'test-thread-id' }]),
+          returning: vi.fn().mockResolvedValue([{ id: "test-id", threadId: "test-thread-id" }]),
         }),
       } as any);
 
@@ -217,7 +217,7 @@ describe("EmailSyncService", () => {
       vi.mocked(mockGmail.getMessage!).mockResolvedValue(mockMessage);
 
       const { db } = await import("../../db");
-      
+
       // Mock sync state with historyId
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
@@ -257,9 +257,9 @@ describe("EmailSyncService", () => {
       vi.mocked(db.select).mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([
-              { historyId: "invalid-id", accountId: "test-account-id" },
-            ]),
+            limit: vi
+              .fn()
+              .mockResolvedValue([{ historyId: "invalid-id", accountId: "test-account-id" }]),
           }),
         }),
       } as any);
@@ -342,7 +342,7 @@ describe("EmailSyncService", () => {
       vi.mocked(mockGmail.listMessages!).mockResolvedValue(mockMessages);
 
       const { db } = await import("../../db");
-      
+
       // Mock that thread and message already exist
       let callCount = 0;
       vi.mocked(db.select).mockReturnValue({
@@ -438,9 +438,9 @@ describe("EmailSyncService", () => {
       } as any);
 
       const valuesMock = vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{ id: 'test-id', threadId: 'test-thread-id' }]),
+        returning: vi.fn().mockResolvedValue([{ id: "test-id", threadId: "test-thread-id" }]),
       });
-      
+
       vi.mocked(db.insert).mockReturnValue({
         values: valuesMock,
       } as any);
@@ -484,9 +484,7 @@ describe("EmailSyncService", () => {
       await syncService.sync({ forceFullSync: true });
 
       // Should call update with syncStatus: 'syncing'
-      expect(updateMock).toHaveBeenCalledWith(
-        expect.objectContaining({ syncStatus: "syncing" })
-      );
+      expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ syncStatus: "syncing" }));
     });
 
     it("should update sync status to 'idle' on success", async () => {
@@ -511,9 +509,7 @@ describe("EmailSyncService", () => {
       await syncService.sync({ forceFullSync: true });
 
       // Should eventually call update with syncStatus: 'idle'
-      expect(updateMock).toHaveBeenCalledWith(
-        expect.objectContaining({ syncStatus: "idle" })
-      );
+      expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ syncStatus: "idle" }));
     });
 
     it("should update sync status to 'error' on failure", async () => {
@@ -538,9 +534,7 @@ describe("EmailSyncService", () => {
       const result = await syncService.sync({ forceFullSync: true });
 
       expect(result.success).toBe(false);
-      expect(updateMock).toHaveBeenCalledWith(
-        expect.objectContaining({ syncStatus: "error" })
-      );
+      expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({ syncStatus: "error" }));
     });
   });
 });

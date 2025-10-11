@@ -7,12 +7,14 @@ Implements granular Server-Sent Events with client-side delta updates instead of
 ## Performance Benefits
 
 ### Before (Full Invalidation)
+
 - **Every SSE event:** Invalidate entire thread/draft list
 - **API calls:** ~50/hour during active email usage
 - **Network bandwidth:** Full list refetch (~100KB) per event
 - **User experience:** Loading spinners on every update
 
 ### After (Delta Updates)
+
 - **Every SSE event:** Apply incremental cache update
 - **API calls:** ~2-3/hour (only full syncs)
 - **Network bandwidth:** Minimal (event data only, ~1KB)
@@ -39,6 +41,7 @@ export enum SSEEventType {
 ```
 
 **Granular event types:**
+
 - `ThreadCreatedEvent` - New thread with full data
 - `ThreadUpdatedEvent` - Thread ID + changes object
 - `ThreadDeletedEvent` - Thread ID to remove
@@ -96,9 +99,8 @@ export function applyThreadUpdated(
   accountId: string,
   event: ThreadUpdatedEvent
 ): void {
-  queryClient.setQueryData<EmailThread[]>(
-    ["/api/email/threads", accountId],
-    (oldThreads) => oldThreads.map(thread =>
+  queryClient.setQueryData<EmailThread[]>(["/api/email/threads", accountId], (oldThreads) =>
+    oldThreads.map((thread) =>
       thread.id === event.threadId
         ? { ...thread, ...event.changes } // Merge changes
         : thread
@@ -112,9 +114,8 @@ export function applyThreadDeleted(
   accountId: string,
   event: ThreadDeletedEvent
 ): void {
-  queryClient.setQueryData<EmailThread[]>(
-    ["/api/email/threads", accountId],
-    (oldThreads) => oldThreads.filter(t => t.id !== event.threadId)
+  queryClient.setQueryData<EmailThread[]>(["/api/email/threads", accountId], (oldThreads) =>
+    oldThreads.filter((t) => t.id !== event.threadId)
   );
 }
 ```
@@ -129,11 +130,11 @@ export function useEmailEventsOptimized({
   useDeltaUpdates = true, // ← Enable/disable delta updates
 }: UseEmailEventsOptions) {
   // ...
-  
+
   // Thread created event
   eventSource.addEventListener(SSEEventType.THREAD_CREATED, (event) => {
     const data: ThreadCreatedEvent = JSON.parse(event.data);
-    
+
     if (useDeltaUpdates) {
       applyThreadCreated(queryClient, accountId, data); // ← Delta update
       trackDeltaUpdate(); // Metrics
@@ -141,7 +142,7 @@ export function useEmailEventsOptimized({
       queryClient.invalidateQueries(...); // ← Legacy fallback
     }
   });
-  
+
   // ... similar for other events
 }
 ```
@@ -153,12 +154,14 @@ export function useEmailEventsOptimized({
 **Server → Client flow:**
 
 1. **Gmail Sync Detects New Email**
+
    ```typescript
    // server/services/gmail-sync.ts
    const newThread = await saveThreadToDatabase(gmailThread);
    ```
 
 2. **Server Emits Granular Event**
+
    ```typescript
    sseEvents.broadcastThreadCreated(accountId, {
      id: newThread.id,
@@ -170,12 +173,14 @@ export function useEmailEventsOptimized({
    ```
 
 3. **Client Receives SSE Event**
+
    ```
    event: thread-created
    data: {"accountId":"123","timestamp":"...","thread":{...}}
    ```
 
 4. **Client Applies Delta Update**
+
    ```typescript
    // No API call! Just update cache
    applyThreadCreated(queryClient, accountId, event);
@@ -188,13 +193,13 @@ export function useEmailEventsOptimized({
 
 ## DRY Principles Applied
 
-| Concept | Implementation |
-|---------|----------------|
-| **Event types** | Single `shared/email-events.ts` (used by server + client) |
-| **Delta logic** | Centralized in `query-delta-updates.ts` |
-| **Event emitters** | Reusable methods in `sse-events.ts` |
-| **SSE handling** | Single `useEmailEventsOptimized` hook |
-| **Type safety** | Shared TypeScript types |
+| Concept            | Implementation                                            |
+| ------------------ | --------------------------------------------------------- |
+| **Event types**    | Single `shared/email-events.ts` (used by server + client) |
+| **Delta logic**    | Centralized in `query-delta-updates.ts`                   |
+| **Event emitters** | Reusable methods in `sse-events.ts`                       |
+| **SSE handling**   | Single `useEmailEventsOptimized` hook                     |
+| **Type safety**    | Shared TypeScript types                                   |
 
 **Zero duplication:** Event shapes defined once, used everywhere.
 
@@ -202,13 +207,14 @@ export function useEmailEventsOptimized({
 
 ### Comprehensive Test Suite (16/16 passing)
 
-**client/src/pages/seedmail/utils/__tests__/query-delta-updates.test.ts:**
+**client/src/pages/seedmail/utils/**tests**/query-delta-updates.test.ts:**
 
 ```bash
 npm test -- client/src/pages/seedmail/utils/__tests__/query-delta-updates.test.ts
 ```
 
 **Coverage:**
+
 - ✅ Thread created (add to cache)
 - ✅ Thread updated (merge changes)
 - ✅ Thread deleted (remove from cache)
@@ -224,29 +230,29 @@ npm test -- client/src/pages/seedmail/utils/__tests__/query-delta-updates.test.t
 
 ### API Call Reduction
 
-| Scenario | Before (Invalidation) | After (Delta) | Improvement |
-|----------|----------------------|---------------|-------------|
-| New email arrives | 1 API call | 0 API calls | **100%** |
-| Mark as read | 1 API call | 0 API calls | **100%** |
-| Delete email | 1 API call | 0 API calls | **100%** |
-| Save draft | 1 API call | 0 API calls | **100%** |
-| 1-hour session | ~50 API calls | ~2-3 API calls | **95%** |
+| Scenario          | Before (Invalidation) | After (Delta)  | Improvement |
+| ----------------- | --------------------- | -------------- | ----------- |
+| New email arrives | 1 API call            | 0 API calls    | **100%**    |
+| Mark as read      | 1 API call            | 0 API calls    | **100%**    |
+| Delete email      | 1 API call            | 0 API calls    | **100%**    |
+| Save draft        | 1 API call            | 0 API calls    | **100%**    |
+| 1-hour session    | ~50 API calls         | ~2-3 API calls | **95%**     |
 
 ### Network Bandwidth
 
-| Event | Before | After | Savings |
-|-------|--------|-------|---------|
-| New email | 100KB (full list) | 1KB (event data) | **99%** |
+| Event        | Before            | After              | Savings   |
+| ------------ | ----------------- | ------------------ | --------- |
+| New email    | 100KB (full list) | 1KB (event data)   | **99%**   |
 | Mark as read | 100KB (full list) | 0.5KB (event data) | **99.5%** |
 
 ### User Experience
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Update delay | 200-500ms | 0-5ms |
-| Loading spinners | Yes | No |
-| Flicker-free | No | Yes |
-| Perceived performance | Good | Excellent |
+| Metric                | Before    | After     |
+| --------------------- | --------- | --------- |
+| Update delay          | 200-500ms | 0-5ms     |
+| Loading spinners      | Yes       | No        |
+| Flicker-free          | No        | Yes       |
+| Perceived performance | Good      | Excellent |
 
 ## Usage Examples
 
@@ -306,6 +312,7 @@ function EmailInbox() {
 ## Migration from Legacy Hook
 
 **Before (`useEmailEvents`):**
+
 ```typescript
 // Invalidates entire query on every event
 eventSource.addEventListener("sync-completed", () => {
@@ -314,6 +321,7 @@ eventSource.addEventListener("sync-completed", () => {
 ```
 
 **After (`useEmailEventsOptimized`):**
+
 ```typescript
 // Applies delta update (no API call)
 eventSource.addEventListener(SSEEventType.THREAD_CREATED, (event) => {
@@ -353,6 +361,7 @@ console.log("Error:", error);
 ### Enable Logging
 
 All delta updates log to console:
+
 ```
 [Delta] Thread created: thread-123
 [Delta] Thread updated: thread-456 { unread: false }
@@ -363,6 +372,7 @@ All delta updates log to console:
 ## Best Practices
 
 ✅ **DO:**
+
 - Use delta updates for all granular events
 - Emit specific events (thread-updated) instead of generic (sync-completed)
 - Include only changed fields in update events
@@ -370,6 +380,7 @@ All delta updates log to console:
 - Test delta logic thoroughly
 
 ❌ **DON'T:**
+
 - Emit full syncs for individual changes
 - Include unchanged data in update events
 - Mix delta updates with invalidations (pick one)
@@ -402,11 +413,13 @@ All delta updates log to console:
 ## Security Considerations
 
 ✅ **Delta updates are safe:**
+
 - Same authorization as full queries
 - Events scoped to user's account
 - No sensitive data in event names
 
 ⚠️ **Considerations:**
+
 - Validate account ownership before emitting
 - Use user-specific SSE connections
 - Rate-limit event emissions

@@ -60,8 +60,6 @@ class AssetOptimizationService {
   }
 
   trackCompressionStats() {
-    const self = this;
-
     return (req: Request, res: Response, next: NextFunction) => {
       const originalSend = res.send;
       const originalJson = res.json;
@@ -75,12 +73,12 @@ class AssetOptimizationService {
             // Estimate compression ratio (simplified)
             const estimatedCompressed = Math.round(originalSize * 0.7); // Rough estimate
 
-            self.stats.requests++;
-            self.stats.totalOriginalSize += originalSize;
-            self.stats.totalCompressedSize += estimatedCompressed;
-            self.stats.compressionRatio =
-              self.stats.totalOriginalSize > 0
-                ? self.stats.totalCompressedSize / self.stats.totalOriginalSize
+            this.stats.requests++;
+            this.stats.totalOriginalSize += originalSize;
+            this.stats.totalCompressedSize += estimatedCompressed;
+            this.stats.compressionRatio =
+              this.stats.totalOriginalSize > 0
+                ? this.stats.totalCompressedSize / this.stats.totalOriginalSize
                 : 1;
           }
         }

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { FailedSendAlert } from "./FailedSendAlert";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -212,7 +212,7 @@ export const AllBounceTypes: Story = {
           maxRetries={3}
         />
       </div>
-      
+
       <div>
         <h3 className="font-semibold mb-2">Soft Bounce</h3>
         <FailedSendAlert
@@ -224,7 +224,7 @@ export const AllBounceTypes: Story = {
           maxRetries={3}
         />
       </div>
-      
+
       <div>
         <h3 className="font-semibold mb-2">Spam Complaint</h3>
         <FailedSendAlert
@@ -236,7 +236,7 @@ export const AllBounceTypes: Story = {
           maxRetries={3}
         />
       </div>
-      
+
       <div>
         <h3 className="font-semibold mb-2">Generic Failure</h3>
         <FailedSendAlert

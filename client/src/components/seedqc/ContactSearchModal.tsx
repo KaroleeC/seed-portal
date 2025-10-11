@@ -103,7 +103,11 @@ export function ContactSearchModal({
               <p className="text-muted-foreground mb-4">
                 No contacts found matching "{contactSearchTerm}"
               </p>
-              <Button onClick={onCreateNewQuote} variant="outline" data-testid="qa-create-new-quote">
+              <Button
+                onClick={onCreateNewQuote}
+                variant="outline"
+                data-testid="qa-create-new-quote"
+              >
                 Create New Quote for "{triggerEmail}"
               </Button>
             </div>

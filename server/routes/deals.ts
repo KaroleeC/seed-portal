@@ -7,7 +7,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { storage } from "../storage.js";
-import { requireAuth, asyncHandler, handleError, validateBody } from "./_shared";
+import { requireAuth, requirePermission, asyncHandler, handleError, validateBody } from "./_shared";
 import { getQuoteProvider } from "../services/providers/index.js";
 import { dealsService } from "../services/deals-service.js";
 import { DealsResultSchema } from "@shared/contracts";
@@ -158,15 +158,15 @@ router.get(
   requireAuth,
   asyncHandler(async (req, res) => {
     const jobId = req.params.jobId;
-    
+
     if (!jobId) {
       return res.status(400).json({ message: "jobId is required" });
     }
-    
+
     // Use provider pattern for status checking
     const provider = getQuoteProvider();
     const status = await provider.checkSyncStatus(jobId);
-    
+
     res.json(status);
   })
 );
@@ -210,7 +210,7 @@ router.get(
  * @query ids - Comma-separated deal IDs (optional)
  * @query ownerId - Filter by owner ID
  * @query limit - Max number of deals to return
- * 
+ *
  * Cacheable: ETag enabled with 2-minute cache
  */
 router.get("/api/deals", requireAuth, withETag({ maxAge: 120 }), async (req, res) => {
@@ -272,32 +272,34 @@ router.get("/api/deals/by-owner", requireAuth, async (req, res) => {
 
 /**
  * POST /api/deals/cache/invalidate
+ * Action: admin.cache
  * Admin-only endpoint to invalidate deals cache
- * 
+ *
  * Useful for forcing a refresh during development or after HubSpot changes
  */
-router.post("/api/deals/cache/invalidate", requireAuth, async (req: any, res) => {
-  try {
-    if (req.user?.role !== "admin") {
-      return res.status(403).json({ message: "Admin access required" });
-    }
+router.post(
+  "/api/deals/cache/invalidate",
+  requireAuth,
+  requirePermission("admin.cache", "system"),
+  async (req: any, res) => {
+    try {
+      // Clear in-memory cache (Redis removed)
+      const pattern = `${CachePrefix.HUBSPOT_DEALS_LIST}*`;
+      const keys = await cache.keys(pattern);
 
-    // Clear in-memory cache (Redis removed)
-    const pattern = `${CachePrefix.HUBSPOT_DEALS_LIST}*`;
-    const keys = await cache.keys(pattern);
-    
-    for (const key of keys) {
-      await cache.del(key);
-    }
+      for (const key of keys) {
+        await cache.del(key);
+      }
 
-    res.json({ success: true, deleted: keys.length, pattern });
-  } catch (error) {
-    console.error("Failed to invalidate deals cache:", error);
-    res.status(500).json({
-      message: "Failed to invalidate deals cache",
-      error: getErrorMessage(error),
-    });
+      res.json({ success: true, deleted: keys.length, pattern });
+    } catch (error) {
+      console.error("Failed to invalidate deals cache:", error);
+      res.status(500).json({
+        message: "Failed to invalidate deals cache",
+        error: getErrorMessage(error),
+      });
+    }
   }
-});
+);
 
 export default router;

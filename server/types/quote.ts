@@ -1,6 +1,6 @@
 /**
  * Quote Domain Types
- * 
+ *
  * Properly typed interfaces for quote operations to replace `any` types.
  */
 
@@ -10,7 +10,7 @@ import type { Quote } from "@shared/schema";
  * Quote data with owner information
  * Used when creating quotes (adds ownerId to insert schema)
  */
-export interface QuoteWithOwner extends Omit<Quote, 'id' | 'createdAt' | 'updatedAt'> {
+export interface QuoteWithOwner extends Omit<Quote, "id" | "createdAt" | "updatedAt"> {
   ownerId: number;
 }
 

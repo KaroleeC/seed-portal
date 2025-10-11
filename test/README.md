@@ -30,27 +30,27 @@ npm run test:db:stop
 ### Basic Integration Test
 
 ```typescript
-import { describe, it, expect, beforeEach } from 'vitest';
-import { withTestDb, createTestLead, createTestThread } from '@test/api-test-utils';
+import { describe, it, expect, beforeEach } from "vitest";
+import { withTestDb, createTestLead, createTestThread } from "@test/api-test-utils";
 
-describe('My Feature', () => {
+describe("My Feature", () => {
   beforeEach(async () => {
     // Clean database before each test
     await withTestDb(async () => {});
   });
 
-  it('should work correctly', async () => {
+  it("should work correctly", async () => {
     await withTestDb(async (db) => {
       // Create test data
       const lead = createTestLead();
       const thread = createTestThread();
-      
+
       await db.insert(leads).values(lead);
       await db.insert(emailThreads).values(thread);
-      
+
       // Test your feature
       // ...
-      
+
       // Assert results
       expect(result).toBe(expected);
     });
@@ -64,8 +64,8 @@ Factories create realistic test data with randomized IDs:
 
 ```typescript
 // Create a single lead
-const lead = createTestLead({ 
-  contactEmail: 'custom@example.com' 
+const lead = createTestLead({
+  contactEmail: "custom@example.com",
 });
 
 // Create multiple leads
@@ -73,8 +73,8 @@ const leads = createTestLeads(5);
 
 // Create an email thread
 const thread = createTestThread({
-  subject: 'Important Email',
-  participants: [{ email: 'test@example.com', name: 'Test' }]
+  subject: "Important Email",
+  participants: [{ email: "test@example.com", name: "Test" }],
 });
 ```
 
@@ -115,10 +115,10 @@ jobs:
     steps:
       - name: Start test database
         run: npm run test:db:start
-      
+
       - name: Run integration tests
         run: npm run test:integration
-      
+
       - name: Cleanup
         if: always()
         run: npm run test:db:stop

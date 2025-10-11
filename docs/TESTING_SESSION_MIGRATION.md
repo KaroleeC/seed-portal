@@ -9,9 +9,11 @@ I've created comprehensive tests to verify the Redis → Postgres migration work
 ## 📋 Test Files Created
 
 ### 1. **Integration Tests** (`test/integration/postgres-sessions.test.ts`)
+
 Tests the Postgres session store at the service level.
 
 **Coverage:**
+
 - ✅ Session table schema verification
 - ✅ Session CRUD operations (create, read, update, delete)
 - ✅ Session expiration handling
@@ -21,9 +23,11 @@ Tests the Postgres session store at the service level.
 - ✅ Migration verification (no Redis dependencies)
 
 ### 2. **E2E Tests** (`test/e2e/impersonation.spec.ts`)
+
 Tests the full impersonation flow in a browser.
 
 **Coverage:**
+
 - ✅ Admin can impersonate users
 - ✅ Impersonation persists across reloads
 - ✅ Admin can stop impersonation
@@ -49,6 +53,7 @@ npm run test:watch test/integration/postgres-sessions.test.ts
 ```
 
 **Prerequisites:**
+
 - Database connection (`DATABASE_URL` set)
 - Postgres running locally or via Supabase
 
@@ -66,6 +71,7 @@ npm run test:e2e:headed test/e2e/impersonation.spec.ts
 ```
 
 **Prerequisites:**
+
 - Server running (`npm run dev`)
 - Test users in database (admin + regular user)
 - Doppler config loaded
@@ -75,6 +81,7 @@ npm run test:e2e:headed test/e2e/impersonation.spec.ts
 ## ✅ What Each Test Verifies
 
 ### **Session Table Tests**
+
 ```typescript
 ✓ Should have user_sessions table created
 ✓ Should have correct schema (sid, sess, expire)
@@ -82,6 +89,7 @@ npm run test:e2e:headed test/e2e/impersonation.spec.ts
 ```
 
 ### **Session Operations Tests**
+
 ```typescript
 ✓ Should create sessionMiddleware correctly
 ✓ Should use Postgres pool for storage
@@ -89,6 +97,7 @@ npm run test:e2e:headed test/e2e/impersonation.spec.ts
 ```
 
 ### **Session Persistence Tests**
+
 ```typescript
 ✓ Should persist session data to Postgres
 ✓ Should handle session expiration
@@ -96,6 +105,7 @@ npm run test:e2e:headed test/e2e/impersonation.spec.ts
 ```
 
 ### **Impersonation Tests**
+
 ```typescript
 ✓ Should store impersonation data correctly
 ✓ Should handle stop impersonation
@@ -138,8 +148,9 @@ LIMIT 10;
    - Verify banner shows "Impersonating..."
 
 3. **Check session in database:**
+
    ```sql
-   SELECT sess FROM user_sessions 
+   SELECT sess FROM user_sessions
    WHERE sess::text LIKE '%isImpersonating%';
    ```
 
@@ -170,6 +181,7 @@ grep -r "REDIS_URL" server/
 ## 📊 Expected Test Results
 
 ### **All Passing:**
+
 ```
 ✓ Postgres Session Store (15 tests)
   ✓ Session Table (3)
@@ -199,7 +211,8 @@ Tests  21 passed (21)
 
 **Cause:** `user_sessions` table hasn't been created yet.
 
-**Fix:** 
+**Fix:**
+
 1. Start the server: `npm run dev`
 2. Login once to trigger session creation
 3. Table will be auto-created
@@ -210,6 +223,7 @@ Tests  21 passed (21)
 **Cause:** `DATABASE_URL` not set or database not running.
 
 **Fix:**
+
 ```bash
 # Check DATABASE_URL
 echo $DATABASE_URL
@@ -226,11 +240,11 @@ doppler run --project seed-portal-api --config dev -- npm test
 
 ```sql
 -- Create admin user
-INSERT INTO users (email, password, role) 
+INSERT INTO users (email, password, role)
 VALUES ('admin@example.com', 'hashed-password', 'admin');
 
 -- Create regular user
-INSERT INTO users (email, password, role) 
+INSERT INTO users (email, password, role)
 VALUES ('user@example.com', 'hashed-password', 'user');
 ```
 

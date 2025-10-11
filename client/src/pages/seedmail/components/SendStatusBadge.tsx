@@ -59,16 +59,8 @@ export function SendStatusBadge({
       return (
         <div className="space-y-1">
           <div className="font-semibold">{label}</div>
-          {bounceType && (
-            <div className="text-xs text-muted-foreground">
-              Type: {bounceType}
-            </div>
-          )}
-          {errorMessage && (
-            <div className="text-xs max-w-xs break-words">
-              {errorMessage}
-            </div>
-          )}
+          {bounceType && <div className="text-xs text-muted-foreground">Type: {bounceType}</div>}
+          {errorMessage && <div className="text-xs max-w-xs break-words">{errorMessage}</div>}
           {retryCount > 0 && (
             <div className="text-xs text-muted-foreground">
               Retry attempts: {retryCount}/{maxRetries}
@@ -86,14 +78,15 @@ export function SendStatusBadge({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Badge variant={variant} className={`gap-1 ${size === "sm" ? "text-xs px-1.5 py-0.5" : ""}`}>
+          <Badge
+            variant={variant}
+            className={`gap-1 ${size === "sm" ? "text-xs px-1.5 py-0.5" : ""}`}
+          >
             <Icon className={`${iconSize} ${className}`} />
             <span>{label}</span>
           </Badge>
         </TooltipTrigger>
-        <TooltipContent>
-          {tooltipContent()}
-        </TooltipContent>
+        <TooltipContent>{tooltipContent()}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

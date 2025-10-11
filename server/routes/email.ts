@@ -391,9 +391,9 @@ router.post("/api/email/sync", requireAuth, async (req: Request, res: Response) 
     try {
       const { queueJob } = await import("../workers/graphile-worker");
       await queueJob("email-sync", { accountId, forceFullSync });
-      
-      return res.json({ 
-        success: true, 
+
+      return res.json({
+        success: true,
         message: "Sync queued",
         queued: true,
       });
@@ -405,7 +405,7 @@ router.post("/api/email/sync", requireAuth, async (req: Request, res: Response) 
 
     // Option 2: Direct execution (fallback)
     const { syncEmailAccount } = await import("../services/email-sync.service");
-    
+
     // Run in background (non-blocking)
     res.json({ success: true, message: "Sync started", queued: false });
 
@@ -414,7 +414,6 @@ router.post("/api/email/sync", requireAuth, async (req: Request, res: Response) 
       const { logger } = await import("../logger");
       logger.error({ error, accountId }, "Manual sync failed");
     });
-
   } catch (error) {
     const { logger } = await import("../logger");
     logger.error({ error }, "Failed to start sync");

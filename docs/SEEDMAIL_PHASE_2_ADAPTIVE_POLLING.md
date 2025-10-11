@@ -49,22 +49,22 @@ const getPollingInterval = () => {
   if (!enablePolling || !isVisible) {
     return false; // Stop polling when hidden
   }
-  
+
   if (isActive) {
     return 30 * 1000; // 30s when actively using SEEDMAIL
   }
-  
+
   return 2 * 60 * 1000; // 2min when visible but unfocused
 };
 ```
 
 ### **User Experience**
 
-| User State | Polling Interval | Example Scenario |
-|------------|------------------|------------------|
-| **Active** | 30 seconds | User is viewing/composing emails |
-| **Visible but unfocused** | 2 minutes | User has tab open but working in another window |
-| **Tab hidden** | Disabled | User switched to another tab/app |
+| User State                | Polling Interval | Example Scenario                                |
+| ------------------------- | ---------------- | ----------------------------------------------- |
+| **Active**                | 30 seconds       | User is viewing/composing emails                |
+| **Visible but unfocused** | 2 minutes        | User has tab open but working in another window |
+| **Tab hidden**            | Disabled         | User switched to another tab/app                |
 
 ---
 
@@ -117,14 +117,14 @@ const { threads } = useEmailThreads({
 // In browser DevTools Console:
 
 // Simulate page hidden
-document.dispatchEvent(new Event('visibilitychange'));
-Object.defineProperty(document, 'hidden', { value: true });
+document.dispatchEvent(new Event("visibilitychange"));
+Object.defineProperty(document, "hidden", { value: true });
 
 // Check React Query DevTools - polling should stop
 
 // Simulate page visible again
-Object.defineProperty(document, 'hidden', { value: false });
-document.dispatchEvent(new Event('visibilitychange'));
+Object.defineProperty(document, "hidden", { value: false });
+document.dispatchEvent(new Event("visibilitychange"));
 
 // Check React Query DevTools - polling should resume
 ```
@@ -133,11 +133,11 @@ document.dispatchEvent(new Event('visibilitychange'));
 
 ```typescript
 // Blur window (unfocus)
-window.dispatchEvent(new Event('blur'));
+window.dispatchEvent(new Event("blur"));
 // Polling interval should increase to 2 minutes
 
 // Focus window
-window.dispatchEvent(new Event('focus'));
+window.dispatchEvent(new Event("focus"));
 // Polling interval should decrease to 30 seconds
 ```
 
@@ -157,7 +157,7 @@ Open Chrome DevTools → Network tab:
 ✅ **Battery-friendly** - Stops when hidden  
 ✅ **No new dependencies** - Uses React Query built-in features  
 ✅ **Zero UI changes** - Works transparently  
-✅ **Works with Phase 1** - Server still syncs in background  
+✅ **Works with Phase 1** - Server still syncs in background
 
 ---
 
@@ -200,7 +200,7 @@ staleTime: 10 * 1000, // 10s - adjust as needed
 // In React component:
 const { isVisible, isFocused, isActive } = usePageVisibility();
 
-console.log('Visibility:', { isVisible, isFocused, isActive });
+console.log("Visibility:", { isVisible, isFocused, isActive });
 ```
 
 ### **React Query DevTools**

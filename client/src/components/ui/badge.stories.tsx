@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Badge } from "./badge";
 
 /**
@@ -173,9 +173,7 @@ export const ThemeAware: Story = {
       </div>
 
       <div className="border-t pt-4">
-        <p className="text-sm text-muted-foreground mb-3">
-          Combined usage:
-        </p>
+        <p className="text-sm text-muted-foreground mb-3">Combined usage:</p>
         <div className="flex items-center gap-2">
           <span className="text-sm">John Doe</span>
           <Badge>Pro</Badge>

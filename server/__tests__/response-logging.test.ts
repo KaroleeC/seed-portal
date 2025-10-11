@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 /**
  * Response Logging Middleware Tests
- * 
+ *
  * Verifies that heavy response logging is properly gated behind DEBUG_HTTP=1
  * and disabled in production environments.
  */
@@ -17,7 +17,7 @@ describe("Response Logging Middleware", () => {
       process.env.DEBUG_HTTP = "1";
 
       const { shouldLogResponses } = await import("../config/environment");
-      
+
       expect(shouldLogResponses()).toBe(false);
     });
 
@@ -26,7 +26,7 @@ describe("Response Logging Middleware", () => {
       process.env.DEBUG_HTTP = "1";
 
       const { shouldDebugRequests } = await import("../config/environment");
-      
+
       expect(shouldDebugRequests()).toBe(false);
     });
   });
@@ -37,7 +37,7 @@ describe("Response Logging Middleware", () => {
       delete process.env.DEBUG_HTTP;
 
       const { shouldLogResponses } = await import("../config/environment");
-      
+
       expect(shouldLogResponses()).toBe(false);
     });
 
@@ -46,7 +46,7 @@ describe("Response Logging Middleware", () => {
       process.env.DEBUG_HTTP = "1";
 
       const { shouldLogResponses } = await import("../config/environment");
-      
+
       expect(shouldLogResponses()).toBe(true);
     });
   });
@@ -54,16 +54,13 @@ describe("Response Logging Middleware", () => {
   describe("Middleware Integration", () => {
     it("verifies server/index.ts imports shared config", async () => {
       const fs = await import("fs");
-      const indexSource = fs.readFileSync(
-        require.resolve("../index.ts"),
-        "utf-8"
-      );
+      const indexSource = fs.readFileSync(require.resolve("../index.ts"), "utf-8");
 
       // Verify imports from shared config
-      expect(indexSource).toContain("from \"./config/environment\"");
+      expect(indexSource).toContain('from "./config/environment"');
       expect(indexSource).toContain("shouldLogResponses");
       expect(indexSource).toContain("shouldDebugRequests");
-      
+
       // Verify uses shared config, not direct process.env checks
       expect(indexSource).toContain("if (shouldLogResponses())");
       expect(indexSource).toContain("if (shouldDebugRequests())");
@@ -71,33 +68,27 @@ describe("Response Logging Middleware", () => {
 
     it("verifies no unguarded DEBUG_HTTP checks remain", async () => {
       const fs = await import("fs");
-      const indexSource = fs.readFileSync(
-        require.resolve("../index.ts"),
-        "utf-8"
-      );
+      const indexSource = fs.readFileSync(require.resolve("../index.ts"), "utf-8");
 
       // Count remaining direct DEBUG_HTTP checks (should be 0 in conditional logic)
       // Note: Comments and strings don't count
       const directChecks = indexSource.match(/if\s*\(\s*process\.env\.DEBUG_HTTP/g);
-      
+
       expect(directChecks).toBeNull();
     });
 
     it("verifies middleware is conditionally registered", async () => {
       const fs = await import("fs");
-      const indexSource = fs.readFileSync(
-        require.resolve("../index.ts"),
-        "utf-8"
-      );
+      const indexSource = fs.readFileSync(require.resolve("../index.ts"), "utf-8");
 
       // Verify the logging middleware is inside a conditional block
       const hasConditional = indexSource.includes("if (shouldLogResponses())");
       expect(hasConditional).toBe(true);
-      
+
       // Verify it logs when enabled
       const hasEnabledMessage = indexSource.includes("Heavy response logging ENABLED");
       expect(hasEnabledMessage).toBe(true);
-      
+
       // Verify it logs when disabled
       const hasDisabledMessage = indexSource.includes("Response logging disabled");
       expect(hasDisabledMessage).toBe(true);
@@ -107,10 +98,7 @@ describe("Response Logging Middleware", () => {
   describe("Performance Impact", () => {
     it("documents performance cost in comments", async () => {
       const fs = await import("fs");
-      const indexSource = fs.readFileSync(
-        require.resolve("../index.ts"),
-        "utf-8"
-      );
+      const indexSource = fs.readFileSync(require.resolve("../index.ts"), "utf-8");
 
       // Verify documentation of performance impact
       expect(indexSource).toContain("Heavy response logging");
@@ -119,10 +107,7 @@ describe("Response Logging Middleware", () => {
 
     it("shared config documents performance impact", async () => {
       const fs = await import("fs");
-      const envSource = fs.readFileSync(
-        require.resolve("../config/environment.ts"),
-        "utf-8"
-      );
+      const envSource = fs.readFileSync(require.resolve("../config/environment.ts"), "utf-8");
 
       // Verify documentation in shared config
       expect(envSource).toContain("Performance impact");
@@ -132,13 +117,14 @@ describe("Response Logging Middleware", () => {
 
   describe("DRY Principle Compliance", () => {
     it("uses single source of truth for debug flags", async () => {
-      const { shouldLogResponses, shouldDebugRequests, DEBUG_HTTP_ENABLED } = 
-        await import("../config/environment");
+      const { shouldLogResponses, shouldDebugRequests, DEBUG_HTTP_ENABLED } = await import(
+        "../config/environment"
+      );
 
       // All functions should reference the same underlying flag
       const result1 = shouldLogResponses();
       const result2 = shouldDebugRequests();
-      
+
       // Both should be consistent (either both true or both false for DEBUG)
       expect(result1).toBe(DEBUG_HTTP_ENABLED && process.env.NODE_ENV !== "production");
       expect(result2).toBe(DEBUG_HTTP_ENABLED);

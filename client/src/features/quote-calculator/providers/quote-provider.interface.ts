@@ -1,9 +1,9 @@
 /**
  * Quote Provider Interface
- * 
+ *
  * Abstract interface for quote sync operations.
  * Allows swapping between HubSpot, SeedPay, or other providers without changing business logic.
- * 
+ *
  * Migration Strategy:
  * - Current: HubSpotQuoteProvider
  * - Future: SeedPayQuoteProvider
@@ -30,7 +30,7 @@ export interface QuoteSyncOptions {
 
 /**
  * Abstract Quote Provider Interface
- * 
+ *
  * All CRM integrations (HubSpot, SeedPay, etc.) must implement this interface
  */
 export interface IQuoteProvider {

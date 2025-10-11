@@ -25,17 +25,18 @@
 
 ## 📊 Polling Strategy
 
-| User State | Poll Interval | Description |
-|------------|---------------|-------------|
-| **Active** (visible + focused) | 30 seconds | User actively using SEEDMAIL |
-| **Visible** (not focused) | 2 minutes | Tab open but user elsewhere |
-| **Hidden** | Disabled | Tab hidden/minimized (battery-friendly) |
+| User State                     | Poll Interval | Description                             |
+| ------------------------------ | ------------- | --------------------------------------- |
+| **Active** (visible + focused) | 30 seconds    | User actively using SEEDMAIL            |
+| **Visible** (not focused)      | 2 minutes     | Tab open but user elsewhere             |
+| **Hidden**                     | Disabled      | Tab hidden/minimized (battery-friendly) |
 
 ---
 
 ## 🔋 Battery Impact
 
 **Estimated API call reduction:**
+
 - **87% fewer calls** when app in background
 - **Zero calls** when tab hidden
 - **Smart throttling** when unfocused
@@ -45,16 +46,19 @@
 ## 🚀 How to Test
 
 ### **1. Open SEEDMAIL**
+
 ```bash
 npm run dev
 ```
 
 ### **2. Watch Network Tab**
+
 - **Active tab**: New request every ~30 seconds
 - **Click another window**: Slows to ~2 minutes
 - **Switch to another tab**: Stops completely
 
 ### **3. Check React Query DevTools**
+
 ```bash
 # Enable in client/src/main.tsx
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
@@ -71,7 +75,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 ✅ **Zero dependencies** - Uses React Query features  
 ✅ **Zero UI changes** - Works transparently  
 ✅ **Backward compatible** - Can disable with `enablePolling={false}`  
-✅ **Works with Phase 1** - Server syncs in background too  
+✅ **Works with Phase 1** - Server syncs in background too
 
 ---
 
@@ -98,6 +102,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 ## 📝 Usage Examples
 
 ### **Default (Polling Enabled)**
+
 ```typescript
 const { threads, loading, refetch } = useEmailThreads({
   accountId,
@@ -107,6 +112,7 @@ const { threads, loading, refetch } = useEmailThreads({
 ```
 
 ### **Disable Polling**
+
 ```typescript
 const { threads } = useEmailThreads({
   accountId,
@@ -120,6 +126,7 @@ const { threads } = useEmailThreads({
 ## 🎉 Phase 2 Complete!
 
 Your SEEDMAIL now has:
+
 - ✅ Background server sync (Phase 1)
 - ✅ Smart client polling (Phase 2)
 - ✅ Battery-friendly design

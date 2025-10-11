@@ -109,7 +109,7 @@ Created `docs/AUTHORIZATION_PATTERN.md` (comprehensive guide):
 
 ```typescript
 router.post("/api/quotes", requireAuth, async (req, res) => {
-  if (req.user?.role !== 'admin' && req.user?.role !== 'sales_manager') {
+  if (req.user?.role !== "admin" && req.user?.role !== "sales_manager") {
     return res.status(403).json({ message: "Forbidden" });
   }
   // Business logic
@@ -170,7 +170,7 @@ router.post(
 ### For New Routes
 
 ```typescript
-import { requireAuth, requirePermission, asyncHandler } from './_shared';
+import { requireAuth, requirePermission, asyncHandler } from "./_shared";
 
 /**
  * POST /api/deals
@@ -267,7 +267,7 @@ router.METHOD(
 ### Lines of Code
 
 - **ESLint rules:** +12 lines
-- **_shared.ts updates:** +30 lines
+- **\_shared.ts updates:** +30 lines
 - **Documentation:** +400 lines
 - **Total:** +442 lines of enforcement infrastructure
 
@@ -313,6 +313,6 @@ router.METHOD(
 **Enforcement:** ✅ Active (ESLint)  
 **Documentation:** ✅ Complete  
 **Fallback:** ✅ RBAC working  
-**Policies:** ⏳ Define when services stabilize  
+**Policies:** ⏳ Define when services stabilize
 
 **Next Step:** Start defining Cerbos policies when business logic settles, then enable `USE_CERBOS=true` gradually.

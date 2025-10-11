@@ -11,13 +11,13 @@ const setBoxEnv = (on: boolean) => {
     process.env["BOX_PASSPHRASE"] = "pass";
     process.env["BOX_CLIENT_FOLDERS_PARENT_ID"] = "0";
   } else {
-    delete process.env["BOX_CLIENT_ID"]; 
-    delete process.env["BOX_CLIENT_SECRET"]; 
-    delete process.env["BOX_ENTERPRISE_ID"]; 
-    delete process.env["BOX_KEY_ID"]; 
-    delete process.env["BOX_PRIVATE_KEY"]; 
-    delete process.env["BOX_PASSPHRASE"]; 
-    delete process.env["BOX_CLIENT_FOLDERS_PARENT_ID"]; 
+    delete process.env["BOX_CLIENT_ID"];
+    delete process.env["BOX_CLIENT_SECRET"];
+    delete process.env["BOX_ENTERPRISE_ID"];
+    delete process.env["BOX_KEY_ID"];
+    delete process.env["BOX_PRIVATE_KEY"];
+    delete process.env["BOX_PASSPHRASE"];
+    delete process.env["BOX_CLIENT_FOLDERS_PARENT_ID"];
   }
 };
 
@@ -31,14 +31,12 @@ describe("BoxService (with mocked SDK)", () => {
 
     const folders = {
       create: vi.fn().mockResolvedValue({ id: "C1", name: "Acme" }),
-      getItems: vi
-        .fn()
-        .mockImplementation(async (folderId: string) => {
-          if (folderId === "TEMPLATE") {
-            return { entries: [{ type: "file", id: "F1", name: "doc.docx" }] };
-          }
-          return { entries: [] };
-        }),
+      getItems: vi.fn().mockImplementation(async (folderId: string) => {
+        if (folderId === "TEMPLATE") {
+          return { entries: [{ type: "file", id: "F1", name: "doc.docx" }] };
+        }
+        return { entries: [] };
+      }),
     };
     const files = {
       copy: vi.fn().mockResolvedValue({ entries: [{ id: "N1", name: "doc.docx" }] }),

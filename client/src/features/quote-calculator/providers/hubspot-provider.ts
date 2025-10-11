@@ -1,6 +1,6 @@
 /**
  * HubSpot Quote Provider
- * 
+ *
  * Current implementation of quote sync using HubSpot APIs.
  * Will be replaced by SeedPayProvider in future.
  */
@@ -16,9 +16,9 @@ export class HubSpotQuoteProvider implements IQuoteProvider {
     try {
       const result = await apiRequest("/api/hubspot/queue-sync", {
         method: "POST",
-        body: JSON.stringify({ 
-          quoteId, 
-          action: options?.action || "auto" 
+        body: JSON.stringify({
+          quoteId,
+          action: options?.action || "auto",
         }),
       });
 

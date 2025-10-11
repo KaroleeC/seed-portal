@@ -141,18 +141,13 @@ export const SYSTEM_FOLDERS = {
       <ExternalLink className="mr-2 h-4 w-4" />
       Open in LEADIQ
     </DropdownMenuItem>
-    
-    <DropdownMenuItem
-      disabled={hasLead}
-      onClick={() => setCreateLeadModalOpen(true)}
-    >
+
+    <DropdownMenuItem disabled={hasLead} onClick={() => setCreateLeadModalOpen(true)}>
       <UserPlus className="mr-2 h-4 w-4" />
       Create Lead
     </DropdownMenuItem>
-    
-    <DropdownMenuItem
-      onClick={() => setAssociateModalOpen(true)}
-    >
+
+    <DropdownMenuItem onClick={() => setAssociateModalOpen(true)}>
       <Link className="mr-2 h-4 w-4" />
       Associate with Existing Lead
     </DropdownMenuItem>
@@ -183,15 +178,15 @@ export const SYSTEM_FOLDERS = {
   <DialogHeader>
     <DialogTitle>Associate with Lead</DialogTitle>
   </DialogHeader>
-  
+
   <Input
     placeholder="Search leads..."
     value={searchQuery}
     onChange={(e) => setSearchQuery(e.target.value)}
   />
-  
+
   <ScrollArea>
-    {leads.map(lead => (
+    {leads.map((lead) => (
       <LeadSearchResult
         key={lead.id}
         lead={lead}
@@ -243,14 +238,14 @@ describe("Email-Lead Linking Service", () => {
     const matches = await findLeadsByEmail("test@example.com");
     expect(matches).toHaveLength(1);
     expect(matches[0].matchType).toBe("primary");
-    expect(matches[0].confidence).toBe(1.00);
+    expect(matches[0].confidence).toBe(1.0);
   });
-  
+
   it("should auto-link thread to multiple leads", async () => {
     const links = await autoLinkThreadToLeads(threadId);
     expect(links).toHaveLength(2);
   });
-  
+
   it("should prevent duplicate links", async () => {
     await linkThreadToLead(threadId, leadId, userId);
     const link2 = await linkThreadToLead(threadId, leadId, userId);
@@ -270,7 +265,7 @@ describe("POST /api/email/lead-linking/link", () => {
       .post("/api/email/lead-linking/link")
       .send({ threadId, leadId })
       .expect(200);
-    
+
     expect(res.body.success).toBe(true);
     expect(res.body.link).toMatchObject({ threadId, leadId });
   });
@@ -286,7 +281,7 @@ test("should show Open in LEADIQ option when lead is linked", async ({ page }) =
   await page.goto("/apps/seedmail");
   await page.click('[data-testid="thread-item"]');
   await page.click('[data-testid="thread-menu"]');
-  
+
   const openInLeadiq = page.locator('text="Open in LEADIQ"');
   await expect(openInLeadiq).toBeEnabled();
 });

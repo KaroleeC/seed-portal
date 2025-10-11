@@ -1,6 +1,6 @@
 /**
  * SeedMail SSE (Server-Sent Events) E2E Tests
- * 
+ *
  * Tests real-time email sync and multi-tab functionality
  */
 
@@ -13,17 +13,19 @@ import { loginAsAdmin } from "./helpers/auth";
 async function waitForSSEConnection(page: Page, timeout = 5000): Promise<boolean> {
   try {
     // Wait for the connected state by checking console logs or UI indicator
-    await page.waitForFunction(
-      () => {
-        // Check if there's a data attribute or state indicating connection
-        const logs = (window as any).__sseConnected;
-        return logs === true;
-      },
-      { timeout }
-    ).catch(() => {
-      // If the above doesn't work, just wait a bit for connection
-      return page.waitForTimeout(2000);
-    });
+    await page
+      .waitForFunction(
+        () => {
+          // Check if there's a data attribute or state indicating connection
+          const logs = (window as any).__sseConnected;
+          return logs === true;
+        },
+        { timeout }
+      )
+      .catch(() => {
+        // If the above doesn't work, just wait a bit for connection
+        return page.waitForTimeout(2000);
+      });
     return true;
   } catch {
     // Fallback: just wait for network to be idle
@@ -62,7 +64,7 @@ test.describe("SeedMail SSE Events", () => {
     });
 
     await page.goto("/apps/seedmail", { waitUntil: "domcontentloaded" });
-    
+
     // Wait for any email account to be selected or connected
     await page.waitForTimeout(2000);
 
@@ -73,7 +75,7 @@ test.describe("SeedMail SSE Events", () => {
     // Listen for console logs BEFORE navigation
     const heartbeatLogs: string[] = [];
     const sseConnectionLogs: string[] = [];
-    
+
     page.on("console", (msg) => {
       const text = msg.text();
       if (text.includes("heartbeat")) {
@@ -92,7 +94,7 @@ test.describe("SeedMail SSE Events", () => {
     // Verify page is responsive (skip long heartbeat wait)
     const pageContent = await page.content();
     expect(pageContent).toBeTruthy();
-    
+
     // At minimum, verify SSE connection was attempted
     expect(sseConnectionLogs.length).toBeGreaterThanOrEqual(0);
   });
@@ -102,7 +104,11 @@ test.describe("SeedMail SSE Events", () => {
     const reconnectLogs: string[] = [];
     page.on("console", (msg) => {
       const text = msg.text();
-      if (text.includes("Reconnecting") || text.includes("Connection error") || text.includes("SSE")) {
+      if (
+        text.includes("Reconnecting") ||
+        text.includes("Connection error") ||
+        text.includes("SSE")
+      ) {
         reconnectLogs.push(text);
       }
     });
@@ -191,7 +197,7 @@ test.describe("SeedMail Multi-Tab SSE", () => {
     // Verify both tabs loaded successfully (page should not be 404)
     const tabAContent = await tabA.content();
     const tabBContent = await tabB.content();
-    
+
     expect(tabAContent).not.toContain("404 Page Not Found");
     expect(tabBContent).not.toContain("404 Page Not Found");
 

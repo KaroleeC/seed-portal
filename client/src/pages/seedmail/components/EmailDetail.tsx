@@ -95,12 +95,7 @@ function MessageWithStatus({
     sendStatus && (sendStatus.status === "failed" || sendStatus.status === "bounced");
 
   return (
-    <div
-      className={cn(
-        "space-y-4 rounded-lg border border-border bg-card p-4",
-        !isLast && "mb-2"
-      )}
-    >
+    <div className={cn("space-y-4 rounded-lg border border-border bg-card p-4", !isLast && "mb-2")}>
       <div className="flex items-start gap-3">
         <Avatar>
           <AvatarFallback className="bg-muted text-muted-foreground">
@@ -462,7 +457,7 @@ export function EmailDetail({
           {messages.map((message, index) => {
             const isLast = index === messages.length - 1;
             const isSentMessage = message.labels?.includes("SENT");
-            
+
             return (
               <MessageWithStatus
                 key={message.id}
@@ -669,8 +664,12 @@ export function EmailDetail({
               </Button>
 
               {/* Tracking checkbox */}
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <label
+                htmlFor="tracking-enabled"
+                className="flex items-center gap-2 text-sm cursor-pointer"
+              >
                 <Checkbox
+                  id="tracking-enabled"
                   checked={composer.trackingEnabled}
                   onCheckedChange={(checked) => composer.setTrackingEnabled(checked as boolean)}
                 />

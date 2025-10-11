@@ -1,6 +1,6 @@
 /**
  * useLeadSearch Hook
- * 
+ *
  * Debounced search for leads with caching
  * Used in lead association modal
  */
@@ -58,7 +58,7 @@ export function useLeadSearch(): UseLeadSearchResult {
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to search leads");
       }

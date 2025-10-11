@@ -1,6 +1,6 @@
 /**
  * useLeadEmails Hook
- * 
+ *
  * Fetches all lead email addresses from CRM for filtering email threads
  */
 
@@ -42,9 +42,7 @@ export function useLeadEmails(): UseLeadEmailsResult {
   });
 
   // Convert to Set for fast lookups
-  const leadEmails = new Set(
-    (data?.emails || []).map((email) => email.toLowerCase())
-  );
+  const leadEmails = new Set((data?.emails || []).map((email) => email.toLowerCase()));
 
   return {
     leadEmails,

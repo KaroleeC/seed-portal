@@ -25,17 +25,14 @@ describe("Asset Path Alignment", () => {
     it("serveStatic references BUILD_OUTPUT_PATH from constants", () => {
       // Read the source file to verify it imports and uses BUILD_OUTPUT_PATH
       const fs = require("fs");
-      const viteSource = fs.readFileSync(
-        path.join(process.cwd(), "server", "vite.ts"),
-        "utf-8"
-      );
+      const viteSource = fs.readFileSync(path.join(process.cwd(), "server", "vite.ts"), "utf-8");
 
       // Verify it imports BUILD_OUTPUT_PATH from constants
       expect(viteSource).toContain('import { BUILD_OUTPUT_PATH } from "./constants"');
 
       // Verify it uses BUILD_OUTPUT_PATH (not hardcoded paths)
       expect(viteSource).toContain("BUILD_OUTPUT_PATH");
-      
+
       // Verify it doesn't use the old hardcoded paths
       expect(viteSource).not.toContain('path.resolve(import.meta.dirname, "public")');
     });

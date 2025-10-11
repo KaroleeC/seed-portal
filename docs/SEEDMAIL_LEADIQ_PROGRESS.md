@@ -105,13 +105,13 @@ POST   /api/email/lead-linking/sync-lead-emails  ✅
    ```typescript
    // Add query parameter
    const { onlyLeads } = req.query;
-   
+
    // Filter threads linked to leads
-   if (onlyLeads === 'true') {
+   if (onlyLeads === "true") {
      query = query.innerJoin(
-       'email_thread_leads',
-       'email_threads.id',
-       'email_thread_leads.thread_id'
+       "email_thread_leads",
+       "email_threads.id",
+       "email_thread_leads.thread_id"
      );
    }
    ```
@@ -119,9 +119,10 @@ POST   /api/email/lead-linking/sync-lead-emails  ✅
 2. **Update useEmailThreads hook** - `client/src/pages/seedmail/hooks/useEmailThreads.ts`
 
    ```typescript
-   const queryKey = folder === "LEADS" 
-     ? ["/api/email/threads", accountId, { onlyLeads: true }]
-     : ["/api/email/threads", accountId, { folder }];
+   const queryKey =
+     folder === "LEADS"
+       ? ["/api/email/threads", accountId, { onlyLeads: true }]
+       : ["/api/email/threads", accountId, { folder }];
    ```
 
 3. **Sidebar already has LEADS** ✅ - Defined in constants
@@ -154,16 +155,13 @@ POST   /api/email/lead-linking/sync-lead-emails  ✅
       <ExternalLink className="mr-2 h-4 w-4" />
       Open in LEADIQ
     </DropdownMenuItem>
-    
+
     {/* 2. Create Lead - enabled if !hasLead */}
-    <DropdownMenuItem
-      disabled={hasLead}
-      onClick={() => setCreateLeadOpen(true)}
-    >
+    <DropdownMenuItem disabled={hasLead} onClick={() => setCreateLeadOpen(true)}>
       <UserPlus className="mr-2 h-4 w-4" />
       Create Lead
     </DropdownMenuItem>
-    
+
     {/* 3. Associate - always enabled */}
     <DropdownMenuItem onClick={() => setAssociateOpen(true)}>
       <Link className="mr-2 h-4 w-4" />
@@ -199,9 +197,7 @@ POST   /api/email/lead-linking/sync-lead-emails  ✅
 **Logic:**
 
 ```typescript
-export async function emailLeadAutoLinkTask(
-  payload: { threadIds: string[] }
-) {
+export async function emailLeadAutoLinkTask(payload: { threadIds: string[] }) {
   for (const threadId of payload.threadIds) {
     await autoLinkThreadToLeads(threadId);
   }
@@ -260,17 +256,17 @@ e2e/seedmail-leadiq-integration.spec.ts
 
 ## Summary by Task
 
-| Task | Status | Time Estimate | Priority |
-|------|--------|---------------|----------|
-| 1. Database migration | ✅ Done | - | - |
-| 2. Service layer | ✅ Done | - | - |
-| 3. API routes | ✅ Done | - | - |
-| 4. Type system | ✅ Done | - | - |
-| 5. Leads folder filtering | 🚧 In Progress | 2-3h | HIGH |
-| 6. Context menu | 🔴 Not Started | 4-5h | HIGH |
-| 7. Association modal | 🔴 Not Started | 6-8h | MEDIUM |
-| 8. Background worker | 🔴 Not Started | 3-4h | MEDIUM |
-| 9. Testing suite | 🔴 Not Started | 12-16h | HIGH |
+| Task                      | Status         | Time Estimate | Priority |
+| ------------------------- | -------------- | ------------- | -------- |
+| 1. Database migration     | ✅ Done        | -             | -        |
+| 2. Service layer          | ✅ Done        | -             | -        |
+| 3. API routes             | ✅ Done        | -             | -        |
+| 4. Type system            | ✅ Done        | -             | -        |
+| 5. Leads folder filtering | 🚧 In Progress | 2-3h          | HIGH     |
+| 6. Context menu           | 🔴 Not Started | 4-5h          | HIGH     |
+| 7. Association modal      | 🔴 Not Started | 6-8h          | MEDIUM   |
+| 8. Background worker      | 🔴 Not Started | 3-4h          | MEDIUM   |
+| 9. Testing suite          | 🔴 Not Started | 12-16h        | HIGH     |
 
 **Total Remaining:** ~27-36 hours of work
 

@@ -32,7 +32,10 @@ router.get("/api/cdn/performance", requireAuth, async (req, res) => {
     const manifest = cdnService.getManifest();
 
     const totalAssets = Object.keys(manifest).length;
-    const totalSize = Object.values(manifest).reduce((sum: any, asset: any) => sum + (asset as any).size, 0);
+    const totalSize = Object.values(manifest).reduce(
+      (sum: any, asset: any) => sum + (asset as any).size,
+      0
+    );
     const averageSize = totalAssets > 0 ? totalSize / totalAssets : 0;
 
     res.json({

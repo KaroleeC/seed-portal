@@ -9,14 +9,17 @@ Successfully migrated from Redis sessions to Postgres sessions using `connect-pg
 ## 🔄 What Changed
 
 ### **Added Files**
+
 - ✅ `server/session-store.ts` - Postgres session configuration
 
 ### **Removed Files**
+
 - ❌ `server/redis.ts` - Redis connection management
 - ❌ `server/disable-redis-instrumentation.ts` - Redis telemetry config
 - ❌ `server/utils/debug-logger.ts` - Redis debug utilities
 
 ### **Modified Files**
+
 - ✅ `server/index.ts` - Now uses Postgres session store
 - ✅ `server/routes.ts` - Removed Redis imports and test endpoints
 - ✅ `package.json` - Added Postgres session deps, removed Redis packages
@@ -24,6 +27,7 @@ Successfully migrated from Redis sessions to Postgres sessions using `connect-pg
 ### **Dependencies Updated**
 
 **Added:**
+
 ```json
 {
   "express-session": "^1.18.1",
@@ -33,6 +37,7 @@ Successfully migrated from Redis sessions to Postgres sessions using `connect-pg
 ```
 
 **Removed:**
+
 ```json
 {
   "redis": "^3.1.2",
@@ -79,12 +84,14 @@ All impersonation routes in `server/admin-routes.ts` remain functional.
 ### **Before Deployment**
 
 1. ✅ Install new dependencies:
+
    ```bash
    npm install express-session connect-pg-simple
    npm install --save-dev @types/express-session
    ```
 
 2. ✅ Remove old dependencies:
+
    ```bash
    npm uninstall redis ioredis connect-redis cache-manager-ioredis-yet
    ```
@@ -97,6 +104,7 @@ All impersonation routes in `server/admin-routes.ts` remain functional.
 ### **After Deployment**
 
 1. ✅ Verify session table exists:
+
    ```sql
    SELECT * FROM user_sessions LIMIT 1;
    ```
@@ -113,11 +121,13 @@ All impersonation routes in `server/admin-routes.ts` remain functional.
 ## 📊 Performance
 
 ### **Redis (Before)**
+
 - ~0.5ms session read/write
 - Separate service to manage
 - Additional infrastructure cost
 
 ### **Postgres (After)**
+
 - ~1-2ms session read/write
 - No additional infrastructure
 - Consolidated with existing database
@@ -135,6 +145,7 @@ curl http://localhost:5001/api/auth/user
 ```
 
 Response should include:
+
 ```json
 {
   "isImpersonating": false,
@@ -158,11 +169,13 @@ Response should include:
 If issues arise, revert by:
 
 1. **Restore Redis dependencies:**
+
    ```bash
    npm install redis@3.1.2 connect-redis ioredis
    ```
 
 2. **Restore `server/redis.ts`** from git:
+
    ```bash
    git checkout HEAD~1 -- server/redis.ts
    ```
@@ -179,7 +192,7 @@ If issues arise, revert by:
 ✅ **Cost Savings** - No Redis hosting fees  
 ✅ **Easier Maintenance** - Postgres already managed  
 ✅ **Same Functionality** - Impersonation works identically  
-✅ **Better Alignment** - Matches your Supabase Postgres + Graphile Worker architecture  
+✅ **Better Alignment** - Matches your Supabase Postgres + Graphile Worker architecture
 
 ---
 

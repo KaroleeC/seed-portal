@@ -1,6 +1,6 @@
 /**
  * LeadAssociationModal Component
- * 
+ *
  * Modal for searching and associating email threads with leads
  * Features:
  * - Real-time lead search
@@ -63,9 +63,11 @@ export function LeadAssociationModal({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/email/lead-linking/thread/:threadId/leads", threadId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/email/lead-linking/thread/:threadId/leads", threadId],
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/email/threads"] });
-      
+
       toast({
         title: "Lead associated",
         description: "Thread successfully linked to lead",
@@ -97,9 +99,11 @@ export function LeadAssociationModal({
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/email/lead-linking/thread/:threadId/leads", threadId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/email/lead-linking/thread/:threadId/leads", threadId],
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/email/threads"] });
-      
+
       toast({
         title: "Lead unlinked",
         description: "Thread successfully unlinked from lead",
@@ -125,9 +129,7 @@ export function LeadAssociationModal({
   };
 
   const getLeadDisplayName = (lead: any) => {
-    const name = [lead.contactFirstName, lead.contactLastName]
-      .filter(Boolean)
-      .join(" ");
+    const name = [lead.contactFirstName, lead.contactLastName].filter(Boolean).join(" ");
     return name || lead.contactEmail || "Unknown";
   };
 
@@ -196,12 +198,8 @@ export function LeadAssociationModal({
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">
-                          {getLeadDisplayName(lead)}
-                        </p>
-                        {linked && (
-                          <Check className="h-4 w-4 text-primary shrink-0" />
-                        )}
+                        <p className="font-medium truncate">{getLeadDisplayName(lead)}</p>
+                        {linked && <Check className="h-4 w-4 text-primary shrink-0" />}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         {lead.contactCompanyName && (

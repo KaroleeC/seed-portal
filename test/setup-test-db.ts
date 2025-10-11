@@ -1,18 +1,19 @@
 /**
  * Test Database Setup
- * 
+ *
  * Manages test database connection, migrations, and cleanup
  */
 
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import { sql } from 'drizzle-orm';
-import * as schema from '../shared/schema';
-import * as emailSchema from '../shared/email-schema';
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { sql } from "drizzle-orm";
+import * as schema from "../shared/schema";
+import * as emailSchema from "../shared/email-schema";
 
-const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL || 
-  'postgresql://test_user:test_password@localhost:5433/seed_portal_test';
+const TEST_DATABASE_URL =
+  process.env.TEST_DATABASE_URL ||
+  "postgresql://test_user:test_password@localhost:5433/seed_portal_test";
 
 let testDb: ReturnType<typeof drizzle> | null = null;
 let testClient: ReturnType<typeof postgres> | null = null;
@@ -25,34 +26,34 @@ let testPool: any = null;
  */
 export async function setupTestDatabase() {
   if (testDb) return testDb;
-  
-  console.log('🔧 Setting up test database...');
-  
+
+  console.log("🔧 Setting up test database...");
+
   // Set DATABASE_URL for test so server/db.ts uses the test database
   process.env.DATABASE_URL = TEST_DATABASE_URL;
-  
+
   // Create connection with minimal pool size for tests
-  testClient = postgres(TEST_DATABASE_URL, { 
+  testClient = postgres(TEST_DATABASE_URL, {
     max: 1,
     idle_timeout: 20,
     connect_timeout: 10,
   });
-  
-  testDb = drizzle(testClient, { 
+
+  testDb = drizzle(testClient, {
     schema: { ...schema, ...emailSchema },
   });
-  
+
   try {
     // Enable required extensions
-    console.log('🔌 Enabling database extensions...');
+    console.log("🔌 Enabling database extensions...");
     await testDb.execute(sql`CREATE EXTENSION IF NOT EXISTS vector;`);
-    
+
     // Run migrations (creates tables from schema.ts)
-    console.log('🔄 Running migrations...');
-    await migrate(testDb, { migrationsFolder: './migrations' });
-    
+    console.log("🔄 Running migrations...");
+    await migrate(testDb, { migrationsFolder: "./migrations" });
+
     // Create email tables (from email-schema.ts) - these aren't in migrations yet
-    console.log('📧 Creating email tables...');
+    console.log("📧 Creating email tables...");
     await testDb.execute(sql`
       CREATE TABLE IF NOT EXISTS email_accounts (
         id TEXT PRIMARY KEY,
@@ -102,13 +103,13 @@ export async function setupTestDatabase() {
       CREATE INDEX IF NOT EXISTS email_lead_links_thread_idx ON email_lead_links(thread_id);
       CREATE INDEX IF NOT EXISTS email_lead_links_lead_idx ON email_lead_links(lead_id);
     `);
-    
-    console.log('✅ Test database ready');
+
+    console.log("✅ Test database ready");
   } catch (error) {
-    console.error('❌ Failed to setup test database:', error);
+    console.error("❌ Failed to setup test database:", error);
     throw error;
   }
-  
+
   return testDb;
 }
 
@@ -118,11 +119,11 @@ export async function setupTestDatabase() {
  */
 export async function cleanupTestDatabase() {
   if (!testDb) return;
-  
+
   try {
     // Disable triggers temporarily for faster cleanup
     await testDb.execute(sql`SET session_replication_role = 'replica';`);
-    
+
     // Truncate in order (children first, then parents)
     await testDb.execute(sql`
       TRUNCATE TABLE 
@@ -133,13 +134,13 @@ export async function cleanupTestDatabase() {
         users
       RESTART IDENTITY CASCADE;
     `);
-    
+
     // Re-enable triggers
     await testDb.execute(sql`SET session_replication_role = 'origin';`);
-    
-    console.log('🧹 Test database cleaned');
+
+    console.log("🧹 Test database cleaned");
   } catch (error) {
-    console.error('⚠️  Failed to cleanup test database:', error);
+    console.error("⚠️  Failed to cleanup test database:", error);
     // Don't throw - let tests continue
   }
 }
@@ -149,7 +150,7 @@ export async function cleanupTestDatabase() {
  */
 export async function closeTestDatabase() {
   if (testClient) {
-    console.log('👋 Closing test database connection');
+    console.log("👋 Closing test database connection");
     await testClient.end();
     testClient = null;
     testDb = null;
@@ -162,7 +163,7 @@ export async function closeTestDatabase() {
  */
 export function getTestDb() {
   if (!testDb) {
-    throw new Error('Test database not initialized. Call setupTestDatabase() first.');
+    throw new Error("Test database not initialized. Call setupTestDatabase() first.");
   }
   return testDb;
 }

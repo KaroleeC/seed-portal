@@ -93,7 +93,7 @@ export class SeedPayQuoteProvider implements IQuoteProvider {
       method: "POST",
       body: JSON.stringify({ quoteId, ...options }),
     });
-    
+
     return {
       success: true,
       quoteId,
@@ -116,7 +116,7 @@ import { seedpayProvider } from "./seedpay-provider";
 
 export function getQuoteProvider(): IQuoteProvider {
   const provider = import.meta.env.VITE_QUOTE_PROVIDER || "hubspot";
-  
+
   switch (provider) {
     case "seedpay":
       return seedpayProvider; // 🎉 NEW
@@ -173,21 +173,21 @@ export function getQuoteProvider(): IQuoteProvider {
 
 ### **Before**
 
-| Metric | Value |
-|--------|-------|
-| **Coupled Files** | useHubSpotSync directly calls HubSpot APIs |
-| **Testability** | Low - requires mocking HubSpot |
-| **Reusability** | None - HubSpot-specific |
-| **Migration Effort** | High - rewrite everything |
+| Metric               | Value                                      |
+| -------------------- | ------------------------------------------ |
+| **Coupled Files**    | useHubSpotSync directly calls HubSpot APIs |
+| **Testability**      | Low - requires mocking HubSpot             |
+| **Reusability**      | None - HubSpot-specific                    |
+| **Migration Effort** | High - rewrite everything                  |
 
 ### **After**
 
-| Metric | Value |
-|--------|-------|
-| **Abstraction** | IQuoteProvider interface |
-| **Testability** | High - pure functions + mocks |
-| **Reusability** | High - any provider |
-| **Migration Effort** | Low - swap provider only |
+| Metric               | Value                         |
+| -------------------- | ----------------------------- |
+| **Abstraction**      | IQuoteProvider interface      |
+| **Testability**      | High - pure functions + mocks |
+| **Reusability**      | High - any provider           |
+| **Migration Effort** | Low - swap provider only      |
 
 ---
 
@@ -216,8 +216,8 @@ const validation = validateQuoteForSync(values, feeCalc);
 **Before:** Inline in hook
 
 ```typescript
-monthlyFee: f.combined.monthlyFee.toString()
-setupFee: f.combined.setupFee.toString()
+monthlyFee: f.combined.monthlyFee.toString();
+setupFee: f.combined.setupFee.toString();
 // ... 10 more lines
 ```
 

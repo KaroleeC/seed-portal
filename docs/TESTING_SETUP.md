@@ -67,25 +67,25 @@ npm run test:db:stop
 ## Example Test
 
 ```typescript
-import { describe, it, expect, beforeEach } from 'vitest';
-import { withTestDb, createTestLead, createTestThread } from '@test/api-test-utils';
-import { linkThreadToLead, getThreadLeads } from '../email-lead-linking.service';
+import { describe, it, expect, beforeEach } from "vitest";
+import { withTestDb, createTestLead, createTestThread } from "@test/api-test-utils";
+import { linkThreadToLead, getThreadLeads } from "../email-lead-linking.service";
 
-describe('My Feature', () => {
+describe("My Feature", () => {
   beforeEach(async () => {
     await withTestDb(async () => {}); // Clean DB
   });
 
-  it('should link thread to lead', async () => {
+  it("should link thread to lead", async () => {
     await withTestDb(async (db) => {
       const lead = createTestLead();
       const thread = createTestThread();
-      
+
       await db.insert(leads).values(lead);
       await db.insert(emailThreads).values(thread);
-      
-      await linkThreadToLead(thread.id, lead.id, 'manual');
-      
+
+      await linkThreadToLead(thread.id, lead.id, "manual");
+
       const linkedLeads = await getThreadLeads(thread.id);
       expect(linkedLeads).toContain(lead.id);
     });
@@ -99,7 +99,7 @@ describe('My Feature', () => {
 ✅ **Auth problems** - Missing `credentials: "include"`  
 ✅ **Database operations** - Insert/query errors  
 ✅ **Business logic bugs** - Incorrect linking behavior  
-✅ **Foreign key violations** - Data integrity issues  
+✅ **Foreign key violations** - Data integrity issues
 
 ## Benefits
 

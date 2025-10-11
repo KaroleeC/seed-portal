@@ -44,7 +44,7 @@ npm run test server/__tests__/routes-smoke.test.ts
 
 ```
 ✓ GET /api/email/accounts should be accessible
-✓ POST /api/email/sync should be accessible  
+✓ POST /api/email/sync should be accessible
 ✓ GET /api/email/events/:accountId should be accessible ✅
 ```
 
@@ -142,14 +142,14 @@ npm run test:ci
 
 ## 📊 **Test Coverage Matrix**
 
-| Component | Unit Tests | Integration Tests | E2E Tests |
-|-----------|-----------|-------------------|-----------|
-| **Route Registration** | ❌ | ✅ Smoke Tests | ✅ E2E |
-| **Auto-Sync Trigger** | ✅ React Hooks | ✅ Full Stack | ✅ E2E |
-| **SSE Connection** | ✅ Service Layer | ✅ Multi-Tab | ✅ E2E |
-| **Job Queueing** | ❌ | ✅ Integration | ⚠️ Manual |
-| **Event Broadcasting** | ✅ Service Layer | ✅ Integration | ✅ E2E |
-| **Error Handling** | ✅ All Layers | ✅ Integration | ⚠️ Manual |
+| Component              | Unit Tests       | Integration Tests | E2E Tests |
+| ---------------------- | ---------------- | ----------------- | --------- |
+| **Route Registration** | ❌               | ✅ Smoke Tests    | ✅ E2E    |
+| **Auto-Sync Trigger**  | ✅ React Hooks   | ✅ Full Stack     | ✅ E2E    |
+| **SSE Connection**     | ✅ Service Layer | ✅ Multi-Tab      | ✅ E2E    |
+| **Job Queueing**       | ❌               | ✅ Integration    | ⚠️ Manual |
+| **Event Broadcasting** | ✅ Service Layer | ✅ Integration    | ✅ E2E    |
+| **Error Handling**     | ✅ All Layers    | ✅ Integration    | ⚠️ Manual |
 
 **Legend**:
 

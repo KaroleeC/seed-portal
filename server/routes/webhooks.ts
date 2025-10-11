@@ -1,11 +1,11 @@
 /**
  * Webhook Routes
- * 
+ *
  * Handles incoming webhooks from external services.
- * 
+ *
  * Routes:
  * - POST /api/webhooks/stripe - Stripe event webhook (payment events)
- * 
+ *
  * Note: Raw body middleware must be applied in server/index.ts
  * for webhook signature verification to work correctly.
  */
@@ -17,11 +17,11 @@ const router = Router();
 /**
  * POST /api/webhooks/stripe
  * Handles Stripe webhook events (payment_intent.succeeded, etc.)
- * 
+ *
  * Security:
  * - Verifies webhook signature using STRIPE_WEBHOOK_SECRET
  * - Requires raw body buffer (not JSON parsed)
- * 
+ *
  * @body Raw buffer - Stripe webhook payload
  * @header stripe-signature - Webhook signature
  * @returns { received: true }
@@ -43,11 +43,7 @@ router.post("/api/webhooks/stripe", async (req: Request, res: Response) => {
 
     // Verify signature (req.body is a Buffer from express.raw())
     const { verifyStripeSignature } = await import("../utils/webhook-verify");
-    const isValid = verifyStripeSignature(
-      req.body as Buffer,
-      stripeSignature,
-      webhookSecret
-    );
+    const isValid = verifyStripeSignature(req.body as Buffer, stripeSignature, webhookSecret);
 
     if (!isValid) {
       console.warn("[Webhook:Stripe] Invalid signature");

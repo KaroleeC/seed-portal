@@ -1,9 +1,9 @@
 /**
  * useQuoteSync - Provider-Agnostic Quote Sync Hook
- * 
+ *
  * Refactored from useHubSpotSync to be CRM-agnostic.
  * Works with any IQuoteProvider (HubSpot, SeedPay, etc.)
- * 
+ *
  * Migration Strategy:
  * - Swap provider via getQuoteProvider() factory
  * - Zero changes to this hook or Calculator UI
@@ -45,7 +45,7 @@ export type QuoteSyncActionDecision =
 
 /**
  * Decide what action to take based on quote state
- * 
+ *
  * DRY: Extracted pure function for testing
  */
 export function decideSyncAction(params: {
@@ -54,17 +54,17 @@ export function decideSyncAction(params: {
   editingQuoteId: number | null;
 }): QuoteSyncActionDecision {
   const { hasExternalIds, hasUnsavedChanges, editingQuoteId } = params;
-  
+
   if (!hasExternalIds && hasUnsavedChanges) return "save_then_sync";
   if (hasExternalIds && hasUnsavedChanges) return "update_quote_then_sync";
   if (!hasExternalIds && editingQuoteId) return "update_then_sync";
-  
+
   return "error_save_first";
 }
 
 /**
  * Build enhanced form data with calculated fees
- * 
+ *
  * DRY: Extracted pure function for testing
  */
 export function buildEnhancedFormData(formValues: QuoteFormFields, f: FeeCalculation) {
@@ -88,7 +88,7 @@ export function buildEnhancedFormData(formValues: QuoteFormFields, f: FeeCalcula
 
 /**
  * Provider-agnostic quote sync hook
- * 
+ *
  * Works with HubSpot today, SeedPay tomorrow
  */
 export function useQuoteSync(options: UseQuoteSyncOptions) {
@@ -119,14 +119,21 @@ export function useQuoteSync(options: UseQuoteSyncOptions) {
     onTimeout: () => {
       toast({
         title: "Sync Timeout",
-        description: "Quote sync is taking longer than expected. Check the quote status in a moment.",
+        description:
+          "Quote sync is taking longer than expected. Check the quote status in a moment.",
         variant: "destructive",
       });
     },
   });
 
   const syncMutation = useMutation({
-    mutationFn: async ({ quoteId, action }: { quoteId: number; action: "auto" | "create" | "update" }) => {
+    mutationFn: async ({
+      quoteId,
+      action,
+    }: {
+      quoteId: number;
+      action: "auto" | "create" | "update";
+    }) => {
       const result = await provider.syncQuote(quoteId, { action });
       return { ...result, quoteId };
     },
@@ -192,16 +199,14 @@ export function useQuoteSync(options: UseQuoteSyncOptions) {
     const currentQuote = editingQuoteId
       ? allQuotes?.find((q: Quote) => q.id === editingQuoteId)
       : null;
-    
+
     // Check for external IDs (provider-agnostic)
-    const hasExternalIds = !!(
-      currentQuote?.hubspotQuoteId && currentQuote?.hubspotDealId
-    );
+    const hasExternalIds = !!(currentQuote?.hubspotQuoteId && currentQuote?.hubspotDealId);
 
     // Validate before sync
     const formValues = opts.form.getValues();
     const validation = validateQuoteForSync(formValues, opts.feeCalculation);
-    
+
     if (!validation.isValid) {
       toast({
         title: "Required Fields Missing",
@@ -242,7 +247,7 @@ export function useQuoteSync(options: UseQuoteSyncOptions) {
     if (decision === "update_quote_then_sync") {
       const quoteId = editingQuoteId || currentQuote?.id;
       if (!quoteId) return;
-      
+
       const formData = opts.form.getValues();
       try {
         await apiRequest(`/api/quotes/${quoteId}`, {
@@ -323,7 +328,7 @@ export function useQuoteSync(options: UseQuoteSyncOptions) {
             ? opts.allQuotes.find((q) => q.id === opts.editingQuoteId)
             : null;
           const hasExternalIds = !!(currentQuote?.hubspotQuoteId && currentQuote?.hubspotDealId);
-          
+
           // Provider-aware button text
           return hasExternalIds ? `Update in ${provider.name}` : `Submit Quote`;
         })();

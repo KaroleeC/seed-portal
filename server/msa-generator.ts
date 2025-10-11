@@ -117,7 +117,7 @@ export class MSAGenerator {
           size: 24,
         }),
         new TextRun({
-          text: `${data.clientLegalName}, a ${data.entityType} organized under the laws of ${data.stateJurisdiction}, with its principal place of business at ${data.clientAddress} (\"Client\")\n\n`,
+          text: `${data.clientLegalName}, a ${data.entityType} organized under the laws of ${data.stateJurisdiction}, with its principal place of business at ${data.clientAddress} ("Client")\n\n`,
           size: 24,
         }),
         new TextRun({

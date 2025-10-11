@@ -811,10 +811,10 @@ export default function Profile() {
 
                       {/* Address Autocomplete */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-muted-foreground">
+                        <p className="text-sm font-medium text-muted-foreground mb-1">
                           <MapPin className="inline h-4 w-4 mr-1" />
                           Address Search
-                        </Label>
+                        </p>
                         <div className="relative">
                           <Input
                             placeholder="Start typing your address..."

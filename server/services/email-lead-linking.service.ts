@@ -1,6 +1,6 @@
 /**
  * Email-Lead Linking Service
- * 
+ *
  * DRY service for managing relationships between SEEDMAIL threads and LEADIQ leads.
  * Provides:
  * - Auto-linking based on email address matching
@@ -60,7 +60,7 @@ export async function findLeadsByEmail(email: string): Promise<LeadEmailMatch[]>
 
   try {
     const result = await pool.query(query, [normalizedEmail]);
-    
+
     return result.rows.map((row: any) => ({
       leadId: row.lead_id,
       matchType: row.match_type,
@@ -100,13 +100,11 @@ export async function getThreadParticipantEmails(threadId: string): Promise<stri
  * Auto-link a thread to leads based on participant email addresses
  * Returns array of created links
  */
-export async function autoLinkThreadToLeads(
-  threadId: string
-): Promise<EmailLeadLink[]> {
+export async function autoLinkThreadToLeads(threadId: string): Promise<EmailLeadLink[]> {
   try {
     // Get all participant emails from thread
     const emails = await getThreadParticipantEmails(threadId);
-    
+
     if (emails.length === 0) {
       linkLogger.warn({ threadId }, "No participant emails found for thread");
       return [];
@@ -148,10 +146,7 @@ export async function autoLinkThreadToLeads(
       }
     }
 
-    linkLogger.info(
-      { threadId, linkCount: links.length, emails },
-      "Auto-linked thread to leads"
-    );
+    linkLogger.info({ threadId, linkCount: links.length, emails }, "Auto-linked thread to leads");
 
     return links;
   } catch (error) {
@@ -195,20 +190,12 @@ export async function linkThreadToLead(
   `;
 
   try {
-    const result = await pool!.query(query, [
-      threadId,
-      leadId,
-      linkSource,
-      userId,
-    ]);
+    const result = await pool!.query(query, [threadId, leadId, linkSource, userId]);
 
     const link = result.rows[0];
-    
-    linkLogger.info(
-      { threadId, leadId, linkSource },
-      "Linked thread to lead"
-    );
-    
+
+    linkLogger.info({ threadId, leadId, linkSource }, "Linked thread to lead");
+
     return link || null;
   } catch (error) {
     linkLogger.error({ error, threadId, leadId }, "Failed to link thread to lead");
@@ -219,10 +206,7 @@ export async function linkThreadToLead(
 /**
  * Unlink a thread from a lead
  */
-export async function unlinkThreadFromLead(
-  threadId: string,
-  leadId: string
-): Promise<boolean> {
+export async function unlinkThreadFromLead(threadId: string, leadId: string): Promise<boolean> {
   const query = `
     DELETE FROM email_lead_links
     WHERE thread_id = $1 AND lead_id = $2
@@ -231,11 +215,11 @@ export async function unlinkThreadFromLead(
   try {
     const result = await pool!.query(query, [threadId, leadId]);
     const deleted = (result.rowCount || 0) > 0;
-    
+
     if (deleted) {
       linkLogger.info({ threadId, leadId }, "Unlinked thread from lead");
     }
-    
+
     return deleted;
   } catch (error) {
     linkLogger.error({ error, threadId, leadId }, "Failed to unlink thread from lead");
@@ -303,7 +287,7 @@ export async function syncLeadEmails(leadId: string): Promise<string[]> {
 
   try {
     const result = await pool.query(query, [leadId]);
-    
+
     if (result.rows.length === 0) {
       return [];
     }
@@ -373,9 +357,9 @@ export async function syncAllLeadEmails(): Promise<number> {
   try {
     const result = await pool!.query(query);
     const count = result.rowCount || 0;
-    
+
     linkLogger.info({ count }, "Synced all lead emails");
-    
+
     return count;
   } catch (error) {
     linkLogger.error({ error }, "Failed to sync all lead emails");

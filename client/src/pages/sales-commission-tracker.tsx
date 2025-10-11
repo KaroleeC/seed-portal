@@ -997,19 +997,17 @@ export function SalesCommissionTracker() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Company</Label>
+                        <p className="text-sm font-medium text-muted-foreground mb-1">Company</p>
                         <p className="text-lg font-semibold">{selectedCommission.companyName}</p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-muted-foreground">
-                          Deal Name
-                        </Label>
+                        <p className="text-sm font-medium text-muted-foreground mb-1">Deal Name</p>
                         <p className="text-lg font-semibold">{selectedCommission.dealName}</p>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-muted-foreground">
+                        <p className="text-sm font-medium text-muted-foreground mb-1">
                           Service Type
-                        </Label>
+                        </p>
                         <div className="flex items-center gap-2">
                           {getServiceTypeIcon(selectedCommission.serviceType)}
                           <span className="capitalize">
@@ -1020,9 +1018,9 @@ export function SalesCommissionTracker() {
                     </div>
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-sm font-medium text-muted-foreground">
+                        <p className="text-sm font-medium text-muted-foreground mb-1">
                           Commission Type
-                        </Label>
+                        </p>
                         <Badge
                           variant={selectedCommission.type === "month_1" ? "default" : "secondary"}
                         >
@@ -1032,22 +1030,22 @@ export function SalesCommissionTracker() {
                         </Badge>
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+                        <p className="text-sm font-medium text-muted-foreground mb-1">Status</p>
                         {getStatusBadge(selectedCommission.status)}
                       </div>
                       <div>
-                        <Label className="text-sm font-medium text-muted-foreground">
+                        <p className="text-sm font-medium text-muted-foreground mb-1">
                           Date Earned
-                        </Label>
+                        </p>
                         <p>{new Date(selectedCommission.dateEarned).toLocaleDateString()}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="border-t pt-4">
-                    <Label className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">
                       Commission Breakdown
-                    </Label>
+                    </p>
                     <div className="grid grid-cols-1 gap-4 mt-2">
                       <div className="p-3 bg-blue-50 rounded-lg">
                         <p className="text-sm text-muted-foreground">Commission Amount</p>
@@ -1068,9 +1066,9 @@ export function SalesCommissionTracker() {
 
                   {selectedCommission.datePaid && (
                     <div className="border-t pt-4">
-                      <Label className="text-sm font-medium text-muted-foreground">
+                      <p className="text-sm font-medium text-muted-foreground mb-2">
                         Payment Information
-                      </Label>
+                      </p>
                       <div className="mt-2">
                         <p className="text-sm text-muted-foreground">Date Paid</p>
                         <p className="font-semibold">

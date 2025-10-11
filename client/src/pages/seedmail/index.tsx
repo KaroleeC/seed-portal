@@ -34,7 +34,7 @@ export default function SeedMailPage() {
   const [draftToLoad, setDraftToLoad] = useState<EmailDraft | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   // Fetch all lead emails for filtering
   const { leadEmails } = useLeadEmails();
 
@@ -146,17 +146,17 @@ export default function SeedMailPage() {
     const sender = t.participants?.[0];
     return sender?.email?.split("@")[1]?.toLowerCase() || "";
   };
-  
+
   const getSenderEmail = (t: EmailThread): string => {
     const sender = t.participants?.[0];
     return sender?.email?.toLowerCase() || "";
   };
-  
+
   const isClientThread = (t: EmailThread) => {
     const d = getSenderDomain(t);
     return d && CUSTOMER_DOMAINS.includes(d);
   };
-  
+
   // A thread is a "Lead" if the sender's email matches a lead in the database
   const isLeadThread = (t: EmailThread) => {
     const senderEmail = getSenderEmail(t);
@@ -293,7 +293,7 @@ export default function SeedMailPage() {
   // Trigger initial sync when account is first selected
   useEffect(() => {
     if (!selectedAccount) return;
-    
+
     // Trigger background sync (no await, runs async)
     apiRequest("/api/email/sync", {
       method: "POST",

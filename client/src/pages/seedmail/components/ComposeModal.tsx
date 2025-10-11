@@ -222,8 +222,11 @@ export function ComposeModal({
           />
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Label className="text-sm font-medium w-12">To</Label>
+              <Label htmlFor="compose-to" className="text-sm font-medium w-12">
+                To
+              </Label>
               <Input
+                id="compose-to"
                 value={composer.to}
                 onChange={(e) => composer.setTo(e.target.value)}
                 placeholder="recipient@example.com"
@@ -251,8 +254,11 @@ export function ComposeModal({
           {/* Cc */}
           {composer.showCc && (
             <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium w-12">Cc</Label>
+              <Label htmlFor="compose-cc" className="text-sm font-medium w-12">
+                Cc
+              </Label>
               <Input
+                id="compose-cc"
                 value={composer.cc}
                 onChange={(e) => composer.setCc(e.target.value)}
                 placeholder="cc@example.com"
@@ -274,8 +280,11 @@ export function ComposeModal({
           {/* Bcc */}
           {composer.showBcc && (
             <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium w-12">Bcc</Label>
+              <Label htmlFor="compose-bcc" className="text-sm font-medium w-12">
+                Bcc
+              </Label>
               <Input
+                id="compose-bcc"
                 value={composer.bcc}
                 onChange={(e) => composer.setBcc(e.target.value)}
                 placeholder="bcc@example.com"
@@ -296,8 +305,11 @@ export function ComposeModal({
 
           {/* Subject */}
           <div className="flex items-center gap-2">
-            <Label className="text-sm font-medium w-12">Subject</Label>
+            <Label htmlFor="compose-subject" className="text-sm font-medium w-12">
+              Subject
+            </Label>
             <Input
+              id="compose-subject"
               value={composer.subject}
               onChange={(e) => composer.setSubject(e.target.value)}
               placeholder="Email subject"
@@ -307,7 +319,7 @@ export function ComposeModal({
 
           {/* Body - Rich Text Editor */}
           <div>
-            <Label className="text-sm font-medium mb-2 block">Message</Label>
+            <p className="text-sm font-medium mb-2">Message</p>
             <RichTextEditor
               content={composer.body}
               onChange={composer.setBody}
@@ -332,7 +344,7 @@ export function ComposeModal({
           {/* Upload progress indicators */}
           {Object.keys(uploadProgress).length > 0 && (
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Uploading...</Label>
+              <p className="text-sm font-medium mb-1">Uploading...</p>
               <div className="space-y-2">
                 {Object.entries(uploadProgress).map(([key, progress]) => {
                   const filename = key.split("-")[0];

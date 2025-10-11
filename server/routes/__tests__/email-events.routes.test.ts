@@ -1,6 +1,6 @@
 /**
  * Email Events SSE Routes Tests
- * 
+ *
  * Tests for /api/email/events SSE endpoint
  */
 
@@ -51,9 +51,7 @@ describe("Email Events SSE Routes", () => {
 
   describe("GET /api/email/events/:accountId - Authentication", () => {
     it("should return 401 when unauthenticated", async () => {
-      const response = await request(app)
-        .get("/api/email/events/test-account")
-        .expect(401);
+      const response = await request(app).get("/api/email/events/test-account").expect(401);
 
       expect(response.body).toEqual({ error: "Unauthorized" });
     });
@@ -68,12 +66,12 @@ describe("Email Events SSE Routes", () => {
             try {
               // Check status code
               expect(res.statusCode).toBe(200);
-              
+
               // Should return SSE headers
               expect(res.headers["content-type"]).toBe("text/event-stream");
               expect(res.headers["cache-control"]).toContain("no-cache");
               expect(res.headers["connection"]).toBe("keep-alive");
-              
+
               // Close connection and complete test
               res.destroy();
               resolve();
@@ -97,12 +95,12 @@ describe("Email Events SSE Routes", () => {
             try {
               // Check status code
               expect(res.statusCode).toBe(200);
-              
+
               expect(res.headers["content-type"]).toBe("text/event-stream");
               expect(res.headers["cache-control"]).toContain("no-cache");
               expect(res.headers["connection"]).toBe("keep-alive");
               expect(res.headers["x-accel-buffering"]).toBe("no");
-              
+
               // Close connection and complete test
               res.destroy();
               resolve();
@@ -124,10 +122,10 @@ describe("Email Events SSE Routes", () => {
             let data = "";
             let hasSeenEvent = false;
             let hasSeenData = false;
-            
+
             res.on("data", (chunk) => {
               data += chunk.toString();
-              
+
               // Check for connected event and data (they come in SSE format across multiple lines)
               if (data.includes("event: connected")) {
                 hasSeenEvent = true;
@@ -135,14 +133,14 @@ describe("Email Events SSE Routes", () => {
               if (data.includes('"accountId":"account-456"') && data.includes('"timestamp"')) {
                 hasSeenData = true;
               }
-              
+
               // Once we have both, validate and complete
               if (hasSeenEvent && hasSeenData) {
                 try {
                   expect(data).toContain("event: connected");
                   expect(data).toContain('"accountId":"account-456"');
                   expect(data).toContain('"timestamp"');
-                  
+
                   // Abort the connection
                   res.destroy();
                   resolve();
@@ -151,7 +149,7 @@ describe("Email Events SSE Routes", () => {
                 }
               }
             });
-            
+
             res.on("error", (err: any) => {
               if (err.code !== "ECONNRESET") {
                 reject(err);
@@ -201,7 +199,7 @@ describe("Email Events SSE Routes", () => {
                 }
               }, 100);
             });
-            
+
             res.on("error", (err: any) => {
               if (err.code !== "ECONNRESET") {
                 reject(err);
@@ -220,12 +218,12 @@ describe("Email Events SSE Routes", () => {
           .buffer(false)
           .parse((res, callback) => {
             let data = "";
-            
+
             let broadcastSent = false;
-            
+
             res.on("data", (chunk) => {
               data += chunk.toString();
-              
+
               // Wait for connected event, then broadcast
               if (data.includes("event: connected") && !broadcastSent) {
                 broadcastSent = true;
@@ -239,7 +237,7 @@ describe("Email Events SSE Routes", () => {
                   });
                 }, 50);
               }
-              
+
               // Check for sync-completed event AND data payload (wait for both)
               if (data.includes("event: sync-completed") && data.includes("syncType")) {
                 // Give a tiny bit more time for the full message to arrive
@@ -257,7 +255,7 @@ describe("Email Events SSE Routes", () => {
                 }, 10);
               }
             });
-            
+
             res.on("error", (err: any) => {
               if (err.code !== "ECONNRESET") {
                 reject(err);

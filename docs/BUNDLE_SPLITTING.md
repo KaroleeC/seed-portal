@@ -50,29 +50,29 @@ export default defineConfig({
 
 **Heavy libraries isolated into separate bundles:**
 
-| Chunk Name | Packages | Est. Size | Usage |
-|------------|----------|-----------|-------|
-| `react` | react, react-dom | ~150KB | Core (always loaded) |
-| `radix-ui` | @radix-ui/* | ~250KB | UI components (frequently used) |
-| `editor-tiptap` | @tiptap/* | ~200KB | Rich text editor (lazy) |
-| `editor-tinymce` | tinymce | ~500KB | Alternative editor (lazy) |
-| `charts` | recharts | ~150KB | Data visualization (lazy) |
-| `firebase` | firebase | ~300KB | Auth/database (lazy) |
-| `icons` | lucide-react, react-icons | ~50KB | Icons (frequently used) |
-| `animations` | framer-motion | ~80KB | Animations (frequently used) |
-| `forms` | react-hook-form, zod | ~100KB | Form handling (frequently used) |
-| `vendor` | misc packages | ~100KB | Catch-all |
+| Chunk Name       | Packages                  | Est. Size | Usage                           |
+| ---------------- | ------------------------- | --------- | ------------------------------- |
+| `react`          | react, react-dom          | ~150KB    | Core (always loaded)            |
+| `radix-ui`       | @radix-ui/\*              | ~250KB    | UI components (frequently used) |
+| `editor-tiptap`  | @tiptap/\*                | ~200KB    | Rich text editor (lazy)         |
+| `editor-tinymce` | tinymce                   | ~500KB    | Alternative editor (lazy)       |
+| `charts`         | recharts                  | ~150KB    | Data visualization (lazy)       |
+| `firebase`       | firebase                  | ~300KB    | Auth/database (lazy)            |
+| `icons`          | lucide-react, react-icons | ~50KB     | Icons (frequently used)         |
+| `animations`     | framer-motion             | ~80KB     | Animations (frequently used)    |
+| `forms`          | react-hook-form, zod      | ~100KB    | Form handling (frequently used) |
+| `vendor`         | misc packages             | ~100KB    | Catch-all                       |
 
 ### Route Chunks
 
 **Feature-specific code loaded on demand:**
 
-| Chunk Name | Route | Contains | Est. Size |
-|------------|-------|----------|-----------|
-| `seedmail` | `/pages/seedmail/` | Email client | ~80KB |
-| `sales-cadence` | `/pages/sales-cadence/` | Scheduler, calendar | ~60KB |
-| `leads-inbox` | `/pages/leads-inbox/` | Kanban, filtering | ~50KB |
-| `client-profiles` | `/pages/client-profiles/` | Profile management | ~40KB |
+| Chunk Name        | Route                     | Contains            | Est. Size |
+| ----------------- | ------------------------- | ------------------- | --------- |
+| `seedmail`        | `/pages/seedmail/`        | Email client        | ~80KB     |
+| `sales-cadence`   | `/pages/sales-cadence/`   | Scheduler, calendar | ~60KB     |
+| `leads-inbox`     | `/pages/leads-inbox/`     | Kanban, filtering   | ~50KB     |
+| `client-profiles` | `/pages/client-profiles/` | Profile management  | ~40KB     |
 
 ### Chunk Loading Strategy
 
@@ -83,7 +83,7 @@ Browser loads:
 3. React chunk (~150KB) - Parallel with step 2
 4. Radix UI chunk (~250KB) - Parallel with step 2
 5. Icons chunk (~50KB) - Parallel with step 2
-   
+
 User navigates to SeedMail:
 6. SeedMail chunk (~80KB) - Lazy loaded
 7. Editor chunk (~200KB) - Lazy loaded
@@ -101,7 +101,7 @@ User navigates to SeedMail:
 // config/bundle-chunks.ts
 export const VENDOR_CHUNKS = {
   react: ["react", "react-dom", "react/jsx-runtime"],
-  "radix-ui": ["@radix-ui/react-dialog", /* ... */],
+  "radix-ui": ["@radix-ui/react-dialog" /* ... */],
   // ... all vendor definitions
 } as const;
 
@@ -137,7 +137,7 @@ npm test -- config/__tests__/bundle-chunks.test.ts
 **Coverage:**
 
 - ✅ Vendor chunk definitions
-- ✅ Route chunk definitions  
+- ✅ Route chunk definitions
 - ✅ Chunk assignment logic
 - ✅ Cross-platform path handling
 - ✅ DRY compliance (no duplicates)
@@ -333,21 +333,21 @@ const SeedMail = lazy(() => import("./pages/seedmail"));
 
 ### Real-World Impact
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Initial bundle size | 3.5MB | 650KB | **81%** |
-| Time to interactive (3G) | 12s | 4s | **67%** |
-| Cache hit rate | 0% | 85% | **85%** |
-| Bandwidth (repeat visit) | 3.5MB | 520KB | **85%** |
+| Metric                   | Before | After | Improvement |
+| ------------------------ | ------ | ----- | ----------- |
+| Initial bundle size      | 3.5MB  | 650KB | **81%**     |
+| Time to interactive (3G) | 12s    | 4s    | **67%**     |
+| Cache hit rate           | 0%     | 85%   | **85%**     |
+| Bandwidth (repeat visit) | 3.5MB  | 520KB | **85%**     |
 
 ### Lighthouse Scores
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Performance | 45 | 92 (+47) |
-| First Contentful Paint | 4.2s | 1.8s |
-| Time to Interactive | 12.1s | 4.3s |
-| Total Blocking Time | 2.1s | 0.4s |
+| Metric                 | Before | After    |
+| ---------------------- | ------ | -------- |
+| Performance            | 45     | 92 (+47) |
+| First Contentful Paint | 4.2s   | 1.8s     |
+| Time to Interactive    | 12.1s  | 4.3s     |
+| Total Blocking Time    | 2.1s   | 0.4s     |
 
 ## Future Enhancements
 

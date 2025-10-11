@@ -80,19 +80,19 @@ Phase 3 adds real-time push notifications for email sync completion using Server
 
 ```typescript
 // Register new SSE connection
-sseEvents.addClient(accountId, userId, response)
+sseEvents.addClient(accountId, userId, response);
 
 // Broadcast sync completion to all clients for an account
 sseEvents.broadcastSyncCompleted(accountId, {
   syncType: "incremental",
   threadsProcessed: 10,
   messagesProcessed: 25,
-  duration: 1234
-})
+  duration: 1234,
+});
 
 // Get stats
-sseEvents.getTotalClientCount()
-sseEvents.getAccountClientCount(accountId)
+sseEvents.getTotalClientCount();
+sseEvents.getAccountClientCount(accountId);
 ```
 
 ### 2. SSE Endpoint
@@ -171,9 +171,9 @@ const { isConnected, lastSync, error } = useEmailEvents({
 - Graceful fallback to adaptive polling
 
 ```typescript
-useEmailEvents({ 
+useEmailEvents({
   accountId: selectedAccount,
-  enabled: !!selectedAccount 
+  enabled: !!selectedAccount,
 });
 
 // Show toast when sync completes
@@ -446,12 +446,12 @@ Consider adding rate limiting for SSE connections:
 
 **Comparison vs Polling:**
 
-| Metric | Phase 2 (Polling) | Phase 3 (SSE) |
-|--------|-------------------|---------------|
-| Sync notification delay | 0-30s | 0s (instant) |
-| Requests per hour | 120+ | 1 (connection) |
-| Network overhead | High | Minimal |
-| Server CPU | Moderate | Low |
+| Metric                  | Phase 2 (Polling) | Phase 3 (SSE)  |
+| ----------------------- | ----------------- | -------------- |
+| Sync notification delay | 0-30s             | 0s (instant)   |
+| Requests per hour       | 120+              | 1 (connection) |
+| Network overhead        | High              | Minimal        |
+| Server CPU              | Moderate          | Low            |
 
 ### Scalability
 
@@ -526,15 +526,15 @@ Consider adding rate limiting for SSE connections:
 
 ## Comparison: SSE vs WebSockets
 
-| Feature | SSE | WebSockets |
-|---------|-----|------------|
-| Direction | Server → Client | Bi-directional |
-| Protocol | HTTP | WebSocket (upgrade) |
-| Reconnection | Automatic | Manual |
-| Proxy/Firewall | Excellent | Good |
-| Complexity | Low | Medium |
-| Browser Support | 96%+ | 98%+ |
-| Use Case | Push notifications | Interactive apps |
+| Feature         | SSE                | WebSockets          |
+| --------------- | ------------------ | ------------------- |
+| Direction       | Server → Client    | Bi-directional      |
+| Protocol        | HTTP               | WebSocket (upgrade) |
+| Reconnection    | Automatic          | Manual              |
+| Proxy/Firewall  | Excellent          | Good                |
+| Complexity      | Low                | Medium              |
+| Browser Support | 96%+               | 98%+                |
+| Use Case        | Push notifications | Interactive apps    |
 
 **Decision:** SSE is perfect for SEEDMAIL sync notifications.
 

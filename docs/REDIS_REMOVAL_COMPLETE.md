@@ -133,13 +133,13 @@
 
 ## 📊 **Performance Benchmarks**
 
-| Operation | Before (Redis) | After (Postgres) | Improvement |
-|-----------|----------------|------------------|-------------|
-| Session read | ~1-2ms | ~0.5-1ms | **50% faster** ✅ |
-| Cache read | ~0.3ms | ~0.01ms | **30x faster** ✅ |
-| Job enqueue | ~0.5ms | ~1-2ms | Slightly slower (acceptable) |
-| Job processing | N/A | Direct DB | **Faster** ✅ |
-| Memory usage | +150MB | Baseline | **150MB saved** ✅ |
+| Operation      | Before (Redis) | After (Postgres) | Improvement                  |
+| -------------- | -------------- | ---------------- | ---------------------------- |
+| Session read   | ~1-2ms         | ~0.5-1ms         | **50% faster** ✅            |
+| Cache read     | ~0.3ms         | ~0.01ms          | **30x faster** ✅            |
+| Job enqueue    | ~0.5ms         | ~1-2ms           | Slightly slower (acceptable) |
+| Job processing | N/A            | Direct DB        | **Faster** ✅                |
+| Memory usage   | +150MB         | Baseline         | **150MB saved** ✅           |
 
 ---
 

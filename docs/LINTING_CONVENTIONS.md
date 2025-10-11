@@ -49,7 +49,7 @@ app.use("/api/email", emailEventsRouter); // ❌ Prefix conflicts
 ```typescript
 useEffect(() => {
   if (!selectedAccount) return;
-  
+
   apiRequest("/api/email/sync", {
     method: "POST",
     body: { accountId: selectedAccount },
@@ -152,14 +152,14 @@ Every route MUST have JSDoc describing:
 ```typescript
 /**
  * GET /api/email/events/:accountId
- * 
+ *
  * SSE endpoint for real-time email sync notifications
- * 
+ *
  * @param accountId - Email account ID to listen for events
- * 
+ *
  * Events:
  * - sync-completed: Fired when background email sync completes
- * 
+ *
  * @example
  * const eventSource = new EventSource('/api/email/events/account-123');
  * eventSource.addEventListener('sync-completed', (event) => {
@@ -236,35 +236,32 @@ module.exports = {
     "@typescript-eslint/no-floating-promises": "error",
     "@typescript-eslint/no-explicit-any": "error",
     "react-hooks/exhaustive-deps": "error", // Upgrade from warn
-    
+
     // Best practices
     "no-console": ["warn", { allow: ["warn", "error", "info"] }],
     "prefer-const": "error",
-    
+
     // Import organization
-    "import/order": ["error", {
-      groups: [
-        "builtin",
-        "external",
-        "internal",
-        ["parent", "sibling"],
-        "index",
-      ],
-      pathGroups: [
-        {
-          pattern: "@/**",
-          group: "internal",
+    "import/order": [
+      "error",
+      {
+        groups: ["builtin", "external", "internal", ["parent", "sibling"], "index"],
+        pathGroups: [
+          {
+            pattern: "@/**",
+            group: "internal",
+          },
+          {
+            pattern: "@shared/**",
+            group: "internal",
+          },
+        ],
+        alphabetize: {
+          order: "asc",
+          caseInsensitive: true,
         },
-        {
-          pattern: "@shared/**",
-          group: "internal",
-        },
-      ],
-      alphabetize: {
-        order: "asc",
-        caseInsensitive: true,
       },
-    }],
+    ],
   },
 };
 ```

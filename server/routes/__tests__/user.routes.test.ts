@@ -1,6 +1,6 @@
 /**
  * User Routes Tests
- * 
+ *
  * Tests all user management endpoints:
  * - Profile retrieval
  * - Preferences CRUD
@@ -26,7 +26,7 @@ vi.mock("../../db", () => {
     insert: vi.fn(),
     values: vi.fn(),
   };
-  
+
   // Make methods chainable
   mockChain.select.mockReturnValue(mockChain);
   mockChain.from.mockReturnValue(mockChain);
@@ -35,7 +35,7 @@ vi.mock("../../db", () => {
   mockChain.set.mockReturnValue(mockChain);
   mockChain.insert.mockReturnValue(mockChain);
   mockChain.values.mockReturnValue(mockChain);
-  
+
   return { db: mockChain };
 });
 
@@ -71,7 +71,7 @@ describe("User Routes", () => {
     // Import mocked db after mocks are set up
     const dbModule = await import("../../db");
     mockDb = dbModule.db;
-    
+
     app = express();
     app.use(express.json());
     app.use(userRoutes);
@@ -83,9 +83,7 @@ describe("User Routes", () => {
 
   describe("GET /api/user", () => {
     it("should return current user profile", async () => {
-      const response = await request(app)
-        .get("/api/user")
-        .expect(200);
+      const response = await request(app).get("/api/user").expect(200);
 
       expect(response.body).toMatchObject({
         id: 1,
@@ -110,9 +108,7 @@ describe("User Routes", () => {
     it("should return preferences for scope", async () => {
       mockDb.limit.mockReturnValueOnce([{ prefs: { theme: "dark" } }]);
 
-      const response = await request(app)
-        .get("/api/user/preferences/seedmail")
-        .expect(200);
+      const response = await request(app).get("/api/user/preferences/seedmail").expect(200);
 
       expect(response.body).toEqual({ theme: "dark" });
     });
@@ -120,17 +116,13 @@ describe("User Routes", () => {
     it("should return null if no preferences exist", async () => {
       mockDb.limit.mockReturnValueOnce([]);
 
-      const response = await request(app)
-        .get("/api/user/preferences/nonexistent")
-        .expect(200);
+      const response = await request(app).get("/api/user/preferences/nonexistent").expect(200);
 
       expect(response.body).toBeNull();
     });
 
     it("should require scope parameter", async () => {
-      const response = await request(app)
-        .get("/api/user/preferences/")
-        .expect(404); // Empty param = not found
+      const response = await request(app).get("/api/user/preferences/").expect(404); // Empty param = not found
 
       // Note: Express treats this as 404, not our validation
     });
@@ -166,14 +158,14 @@ describe("User Routes", () => {
 
   describe("GET /api/user/signature", () => {
     it("should return signature config", async () => {
-      mockDb.limit.mockReturnValueOnce([{
-        emailSignature: JSON.stringify({ name: "John Doe" }),
-        emailSignatureEnabled: true,
-      }]);
+      mockDb.limit.mockReturnValueOnce([
+        {
+          emailSignature: JSON.stringify({ name: "John Doe" }),
+          emailSignatureEnabled: true,
+        },
+      ]);
 
-      const response = await request(app)
-        .get("/api/user/signature")
-        .expect(200);
+      const response = await request(app).get("/api/user/signature").expect(200);
 
       expect(response.body).toEqual({
         config: { name: "John Doe" },
@@ -182,14 +174,14 @@ describe("User Routes", () => {
     });
 
     it("should handle missing signature", async () => {
-      mockDb.limit.mockReturnValueOnce([{
-        emailSignature: null,
-        emailSignatureEnabled: true,
-      }]);
+      mockDb.limit.mockReturnValueOnce([
+        {
+          emailSignature: null,
+          emailSignatureEnabled: true,
+        },
+      ]);
 
-      const response = await request(app)
-        .get("/api/user/signature")
-        .expect(200);
+      const response = await request(app).get("/api/user/signature").expect(200);
 
       expect(response.body).toEqual({
         config: null,
@@ -198,14 +190,14 @@ describe("User Routes", () => {
     });
 
     it("should handle invalid JSON gracefully", async () => {
-      mockDb.limit.mockReturnValueOnce([{
-        emailSignature: "invalid json{",
-        emailSignatureEnabled: false,
-      }]);
+      mockDb.limit.mockReturnValueOnce([
+        {
+          emailSignature: "invalid json{",
+          emailSignatureEnabled: false,
+        },
+      ]);
 
-      const response = await request(app)
-        .get("/api/user/signature")
-        .expect(200);
+      const response = await request(app).get("/api/user/signature").expect(200);
 
       expect(response.body.config).toBeNull();
     });

@@ -5,10 +5,10 @@ import { BUILD_OUTPUT_PATH } from "../server/constants";
 
 /**
  * Build Compression Verification Tests
- * 
+ *
  * These tests verify that build-time precompression is working correctly.
  * They check for the existence of .gz and .br files after a production build.
- * 
+ *
  * Note: These tests require a production build to have been run first.
  * Run `npm run build` before running these tests in CI.
  */
@@ -32,14 +32,14 @@ describe("Build-time Precompression", () => {
 
       // Find JS files in build output
       const files = await findFilesRecursively(BUILD_OUTPUT_PATH, /\.js$/);
-      
+
       if (files.length === 0) {
         console.warn("No JS files found in build output - build may not be complete");
         return;
       }
 
       // Check that at least some .gz files exist
-      const gzFiles = files.filter(f => f.endsWith(".js")).map(f => `${f}.gz`);
+      const gzFiles = files.filter((f) => f.endsWith(".js")).map((f) => `${f}.gz`);
       const existingGzFiles = await Promise.all(
         gzFiles.map(async (file) => {
           try {
@@ -52,7 +52,7 @@ describe("Build-time Precompression", () => {
       );
 
       const gzCount = existingGzFiles.filter(Boolean).length;
-      
+
       // At least some JS files should have .gz versions
       // (only files > 1KB are compressed per our config)
       if (files.length > 0) {
@@ -68,13 +68,13 @@ describe("Build-time Precompression", () => {
       }
 
       const files = await findFilesRecursively(BUILD_OUTPUT_PATH, /\.js$/);
-      
+
       if (files.length === 0) {
         console.warn("No JS files found in build output - build may not be complete");
         return;
       }
 
-      const brFiles = files.filter(f => f.endsWith(".js")).map(f => `${f}.br`);
+      const brFiles = files.filter((f) => f.endsWith(".js")).map((f) => `${f}.br`);
       const existingBrFiles = await Promise.all(
         brFiles.map(async (file) => {
           try {
@@ -87,7 +87,7 @@ describe("Build-time Precompression", () => {
       );
 
       const brCount = existingBrFiles.filter(Boolean).length;
-      
+
       if (files.length > 0) {
         expect(brCount).toBeGreaterThan(0);
       }
@@ -101,13 +101,13 @@ describe("Build-time Precompression", () => {
       }
 
       const files = await findFilesRecursively(BUILD_OUTPUT_PATH, /\.css$/);
-      
+
       if (files.length === 0) {
         // CSS files are optional depending on build
         return;
       }
 
-      const gzFiles = files.filter(f => f.endsWith(".css")).map(f => `${f}.gz`);
+      const gzFiles = files.filter((f) => f.endsWith(".css")).map((f) => `${f}.gz`);
       const existingGzFiles = await Promise.all(
         gzFiles.map(async (file) => {
           try {
@@ -120,7 +120,7 @@ describe("Build-time Precompression", () => {
       );
 
       const gzCount = existingGzFiles.filter(Boolean).length;
-      
+
       if (files.length > 0) {
         expect(gzCount).toBeGreaterThan(0);
       }
@@ -135,12 +135,12 @@ describe("Build-time Precompression", () => {
 
       const jsFiles = await findFilesRecursively(BUILD_OUTPUT_PATH, /\.js$/);
       const cssFiles = await findFilesRecursively(BUILD_OUTPUT_PATH, /\.css$/);
-      
+
       // Should have original uncompressed files
       expect(jsFiles.length).toBeGreaterThan(0);
-      
+
       // Verify original files exist (not just .gz/.br)
-      const originalJsFiles = jsFiles.filter(f => !f.endsWith(".gz") && !f.endsWith(".br"));
+      const originalJsFiles = jsFiles.filter((f) => !f.endsWith(".gz") && !f.endsWith(".br"));
       expect(originalJsFiles.length).toBeGreaterThan(0);
     });
 
@@ -152,24 +152,21 @@ describe("Build-time Precompression", () => {
       }
 
       const jsFiles = await findFilesRecursively(BUILD_OUTPUT_PATH, /\.js$/);
-      const originalFiles = jsFiles.filter(f => !f.endsWith(".gz") && !f.endsWith(".br"));
-      
+      const originalFiles = jsFiles.filter((f) => !f.endsWith(".gz") && !f.endsWith(".br"));
+
       if (originalFiles.length === 0) return;
 
       // Find a file that has both .gz and .br versions
       for (const file of originalFiles) {
         const gzFile = `${file}.gz`;
         const brFile = `${file}.br`;
-        
+
         try {
-          const [gzStats, brStats] = await Promise.all([
-            fs.stat(gzFile),
-            fs.stat(brFile),
-          ]);
-          
+          const [gzStats, brStats] = await Promise.all([fs.stat(gzFile), fs.stat(brFile)]);
+
           // Brotli should generally be smaller than gzip
           expect(brStats.size).toBeLessThanOrEqual(gzStats.size);
-          
+
           // Found at least one comparison, test passes
           return;
         } catch {
@@ -189,8 +186,8 @@ describe("Build-time Precompression", () => {
       }
 
       const jsFiles = await findFilesRecursively(BUILD_OUTPUT_PATH, /\.js$/);
-      const originalFiles = jsFiles.filter(f => !f.endsWith(".gz") && !f.endsWith(".br"));
-      
+      const originalFiles = jsFiles.filter((f) => !f.endsWith(".gz") && !f.endsWith(".br"));
+
       if (originalFiles.length === 0) return;
 
       // Check compression ratio for at least one large file
@@ -200,17 +197,17 @@ describe("Build-time Precompression", () => {
             fs.stat(file),
             fs.stat(`${file}.gz`),
           ]);
-          
+
           // Only check files > 1KB (our threshold)
           if (originalStats.size > 1024) {
             const compressionRatio = gzStats.size / originalStats.size;
-            
+
             // Compression ratio should be < 1 (file is smaller)
             expect(compressionRatio).toBeLessThan(1);
-            
+
             // Should achieve at least 10% compression for JS
             expect(compressionRatio).toBeLessThan(0.9);
-            
+
             return; // Found at least one, test passes
           }
         } catch {
@@ -226,13 +223,13 @@ describe("Build-time Precompression", () => {
  */
 async function findFilesRecursively(dir: string, pattern: RegExp): Promise<string[]> {
   const results: string[] = [];
-  
+
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      
+
       if (entry.isDirectory()) {
         const subFiles = await findFilesRecursively(fullPath, pattern);
         results.push(...subFiles);
@@ -243,6 +240,6 @@ async function findFilesRecursively(dir: string, pattern: RegExp): Promise<strin
   } catch (error) {
     // Directory doesn't exist or is inaccessible
   }
-  
+
   return results;
 }

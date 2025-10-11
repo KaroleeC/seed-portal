@@ -1,17 +1,17 @@
 /**
  * Test Server Setup
- * 
+ *
  * Lightweight test server for smoke tests.
  * Starts the Express app with a test database.
  */
 
-import { createServer } from 'http';
-import type { Server } from 'http';
+import { createServer } from "http";
+import type { Server } from "http";
 
 class TestServer {
   private httpServer: Server | null = null;
-  public url = '';
-  public testToken = 'test-token-12345'; // Mock token for tests
+  public url = "";
+  public testToken = "test-token-12345"; // Mock token for tests
 
   async start(): Promise<void> {
     if (this.httpServer) {
@@ -19,7 +19,7 @@ class TestServer {
     }
 
     // Import the Express app
-    const { app } = await import('../server/index');
+    const { app } = await import("../server/index");
 
     // Create HTTP server
     this.httpServer = createServer(app);
@@ -28,7 +28,7 @@ class TestServer {
     await new Promise<void>((resolve) => {
       this.httpServer!.listen(0, () => {
         const address = this.httpServer!.address();
-        if (address && typeof address === 'object') {
+        if (address && typeof address === "object") {
           this.url = `http://127.0.0.1:${address.port}`;
         }
         resolve();
@@ -49,7 +49,7 @@ class TestServer {
     });
 
     this.httpServer = null;
-    this.url = '';
+    this.url = "";
   }
 }
 

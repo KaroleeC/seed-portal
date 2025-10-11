@@ -136,7 +136,7 @@ describe("Environment Configuration", () => {
       process.env.VERBOSE = "1";
 
       const { shouldLogResponses, IS_PRODUCTION } = await import("../environment");
-      
+
       expect(IS_PRODUCTION).toBe(true);
       expect(shouldLogResponses()).toBe(false);
     });
@@ -146,7 +146,7 @@ describe("Environment Configuration", () => {
       // No DEBUG_HTTP set
 
       const { shouldLogResponses, shouldDebugRequests } = await import("../environment");
-      
+
       expect(shouldLogResponses()).toBe(false);
       expect(shouldDebugRequests()).toBe(false);
     });

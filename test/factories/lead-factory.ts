@@ -1,10 +1,10 @@
 /**
  * Lead Test Factory
- * 
+ *
  * Creates test lead data for integration tests matching crmLeads schema
  */
 
-import { nanoid } from 'nanoid';
+import { nanoid } from "nanoid";
 
 export interface TestLead {
   id: string;
@@ -29,15 +29,15 @@ export interface TestLead {
 export function createTestLead(overrides: Partial<TestLead> = {}): TestLead {
   const id = overrides.id || nanoid();
   const now = new Date();
-  
+
   return {
     id,
     contactId: null,
-    source: 'manual',
-    status: 'new',
-    stage: 'unassigned',
+    source: "manual",
+    status: "new",
+    stage: "unassigned",
     assignedTo: null,
-    payload: { email: `test-${id}@example.com`, name: 'Test User' },
+    payload: { email: `test-${id}@example.com`, name: "Test User" },
     archived: false,
     convertedAt: null,
     convertedContactId: null,

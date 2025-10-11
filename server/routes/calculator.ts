@@ -211,7 +211,7 @@ router.delete(
  * GET /api/calculator/content
  * Get calculator content (SOW templates, agreement links)
  * Can optionally filter by service via ?service=bookkeeping
- * 
+ *
  * Cacheable: ETag enabled with 5-minute cache
  */
 router.get("/api/calculator/content", requireAuth, withETag({ maxAge: 300 }), async (req, res) => {
@@ -249,14 +249,7 @@ router.get("/api/calculator/content", requireAuth, withETag({ maxAge: 300 }), as
     const isBlank = (v: any) => typeof v === "string" && v.trim() === "";
     const norm = (v: any) => (v === undefined || v === null || isBlank(v) ? undefined : v);
     const asDbKey = (svc: string) =>
-      svc as
-        | "bookkeeping"
-        | "taas"
-        | "payroll"
-        | "ap"
-        | "ar"
-        | "agent_of_service"
-        | "cfo_advisory";
+      svc as "bookkeeping" | "taas" | "payroll" | "ap" | "ar" | "agent_of_service" | "cfo_advisory";
 
     const withDefaults = (existing: any | undefined, service: string) => {
       const included = JSON.stringify(
@@ -327,7 +320,7 @@ router.get("/api/calculator/content", requireAuth, withETag({ maxAge: 300 }), as
 /**
  * GET /api/pricing/config
  * Get pricing configuration for Calculator and other UIs
- * 
+ *
  * Cacheable: ETag enabled with 5-minute cache
  */
 router.get("/api/pricing/config", requireAuth, withETag({ maxAge: 300 }), async (req, res) => {

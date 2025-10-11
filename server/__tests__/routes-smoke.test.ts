@@ -1,9 +1,9 @@
 /**
  * Route Smoke Tests
- * 
+ *
  * Validates that all critical API routes are registered and accessible.
  * These tests catch route mounting issues (like the SSE 404 bug).
- * 
+ *
  * Run this in CI to catch integration bugs before deployment.
  */
 
@@ -105,7 +105,7 @@ describe("Critical Route Smoke Tests", () => {
   beforeAll(async () => {
     app = express();
     app.use(express.json());
-    
+
     // Register routes exactly as production does
     await registerRoutes(app);
   });
@@ -121,17 +121,17 @@ describe("Critical Route Smoke Tests", () => {
     emailRoutes.forEach(({ method, path, description }) => {
       it(`${method} ${path} should be accessible (${description})`, async () => {
         const req = request(app)[method.toLowerCase() as keyof typeof request.Test](path);
-        
+
         // Add query params for routes that require them
         if (path.includes("/threads") || path.includes("/drafts")) {
           req.query({ accountId: "test-account" });
         }
-        
+
         const response = await req;
-        
+
         // Should NOT be 404
         expect(response.status).not.toBe(404);
-        
+
         // Should be one of: 200, 400 (missing params), 401 (auth), 500 (server error)
         expect([200, 400, 401, 500]).toContain(response.status);
       });
@@ -147,12 +147,12 @@ describe("Critical Route Smoke Tests", () => {
           // Just check that connection starts
           expect(res.statusCode).toBe(200);
           expect(res.headers["content-type"]).toBe("text/event-stream");
-          
+
           // Close connection immediately
           res.destroy();
           callback(null, "");
         });
-      
+
       // If we get here, route exists (not 404)
       expect(response.status).toBe(200);
     });
@@ -167,7 +167,7 @@ describe("Critical Route Smoke Tests", () => {
           // We just need to verify it's not a 404
           return err.response || { status: 200 };
         });
-      
+
       expect(response.status).not.toBe(404);
     });
   });
@@ -182,8 +182,9 @@ describe("Critical Route Smoke Tests", () => {
 
     coreRoutes.forEach(({ method, path, description }) => {
       it(`${method} ${path} should be accessible (${description})`, async () => {
-        const response = await request(app)[method.toLowerCase() as keyof typeof request.Test](path);
-        
+        const response =
+          await request(app)[method.toLowerCase() as keyof typeof request.Test](path);
+
         // Should NOT be 404
         expect(response.status).not.toBe(404);
         expect([200, 400, 401, 500]).toContain(response.status);
@@ -196,7 +197,7 @@ describe("Critical Route Smoke Tests", () => {
       // Try to register the same route twice - should still work
       const response1 = await request(app).get("/api/email/accounts");
       const response2 = await request(app).get("/api/email/accounts");
-      
+
       // Both should succeed (or fail with same error)
       expect(response1.status).toBe(response2.status);
     });

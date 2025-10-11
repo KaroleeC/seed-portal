@@ -1,6 +1,6 @@
 /**
  * useThreadLeads Hook
- * 
+ *
  * Fetches leads linked to an email thread
  * Returns lead IDs and loading/error states
  */
@@ -22,7 +22,7 @@ interface UseThreadLeadsResult {
  */
 export function useThreadLeads(threadId: string | undefined | null): UseThreadLeadsResult {
   const { data, isLoading, error } = useQuery<{ leadIds: string[] }>({
-    queryKey: ['thread-leads', threadId],
+    queryKey: ["thread-leads", threadId],
     queryFn: async () => {
       if (!threadId) {
         return { leadIds: [] };
@@ -32,18 +32,15 @@ export function useThreadLeads(threadId: string | undefined | null): UseThreadLe
       const { data } = await supabase.auth.getSession();
       const accessToken = data?.session?.access_token;
 
-      const response = await fetch(
-        `/api/email/lead-linking/thread/${threadId}/leads`,
-        {
-          credentials: 'include',
-          headers: {
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-          },
-        }
-      );
-      
+      const response = await fetch(`/api/email/lead-linking/thread/${threadId}/leads`, {
+        credentials: "include",
+        headers: {
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+      });
+
       if (!response.ok) {
-        throw new Error('Failed to fetch thread leads');
+        throw new Error("Failed to fetch thread leads");
       }
 
       return response.json();
@@ -54,7 +51,7 @@ export function useThreadLeads(threadId: string | undefined | null): UseThreadLe
   });
 
   const leadIds = data?.leadIds || [];
-  
+
   return {
     leadIds,
     isLoading,

@@ -1,6 +1,6 @@
 /**
  * Quote Validation
- * 
+ *
  * Provider-agnostic validation rules for quotes.
  * Extracted from useHubSpotSync for reusability and testability.
  */
@@ -16,7 +16,7 @@ export interface ValidationResult {
 
 /**
  * Get missing required fields for TaaS service
- * 
+ *
  * DRY: Single source of truth for TaaS validation rules
  */
 export function getMissingTaasFields(values: QuoteFormFields): string[] {
@@ -38,7 +38,7 @@ export function getMissingTaasFields(values: QuoteFormFields): string[] {
 
 /**
  * Get all missing required fields based on selected services
- * 
+ *
  * @param values - Form values
  * @param feeCalculation - Current fee calculation
  * @returns Array of missing field names
@@ -50,7 +50,8 @@ export function getMissingFields(
   const missing: string[] = [];
 
   // TaaS-specific validation
-  const includesTaas = Boolean(feeCalculation?.includesTaas) || Boolean((values as any).includesTaas);
+  const includesTaas =
+    Boolean(feeCalculation?.includesTaas) || Boolean((values as any).includesTaas);
   if (includesTaas) {
     missing.push(...getMissingTaasFields(values));
   }
@@ -66,7 +67,7 @@ export function getMissingFields(
 
 /**
  * Validate quote before sync
- * 
+ *
  * @param values - Form values
  * @param feeCalculation - Current fee calculation
  * @returns Validation result
@@ -107,7 +108,7 @@ export const FIELD_DISPLAY_NAMES: Record<string, string> = {
  */
 export function formatValidationErrors(result: ValidationResult): string {
   if (result.isValid) return "";
-  
+
   const fieldNames = result.missingFields
     .map((field) => FIELD_DISPLAY_NAMES[field] || field)
     .join(", ");

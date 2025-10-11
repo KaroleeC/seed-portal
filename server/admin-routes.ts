@@ -35,29 +35,18 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
     googleAdminService = null;
   }
 
-  // Middleware to check admin access after authentication
-  const requireAdmin = (req: any, res: any, next: any) => {
-    console.log("Admin access check:", {
-      hasUser: !!req.user,
-      userEmail: req.user?.email,
-      userRole: req.user?.role,
-    });
-
-    // Optional allowlist for break-glass access (comma-separated emails)
-    const allowlist = (process.env.ADMIN_EMAIL_ALLOWLIST || "")
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-    if (req.user?.email && allowlist.includes(String(req.user.email).toLowerCase())) {
-      return next();
-    }
-
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-
-    next();
-  };
+  // REFACTORED: Use requirePermission middleware instead of custom requireAdmin
+  // All routes now use the standard authorization pattern (see AUTHORIZATION_PATTERN.md)
+  //
+  // The requirePermission middleware supports:
+  // - Cerbos-based policies (when USE_CERBOS=true)
+  // - RBAC fallback (when USE_CERBOS=false)
+  // - Break-glass admin access via ADMIN_EMAIL_ALLOWLIST
+  //
+  // For backward compatibility during migration, create an alias
+  // TODO: Replace all `requireAdmin` with explicit `requirePermission("resource.action")`
+  const authModule = await import("./services/authz/authorize");
+  const requireAdmin = authModule.requirePermission("admin.access", "system");
 
   // ----- Link HubSpot owner by user email -----
   app.post(
@@ -950,6 +939,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         email: req.user.email,
         firstName: req.user.firstName,
         lastName: req.user.lastName,
+        // eslint-disable-next-line no-restricted-syntax -- Reading role for session, not authorization
         role: req.user.role,
         defaultDashboard: req.user.defaultDashboard,
       };

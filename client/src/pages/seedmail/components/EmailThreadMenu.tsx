@@ -1,6 +1,6 @@
 /**
  * EmailThreadMenu Component
- * 
+ *
  * 3-dot menu for email threads with lead-related actions:
  * 1. Open in LEADIQ - Opens lead in LEADIQ app (enabled if lead exists)
  * 2. Create Lead - Opens lead creation modal (enabled if NO lead exists)
@@ -27,11 +27,7 @@ interface EmailThreadMenuProps {
   onAssociateLead?: () => void;
 }
 
-export function EmailThreadMenu({
-  threadId,
-  onCreateLead,
-  onAssociateLead,
-}: EmailThreadMenuProps) {
+export function EmailThreadMenu({ threadId, onCreateLead, onAssociateLead }: EmailThreadMenuProps) {
   const [, setLocation] = useLocation();
   const { hasLeads, primaryLeadId, leadIds, isLoading } = useThreadLeads(threadId);
   const [isOpen, setIsOpen] = useState(false);
@@ -71,7 +67,7 @@ export function EmailThreadMenu({
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Lead Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        
+
         {/* Open in LEADIQ */}
         <DropdownMenuItem
           disabled={!hasLeads || isLoading}
@@ -81,9 +77,7 @@ export function EmailThreadMenu({
           <ExternalLink className="mr-2 h-4 w-4" />
           <span>Open in LEADIQ</span>
           {leadIds.length > 1 && (
-            <span className="ml-auto text-xs text-muted-foreground">
-              +{leadIds.length - 1}
-            </span>
+            <span className="ml-auto text-xs text-muted-foreground">+{leadIds.length - 1}</span>
           )}
         </DropdownMenuItem>
 
@@ -100,10 +94,7 @@ export function EmailThreadMenu({
         <DropdownMenuSeparator />
 
         {/* Associate with Existing Lead */}
-        <DropdownMenuItem
-          onClick={handleAssociateLead}
-          className="cursor-pointer"
-        >
+        <DropdownMenuItem onClick={handleAssociateLead} className="cursor-pointer">
           <LinkIcon className="mr-2 h-4 w-4" />
           <span>Associate with Existing Lead</span>
         </DropdownMenuItem>

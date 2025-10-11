@@ -27,7 +27,7 @@ export function useSendStatus(messageId: string | undefined | null, enabled = tr
     queryKey: ["/api/email/send-status", messageId],
     queryFn: async () => {
       if (!messageId) return null;
-      
+
       try {
         const status = await apiRequest(`/api/email/send-status/${messageId}`);
         return status;

@@ -10,7 +10,7 @@
 
 Successfully completed comprehensive refactor of `routes.ts` including:
 
-- ✅ Fixed all import errors  
+- ✅ Fixed all import errors
 - ✅ Eliminated 58 lines of duplicated code
 - ✅ Replaced 100+ console.log with structured logging
 - ✅ Added proper TypeScript types
@@ -108,24 +108,33 @@ console.log("🟢 POST /api/quotes - HANDLER EXECUTING");
 **After** (structured pino logging):
 
 ```typescript
-quoteLogger.debug({
-  requestId,
-  contactEmail,
-  hasApprovalCode: !!approvalCode,
-}, "Checking approval requirements");
+quoteLogger.debug(
+  {
+    requestId,
+    contactEmail,
+    hasApprovalCode: !!approvalCode,
+  },
+  "Checking approval requirements"
+);
 
-quoteLogger.info({
-  requestId,
-  quoteId: quote.id,
-  contactEmail: quote.contactEmail,
-  monthlyFee: quote.monthlyFee,
-}, "Quote created successfully");
+quoteLogger.info(
+  {
+    requestId,
+    quoteId: quote.id,
+    contactEmail: quote.contactEmail,
+    monthlyFee: quote.monthlyFee,
+  },
+  "Quote created successfully"
+);
 
-quoteLogger.error({
-  requestId,
-  error: getErrorMessage(error),
-  userId: req.user?.id,
-}, "Quote creation failed");
+quoteLogger.error(
+  {
+    requestId,
+    error: getErrorMessage(error),
+    userId: req.user?.id,
+  },
+  "Quote creation failed"
+);
 ```
 
 **Benefits:**
@@ -144,7 +153,7 @@ quoteLogger.error({
 
 ```typescript
 // Replaced 15+ uses of `any` with proper types
-interface QuoteCreationData extends Omit<Quote, 'id' | 'createdAt' | 'updatedAt'> {
+interface QuoteCreationData extends Omit<Quote, "id" | "createdAt" | "updatedAt"> {
   ownerId: number;
   // ... all quote fields properly typed
 }
@@ -199,16 +208,16 @@ quote = await storage.createQuote(quoteData);
 
 ```typescript
 describe("POST /api/quotes", () => {
-  it("should create a quote with valid data")
-  it("should sanitize empty string fields to defaults")
-  it("should require approval code when existing HubSpot quotes exist")
-  it("should accept quote when no live HubSpot quotes exist")
-  it("should validate and use approval code")
-  it("should reject invalid approval code")
-  it("should reject quote without required fields")
-  it("should reject quote with invalid email")
-  it("should calculate pricing on server side")
-  it("should handle pricing calculation errors")
+  it("should create a quote with valid data");
+  it("should sanitize empty string fields to defaults");
+  it("should require approval code when existing HubSpot quotes exist");
+  it("should accept quote when no live HubSpot quotes exist");
+  it("should validate and use approval code");
+  it("should reject invalid approval code");
+  it("should reject quote without required fields");
+  it("should reject quote with invalid email");
+  it("should calculate pricing on server side");
+  it("should handle pricing calculation errors");
 });
 ```
 
@@ -216,10 +225,10 @@ describe("POST /api/quotes", () => {
 
 ```typescript
 describe("GET /api/quotes", () => {
-  it("should return all quotes for authenticated user")
-  it("should filter quotes by email")
-  it("should search quotes")
-  it("should handle errors gracefully")
+  it("should return all quotes for authenticated user");
+  it("should filter quotes by email");
+  it("should search quotes");
+  it("should handle errors gracefully");
 });
 ```
 
@@ -227,26 +236,26 @@ describe("GET /api/quotes", () => {
 
 ```typescript
 describe("PUT /api/quotes/:id", () => {
-  it("should update a quote successfully")
-  it("should return 404 for non-existent quote")
-  it("should sync to HubSpot after update")
-  it("should handle invalid quote ID")
-  it("should recalculate pricing on update")
-  it("should handle update errors")
+  it("should update a quote successfully");
+  it("should return 404 for non-existent quote");
+  it("should sync to HubSpot after update");
+  it("should handle invalid quote ID");
+  it("should recalculate pricing on update");
+  it("should handle update errors");
 });
 ```
 
 ### **Test Coverage Breakdown**
 
-| Feature | Tests | Coverage |
-|---------|-------|----------|
-| **Validation** | 3 tests | Required fields, email format, data types |
-| **Approval Flow** | 4 tests | Code required, validation, HubSpot checking |
-| **Pricing** | 2 tests | Server calculation, error handling |
-| **Authentication** | 1 test | Auth required |
-| **CRUD Operations** | 6 tests | Create, Read, Update |
-| **HubSpot Sync** | 2 tests | Sync on create/update |
-| **Error Handling** | 2 tests | Graceful failure |
+| Feature             | Tests   | Coverage                                    |
+| ------------------- | ------- | ------------------------------------------- |
+| **Validation**      | 3 tests | Required fields, email format, data types   |
+| **Approval Flow**   | 4 tests | Code required, validation, HubSpot checking |
+| **Pricing**         | 2 tests | Server calculation, error handling          |
+| **Authentication**  | 1 test  | Auth required                               |
+| **CRUD Operations** | 6 tests | Create, Read, Update                        |
+| **HubSpot Sync**    | 2 tests | Sync on create/update                       |
+| **Error Handling**  | 2 tests | Graceful failure                            |
 
 ---
 
@@ -275,14 +284,14 @@ describe("PUT /api/quotes/:id", () => {
 
 ### **Code Quality**
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **File Size** | 1,728 lines | 1,640 lines | -88 lines |
-| **Duplication** | 83 lines | 0 lines | **100%** ✂️ |
-| **console.log** | 200+ | 0 | **100%** 🎯 |
-| **`any` Types** | 15+ uses | 0 | **100%** 🔒 |
-| **Test Coverage** | 0% | 85%+ | **∞** 🧪 |
-| **Structured Logs** | 0% | 100% | **100%** 📊 |
+| Metric              | Before      | After       | Improvement |
+| ------------------- | ----------- | ----------- | ----------- |
+| **File Size**       | 1,728 lines | 1,640 lines | -88 lines   |
+| **Duplication**     | 83 lines    | 0 lines     | **100%** ✂️ |
+| **console.log**     | 200+        | 0           | **100%** 🎯 |
+| **`any` Types**     | 15+ uses    | 0           | **100%** 🔒 |
+| **Test Coverage**   | 0%          | 85%+        | **∞** 🧪    |
+| **Structured Logs** | 0%          | 100%        | **100%** 📊 |
 
 ### **Maintainability**
 
@@ -301,10 +310,10 @@ describe("PUT /api/quotes/:id", () => {
 
 ```typescript
 await hubSpotService.updateQuote(
-  quote.hubspotQuoteId,           // 1
-  quote.hubspotDealId,            // 2
-  quote.companyName,              // 3
-  parseFloat(quote.monthlyFee),   // 4
+  quote.hubspotQuoteId, // 1
+  quote.hubspotDealId, // 2
+  quote.companyName, // 3
+  parseFloat(quote.monthlyFee) // 4
   // ... 16 more parameters
 );
 ```

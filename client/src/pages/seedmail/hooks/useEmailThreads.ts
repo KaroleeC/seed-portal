@@ -20,12 +20,12 @@ interface UseEmailThreadsResult {
 
 /**
  * Hook to fetch and filter email threads with adaptive polling
- * 
+ *
  * Polling strategy (when enablePolling=true):
  * - 30s when page is active (visible + focused)
  * - 2min when page is visible but not focused
  * - Disabled when page is hidden (battery-friendly)
- * 
+ *
  * Handles both regular threads and draft conversion
  */
 export function useEmailThreads({
@@ -40,11 +40,11 @@ export function useEmailThreads({
     if (!enablePolling || !isVisible) {
       return false; // Stop polling when hidden (battery-friendly)
     }
-    
+
     if (isActive) {
       return 30 * 1000; // 30 seconds when actively using SEEDMAIL
     }
-    
+
     return 2 * 60 * 1000; // 2 minutes when visible but unfocused
   };
 

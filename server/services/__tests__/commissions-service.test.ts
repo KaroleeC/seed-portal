@@ -1,6 +1,6 @@
 /**
  * Commissions Service Tests
- * 
+ *
  * Tests for the commissions service layer.
  * Ensures DRY consolidation works correctly.
  */
@@ -69,9 +69,7 @@ describe("commissions-service", () => {
     });
 
     it("should get commissions for specific user", async () => {
-      const mockCommissions = [
-        { id: 1, sales_rep_id: 5, amount: 1000 },
-      ];
+      const mockCommissions = [{ id: 1, sales_rep_id: 5, amount: 1000 }];
 
       vi.mocked(dbModule.db.execute).mockResolvedValue({
         rows: mockCommissions,

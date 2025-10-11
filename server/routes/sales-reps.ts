@@ -1,8 +1,8 @@
 /**
  * Sales Reps Router
- * 
+ *
  * Handles sales representative management and bonus tracking.
- * 
+ *
  * Routes:
  * - GET /api/sales-reps - List all active sales reps
  * - GET /api/sales-reps/me - Get current user's sales rep profile
@@ -22,7 +22,7 @@ const router = Router();
 /**
  * GET /api/sales-reps
  * Get all active sales reps with user details
- * 
+ *
  * @returns Array of sales reps with name, email, HubSpot ID
  */
 router.get("/api/sales-reps", requireAuth, async (req: any, res: Response) => {
@@ -106,7 +106,7 @@ router.get("/api/sales-reps", requireAuth, async (req: any, res: Response) => {
 /**
  * GET /api/sales-reps/me
  * Get current user's sales rep profile
- * 
+ *
  * @returns Sales rep profile or null
  */
 router.get("/api/sales-reps/me", requireAuth, async (req: any, res: Response) => {
@@ -126,7 +126,7 @@ router.get("/api/sales-reps/me", requireAuth, async (req: any, res: Response) =>
 /**
  * GET /api/monthly-bonuses
  * Get monthly bonuses for a sales rep
- * 
+ *
  * @query salesRepId - Optional sales rep ID filter (admin only for other reps)
  * @returns Array of monthly bonuses
  */
@@ -157,7 +157,7 @@ router.get("/api/monthly-bonuses", requireAuth, async (req: any, res: Response) 
 /**
  * GET /api/milestone-bonuses
  * Get milestone bonuses for a sales rep
- * 
+ *
  * @query salesRepId - Optional sales rep ID filter (admin only for other reps)
  * @returns Array of milestone bonuses
  */

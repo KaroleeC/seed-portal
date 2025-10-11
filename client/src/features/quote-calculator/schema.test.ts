@@ -19,7 +19,7 @@ describe("Quote Form Schema", () => {
         cleanupMonths: 1,
         cleanupComplexity: "1.0",
       };
-      
+
       const quoteFormDefaults = quoteFormSchema.parse(minimalValidData);
       const formDefaults = formSchema.parse(minimalValidData);
 

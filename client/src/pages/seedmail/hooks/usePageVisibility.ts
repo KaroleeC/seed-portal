@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 /**
  * Hook to track page visibility and focus state
- * 
+ *
  * Returns:
  * - isVisible: Page is visible (not hidden/minimized)
  * - isFocused: Page has focus (user is actively interacting)
@@ -27,7 +27,7 @@ export function usePageVisibility() {
 
     // Page Visibility API
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    
+
     // Focus events
     window.addEventListener("focus", handleFocus);
     window.addEventListener("blur", handleBlur);

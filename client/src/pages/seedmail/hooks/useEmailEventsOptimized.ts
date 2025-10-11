@@ -1,15 +1,15 @@
 /**
  * Optimized Email Events Hook
- * 
+ *
  * SSE hook with delta updates instead of full query invalidation.
  * Performance: 95%+ reduction in unnecessary API calls.
- * 
+ *
  * Features:
  * - Delta updates via queryClient.setQueryData
  * - Automatic reconnection on connection loss
  * - Granular event handling (thread-created, thread-updated, etc.)
  * - Falls back gracefully if SSE not supported
- * 
+ *
  * DRY Principle: All delta update logic centralized in query-delta-updates.ts
  */
 
@@ -46,13 +46,13 @@ interface UseEmailEventsOptions {
 
 /**
  * Hook to listen for real-time email events via Server-Sent Events (SSE).
- * 
+ *
  * @param options - Configuration options
  * @returns Connection state and event data
- * 
+ *
  * @example
  * ```tsx
- * const { isConnected, lastSync } = useEmailEventsOptimized({ 
+ * const { isConnected, lastSync } = useEmailEventsOptimized({
  *   accountId: selectedAccount?.id,
  *   useDeltaUpdates: true, // 95%+ fewer API calls
  * });
@@ -83,7 +83,7 @@ export function useEmailEventsOptimized({
     }
 
     console.log(`[SSE] Connecting to events for account ${accountId}...`);
-    console.log(`[SSE] Delta updates: ${useDeltaUpdates ? 'enabled' : 'disabled (legacy mode)'}`);
+    console.log(`[SSE] Delta updates: ${useDeltaUpdates ? "enabled" : "disabled (legacy mode)"}`);
 
     // Create SSE connection
     const eventSource = new EventSource(`/api/email/events/${accountId}`);
@@ -138,17 +138,20 @@ export function useEmailEventsOptimized({
     });
 
     // Unread count updated event (granular)
-    eventSource.addEventListener(SSEEventType.UNREAD_COUNT_UPDATED, (event: MessageEvent<string>) => {
-      const data: UnreadCountUpdatedEvent = JSON.parse(event.data);
-      console.log("[SSE] Unread count updated:", data);
+    eventSource.addEventListener(
+      SSEEventType.UNREAD_COUNT_UPDATED,
+      (event: MessageEvent<string>) => {
+        const data: UnreadCountUpdatedEvent = JSON.parse(event.data);
+        console.log("[SSE] Unread count updated:", data);
 
-      if (useDeltaUpdates) {
-        applyUnreadCountUpdated(queryClient, accountId, data);
-        trackDeltaUpdate();
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["/api/email/unread-count", accountId] });
+        if (useDeltaUpdates) {
+          applyUnreadCountUpdated(queryClient, accountId, data);
+          trackDeltaUpdate();
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["/api/email/unread-count", accountId] });
+        }
       }
-    });
+    );
 
     // Message created event (granular)
     eventSource.addEventListener(SSEEventType.MESSAGE_CREATED, (event: MessageEvent<string>) => {
@@ -193,13 +196,13 @@ export function useEmailEventsOptimized({
     eventSource.addEventListener(SSEEventType.SYNC_COMPLETED, (event: MessageEvent<string>) => {
       const data: SyncCompletedEvent = JSON.parse(event.data);
       console.log("[SSE] Sync completed:", data);
-      
+
       setLastSync(data);
 
       // Full sync always invalidates (too many changes to apply individually)
       queryClient.invalidateQueries({ queryKey: ["/api/email/threads", accountId] });
       queryClient.invalidateQueries({ queryKey: ["/api/email/drafts", accountId] });
-      
+
       console.log("[SSE] Invalidated email queries after full sync");
     });
 
@@ -214,7 +217,7 @@ export function useEmailEventsOptimized({
     eventSource.onerror = (err: Event) => {
       console.error("[SSE] Connection error:", err);
       setIsConnected(false);
-      
+
       // EventSource automatically reconnects, but we track state
       if (eventSource.readyState === EventSource.CLOSED) {
         setError("Connection closed");

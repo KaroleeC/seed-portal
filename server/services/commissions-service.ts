@@ -1,9 +1,9 @@
 /**
  * Commissions Service
- * 
+ *
  * DRY: Consolidates duplicate SQL queries from routes.ts
  * Provides a clean interface for commission data access.
- * 
+ *
  * Before: Same SQL query repeated 3 times in routes
  * After: Single function with flexible filtering
  */
@@ -36,12 +36,12 @@ export interface CommissionFilters {
 
 /**
  * Get commissions with flexible filtering
- * 
+ *
  * DRY: Single SQL query used for all scenarios:
  * - Specific sales rep
  * - All commissions (admin)
  * - User's own commissions
- * 
+ *
  * @param filters - Filter criteria
  * @returns Array of commissions
  */
@@ -91,7 +91,7 @@ export async function getCommissions(filters: CommissionFilters): Promise<Commis
 
 /**
  * Get commission by ID
- * 
+ *
  * @param id - Commission ID
  * @returns Commission or null
  */
@@ -128,7 +128,7 @@ export async function getCommissionById(id: number): Promise<Commission | null> 
 
 /**
  * Update commission status
- * 
+ *
  * @param id - Commission ID
  * @param status - New status
  * @returns Updated commission
@@ -154,7 +154,7 @@ export async function updateCommissionStatus(
 
 /**
  * Update commission amount and notes
- * 
+ *
  * @param id - Commission ID
  * @param amount - New amount
  * @param notes - New notes
@@ -187,7 +187,7 @@ export async function updateCommission(
 
 /**
  * Get commission adjustments for a sales rep
- * 
+ *
  * @param salesRepId - Sales rep ID
  * @returns Array of adjustments
  */
@@ -215,9 +215,9 @@ export async function getCommissionAdjustments(salesRepId?: number) {
 
 /**
  * Group commissions by invoice
- * 
+ *
  * DRY: Extracted from routes to be reusable
- * 
+ *
  * @param commissions - Array of commissions
  * @returns Map of invoice groups
  */
@@ -231,10 +231,7 @@ export function groupCommissionsByInvoice(commissions: Commission[]): Map<string
     }
 
     // Handle bonus records specially (they don't have invoice IDs)
-    if (
-      comm.commission_type === "monthly_bonus" ||
-      comm.commission_type === "milestone_bonus"
-    ) {
+    if (comm.commission_type === "monthly_bonus" || comm.commission_type === "milestone_bonus") {
       const bonusKey = `bonus_${comm.id}`;
       invoiceGroups.set(bonusKey, {
         id: comm.id,

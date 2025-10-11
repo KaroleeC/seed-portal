@@ -54,14 +54,23 @@ router.get(
   asyncHandler(async (req: any, res) => {
     const probe = await boxService.getFolderInfo("0");
     if (!probe) {
-      return res.status(500).json({ message: "Box is not configured (App Auth credentials missing/invalid)" });
+      return res
+        .status(500)
+        .json({ message: "Box is not configured (App Auth credentials missing/invalid)" });
     }
     const rootId = process.env.BOX_CLIENT_FOLDERS_PARENT_ID;
     if (!rootId || rootId === "0") {
-      return res.status(500).json({ message: "BOX_CLIENT_FOLDERS_PARENT_ID is not set to the CLIENTS folder id" });
+      return res
+        .status(500)
+        .json({ message: "BOX_CLIENT_FOLDERS_PARENT_ID is not set to the CLIENTS folder id" });
     }
-    const folderId = typeof req.query.folderId === "string" && req.query.folderId.trim().length ? String(req.query.folderId) : String(rootId);
-    const ok = String(folderId) === String(rootId) || (await boxService.isUnderClientsRoot(folderId, "folder"));
+    const folderId =
+      typeof req.query.folderId === "string" && req.query.folderId.trim().length
+        ? String(req.query.folderId)
+        : String(rootId);
+    const ok =
+      String(folderId) === String(rootId) ||
+      (await boxService.isUnderClientsRoot(folderId, "folder"));
     if (!ok) return res.status(403).json({ message: "Folder not within CLIENTS root" });
     const items = await boxService.listFolderItems(folderId);
     return res.json({ folderId, items });
@@ -84,7 +93,11 @@ router.post(
         await queue
           .add(
             "index-files",
-            { fileIds: files.map((f: any) => f.id), userId: Number(req.user?.id) || 0, timestamp: Date.now() },
+            {
+              fileIds: files.map((f: any) => f.id),
+              userId: Number(req.user?.id) || 0,
+              timestamp: Date.now(),
+            },
             { priority: 5 }
           )
           .catch(() => {});
@@ -102,7 +115,12 @@ router.post(
   asyncHandler(async (req, res) => {
     const { documentUrl, documentType } = req.body;
     try {
-      res.json({ success: true, message: "Document extraction coming soon", documentUrl, documentType });
+      res.json({
+        success: true,
+        message: "Document extraction coming soon",
+        documentUrl,
+        documentType,
+      });
     } catch (error) {
       console.error("🚨 Document extraction failed:", error);
       handleError(error, res, "Document Extraction");
@@ -136,7 +154,14 @@ router.post(
       return res.status(400).json({ message: "Invalid quote ID" });
     }
     try {
-      res.json({ success: true, analysis: { quoteId, recommendations: ["Quote looks good!", "Consider adding TaaS service for tax compliance"], confidence: 0.85 } });
+      res.json({
+        success: true,
+        analysis: {
+          quoteId,
+          recommendations: ["Quote looks good!", "Consider adding TaaS service for tax compliance"],
+          confidence: 0.85,
+        },
+      });
     } catch (error) {
       console.error("🚨 Quote analysis failed:", error);
       handleError(error, res, "Quote Analysis");
@@ -151,10 +176,13 @@ router.post(
     const mode: "sell" | "support" = req.body?.mode === "support" ? "support" : "sell";
     const question = (req.body?.question || "").toString().trim();
     const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : [];
-    const providedConversationId = typeof req.body?.conversationId === "string" ? req.body.conversationId.trim() : "";
+    const providedConversationId =
+      typeof req.body?.conversationId === "string" ? req.body.conversationId.trim() : "";
     if (!question) return res.status(400).json({ message: "question is required" });
     if (attachments.length > 0 && mode !== "support") {
-      return res.status(403).json({ message: "Box attachments are only permitted in support mode" });
+      return res
+        .status(403)
+        .json({ message: "Box attachments are only permitted in support mode" });
     }
     let fileNames: string[] = [];
     let combinedText = "";
@@ -221,7 +249,9 @@ Rules:
 - Short quotes and exact numbers are allowed; avoid long verbatim passages.
 - If the KB is empty or unreadable, respond exactly with: "No readable data extracted from the attached files. Please attach text-based PDFs/CSV/XLSX or OCR the documents." and stop.`;
     const sys = mode === "support" ? systemSupport : systemSell;
-    const sourceNote = fileNames.length ? `\n\nWhen stating a fact, append the file in brackets [name]. Files available:\n- ${fileNames.slice(0, 20).join("\n- ")}` : "";
+    const sourceNote = fileNames.length
+      ? `\n\nWhen stating a fact, append the file in brackets [name]. Files available:\n- ${fileNames.slice(0, 20).join("\n- ")}`
+      : "";
     const kb = combinedText ? `\n\nKnowledge Base:\n${combinedText}` : "";
     const fullPrompt = `${sys}\n\nUser question:\n${question}${sourceNote}${kb}`;
     const model = mode === "support" ? "gpt-4o" : "gpt-4o-mini";
@@ -230,8 +260,24 @@ Rules:
     const conversationId = providedConversationId || randomUUID();
     if (db) {
       try {
-        await db.insert(aiConversations).values({ id: conversationId, userId: Number(req.user?.id) || 0, mode, startedAt: new Date(), lastActivityAt: new Date() }).onConflictDoNothing?.({ target: aiConversations.id });
-        await db.insert(aiMessages).values({ conversationId, role: "user", content: question, attachments: attachments && attachments.length ? (attachments as any) : null });
+        await db
+          .insert(aiConversations)
+          .values({
+            id: conversationId,
+            userId: Number(req.user?.id) || 0,
+            mode,
+            startedAt: new Date(),
+            lastActivityAt: new Date(),
+          })
+          .onConflictDoNothing?.({ target: aiConversations.id });
+        await db
+          .insert(aiMessages)
+          .values({
+            conversationId,
+            role: "user",
+            content: question,
+            attachments: attachments && attachments.length ? (attachments as any) : null,
+          });
       } catch (e) {
         console.warn("[AI] DB persist (query, user msg) failed:", (e as any)?.message);
       }
@@ -239,8 +285,13 @@ Rules:
     const answer = await aiService.generateContent(fullPrompt, { model, maxTokens, temperature });
     if (db) {
       try {
-        await db.insert(aiMessages).values({ conversationId, role: "assistant", content: answer, attachments: null });
-        await db.update(aiConversations).set({ lastActivityAt: new Date() }).where(eq(aiConversations.id, conversationId));
+        await db
+          .insert(aiMessages)
+          .values({ conversationId, role: "assistant", content: answer, attachments: null });
+        await db
+          .update(aiConversations)
+          .set({ lastActivityAt: new Date() })
+          .where(eq(aiConversations.id, conversationId));
       } catch (e) {
         console.warn("[AI] DB persist (query, assistant msg) failed:", (e as any)?.message);
       }
@@ -256,7 +307,8 @@ router.post(
     const mode: "sell" | "support" = req.body?.mode === "support" ? "support" : "sell";
     const question = (req.body?.question || "").toString().trim();
     const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : [];
-    const providedConversationId = typeof req.body?.conversationId === "string" ? req.body.conversationId.trim() : "";
+    const providedConversationId =
+      typeof req.body?.conversationId === "string" ? req.body.conversationId.trim() : "";
     if (!question) {
       res.status(400);
       return res.end();
@@ -301,21 +353,29 @@ router.post(
     const conversationId = providedConversationId || randomUUID();
     write({ meta: { citations: fileNames, conversationId } });
     let assistantText = "";
-    await aiService.streamChat(`${question}${combinedText ? `\n\nKnowledge Base:\n${combinedText}` : ""}`, {
-      model: mode === "support" ? "gpt-4o" : "gpt-4o-mini",
-      maxTokens: mode === "support" ? 900 : 600,
-      temperature: mode === "sell" ? 0.25 : 0.35,
-      onDelta: (delta: string) => {
-        assistantText += delta || "";
-        write({ delta });
-      },
-    });
+    await aiService.streamChat(
+      `${question}${combinedText ? `\n\nKnowledge Base:\n${combinedText}` : ""}`,
+      {
+        model: mode === "support" ? "gpt-4o" : "gpt-4o-mini",
+        maxTokens: mode === "support" ? 900 : 600,
+        temperature: mode === "sell" ? 0.25 : 0.35,
+        onDelta: (delta: string) => {
+          assistantText += delta || "";
+          write({ delta });
+        },
+      }
+    );
     res.write("data: [DONE]\n\n");
     res.end();
     if (db) {
       try {
-        await db.insert(aiMessages).values({ conversationId, role: "assistant", content: assistantText, attachments: null });
-        await db.update(aiConversations).set({ lastActivityAt: new Date() }).where(eq(aiConversations.id, conversationId));
+        await db
+          .insert(aiMessages)
+          .values({ conversationId, role: "assistant", content: assistantText, attachments: null });
+        await db
+          .update(aiConversations)
+          .set({ lastActivityAt: new Date() })
+          .where(eq(aiConversations.id, conversationId));
       } catch (e) {
         console.warn("[AI] DB persist (stream, assistant msg) failed:", (e as any)?.message);
       }
@@ -328,9 +388,13 @@ router.post(
   requireAuth,
   asyncHandler(async (req: any, res) => {
     const conversationId = String(req.body?.conversationId || "").trim();
-    if (!conversationId) return res.status(400).json({ ok: false, message: "conversationId is required" });
+    if (!conversationId)
+      return res.status(400).json({ ok: false, message: "conversationId is required" });
     if (!db) return res.json({ ok: true });
-    await db.update(aiConversations).set({ endedAt: new Date(), lastActivityAt: new Date() }).where(eq(aiConversations.id, conversationId));
+    await db
+      .update(aiConversations)
+      .set({ endedAt: new Date(), lastActivityAt: new Date() })
+      .where(eq(aiConversations.id, conversationId));
     res.json({ ok: true });
   })
 );
@@ -338,7 +402,11 @@ router.post(
 router.get(
   "/api/ai/health",
   asyncHandler(async (_req, res) => {
-    res.json({ status: "healthy", services: { ocr: "available", chat: "coming_soon", analysis: "coming_soon" }, timestamp: new Date().toISOString() });
+    res.json({
+      status: "healthy",
+      services: { ocr: "available", chat: "coming_soon", analysis: "coming_soon" },
+      timestamp: new Date().toISOString(),
+    });
   })
 );
 

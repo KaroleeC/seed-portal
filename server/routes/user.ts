@@ -1,8 +1,8 @@
 /**
  * User Routes
- * 
+ *
  * Handles user profile, preferences, and email signature management.
- * 
+ *
  * Routes:
  * - GET    /api/user                        Get current user profile
  * - GET    /api/user/preferences/:scope     Get user preferences by scope
@@ -62,7 +62,7 @@ router.get("/api/user", requireAuth, (req: any, res) => {
 /**
  * GET /api/user/preferences/:scope
  * Loads user preferences for a specific scope (e.g., "seedmail", "calculator")
- * 
+ *
  * @param scope - Preference namespace (e.g., "seedmail", "calculator")
  * @returns JSON object with preferences or null if not set
  */
@@ -89,7 +89,7 @@ router.get("/api/user/preferences/:scope", requireAuth, async (req: any, res) =>
 /**
  * PUT /api/user/preferences/:scope
  * Updates user preferences for a specific scope
- * 
+ *
  * @param scope - Preference namespace
  * @body prefs - Preference data (JSON object)
  * @returns Updated preferences
@@ -141,7 +141,7 @@ router.put("/api/user/preferences/:scope", requireAuth, async (req: any, res) =>
 /**
  * GET /api/user/signature
  * Returns the user's email signature configuration
- * 
+ *
  * @returns { config: object | null, enabled: boolean }
  */
 router.get("/api/user/signature", requireAuth, async (req: any, res) => {
@@ -179,7 +179,7 @@ router.get("/api/user/signature", requireAuth, async (req: any, res) => {
 /**
  * PUT /api/user/signature
  * Updates the user's email signature configuration
- * 
+ *
  * @body config - Signature configuration object
  * @body enabled - Whether signature is enabled
  * @returns { config, enabled, message }
@@ -239,7 +239,7 @@ const signatureUpload = multer({
 /**
  * POST /api/upload/signature-image
  * Uploads an image for use in email signatures
- * 
+ *
  * @body file - Image file (multipart/form-data)
  * @returns { url: string } - Public URL of uploaded image
  */

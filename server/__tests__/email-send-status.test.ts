@@ -41,16 +41,16 @@ describe("Email Send Status & Retry API", () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    
+
     // Mock auth middleware
     app.use((req: any, res, next) => {
       req.user = { id: "user-123" };
       req.principal = { userId: "user-123" };
       next();
     });
-    
+
     app.use(trackingRoutes);
-    
+
     vi.clearAllMocks();
   });
 
@@ -76,9 +76,7 @@ describe("Email Send Status & Retry API", () => {
         limit: vi.fn().mockResolvedValue([mockStatus]),
       });
 
-      const response = await request(app)
-        .get("/api/email/send-status/msg-123")
-        .expect(200);
+      const response = await request(app).get("/api/email/send-status/msg-123").expect(200);
 
       expect(response.body).toEqual(mockStatus);
     });
@@ -91,9 +89,7 @@ describe("Email Send Status & Retry API", () => {
         limit: vi.fn().mockResolvedValue([]),
       });
 
-      const response = await request(app)
-        .get("/api/email/send-status/msg-999")
-        .expect(200);
+      const response = await request(app).get("/api/email/send-status/msg-999").expect(200);
 
       expect(response.body).toBeNull();
     });
@@ -128,25 +124,25 @@ describe("Email Send Status & Retry API", () => {
       };
 
       // Mock database calls
-      mockDb.select.mockReturnValueOnce({
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue([mockSendStatus]),
-      }).mockReturnValueOnce({
-        from: vi.fn().mockReturnThis(),
-        innerJoin: vi.fn().mockReturnThis(),
-        where: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue([mockDraft]),
-      });
+      mockDb.select
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([mockSendStatus]),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          innerJoin: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([mockDraft]),
+        });
 
       mockDb.update.mockReturnValue({
         set: vi.fn().mockReturnThis(),
         where: vi.fn().mockResolvedValue(undefined),
       });
 
-      const response = await request(app)
-        .post("/api/email/retry-send/status-123")
-        .expect(200);
+      const response = await request(app).post("/api/email/retry-send/status-123").expect(200);
 
       expect(response.body).toMatchObject({
         success: true,
@@ -169,9 +165,7 @@ describe("Email Send Status & Retry API", () => {
         limit: vi.fn().mockResolvedValue([mockSendStatus]),
       });
 
-      const response = await request(app)
-        .post("/api/email/retry-send/status-123")
-        .expect(400);
+      const response = await request(app).post("/api/email/retry-send/status-123").expect(400);
 
       expect(response.body).toMatchObject({
         error: "Maximum retry attempts exceeded",
@@ -187,9 +181,7 @@ describe("Email Send Status & Retry API", () => {
         limit: vi.fn().mockResolvedValue([]),
       });
 
-      const response = await request(app)
-        .post("/api/email/retry-send/invalid-status")
-        .expect(404);
+      const response = await request(app).post("/api/email/retry-send/invalid-status").expect(404);
 
       expect(response.body).toMatchObject({
         error: "Send status not found",
@@ -211,9 +203,7 @@ describe("Email Send Status & Retry API", () => {
         limit: vi.fn().mockResolvedValue([mockSendStatus]),
       });
 
-      const response = await request(app)
-        .post("/api/email/retry-send/status-123")
-        .expect(400);
+      const response = await request(app).post("/api/email/retry-send/status-123").expect(400);
 
       expect(response.body).toMatchObject({
         error: "No draft associated with this send status",
@@ -238,20 +228,20 @@ describe("Email Send Status & Retry API", () => {
         },
       };
 
-      mockDb.select.mockReturnValueOnce({
-        from: vi.fn().mockReturnThis(),
-        where: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue([mockSendStatus]),
-      }).mockReturnValueOnce({
-        from: vi.fn().mockReturnThis(),
-        innerJoin: vi.fn().mockReturnThis(),
-        where: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue([mockDraft]),
-      });
+      mockDb.select
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([mockSendStatus]),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnThis(),
+          innerJoin: vi.fn().mockReturnThis(),
+          where: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockResolvedValue([mockDraft]),
+        });
 
-      const response = await request(app)
-        .post("/api/email/retry-send/status-123")
-        .expect(403);
+      const response = await request(app).post("/api/email/retry-send/status-123").expect(403);
 
       expect(response.body).toMatchObject({
         error: "Unauthorized",

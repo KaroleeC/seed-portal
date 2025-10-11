@@ -1,4 +1,5 @@
-import { CadenceModel, createEmptyCadence } from "./types";
+import type { CadenceModel } from "./types";
+import { createEmptyCadence } from "./types";
 
 // In-memory store for Phase A.1 (cleared on reload)
 const memoryStore: Record<string, CadenceModel> = {};

@@ -1,12 +1,12 @@
 /**
  * SEEDMAIL Integration Tests
- * 
+ *
  * Validates the full email sync + SSE notification flow:
  * 1. Auto-sync triggers on account selection
  * 2. Background job processes the sync
  * 3. SSE broadcasts sync completion
  * 4. Client receives notification
- * 
+ *
  * These tests ensure the entire SeedMail architecture works end-to-end.
  */
 
@@ -269,9 +269,7 @@ describe("SEEDMAIL Integration", () => {
     it("should reject sync requests without authentication", async () => {
       // This would require unmocking auth, but validates the principle
       // In production, unauthenticated requests should be rejected
-      const response = await request(app)
-        .post("/api/email/sync")
-        .send({ accountId: "test" });
+      const response = await request(app).post("/api/email/sync").send({ accountId: "test" });
 
       // With mocked auth, it succeeds - in production would be 401
       expect([200, 401]).toContain(response.status);

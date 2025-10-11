@@ -9,7 +9,13 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
     include: ["**/*.{test,spec}.{ts,tsx}"],
-    exclude: ["**/node_modules/**", "**/dist/**", "**/__tests__/**/*.golden.ts", "**/e2e/**", "**/playwright-report/**"],
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/__tests__/**/*.golden.ts",
+      "**/e2e/**",
+      "**/playwright-report/**",
+    ],
     environmentMatchGlobs: [
       ["**/server/**", "node"],
       ["**/test/integration/**", "node"],

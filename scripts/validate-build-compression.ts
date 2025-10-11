@@ -1,12 +1,12 @@
 #!/usr/bin/env tsx
 /**
  * Build Compression Validation Script
- * 
+ *
  * This script runs after a production build to validate that:
  * 1. Compressed files (.gz and .br) were generated
  * 2. Compression ratios are meaningful
  * 3. Original files are preserved
- * 
+ *
  * Usage: npm run build:validate
  * Exit code 0 = success, 1 = failure
  */
@@ -23,13 +23,13 @@ interface ValidationResult {
 
 async function findFilesRecursively(dir: string, pattern: RegExp): Promise<string[]> {
   const results: string[] = [];
-  
+
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      
+
       if (entry.isDirectory()) {
         const subFiles = await findFilesRecursively(fullPath, pattern);
         results.push(...subFiles);
@@ -40,7 +40,7 @@ async function findFilesRecursively(dir: string, pattern: RegExp): Promise<strin
   } catch (error) {
     // Directory doesn't exist
   }
-  
+
   return results;
 }
 
@@ -64,8 +64,8 @@ async function validateBuildCompression(): Promise<ValidationResult[]> {
 
   // Find all JS files
   const jsFiles = await findFilesRecursively(BUILD_OUTPUT_PATH, /\.js$/);
-  const originalJsFiles = jsFiles.filter(f => !f.endsWith(".gz") && !f.endsWith(".br"));
-  
+  const originalJsFiles = jsFiles.filter((f) => !f.endsWith(".gz") && !f.endsWith(".br"));
+
   results.push({
     success: originalJsFiles.length > 0,
     message: `✓ Found ${originalJsFiles.length} JavaScript files`,
@@ -78,14 +78,14 @@ async function validateBuildCompression(): Promise<ValidationResult[]> {
   for (const file of originalJsFiles) {
     const gzFile = `${file}.gz`;
     const brFile = `${file}.br`;
-    
+
     try {
       await fs.access(gzFile);
       gzCount++;
     } catch {
       // File doesn't exist or is too small
     }
-    
+
     try {
       await fs.access(brFile);
       brCount++;
@@ -96,17 +96,19 @@ async function validateBuildCompression(): Promise<ValidationResult[]> {
 
   results.push({
     success: gzCount > 0,
-    message: gzCount > 0 
-      ? `✓ Generated ${gzCount} Gzip compressed files`
-      : `✗ No Gzip compressed files found`,
+    message:
+      gzCount > 0
+        ? `✓ Generated ${gzCount} Gzip compressed files`
+        : `✗ No Gzip compressed files found`,
     details: { gzCount, totalFiles: originalJsFiles.length },
   });
 
   results.push({
     success: brCount > 0,
-    message: brCount > 0 
-      ? `✓ Generated ${brCount} Brotli compressed files`
-      : `✗ No Brotli compressed files found`,
+    message:
+      brCount > 0
+        ? `✓ Generated ${brCount} Brotli compressed files`
+        : `✗ No Brotli compressed files found`,
     details: { brCount, totalFiles: originalJsFiles.length },
   });
 
@@ -116,14 +118,11 @@ async function validateBuildCompression(): Promise<ValidationResult[]> {
 
   for (const file of originalJsFiles) {
     try {
-      const [originalStats, gzStats] = await Promise.all([
-        fs.stat(file),
-        fs.stat(`${file}.gz`),
-      ]);
-      
+      const [originalStats, gzStats] = await Promise.all([fs.stat(file), fs.stat(`${file}.gz`)]);
+
       const ratio = gzStats.size / originalStats.size;
       compressionRatios.push(ratio);
-      
+
       if (ratio < 0.9) {
         validCompressionCount++;
       }
@@ -135,7 +134,7 @@ async function validateBuildCompression(): Promise<ValidationResult[]> {
   if (compressionRatios.length > 0) {
     const avgRatio = compressionRatios.reduce((a, b) => a + b, 0) / compressionRatios.length;
     const savingsPercent = ((1 - avgRatio) * 100).toFixed(1);
-    
+
     results.push({
       success: avgRatio < 0.9,
       message: `✓ Average compression ratio: ${(avgRatio * 100).toFixed(1)}% (${savingsPercent}% savings)`,
@@ -145,8 +144,8 @@ async function validateBuildCompression(): Promise<ValidationResult[]> {
 
   // Check CSS files
   const cssFiles = await findFilesRecursively(BUILD_OUTPUT_PATH, /\.css$/);
-  const originalCssFiles = cssFiles.filter(f => !f.endsWith(".gz") && !f.endsWith(".br"));
-  
+  const originalCssFiles = cssFiles.filter((f) => !f.endsWith(".gz") && !f.endsWith(".br"));
+
   if (originalCssFiles.length > 0) {
     let cssGzCount = 0;
     for (const file of originalCssFiles) {
@@ -157,7 +156,7 @@ async function validateBuildCompression(): Promise<ValidationResult[]> {
         // Not compressed
       }
     }
-    
+
     results.push({
       success: true,
       message: `✓ Found ${originalCssFiles.length} CSS files, ${cssGzCount} compressed`,
@@ -170,11 +169,11 @@ async function validateBuildCompression(): Promise<ValidationResult[]> {
 
 async function main() {
   console.log("\n🔍 Validating build compression...\n");
-  
+
   const results = await validateBuildCompression();
-  
+
   let hasFailures = false;
-  
+
   for (const result of results) {
     console.log(result.message);
     if (!result.success) {
@@ -184,9 +183,9 @@ async function main() {
       }
     }
   }
-  
+
   console.log("");
-  
+
   if (hasFailures) {
     console.error("❌ Build compression validation FAILED");
     process.exit(1);

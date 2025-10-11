@@ -479,29 +479,29 @@ router.get("/api/crm/leads/emails", requireAuth, async (req, res) => {
 
     // Collect all unique emails from payload
     const emailSet = new Set<string>();
-    
+
     for (const lead of leads) {
       // Get email from payload.email
       const payloadEmail = (lead.payload as any)?.email;
-      if (payloadEmail && typeof payloadEmail === 'string') {
+      if (payloadEmail && typeof payloadEmail === "string") {
         emailSet.add(payloadEmail.toLowerCase());
       }
     }
-    
+
     // If we need contact emails too, query them separately for leads with contactId
     const contactIds = leads
-      .map(l => l.contactId)
+      .map((l) => l.contactId)
       .filter((id): id is string => id !== null && id !== undefined);
-    
+
     if (contactIds.length > 0) {
       const { crmContacts } = await import("@shared/schema");
       const { inArray } = await import("drizzle-orm");
-      
+
       const contacts = await db
         .select({ email: crmContacts.email })
         .from(crmContacts)
         .where(inArray(crmContacts.id, contactIds));
-      
+
       for (const contact of contacts) {
         if (contact.email) {
           emailSet.add(contact.email.toLowerCase());

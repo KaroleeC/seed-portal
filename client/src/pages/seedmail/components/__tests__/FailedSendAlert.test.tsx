@@ -146,10 +146,9 @@ describe("FailedSendAlert", () => {
     await user.click(retryButton);
 
     await waitFor(() => {
-      expect(queryClient.apiRequest).toHaveBeenCalledWith(
-        "/api/email/retry-send/status-123",
-        { method: "POST" }
-      );
+      expect(queryClient.apiRequest).toHaveBeenCalledWith("/api/email/retry-send/status-123", {
+        method: "POST",
+      });
     });
   });
 

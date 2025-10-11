@@ -165,12 +165,12 @@ Complete implementation of email send status tracking, delivery confirmation, fa
 
 ### Exponential Backoff
 
-| Retry # | Delay | Description |
-|---------|-------|-------------|
-| 1 | 1 minute | Quick retry for transient errors |
-| 2 | 5 minutes | Allow temporary issues to resolve |
-| 3 | 30 minutes | Extended wait for mailbox issues |
-| 4+ | 2 hours | Maximum backoff |
+| Retry # | Delay      | Description                       |
+| ------- | ---------- | --------------------------------- |
+| 1       | 1 minute   | Quick retry for transient errors  |
+| 2       | 5 minutes  | Allow temporary issues to resolve |
+| 3       | 30 minutes | Extended wait for mailbox issues  |
+| 4+      | 2 hours    | Maximum backoff                   |
 
 ### Max Retries
 
@@ -200,22 +200,24 @@ const result = await emailSendService.sendEmail({
 **Add SendStatusBadge:**
 
 ```tsx
-import { SendStatusBadge } from './components/SendStatusBadge';
-import { useSendStatus } from './hooks/useSendStatus';
+import { SendStatusBadge } from "./components/SendStatusBadge";
+import { useSendStatus } from "./hooks/useSendStatus";
 
 // In thread list item
 const { data: sendStatus } = useSendStatus(message.id);
 
-{sendStatus && (
-  <SendStatusBadge
-    status={sendStatus.status}
-    errorMessage={sendStatus.errorMessage}
-    bounceType={sendStatus.bounceType}
-    retryCount={sendStatus.retryCount}
-    maxRetries={sendStatus.maxRetries}
-    size="sm"
-  />
-)}
+{
+  sendStatus && (
+    <SendStatusBadge
+      status={sendStatus.status}
+      errorMessage={sendStatus.errorMessage}
+      bounceType={sendStatus.bounceType}
+      retryCount={sendStatus.retryCount}
+      maxRetries={sendStatus.maxRetries}
+      size="sm"
+    />
+  );
+}
 ```
 
 ### 3. Email Detail View
@@ -223,22 +225,24 @@ const { data: sendStatus } = useSendStatus(message.id);
 **Add FailedSendAlert:**
 
 ```tsx
-import { FailedSendAlert } from './components/FailedSendAlert';
-import { useSendStatus } from './hooks/useSendStatus';
+import { FailedSendAlert } from "./components/FailedSendAlert";
+import { useSendStatus } from "./hooks/useSendStatus";
 
 // In email detail
 const { data: sendStatus } = useSendStatus(message.id);
 
-{sendStatus && (sendStatus.status === 'failed' || sendStatus.status === 'bounced') && (
-  <FailedSendAlert
-    statusId={sendStatus.id}
-    errorMessage={sendStatus.errorMessage}
-    bounceType={sendStatus.bounceType}
-    bounceReason={sendStatus.bounceReason}
-    retryCount={sendStatus.retryCount}
-    maxRetries={sendStatus.maxRetries}
-  />
-)}
+{
+  sendStatus && (sendStatus.status === "failed" || sendStatus.status === "bounced") && (
+    <FailedSendAlert
+      statusId={sendStatus.id}
+      errorMessage={sendStatus.errorMessage}
+      bounceType={sendStatus.bounceType}
+      bounceReason={sendStatus.bounceReason}
+      retryCount={sendStatus.retryCount}
+      maxRetries={sendStatus.maxRetries}
+    />
+  );
+}
 ```
 
 ---
@@ -335,13 +339,13 @@ Create Graphile Worker job to auto-retry based on `nextRetryAt` timestamp.
 
 ```sql
 -- Send success rate
-SELECT 
+SELECT
   COUNT(*) FILTER (WHERE status = 'sent') * 100.0 / COUNT(*) as success_rate
 FROM email_send_status
 WHERE created_at > NOW() - INTERVAL '7 days';
 
 -- Bounce rate by type
-SELECT 
+SELECT
   bounce_type,
   COUNT(*) as count,
   COUNT(*) * 100.0 / SUM(COUNT(*)) OVER () as percentage
@@ -350,7 +354,7 @@ WHERE status = 'bounced'
 GROUP BY bounce_type;
 
 -- Retry effectiveness
-SELECT 
+SELECT
   retry_count,
   COUNT(*) FILTER (WHERE status = 'sent') as successful,
   COUNT(*) FILTER (WHERE status IN ('failed', 'bounced')) as still_failed
@@ -360,7 +364,7 @@ GROUP BY retry_count
 ORDER BY retry_count;
 
 -- Average time to first open
-SELECT 
+SELECT
   AVG(EXTRACT(EPOCH FROM (first_opened_at - sent_at))) / 60 as avg_minutes_to_open
 FROM email_messages
 WHERE tracking_enabled = true AND first_opened_at IS NOT NULL;
