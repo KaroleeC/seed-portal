@@ -4,21 +4,24 @@ import { formSchema } from "../../components/quote-form/QuoteFormSchema";
 describe("Quote Form Schema", () => {
   describe("Schema Parity", () => {
     it("should have the same fields in both schemas", () => {
-      // Get the shape of both schemas
-      const quoteFormShape = quoteFormSchema.shape;
-      const formShape = formSchema.shape;
-
-      // Check that both schemas have the same keys
-      const quoteFormKeys = Object.keys(quoteFormShape);
-      const formKeys = Object.keys(formShape);
-
-      expect(quoteFormKeys).toEqual(formKeys);
+      // Both schemas are ZodEffects (due to superRefine), so they reference the same underlying schema
+      // They should be functionally identical
+      expect(quoteFormSchema).toBe(formSchema);
     });
 
     it("should have the same default values for fields with defaults", () => {
-      // Test fields that have defaults
-      const quoteFormDefaults = quoteFormSchema.parse({});
-      const formDefaults = formSchema.parse({});
+      // Test fields that have defaults with a minimal valid object
+      const minimalValidData = {
+        contactEmail: "test@example.com",
+        monthlyRevenueRange: "10K-25K",
+        monthlyTransactions: "1-50",
+        industry: "Software/SaaS",
+        cleanupMonths: 1,
+        cleanupComplexity: "1.0",
+      };
+      
+      const quoteFormDefaults = quoteFormSchema.parse(minimalValidData);
+      const formDefaults = formSchema.parse(minimalValidData);
 
       // Compare specific fields with defaults
       expect(quoteFormDefaults.serviceMonthlyBookkeeping).toEqual(
@@ -58,13 +61,15 @@ describe("Quote Form Schema", () => {
 
   describe("Roundtrip Parse/Stringify", () => {
     it("should maintain data integrity through parse/stringify cycles", () => {
-      // Test data with various field types
+      // Test data with various field types (including required fields)
       const testData = {
         contactEmail: "test@example.com",
+        monthlyTransactions: "1-50",
         monthlyRevenueRange: "10K-25K",
         industry: "Software/SaaS",
         entityType: "LLC",
         cleanupMonths: 12,
+        cleanupComplexity: "1.0",
         serviceMonthlyBookkeeping: true,
         serviceTaasMonthly: false,
         serviceCleanupProjects: true,

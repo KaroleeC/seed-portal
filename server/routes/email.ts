@@ -22,10 +22,11 @@ import trackingRoutes from "./email/tracking.routes.js";
 import threadsRoutes from "./email/threads.routes.js";
 import messagesRoutes from "./email/messages.routes.js";
 import draftsRoutes from "./email/drafts.routes.js";
+import leadLinkingRoutes from "./email/lead-linking.routes.js";
 
 const router = Router();
 
-// Temporary in-memory storage for OAuth states (TODO: move to Redis in production)
+// In-memory storage for OAuth states
 const oauthStates = new Map<string, { userId: string; createdAt: number }>();
 
 // Clean up expired states every 10 minutes
@@ -130,6 +131,18 @@ router.get("/api/email/oauth/callback", async (req: Request, res: Response) => {
       totalMessages: profile.messagesTotal,
     });
 
+    // Queue initial sync job
+    try {
+      const { scheduleEmailSync } = await import("../workers/graphile-worker");
+      const { logger } = await import("../logger");
+      await scheduleEmailSync(accountId, { forceFullSync: true, intervalMinutes: 0 });
+      logger.info({ accountId }, "Initial sync job queued for new account");
+    } catch (error) {
+      const { logger } = await import("../logger");
+      logger.error({ error, accountId }, "Failed to queue initial sync");
+      // Non-fatal - user can manually sync
+    }
+
     // Redirect to SeedMail
     res.redirect("/apps/seedmail");
   } catch (error) {
@@ -194,6 +207,7 @@ router.post("/api/email/send", requireAuth, async (req: Request, res: Response) 
       attachments,
       sendAt,
       trackingEnabled,
+      draftId,
     } = req.body as {
       accountId: string;
       to: string[] | string;
@@ -206,6 +220,7 @@ router.post("/api/email/send", requireAuth, async (req: Request, res: Response) 
       attachments?: Array<{ filename: string; contentBase64: string; contentType?: string }>;
       sendAt?: string;
       trackingEnabled?: boolean;
+      draftId?: string;
     };
 
     if (!accountId || !to || !subject) {
@@ -305,6 +320,7 @@ router.post("/api/email/send", requireAuth, async (req: Request, res: Response) 
           threadId,
           attachments,
           trackingEnabled,
+          draftId, // Link to draft for retry support
         },
         when
       );
@@ -325,9 +341,10 @@ router.post("/api/email/send", requireAuth, async (req: Request, res: Response) 
       threadId,
       attachments,
       trackingEnabled,
+      draftId, // Link to draft for retry support
     });
 
-    res.json({ success: true, messageId: result.id });
+    res.json({ success: true, messageId: result.id, statusId: result.statusId });
   } catch (error: any) {
     // eslint-disable-next-line no-console
     console.error("[Email] Failed to send email:", error);
@@ -348,17 +365,18 @@ router.post("/api/email/send", requireAuth, async (req: Request, res: Response) 
 
 /**
  * POST /api/email/sync
- * Trigger sync for an account
+ * Trigger manual sync for an account
+ * Now delegates to the email sync service
  */
 router.post("/api/email/sync", requireAuth, async (req: Request, res: Response) => {
   try {
-    const { accountId } = req.body;
+    const { accountId, forceFullSync } = req.body;
 
     if (!accountId) {
       return res.status(400).json({ error: "accountId required" });
     }
 
-    // Get account
+    // Verify account exists
     const [account] = await db
       .select()
       .from(emailAccounts)
@@ -369,146 +387,37 @@ router.post("/api/email/sync", requireAuth, async (req: Request, res: Response) 
       return res.status(404).json({ error: "Account not found" });
     }
 
-    // Mark as syncing
-    await db
-      .update(emailSyncState)
-      .set({ syncStatus: "syncing", updatedAt: new Date() })
-      .where(eq(emailSyncState.accountId, accountId));
+    // Option 1: Queue via worker (preferred for background processing)
+    try {
+      const { queueJob } = await import("../workers/graphile-worker");
+      await queueJob("email-sync", { accountId, forceFullSync });
+      
+      return res.json({ 
+        success: true, 
+        message: "Sync queued",
+        queued: true,
+      });
+    } catch (queueError) {
+      // Fallback: Run sync directly if worker not available
+      const { logger } = await import("../logger");
+      logger.warn({ error: queueError, accountId }, "Worker not available, running sync directly");
+    }
 
-    // Return immediately - sync in background
-    res.json({ success: true, message: "Sync started" });
+    // Option 2: Direct execution (fallback)
+    const { syncEmailAccount } = await import("../services/email-sync.service");
+    
+    // Run in background (non-blocking)
+    res.json({ success: true, message: "Sync started", queued: false });
 
-    // Sync in background (non-blocking)
-    (async () => {
-      try {
-        const { decryptEmailTokens } = await import("../services/email-tokens");
-        const { accessToken, refreshToken } = decryptEmailTokens(account);
-        const gmail = createGmailService();
-        gmail.setCredentials(accessToken, refreshToken);
+    // Execute sync asynchronously
+    syncEmailAccount(accountId, { forceFullSync }).catch(async (error) => {
+      const { logger } = await import("../logger");
+      logger.error({ error, accountId }, "Manual sync failed");
+    });
 
-        // Fetch recent messages (last 50)
-        const messages = await gmail.listMessages({ maxResults: 50 });
-
-        // eslint-disable-next-line no-console
-        console.log(`[Email Sync] Fetched ${messages.length} messages for ${account.email}`);
-
-        // Group by thread and insert
-        type Message = Awaited<ReturnType<typeof gmail.listMessages>>[number];
-        const threadMap = new Map<string, Message[]>();
-        for (const msg of messages) {
-          if (!threadMap.has(msg.threadId)) {
-            threadMap.set(msg.threadId, []);
-          }
-          threadMap.get(msg.threadId)!.push(msg);
-        }
-
-        let threadsInserted = 0;
-        let messagesInserted = 0;
-
-        for (const [threadId, threadMessages] of threadMap) {
-          const latestMessage = threadMessages[0]; // Most recent
-
-          // Check if thread exists
-          const existingThread = await db
-            .select()
-            .from(emailThreads)
-            .where(eq(emailThreads.gmailThreadId, threadId))
-            .limit(1);
-
-          let dbThreadId: string;
-
-          if (existingThread.length === 0) {
-            // Create thread
-            dbThreadId = nanoid();
-            await db.insert(emailThreads).values({
-              id: dbThreadId,
-              accountId: account.id,
-              gmailThreadId: threadId,
-              subject: latestMessage.subject || "(No Subject)",
-              snippet: latestMessage.snippet || "",
-              participants: [latestMessage.from],
-              lastMessageAt: latestMessage.receivedAt,
-              messageCount: threadMessages.length,
-              unreadCount: threadMessages.filter((m) => !m.isRead).length,
-              isStarred: latestMessage.isStarred,
-              labels: latestMessage.labels,
-            });
-            threadsInserted++;
-          } else {
-            dbThreadId = existingThread[0].id;
-          }
-
-          // Insert messages
-          for (const msg of threadMessages) {
-            // Check if message exists
-            const existingMsg = await db
-              .select()
-              .from(emailMessages)
-              .where(eq(emailMessages.gmailMessageId, msg.id))
-              .limit(1);
-
-            if (existingMsg.length === 0) {
-              await db.insert(emailMessages).values({
-                id: nanoid(),
-                threadId: dbThreadId,
-                gmailMessageId: msg.id,
-                from: msg.from,
-                to: msg.to,
-                cc: msg.cc,
-                subject: msg.subject || "",
-                bodyHtml: msg.bodyHtml,
-                bodyText: msg.bodyText,
-                snippet: msg.snippet,
-                isRead: msg.isRead,
-                isStarred: msg.isStarred,
-                labels: msg.labels,
-                sentAt: msg.sentAt,
-                receivedAt: msg.receivedAt,
-                headers: msg.headers,
-              });
-              messagesInserted++;
-            }
-          }
-        }
-
-        // Update sync state
-        await db
-          .update(emailSyncState)
-          .set({
-            syncStatus: "idle",
-            lastSyncedAt: new Date(),
-            messagesSync: messagesInserted,
-            updatedAt: new Date(),
-          })
-          .where(eq(emailSyncState.accountId, accountId));
-
-        // Update account last synced
-        await db
-          .update(emailAccounts)
-          .set({ lastSyncedAt: new Date() })
-          .where(eq(emailAccounts.id, accountId));
-
-        // eslint-disable-next-line no-console
-        console.log(
-          `[Email Sync] Complete: ${threadsInserted} threads, ${messagesInserted} messages`
-        );
-      } catch (syncError) {
-        // eslint-disable-next-line no-console
-        console.error("[Email Sync] Background sync failed:", syncError);
-
-        // Mark as failed
-        await db
-          .update(emailSyncState)
-          .set({
-            syncStatus: "error",
-            lastError: syncError instanceof Error ? syncError.message : "Unknown error",
-            updatedAt: new Date(),
-          })
-          .where(eq(emailSyncState.accountId, accountId));
-      }
-    })();
   } catch (error) {
-    console.error("[Email] Failed to start sync:", error);
+    const { logger } = await import("../logger");
+    logger.error({ error }, "Failed to start sync");
     res.status(500).json({ error: "Failed to start sync" });
   }
 });
@@ -523,10 +432,13 @@ router.use(threadsRoutes);
 // Message operations (read/unread, star)
 router.use(messagesRoutes);
 
-// Draft management (list, get, create, update, delete)
+// Draft operations (create, update, delete)
 router.use(draftsRoutes);
 
-// Email tracking routes (pixels, opens, send status)
+// Lead linking operations (link/unlink threads to CRM leads)
+router.use("/api/email/lead-linking", leadLinkingRoutes);
+
+// Tracking operations (open, link clicks)
 router.use(trackingRoutes);
 
 /**

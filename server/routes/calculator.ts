@@ -10,6 +10,9 @@ import { calculateQuotePricing } from "../../shared/pricing.js";
 import { buildServiceConfig } from "../services/hubspot/compose.js";
 import { storage } from "../storage.js";
 import { requireAuth, asyncHandler, handleError, validateBody } from "./_shared";
+import { pricingConfigService } from "../pricing-config.js";
+import { CalculatorContentResponseSchema, PricingConfigSchema } from "@shared/contracts";
+import { withETag } from "../middleware/etag.js";
 
 const router = Router();
 
@@ -203,5 +206,146 @@ router.delete(
     });
   })
 );
+
+/**
+ * GET /api/calculator/content
+ * Get calculator content (SOW templates, agreement links)
+ * Can optionally filter by service via ?service=bookkeeping
+ * 
+ * Cacheable: ETag enabled with 5-minute cache
+ */
+router.get("/api/calculator/content", requireAuth, withETag({ maxAge: 300 }), async (req, res) => {
+  try {
+    const {
+      DEFAULT_INCLUDED_FIELDS,
+      DEFAULT_AGREEMENT_LINKS,
+      DEFAULT_MSA_LINK,
+      SERVICE_KEYS_DB,
+      getDefaultSowTitle,
+      getDefaultSowTemplate,
+    } = await import("../calculator-defaults");
+
+    const safeParse = (s?: string | null): any => {
+      if (!s) return {};
+      try {
+        return JSON.parse(s);
+      } catch {
+        return {};
+      }
+    };
+    const deepMerge = (base: any, override: any): any => {
+      if (!override || typeof override !== "object") return base;
+      const result: any = Array.isArray(base) ? [...base] : { ...base };
+      for (const key of Object.keys(override)) {
+        const o = override[key];
+        if (o && typeof o === "object" && !Array.isArray(o)) {
+          result[key] = deepMerge(base?.[key] || {}, o);
+        } else {
+          result[key] = o;
+        }
+      }
+      return result;
+    };
+    const isBlank = (v: any) => typeof v === "string" && v.trim() === "";
+    const norm = (v: any) => (v === undefined || v === null || isBlank(v) ? undefined : v);
+    const asDbKey = (svc: string) =>
+      svc as
+        | "bookkeeping"
+        | "taas"
+        | "payroll"
+        | "ap"
+        | "ar"
+        | "agent_of_service"
+        | "cfo_advisory";
+
+    const withDefaults = (existing: any | undefined, service: string) => {
+      const included = JSON.stringify(
+        deepMerge(DEFAULT_INCLUDED_FIELDS, safeParse(existing?.includedFieldsJson))
+      );
+      if (existing) {
+        return {
+          ...existing,
+          sowTitle: norm(existing.sowTitle) ?? getDefaultSowTitle(service as any),
+          sowTemplate: norm(existing.sowTemplate) ?? getDefaultSowTemplate(service as any),
+          agreementLink:
+            norm(existing.agreementLink) ?? DEFAULT_AGREEMENT_LINKS[asDbKey(service)] ?? null,
+          includedFieldsJson: included,
+          createdAt: existing.createdAt ? new Date(existing.createdAt).toISOString() : undefined,
+          updatedAt: existing.updatedAt ? new Date(existing.updatedAt).toISOString() : undefined,
+        };
+      }
+      return {
+        id: 0,
+        service,
+        sowTitle: getDefaultSowTitle(service as any),
+        sowTemplate: getDefaultSowTemplate(service as any),
+        agreementLink: DEFAULT_AGREEMENT_LINKS[asDbKey(service)] ?? null,
+        includedFieldsJson: included,
+        updatedBy: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    };
+
+    const service = typeof req.query.service === "string" ? req.query.service : undefined;
+    if (service) {
+      const item = await storage.getCalculatorServiceContent(service);
+      const payload = {
+        items: [withDefaults(item, service)],
+        msaLink: DEFAULT_MSA_LINK,
+      };
+      const parsed = CalculatorContentResponseSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("[CalculatorContent] invalid payload", parsed.error.issues);
+        return res.status(500).json({
+          status: "error",
+          message: "Invalid calculator content payload",
+        });
+      }
+      return res.json(parsed.data);
+    } else {
+      const items = await storage.getAllCalculatorServiceContent();
+      const map = new Map<string, any>((items || []).map((i) => [i.service, i]));
+      const merged = SERVICE_KEYS_DB.map((svc) => withDefaults(map.get(svc), svc));
+      const payload = { items: merged, msaLink: DEFAULT_MSA_LINK };
+      const parsed = CalculatorContentResponseSchema.safeParse(payload);
+      if (!parsed.success) {
+        console.error("[CalculatorContent] invalid payload", parsed.error.issues);
+        return res.status(500).json({
+          status: "error",
+          message: "Invalid calculator content payload",
+        });
+      }
+      res.json(parsed.data);
+    }
+  } catch (error) {
+    console.error("[CalculatorContent] load failed", error);
+    res.status(500).json({ message: "Failed to load calculator content" });
+  }
+});
+
+/**
+ * GET /api/pricing/config
+ * Get pricing configuration for Calculator and other UIs
+ * 
+ * Cacheable: ETag enabled with 5-minute cache
+ */
+router.get("/api/pricing/config", requireAuth, withETag({ maxAge: 300 }), async (req, res) => {
+  try {
+    const config = await pricingConfigService.loadPricingConfig();
+    const parsed = PricingConfigSchema.safeParse(config);
+    if (!parsed.success) {
+      console.error("[PricingConfig] validation failed", parsed.error.issues);
+      return res.status(500).json({ status: "error", message: "Invalid pricing configuration" });
+    }
+    return res.json(parsed.data);
+  } catch (error) {
+    console.error("[PricingConfig] load failed", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to load pricing configuration",
+    });
+  }
+});
 
 export default router;

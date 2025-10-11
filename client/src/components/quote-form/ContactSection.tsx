@@ -80,6 +80,7 @@ export function ContactSection({
                         {...field}
                         type="email"
                         className="pr-10"
+                        data-testid="qa-contact-email"
                         onChange={(e) => {
                           field.onChange(e);
                           onEmailChange(e.target.value);
@@ -114,6 +115,7 @@ export function ContactSection({
                       placeholder={hubspotContact?.properties?.company || "Enter company name"}
                       disabled={!!isCompanyNameLocked}
                       title={isCompanyNameLocked ? "Locked from HubSpot" : undefined}
+                      data-testid="qa-company-name"
                     />
                   </FormControl>
                   <button
@@ -121,6 +123,7 @@ export function ContactSection({
                     className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted/50"
                     onClick={() => setValue("companyNameLocked", !isCompanyNameLocked)}
                     title={isCompanyNameLocked ? "Unlock company name" : "Lock company name"}
+                    data-testid="qa-toggle-company-name-lock"
                   >
                     {isCompanyNameLocked ? (
                       <Lock className="h-4 w-4" />
@@ -154,6 +157,7 @@ export function ContactSection({
                         placeholder={hubspotContact?.properties?.firstname || "First name"}
                         disabled={!!isFirstNameLocked}
                         title={isFirstNameLocked ? "Locked from HubSpot" : undefined}
+                        data-testid="qa-first-name"
                       />
                     </FormControl>
                     <button
@@ -161,6 +165,7 @@ export function ContactSection({
                       className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted/50"
                       onClick={() => setValue("contactFirstNameLocked", !isFirstNameLocked)}
                       title={isFirstNameLocked ? "Unlock first name" : "Lock first name"}
+                      data-testid="qa-toggle-first-name-lock"
                     >
                       {isFirstNameLocked ? (
                         <Lock className="h-4 w-4" />
@@ -186,6 +191,7 @@ export function ContactSection({
                         placeholder={hubspotContact?.properties?.lastname || "Last name"}
                         disabled={!!isLastNameLocked}
                         title={isLastNameLocked ? "Locked from HubSpot" : undefined}
+                        data-testid="qa-last-name"
                       />
                     </FormControl>
                     <button
@@ -193,6 +199,7 @@ export function ContactSection({
                       className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted/50"
                       onClick={() => setValue("contactLastNameLocked", !isLastNameLocked)}
                       title={isLastNameLocked ? "Unlock last name" : "Lock last name"}
+                      data-testid="qa-toggle-last-name-lock"
                     >
                       {isLastNameLocked ? (
                         <Lock className="h-4 w-4" />
@@ -222,6 +229,7 @@ export function ContactSection({
                         placeholder={hubspotContact?.properties?.industry || "Industry"}
                         disabled={!!isIndustryLocked}
                         title={isIndustryLocked ? "Locked from HubSpot" : undefined}
+                        data-testid="qa-industry"
                       />
                     </FormControl>
                     <button
@@ -229,6 +237,7 @@ export function ContactSection({
                       className="inline-flex h-9 w-9 items-center justify-center rounded-md border text-muted-foreground hover:bg-muted/50"
                       onClick={() => setValue("industryLocked", !isIndustryLocked)}
                       title={isIndustryLocked ? "Unlock industry" : "Lock industry"}
+                      data-testid="qa-toggle-industry-lock"
                     >
                       {isIndustryLocked ? (
                         <Lock className="h-4 w-4" />
@@ -250,7 +259,7 @@ export function ContactSection({
                   <FormLabel>MONTHLY Revenue Range</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value || ""}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="qa-revenue-range">
                         <SelectValue placeholder="Select revenue range" />
                       </SelectTrigger>
                     </FormControl>
@@ -276,7 +285,7 @@ export function ContactSection({
                   <FormLabel>Entity Type (Tax Classification)</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value || ""}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="qa-entity-type">
                         <SelectValue placeholder="Select entity type" />
                       </SelectTrigger>
                     </FormControl>
@@ -302,6 +311,7 @@ export function ContactSection({
               className="inline-flex items-center rounded-md border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/50"
               onClick={() => setValue("companyAddressLocked", !isAddressLocked)}
               title={isAddressLocked ? "Unlock address fields" : "Lock address fields"}
+              data-testid="qa-toggle-address-lock"
             >
               {isAddressLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
             </button>
@@ -320,6 +330,7 @@ export function ContactSection({
                     placeholder={hubspotContact?.properties?.address || "123 Business St"}
                     disabled={!!isAddressLocked}
                     title={isAddressLocked ? "Locked from HubSpot" : undefined}
+                    data-testid="qa-street"
                   />
                 </FormControl>
                 <FormMessage />
@@ -340,6 +351,7 @@ export function ContactSection({
                       placeholder={hubspotContact?.properties?.city || "City"}
                       disabled={!!isAddressLocked}
                       title={isAddressLocked ? "Locked from HubSpot" : undefined}
+                      data-testid="qa-city"
                     />
                   </FormControl>
                   <FormMessage />
@@ -358,6 +370,7 @@ export function ContactSection({
                       placeholder={hubspotContact?.properties?.state || "State"}
                       disabled={!!isAddressLocked}
                       title={isAddressLocked ? "Locked from HubSpot" : undefined}
+                      data-testid="qa-state"
                     />
                   </FormControl>
                   <FormMessage />
@@ -376,6 +389,7 @@ export function ContactSection({
                       placeholder={hubspotContact?.properties?.zip || "ZIP"}
                       disabled={!!isAddressLocked}
                       title={isAddressLocked ? "Locked from HubSpot" : undefined}
+                      data-testid="qa-zip"
                     />
                   </FormControl>
                   <FormMessage />

@@ -38,7 +38,7 @@ export function ContactSearchModal({
 }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl" data-testid="qa-contact-search-modal">
         <DialogHeader>
           <DialogTitle>Search HubSpot Contacts</DialogTitle>
           <DialogDescription>
@@ -57,6 +57,7 @@ export function ContactSearchModal({
                 searchHubSpotContacts(e.target.value);
               }}
               className="pl-10"
+              data-testid="qa-contact-search-input"
             />
           </div>
 
@@ -74,6 +75,7 @@ export function ContactSearchModal({
                   key={contact.id}
                   className="cursor-pointer hover:bg-muted transition-colors"
                   onClick={() => onContactSelect(contact)}
+                  data-testid="qa-contact-result"
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
@@ -101,7 +103,7 @@ export function ContactSearchModal({
               <p className="text-muted-foreground mb-4">
                 No contacts found matching "{contactSearchTerm}"
               </p>
-              <Button onClick={onCreateNewQuote} variant="outline">
+              <Button onClick={onCreateNewQuote} variant="outline" data-testid="qa-create-new-quote">
                 Create New Quote for "{triggerEmail}"
               </Button>
             </div>

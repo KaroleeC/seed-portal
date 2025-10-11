@@ -61,7 +61,6 @@ Required to boot:
 
 Optional (recommended later):
 
-- `REDIS_URL` — enable Redis-backed sessions and jobs; otherwise MemoryStore is used.
 - `SENTRY_DSN` — error tracking.
 
 Feature-specific (enable when needed):

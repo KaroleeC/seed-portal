@@ -43,7 +43,7 @@ import { CommissionPreview } from "@/components/seedqc/CommissionPreview";
 import { useQuotes } from "@/hooks/use-quotes";
 import { useAuth } from "@/hooks/use-auth";
 import type { FeeCalculation } from "@/components/seedqc/types";
-import { useHubSpotSync } from "@/features/quote-calculator/hooks/useHubSpotSync";
+import { useQuoteSync } from "@/features/quote-calculator/hooks/useQuoteSync";
 import { useQuotePersistence } from "@/features/quote-calculator/hooks/useQuotePersistence";
 import { useDebouncedPricingValues } from "@/features/quote-calculator/hooks/useDebouncedPricingValues";
 
@@ -357,14 +357,14 @@ function QuoteCalculator() {
     return hasMonthlyFees || hasSetupFees || hasProjectFees || hasServiceFees;
   })();
 
-  const hubspotSync = useHubSpotSync({
+  const quoteSync = useQuoteSync({
     form,
     feeCalculation,
     editingQuoteId,
     hasUnsavedChanges,
     allQuotes,
     isCalculated,
-    hubspotVerificationStatus,
+    verificationStatus: hubspotVerificationStatus,
     creating,
     refetchQuotes,
     saveQuote: async (data) => {
@@ -964,9 +964,9 @@ function QuoteCalculator() {
                       creating ? "Saving..." : editingQuoteId ? "Update Quote" : "Save Quote"
                     }
                     showHubspotButton={isCalculated}
-                    onPushToHubSpot={hubspotSync.onPushToHubSpot}
-                    isPushDisabled={hubspotSync.isPushDisabled}
-                    pushLabel={hubspotSync.pushLabel}
+                    onPushToHubSpot={quoteSync.onSyncQuote}
+                    isPushDisabled={quoteSync.isSyncDisabled}
+                    pushLabel={quoteSync.syncLabel}
                     showNotFoundAlert={hubspotVerificationStatus === "not-found" && isCalculated}
                     editingQuoteId={editingQuoteId}
                     hasUnsavedChanges={hasUnsavedChanges}

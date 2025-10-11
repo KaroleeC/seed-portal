@@ -121,7 +121,7 @@ The a11y addon automatically checks for accessibility issues. View results in th
 Test user interactions:
 
 ```tsx
-import { userEvent, within, expect } from "@storybook/test";
+import { userEvent, within, expect } from "storybook/test";
 
 export const ClickButton: Story = {
   play: async ({ canvasElement }) => {

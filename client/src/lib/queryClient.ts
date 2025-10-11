@@ -335,39 +335,19 @@ export const getQueryFn: <T>(options: { on401: UnauthorizedBehavior }) => QueryF
     return await res.json();
   };
 
-export const queryClient = new QueryClient({
+// Use centralized, resource-aware query configuration
+import { queryClientConfig } from "./queryConfig";
+
+// Set the default queryFn here to avoid circular dependency
+const configWithQueryFn = {
+  ...queryClientConfig,
   defaultOptions: {
+    ...queryClientConfig.defaultOptions,
     queries: {
+      ...queryClientConfig.defaultOptions?.queries,
       queryFn: getQueryFn({ on401: "returnNull" }),
-      refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: 1 * 60 * 1000, // 1 minute for faster initial loads
-      gcTime: 5 * 60 * 1000, // Garbage collect after 5 minutes
-      retry: (failureCount, error) => {
-        // Don't retry on authentication errors or client errors
-        if (error instanceof Error && error.message.includes("401")) return false;
-        if (error instanceof Error && error.message.includes("4")) return false; // Any 4xx error
-        return failureCount < 3;
-      },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    },
-    mutations: {
-      retry: (failureCount, error) => {
-        // Only retry network errors, not business logic errors
-        if (error instanceof Error && error.message.includes("Network")) return failureCount < 2;
-        return false;
-      },
-      onError: (error) => {
-        // Only log unexpected errors, not auth/validation errors
-        if (
-          error instanceof Error &&
-          !error.message.includes("401") &&
-          !error.message.includes("400") &&
-          !error.message.includes("422")
-        ) {
-          console.error("Unexpected mutation error:", error.message);
-        }
-      },
     },
   },
-});
+};
+
+export const queryClient = new QueryClient(configWithQueryFn);

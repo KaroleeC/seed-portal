@@ -1,0 +1,2 @@
+# Test environment file (contains sensitive data)
+.env.test

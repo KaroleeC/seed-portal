@@ -30,6 +30,7 @@ interface SendEmailParams {
   threadId?: string;
   attachments?: Array<{ filename: string; contentBase64: string; contentType?: string }>;
   trackingEnabled?: boolean;
+  draftId?: string; // Link to draft for retry support
 }
 
 interface SendEmailResult {
@@ -79,6 +80,7 @@ export class EmailSendService {
     const statusId = nanoid();
     await db.insert(emailSendStatus).values({
       id: statusId,
+      draftId: params.draftId || null, // Link to draft for retry support
       status: "sending",
       retryCount: 0,
       maxRetries: 3,

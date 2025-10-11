@@ -129,6 +129,17 @@ router.post("/api/email/drafts", requireAuth, async (req: Request, res: Response
         .where(eq(emailDrafts.id, id))
         .returning();
 
+      // Broadcast SSE event (Phase 3.1)
+      try {
+        const { sseEvents } = await import("../../services/sse-events");
+        sseEvents.broadcastDraftSaved(accountId, {
+          draftId: updated.id,
+          subject: updated.subject || "",
+        });
+      } catch {
+        // Non-fatal if SSE unavailable
+      }
+
       return res.json(updated);
     }
 
@@ -138,6 +149,17 @@ router.post("/api/email/drafts", requireAuth, async (req: Request, res: Response
       .insert(emailDrafts)
       .values({ id: draftId, ...draftData })
       .returning();
+
+    // Broadcast SSE event (Phase 3.1)
+    try {
+      const { sseEvents } = await import("../../services/sse-events");
+      sseEvents.broadcastDraftSaved(accountId, {
+        draftId: created.id,
+        subject: created.subject || "",
+      });
+    } catch {
+      // Non-fatal if SSE unavailable
+    }
 
     res.json(created);
   } catch (error) {

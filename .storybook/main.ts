@@ -6,19 +6,18 @@ const config: StorybookConfig = {
     "../client/src/components/**/*.stories.@(js|jsx|ts|tsx)",
     "../client/src/pages/**/*.stories.@(js|jsx|ts|tsx)",
   ],
+
   addons: [
-    "@storybook/addon-essentials",
-    "@storybook/addon-interactions",
     "@storybook/addon-a11y",
     "@storybook/addon-themes",
+    "@storybook/addon-docs"
   ],
+
   framework: {
     name: "@storybook/react-vite",
     options: {},
   },
-  docs: {
-    autodocs: "tag",
-  },
+
   async viteFinal(config) {
     // Merge with your existing Vite config
     return {
@@ -33,7 +32,7 @@ const config: StorybookConfig = {
         },
       },
     };
-  },
+  }
 };
 
 export default config;

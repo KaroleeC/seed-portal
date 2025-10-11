@@ -4,6 +4,7 @@ import type { Request, Response, NextFunction } from "express";
 import compression from "compression";
 import { promises as fs } from "fs";
 import path from "path";
+import { BUILD_OUTPUT_PATH } from "../constants";
 
 interface CompressionStats {
   requests: number;
@@ -156,7 +157,7 @@ export function servePrecompressed(req: Request, res: Response, next: NextFuncti
 
   // Try brotli first if supported
   if (acceptEncoding.includes("br")) {
-    const brPath = path.join(process.cwd(), "client", "dist", `${originalUrl}.br`);
+    const brPath = path.join(BUILD_OUTPUT_PATH, `${originalUrl}.br`);
 
     fs.access(brPath)
       .then(() => {
@@ -176,7 +177,7 @@ export function servePrecompressed(req: Request, res: Response, next: NextFuncti
   }
 
   function tryGzip() {
-    const gzPath = path.join(process.cwd(), "client", "dist", `${originalUrl}.gz`);
+    const gzPath = path.join(BUILD_OUTPUT_PATH, `${originalUrl}.gz`);
 
     fs.access(gzPath)
       .then(() => {

@@ -19,6 +19,10 @@ test.describe("Quote Calculator", () => {
     // Verify page loaded (simpler check for now)
     await expect(page).toHaveURL(/\/calculator/);
     await expect(page.locator("body")).toBeVisible();
+
+    // Stable selectors for primary actions
+    await expect(page.getByTestId("qa-save-quote")).toBeVisible();
+    await expect(page.getByTestId("qa-reset-quote")).toBeVisible();
   });
 
   test.skip("can fill out basic quote form", async ({ page }) => {

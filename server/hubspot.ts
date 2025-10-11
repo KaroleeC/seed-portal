@@ -40,7 +40,8 @@ export interface HubSpotDeal {
 }
 
 // Unused imports removed - cache functionality moved to modular services
-import { getRedisAsync } from "./redis";
+// DISABLED: Redis removed
+// import { getRedisAsync } from "./redis";
 import type { Invoice, InvoiceLineItem, Subscription, SubscriptionPayment } from "@shared/billing";
 import { createProductsService } from "./services/hubspot/products.js";
 import { createContactsService } from "./services/hubspot/contacts.js";
@@ -283,42 +284,8 @@ export class HubSpotService {
         return null;
       }
 
-      // Attempt to use configured pipeline and stage IDs from Redis if present
-      try {
-        const redisConns = await getRedisAsync();
-        const cacheRedis: any = redisConns?.cacheRedis;
-        if (cacheRedis) {
-          const configuredPipelineId = await cacheRedis.get("config:hubspot:pipeline_id");
-          const configuredStageId = await cacheRedis.get("config:hubspot:qualified_stage_id");
-          if (configuredPipelineId && configuredStageId) {
-            const selectedPipeline = pipelines.results.find(
-              (p: any) => String(p.id) === String(configuredPipelineId)
-            );
-            const selectedStage = selectedPipeline?.stages?.find(
-              (s: any) => String(s.id) === String(configuredStageId)
-            );
-            if (selectedPipeline && selectedStage) {
-              console.log(
-                `Using configured HubSpot pipeline ${selectedPipeline.id} and stage ${selectedStage.id}`
-              );
-              return {
-                pipelineId: selectedPipeline.id,
-                qualifiedStageId: selectedStage.id,
-              };
-            } else {
-              console.warn("Configured pipeline/stage not found; falling back to detection", {
-                configuredPipelineId,
-                configuredStageId,
-              });
-            }
-          }
-        }
-      } catch (e) {
-        console.warn(
-          "Failed reading configured pipeline/stage from Redis; proceeding with fallback",
-          (e as any)?.message
-        );
-      }
+      // DISABLED: Redis configuration removed
+      // Pipeline/stage IDs now detected automatically from HubSpot API
 
       // Find "Seed Sales Pipeline" (case-insensitive search)
       let seedPipeline = pipelines.results.find(

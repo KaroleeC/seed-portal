@@ -1,7 +1,5 @@
-import { getRedis } from "./redis";
 import { createHash } from "crypto";
 import { logger } from "./logger";
-import { promisify } from "util";
 
 const cacheLogger = logger.child({ module: "cache" });
 
@@ -22,19 +20,20 @@ export interface CacheStats {
 }
 
 export class CacheService {
-  private getCacheRedis() {
-    const redis = getRedis();
-    return (redis as any)?.cacheRedis;
-  }
+  private memoryCache: Map<string, { value: any; expiresAt: number }> = new Map();
 
   /**
    * List keys matching a pattern (advanced use only)
    */
   async keys(pattern: string): Promise<string[]> {
-    const cacheRedis = this.getCacheRedis();
-    if (!cacheRedis) return [];
     try {
-      return await cacheRedis.keys(pattern);
+      const regexPattern = pattern.replace(/\*/g, '.*');
+      const regex = new RegExp(`^${regexPattern}$`);
+      const matchingKeys: string[] = [];
+      for (const key of this.memoryCache.keys()) {
+        if (regex.test(key)) matchingKeys.push(key);
+      }
+      return matchingKeys;
     } catch (error) {
       cacheLogger.error({ error, pattern }, "Cache keys error");
       return [];
@@ -64,19 +63,15 @@ export class CacheService {
    * Get value from cache
    */
   async get<T>(key: string): Promise<T | null> {
-    const cacheRedis = this.getCacheRedis();
-    if (!cacheRedis) {
-      return null;
-    }
-
     try {
-      const cached = await cacheRedis.getAsync(key);
-      if (cached) {
+      const entry = this.memoryCache.get(key);
+      if (entry && Date.now() < entry.expiresAt) {
         this.stats.hits++;
         this.stats.totalOperations++;
         cacheLogger.debug({ key }, "Cache hit");
-        return JSON.parse(cached);
+        return entry.value;
       }
+      if (entry) this.memoryCache.delete(key);
       this.stats.misses++;
       this.stats.totalOperations++;
       cacheLogger.debug({ key }, "Cache miss");
@@ -93,16 +88,10 @@ export class CacheService {
    * Set value in cache
    */
   async set<T>(key: string, value: T, ttl?: number): Promise<void> {
-    const cacheRedis = this.getCacheRedis();
-    if (!cacheRedis) {
-      return;
-    }
-
     try {
-      const serialized = JSON.stringify(value);
       const expiryTime = ttl || this.defaultTTL;
-
-      await cacheRedis.setAsync(key, serialized, "EX", expiryTime);
+      const expiresAt = Date.now() + (expiryTime * 1000);
+      this.memoryCache.set(key, { value, expiresAt });
       cacheLogger.debug({ key, ttl: expiryTime }, "Cache set");
     } catch (error) {
       cacheLogger.error({ error, key }, "Cache set error");
@@ -113,19 +102,18 @@ export class CacheService {
    * Delete value from cache
    */
   async del(pattern: string): Promise<void> {
-    const cacheRedis = this.getCacheRedis();
-    if (!cacheRedis) {
-      return;
-    }
-
     try {
-      // Find all keys matching the pattern
-      const keysAsync = promisify(cacheRedis.keys).bind(cacheRedis);
-      const keys = await keysAsync(`cache:${pattern}*`);
-      if (keys.length > 0) {
-        // Delete the keys directly (with their full key names including prefix)
-        await cacheRedis.delAsync(...keys);
-        cacheLogger.debug({ pattern, count: keys.length }, "Cache invalidated");
+      const regexPattern = `cache:${pattern}*`.replace(/\*/g, '.*');
+      const regex = new RegExp(`^${regexPattern}$`);
+      let deletedCount = 0;
+      for (const key of this.memoryCache.keys()) {
+        if (regex.test(key)) {
+          this.memoryCache.delete(key);
+          deletedCount++;
+        }
+      }
+      if (deletedCount > 0) {
+        cacheLogger.debug({ pattern, count: deletedCount }, "Cache invalidated");
       }
     } catch (error) {
       cacheLogger.error({ error, pattern }, "Cache delete error");
@@ -136,19 +124,15 @@ export class CacheService {
    * Wrap a function with caching
    */
   async wrap<T>(key: string, fn: () => Promise<T>, options: CacheOptions = {}): Promise<T> {
-    const cacheRedis = this.getCacheRedis();
-    // Skip cache if requested or Redis not available
-    if (options.skipCache || !cacheRedis) {
+    if (options.skipCache) {
       return await fn();
     }
 
-    // Check cache first
     const cached = await this.get<T>(key);
     if (cached !== null) {
       return cached;
     }
 
-    // Execute function and cache result
     const result = await fn();
     await this.set(key, result, options.ttl);
 
@@ -159,26 +143,8 @@ export class CacheService {
    * Get cache statistics
    */
   async getStats(): Promise<CacheStats> {
-    const cacheRedis = this.getCacheRedis();
-    let totalKeys = 0;
-    let memoryUsage = "0MB";
-
-    if (cacheRedis) {
-      try {
-        // Get Redis INFO for memory usage
-        const info = await cacheRedis.info("memory");
-        const memoryMatch = info.match(/used_memory_human:(.*)/);
-        if (memoryMatch) {
-          memoryUsage = memoryMatch[1].trim();
-        }
-
-        // Count cache keys (with prefix)
-        const keys = await cacheRedis.keys("cache:*");
-        totalKeys = keys.length;
-      } catch (error) {
-        cacheLogger.error({ error }, "Failed to get cache stats");
-      }
-    }
+    const totalKeys = this.memoryCache.size;
+    const memoryUsage = `~${Math.round(totalKeys * 0.001)}KB`;
 
     const hitRate =
       this.stats.totalOperations > 0 ? (this.stats.hits / this.stats.totalOperations) * 100 : 0;
@@ -211,16 +177,11 @@ export class CacheService {
    * Clear all cache entries
    */
   async clearAll(): Promise<void> {
-    const cacheRedis = this.getCacheRedis();
-    if (!cacheRedis) {
-      return;
-    }
-
     try {
-      const keys = await cacheRedis.keys("cache:*");
-      if (keys.length > 0) {
-        await cacheRedis.del(...keys);
-        cacheLogger.info({ count: keys.length }, "Cache cleared");
+      const count = this.memoryCache.size;
+      this.memoryCache.clear();
+      if (count > 0) {
+        cacheLogger.info({ count }, "Cache cleared");
       }
     } catch (error) {
       cacheLogger.error({ error }, "Failed to clear cache");

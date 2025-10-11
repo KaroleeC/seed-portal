@@ -3,6 +3,20 @@
  *
  * Common middleware, validation helpers, and error handlers
  * used across all domain routers.
+ *
+ * AUTHORIZATION PATTERN (Enforced by ESLint):
+ * ✅ All routes MUST use requirePermission() middleware
+ * ❌ Never use inline auth checks (req.user?.role === 'admin')
+ *
+ * Example:
+ *   router.post(
+ *     "/api/resource",
+ *     requireAuth,
+ *     requirePermission("resource.action", "resource"),
+ *     handler
+ *   );
+ *
+ * See: docs/AUTHORIZATION_PATTERN.md
  */
 /* eslint-disable no-param-reassign */
 // Middleware intentionally mutates req/res objects
@@ -16,6 +30,8 @@ import type { z } from "zod";
 /**
  * Require authentication middleware
  * Ensures user is logged in before accessing protected routes
+ *
+ * Usage: Apply to all non-public routes
  */
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
@@ -23,6 +39,28 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
   next();
 }
+
+// ============================================================================
+// AUTHORIZATION
+// ============================================================================
+
+/**
+ * Re-export authorization middleware from authz service
+ * This provides a single import point for all auth needs
+ *
+ * Usage:
+ *   import { requireAuth, requirePermission } from './_shared';
+ *
+ *   router.post('/api/resource',
+ *     requireAuth,
+ *     requirePermission('resource.action', 'resource'),
+ *     handler
+ *   );
+ *
+ * Note: requirePermission falls back to RBAC when USE_CERBOS=false
+ * Define Cerbos policies later when services stabilize
+ */
+export { requirePermission } from "../services/authz/authorize.js";
 
 // ============================================================================
 // VALIDATION
@@ -146,7 +184,7 @@ export function asyncHandler(
 
 /**
  * Simple in-memory rate limiter
- * For production, use Redis-backed rate limiter
+ * Suitable for single-server deployments
  */
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 

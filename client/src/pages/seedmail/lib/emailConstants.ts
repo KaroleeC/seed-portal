@@ -3,17 +3,21 @@
  * Shared constants for email client
  */
 
-import { Inbox, Send, Star, Mail, Trash2, Archive } from "lucide-react";
-import type { FolderConfig } from "@/shared/email-types";
+import { Inbox, Send, Star, FileText, Trash2, Archive, Users } from "lucide-react";
+import type { EmailFolder } from "@shared/email-types";
 
-export const SYSTEM_FOLDERS: FolderConfig[] = [
-  { id: "INBOX", label: "Inbox", icon: Inbox, color: "text-blue-500" },
-  { id: "SENT", label: "Sent", icon: Send, color: "text-green-500" },
-  { id: "STARRED", label: "Starred", icon: Star, color: "text-yellow-500" },
-  { id: "DRAFT", label: "Drafts", icon: Mail, color: "text-gray-500" },
-  { id: "TRASH", label: "Trash", icon: Trash2, color: "text-red-500" },
-  { id: "ARCHIVE", label: "Archive", icon: Archive, color: "text-purple-500" },
-];
+/**
+ * System email folders with metadata
+ */
+export const SYSTEM_FOLDERS = [
+  { id: "INBOX" as EmailFolder, label: "Inbox", icon: Inbox },
+  { id: "SENT" as EmailFolder, label: "Sent", icon: Send },
+  { id: "STARRED" as EmailFolder, label: "Starred", icon: Star },
+  { id: "DRAFT" as EmailFolder, label: "Drafts", icon: FileText },
+  { id: "TRASH" as EmailFolder, label: "Trash", icon: Trash2 },
+  { id: "ARCHIVE" as EmailFolder, label: "Archive", icon: Archive },
+  { id: "LEADS" as EmailFolder, label: "Leads", icon: Users },
+] as const;
 
 export const MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024; // 25MB
 export const SYNC_INTERVAL_MS = 30 * 1000; // 30 seconds

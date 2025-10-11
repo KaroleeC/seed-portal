@@ -5,7 +5,6 @@
 ### Essential Backend Variables (from Doppler)
 
 - `DATABASE_URL` - Supabase PostgreSQL connection string
-- `REDIS_URL` - Railway will provide this automatically
 - `SESSION_SECRET` - For session encryption
 - `NODE_ENV` - Set to "production"
 
@@ -36,22 +35,18 @@
    - Uses: `web` process from Procfile
    - Port: 8080 (Railway default)
 
-2. **Worker Service** (BullMQ Background Jobs)
+2. **Worker Service** (Graphile Worker Background Jobs)
    - Uses: `worker` process from Procfile
    - No exposed port needed
-
-3. **Redis Service**
-   - One-click add from Railway dashboard
-   - Will auto-provide REDIS_URL
+   - Postgres-backed job queue (no Redis needed)
 
 ## Deployment Steps
 
 1. Create Railway project
 2. Connect to GitHub repo: `seed-portal`
-3. Add Redis service
-4. Configure environment variables from Doppler
-5. Deploy both web and worker services
-6. Test health endpoint: `/api/health`
+3. Configure environment variables from Doppler
+4. Deploy both web and worker services
+5. Test health endpoint: `/api/health`
 
 ## CORS Configuration
 

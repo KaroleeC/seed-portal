@@ -5,11 +5,15 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, MailPlus, RefreshCw } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { ComposeModal } from "./components/ComposeModal";
+import { sendDraft, DraftParamsSchema, type DraftParams } from "./lib/sendDraft";
+import { UnifiedEmailComposer } from "./components/UnifiedEmailComposer";
+import { getGoogleAuthUrl, handleGoogleOAuthCallback } from "@/lib/auth/googleAuth";
+import { useLeadEmails } from "./hooks/useLeadEmails";
 import { EmailDetail } from "./components/EmailDetail";
 import { Sidebar } from "./components/Sidebar";
 import { ThreadList } from "./components/ThreadList";
 import { useEmailThreads } from "./hooks/useEmailThreads";
+import { useEmailEvents } from "./hooks/useEmailEvents";
 import type { EmailAccount, EmailThread, EmailDraft, EmailFolder } from "@shared/email-types";
 
 export default function SeedMailPage() {
@@ -30,6 +34,9 @@ export default function SeedMailPage() {
   const [draftToLoad, setDraftToLoad] = useState<EmailDraft | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  
+  // Fetch all lead emails for filtering
+  const { leadEmails } = useLeadEmails();
 
   // Check for existing draft and show non-blocking toast
   const checkAndPromptForDraft = (inReplyToMessageId?: string, recipientEmail?: string) => {
@@ -139,13 +146,21 @@ export default function SeedMailPage() {
     const sender = t.participants?.[0];
     return sender?.email?.split("@")[1]?.toLowerCase() || "";
   };
+  
+  const getSenderEmail = (t: EmailThread): string => {
+    const sender = t.participants?.[0];
+    return sender?.email?.toLowerCase() || "";
+  };
+  
   const isClientThread = (t: EmailThread) => {
     const d = getSenderDomain(t);
     return d && CUSTOMER_DOMAINS.includes(d);
   };
+  
+  // A thread is a "Lead" if the sender's email matches a lead in the database
   const isLeadThread = (t: EmailThread) => {
-    const d = getSenderDomain(t);
-    return d && d !== "seedfinancial.io" && !CUSTOMER_DOMAINS.includes(d);
+    const senderEmail = getSenderEmail(t);
+    return senderEmail && leadEmails.has(senderEmail);
   };
 
   // Helpers
@@ -257,6 +272,36 @@ export default function SeedMailPage() {
     folder: selectedFolder as EmailFolder,
     searchQuery,
   });
+
+  // Enable SSE for real-time sync notifications (Phase 3)
+  const { lastSync } = useEmailEvents({
+    accountId: selectedAccount,
+    enabled: !!selectedAccount, // Only connect when account is selected
+  });
+
+  // Show toast when sync completes via SSE
+  useEffect(() => {
+    if (lastSync) {
+      toast({
+        title: "✅ Inbox synced",
+        description: `${lastSync.messagesProcessed} messages processed in ${(lastSync.duration / 1000).toFixed(1)}s`,
+        duration: 3000,
+      });
+    }
+  }, [lastSync, toast]);
+
+  // Trigger initial sync when account is first selected
+  useEffect(() => {
+    if (!selectedAccount) return;
+    
+    // Trigger background sync (no await, runs async)
+    apiRequest("/api/email/sync", {
+      method: "POST",
+      body: { accountId: selectedAccount },
+    }).catch((error) => {
+      console.error("[AutoSync] Initial sync failed:", error);
+    });
+  }, [selectedAccount]);
 
   // Keyboard shortcuts (list navigation and actions)
   useEffect(() => {
@@ -531,22 +576,6 @@ export default function SeedMailPage() {
           </div>
         </div>
       </div>
-
-      <ComposeModal
-        open={isComposeOpen}
-        onOpenChange={(open) => {
-          setIsComposeOpen(open);
-          if (!open) {
-            setDraftToLoad(null); // Clear draft when closing
-            // Refresh drafts list after a delay to allow backend to process
-            setTimeout(() => refetchDrafts(), 500);
-          }
-        }}
-        accountId={selectedAccount}
-        replyToThreadId={replyToMessageId}
-        draft={draftToLoad}
-        onCheckDraft={(recipientEmail) => checkAndPromptForDraft(undefined, recipientEmail)}
-      />
     </DashboardLayout>
   );
 }

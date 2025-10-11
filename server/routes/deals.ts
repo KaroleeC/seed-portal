@@ -6,17 +6,19 @@
 
 import { Router } from "express";
 import { z } from "zod";
-import { syncQuoteToHubSpot } from "../services/hubspot/sync.js";
-import { HubSpotService } from "../hubspot.js";
 import { storage } from "../storage.js";
-import { requireAuth, asyncHandler, handleError, validateBody, getErrorMessage } from "./_shared";
-import { enqueueHubSpotSync, getJob } from "../jobs/in-memory-queue.js";
+import { requireAuth, asyncHandler, handleError, validateBody } from "./_shared";
+import { getQuoteProvider } from "../services/providers/index.js";
+import { dealsService } from "../services/deals-service.js";
+import { DealsResultSchema } from "@shared/contracts";
+import { getErrorMessage } from "../utils/error-handling";
+import { cache, CachePrefix } from "../cache.js";
+import { withETag } from "../middleware/etag.js";
 
 const router = Router();
 
 // ============================================================================
 // SCHEMAS
-// ============================================================================
 
 const queueSyncSchema = z.object({
   quoteId: z.number().int().positive(),
@@ -48,14 +50,16 @@ router.post(
     const { quoteId, action = "auto" } = req.body;
     const actorEmail = (req.user as any)?.email || "unknown@seedfinancial.io";
 
-    // Enqueue and return immediately
-    const jobId = enqueueHubSpotSync(quoteId, action, actorEmail);
+    // Use provider pattern for queue (DRY: single point of abstraction)
+    const provider = getQuoteProvider();
+    const result = await provider.queueSync(quoteId, { action, actorEmail });
 
     res.status(202).json({
-      queued: true,
-      jobId,
+      queued: result.queued,
+      jobId: result.jobId,
       message: "Quote sync queued for processing",
       quoteId,
+      result: result.result,
     });
   })
 );
@@ -72,7 +76,9 @@ router.post(
     const { quoteId } = req.body;
     const actorEmail = (req.user as any)?.email || "unknown@seedfinancial.io";
 
-    const result = await syncQuoteToHubSpot(quoteId, "create", actorEmail);
+    // Use provider pattern (DRY: consistent abstraction)
+    const provider = getQuoteProvider();
+    const result = await provider.syncQuote(quoteId, { action: "create", actorEmail });
 
     res.json({
       message: result.success ? "Quote created in HubSpot" : "Failed to create quote in HubSpot",
@@ -94,7 +100,9 @@ router.post(
     const actorEmail = (req.user as any)?.email || "unknown@seedfinancial.io";
 
     try {
-      const result = await syncQuoteToHubSpot(quoteId, "update", actorEmail);
+      // Use provider pattern (DRY: consistent abstraction)
+      const provider = getQuoteProvider();
+      const result = await provider.syncQuote(quoteId, { action: "update", actorEmail });
 
       res.json({
         message: result.success ? "Quote updated in HubSpot" : "Failed to update quote in HubSpot",
@@ -150,28 +158,16 @@ router.get(
   requireAuth,
   asyncHandler(async (req, res) => {
     const jobId = req.params.jobId;
-
+    
     if (!jobId) {
-      return res.status(400).json({ message: "Job ID is required" });
+      return res.status(400).json({ message: "jobId is required" });
     }
-
-    const job = getJob(jobId);
-
-    if (!job) {
-      return res.status(404).json({ message: "Job not found" });
-    }
-
-    res.json({
-      jobId: job.id,
-      status: job.status,
-      quoteId: (job.data as any)?.quoteId,
-      createdAt: job.createdAt,
-      startedAt: job.startedAt,
-      completedAt: job.completedAt,
-      result: job.result,
-      error: job.error,
-      progress: job.progress,
-    });
+    
+    // Use provider pattern for status checking
+    const provider = getQuoteProvider();
+    const status = await provider.checkSyncStatus(jobId);
+    
+    res.json(status);
   })
 );
 
@@ -207,5 +203,101 @@ router.get(
     });
   })
 );
+
+/**
+ * GET /api/deals
+ * Get all deals or filter by deal IDs
+ * @query ids - Comma-separated deal IDs (optional)
+ * @query ownerId - Filter by owner ID
+ * @query limit - Max number of deals to return
+ * 
+ * Cacheable: ETag enabled with 2-minute cache
+ */
+router.get("/api/deals", requireAuth, withETag({ maxAge: 120 }), async (req, res) => {
+  try {
+    const ids =
+      typeof req.query.ids === "string" && req.query.ids.trim().length
+        ? req.query.ids
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : undefined;
+    const ownerId = typeof req.query.ownerId === "string" ? req.query.ownerId : undefined;
+    const limit = typeof req.query.limit === "string" ? parseInt(req.query.limit, 10) : undefined;
+
+    const deals = await dealsService.getDeals({ ids, ownerId, limit });
+    const parsed = DealsResultSchema.safeParse(deals);
+    if (!parsed.success) {
+      console.error("Invalid DealsResult payload:", parsed.error.issues);
+      return res.status(500).json({ status: "error", message: "Invalid deals payload" });
+    }
+    return res.json(parsed.data);
+  } catch (error) {
+    console.error("Failed to fetch deals:", error);
+    return res.status(500).json({
+      status: "error",
+      message: getErrorMessage(error) || "Failed to fetch deals",
+    });
+  }
+});
+
+/**
+ * GET /api/deals/by-owner
+ * Fetch deals filtered by owner ID
+ * @query ownerId - HubSpot owner ID (required)
+ * @query limit - Max number of deals to return
+ */
+router.get("/api/deals/by-owner", requireAuth, async (req, res) => {
+  try {
+    const ownerId = typeof req.query.ownerId === "string" ? req.query.ownerId : undefined;
+    const limit = typeof req.query.limit === "string" ? parseInt(req.query.limit, 10) : undefined;
+    if (!ownerId) {
+      return res.status(400).json({ status: "error", message: "ownerId is required" });
+    }
+    const deals = await dealsService.getDeals({ ownerId, limit });
+    const parsed = DealsResultSchema.safeParse(deals);
+    if (!parsed.success) {
+      console.error("Invalid DealsResult payload:", parsed.error.issues);
+      return res.status(500).json({ status: "error", message: "Invalid deals payload" });
+    }
+    return res.json(parsed.data);
+  } catch (error) {
+    console.error("Failed to fetch deals by owner:", error);
+    return res.status(500).json({
+      status: "error",
+      message: getErrorMessage(error) || "Failed to fetch deals by owner",
+    });
+  }
+});
+
+/**
+ * POST /api/deals/cache/invalidate
+ * Admin-only endpoint to invalidate deals cache
+ * 
+ * Useful for forcing a refresh during development or after HubSpot changes
+ */
+router.post("/api/deals/cache/invalidate", requireAuth, async (req: any, res) => {
+  try {
+    if (req.user?.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    // Clear in-memory cache (Redis removed)
+    const pattern = `${CachePrefix.HUBSPOT_DEALS_LIST}*`;
+    const keys = await cache.keys(pattern);
+    
+    for (const key of keys) {
+      await cache.del(key);
+    }
+
+    res.json({ success: true, deleted: keys.length, pattern });
+  } catch (error) {
+    console.error("Failed to invalidate deals cache:", error);
+    res.status(500).json({
+      message: "Failed to invalidate deals cache",
+      error: getErrorMessage(error),
+    });
+  }
+});
 
 export default router;

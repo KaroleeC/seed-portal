@@ -35,7 +35,7 @@ export function ExistingQuotesModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl" data-testid="qa-existing-quotes-modal">
         <DialogHeader>
           <DialogTitle>{hasExisting ? "Existing Quotes Found" : "Create New Quote"}</DialogTitle>
           <DialogDescription>
@@ -60,7 +60,11 @@ export function ExistingQuotesModal({
               </h4>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {existingQuotesForEmail.map((quote) => (
-                  <Card key={quote.id} className="hover:bg-muted/40 transition-colors">
+                  <Card
+                    key={quote.id}
+                    className="hover:bg-muted/40 transition-colors"
+                    data-testid={`qa-existing-quote-item`}
+                  >
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">
                         <div>
@@ -93,6 +97,7 @@ export function ExistingQuotesModal({
                             onQuoteClick(quote);
                             onOpenChange(false);
                           }}
+                          data-testid="qa-existing-quote-edit"
                         >
                           Edit
                         </Button>
@@ -107,6 +112,7 @@ export function ExistingQuotesModal({
             <Button
               onClick={onPrimaryAction}
               className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+              data-testid="qa-existing-quotes-primary"
             >
               {primaryActionLabel}
             </Button>

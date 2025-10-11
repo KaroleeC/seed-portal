@@ -9,7 +9,13 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
     include: ["**/*.{test,spec}.{ts,tsx}"],
-    exclude: ["**/node_modules/**", "**/dist/**", "**/__tests__/**/*.golden.ts"],
+    exclude: ["**/node_modules/**", "**/dist/**", "**/__tests__/**/*.golden.ts", "**/e2e/**", "**/playwright-report/**"],
+    environmentMatchGlobs: [
+      ["**/server/**", "node"],
+      ["**/test/integration/**", "node"],
+      ["**/__tests__/vite-config.test.ts", "node"],
+      ["**/__tests__/build-compression.test.ts", "node"],
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
@@ -21,6 +27,12 @@ export default defineConfig({
         "**/__tests__/**",
         "**/*.d.ts",
       ],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 70,
+        statements: 80,
+      },
     },
     // Performance
     poolOptions: {
@@ -40,6 +52,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./client/src"),
       "@shared": path.resolve(__dirname, "./shared"),
       "@server": path.resolve(__dirname, "./server"),
+      "@test": path.resolve(__dirname, "./test"),
     },
   },
 });

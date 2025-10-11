@@ -9,7 +9,6 @@ export const EnvSchema = z.object({
 
   // Core infrastructure
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required").optional(),
-  REDIS_URL: z.string().optional(),
 
   // Integrations
   HUBSPOT_ACCESS_TOKEN: z.string().min(1, "HUBSPOT_ACCESS_TOKEN is required").optional(),

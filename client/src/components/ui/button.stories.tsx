@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { fn } from "@storybook/test";
+import { fn } from "storybook/test";
 import { Button } from "./button";
 import { Mail, Plus, Trash2, Download } from "lucide-react";
 
@@ -52,12 +52,19 @@ export const Outline: Story = {
 };
 
 /**
- * Secondary button with muted colors.
+ * Secondary button with Seed teal gradient (theme-aware).
+ * Light mode: dark-to-light teal
+ * Dark mode: light-to-dark teal (reversed & softer)
  */
 export const Secondary: Story = {
   args: {
     variant: "secondary",
-    children: "Secondary",
+    children: (
+      <>
+        <Mail />
+        Secondary
+      </>
+    ),
   },
 };
 
@@ -196,13 +203,154 @@ export const AllVariants: Story = {
     <div className="flex flex-col gap-4">
       <div className="flex gap-2">
         <Button variant="default">Default</Button>
-        <Button variant="destructive">Destructive</Button>
-        <Button variant="outline">Outline</Button>
+        <Button variant="seed-orange">Seed Orange</Button>
+        <Button variant="secondary">Secondary (Teal)</Button>
       </div>
       <div className="flex gap-2">
-        <Button variant="secondary">Secondary</Button>
+        <Button variant="destructive">Destructive</Button>
+        <Button variant="outline">Outline</Button>
         <Button variant="ghost">Ghost</Button>
+      </div>
+      <div className="flex gap-2">
         <Button variant="link">Link</Button>
+      </div>
+    </div>
+  ),
+};
+
+/**
+ * ✅ DEPLOYED: Seed Orange Variant
+ * The new seed-orange variant is now live!
+ * Use: <Button variant="seed-orange">
+ */
+export const SeedOrange: Story = {
+  args: {
+    variant: "seed-orange",
+    children: (
+      <>
+        <Mail />
+        Seed Orange
+      </>
+    ),
+  },
+};
+
+/**
+ * 🎨 Theme-Aware Variants
+ * Primary (orange) and Secondary (teal) automatically adapt to light/dark theme.
+ * Toggle Storybook theme to see the difference!
+ */
+export const ThemeAware: Story = {
+  render: () => (
+    <div className="flex flex-col gap-6 p-6">
+      <div>
+        <p className="text-sm text-muted-foreground mb-3">
+          🔥 Seed Orange (default) - same in both themes
+        </p>
+        <div className="flex gap-2">
+          <Button>Primary Action</Button>
+          <Button size="sm">Small</Button>
+          <Button size="lg">Large</Button>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm text-muted-foreground mb-3">
+          🌊 Seed Teal (secondary) - gradient reverses & softens in dark mode
+        </p>
+        <div className="flex gap-2">
+          <Button variant="secondary">
+            <Download />
+            Secondary Action
+          </Button>
+          <Button variant="secondary" size="sm">
+            Export
+          </Button>
+          <Button variant="secondary" size="lg">
+            Learn More
+          </Button>
+        </div>
+      </div>
+
+      <div className="border-t pt-4">
+        <p className="text-sm text-muted-foreground mb-3">
+          💡 Tip: Toggle the theme in Storybook toolbar to see adaptability!
+        </p>
+      </div>
+    </div>
+  ),
+};
+
+/**
+ * 🎨 PREVIEW: Orange Gradient Options (Reference)
+ * Option 4 (Deep Fire) was selected and deployed as "seed-orange" variant.
+ */
+export const OrangeGradientPreview: Story = {
+  render: () => (
+    <div className="flex flex-col gap-6 p-6">
+      <div>
+        <p className="text-sm text-muted-foreground mb-2">Option 1: Diagonal (Warm)</p>
+        <Button
+          style={{
+            background: "linear-gradient(135deg, #e24c00 0%, #ff7f3f 100%)",
+            color: "white",
+            border: "none",
+          }}
+        >
+          <Mail />
+          Orange Diagonal
+        </Button>
+      </div>
+
+      <div>
+        <p className="text-sm text-muted-foreground mb-2">Option 2: Vibrant Glow</p>
+        <Button
+          style={{
+            background: "linear-gradient(135deg, #e24c00 0%, #ff6b35 50%, #f4a261 100%)",
+            color: "white",
+            border: "none",
+            boxShadow: "0 4px 20px rgba(226, 76, 0, 0.3)",
+          }}
+        >
+          <Mail />
+          Orange Glow
+        </Button>
+      </div>
+
+      <div>
+        <p className="text-sm text-muted-foreground mb-2">Option 3: Sunset (Subtle)</p>
+        <Button
+          style={{
+            background: "linear-gradient(to right, #e24c00 0%, #ff8c42 100%)",
+            color: "white",
+            border: "none",
+          }}
+        >
+          <Mail />
+          Orange Sunset
+        </Button>
+      </div>
+
+      <div>
+        <p className="text-sm text-muted-foreground mb-2">Option 4: Deep Fire</p>
+        <Button
+          style={{
+            background: "linear-gradient(135deg, #d44400 0%, #e24c00 50%, #ff7f3f 100%)",
+            color: "white",
+            border: "none",
+          }}
+        >
+          <Mail />
+          Deep Orange
+        </Button>
+      </div>
+
+      <div className="border-t pt-4 mt-2">
+        <p className="text-sm text-muted-foreground mb-2">Current Default (for comparison)</p>
+        <Button variant="default">
+          <Mail />
+          Current Blue
+        </Button>
       </div>
     </div>
   ),

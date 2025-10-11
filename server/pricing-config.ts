@@ -1,8 +1,7 @@
 // Server-side pricing configuration service
-// Loads pricing configurations from database with caching
+// Loads pricing configurations from database with in-memory caching (Redis removed)
 
 import { storage } from "./storage";
-import { getRedisAsync } from "./redis";
 
 // Cache keys
 const CACHE_KEYS = {
@@ -71,21 +70,9 @@ class PricingConfigService {
   async getBaseFees(): Promise<Record<string, number>> {
     const cacheKey = CACHE_KEYS.BASE_PRICING;
 
-    // Try cache first
+    // Try in-memory cache first
     let cached = this.cache.get(cacheKey);
     if (cached) return cached;
-
-    // Try Redis cache
-    const redisConnections = await getRedisAsync();
-    const cacheRedis = redisConnections?.cacheRedis;
-    if (cacheRedis) {
-      const redisData = await cacheRedis.get(cacheKey);
-      if (redisData) {
-        cached = JSON.parse(redisData);
-        this.cache.set(cacheKey, cached);
-        return cached;
-      }
-    }
 
     // Load from database
     const basePricing = await storage.getAllPricingBase();
@@ -95,11 +82,8 @@ class PricingConfigService {
       result[item.service] = parseFloat(item.baseFee);
     });
 
-    // Cache the result
+    // Cache the result in memory
     this.cache.set(cacheKey, result);
-    if (cacheRedis) {
-      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
-    }
 
     return result;
   }
@@ -111,17 +95,6 @@ class PricingConfigService {
     let cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const redisConnections = await getRedisAsync();
-    const cacheRedis = redisConnections?.cacheRedis;
-    if (cacheRedis) {
-      const redisData = await cacheRedis.get(cacheKey);
-      if (redisData) {
-        cached = JSON.parse(redisData);
-        this.cache.set(cacheKey, cached);
-        return cached;
-      }
-    }
-
     const multipliers = await storage.getAllRevenueMultipliers();
     const result: Record<string, number> = {};
 
@@ -130,9 +103,6 @@ class PricingConfigService {
     });
 
     this.cache.set(cacheKey, result);
-    if (cacheRedis) {
-      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
-    }
 
     return result;
   }
@@ -144,17 +114,6 @@ class PricingConfigService {
     let cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const redisConnections = await getRedisAsync();
-    const cacheRedis = redisConnections?.cacheRedis;
-    if (cacheRedis) {
-      const redisData = await cacheRedis.get(cacheKey);
-      if (redisData) {
-        cached = JSON.parse(redisData);
-        this.cache.set(cacheKey, cached);
-        return cached;
-      }
-    }
-
     const surcharges = await storage.getAllTransactionSurcharges();
     const result: Record<string, number> = {};
 
@@ -163,9 +122,6 @@ class PricingConfigService {
     });
 
     this.cache.set(cacheKey, result);
-    if (cacheRedis) {
-      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
-    }
 
     return result;
   }
@@ -176,17 +132,6 @@ class PricingConfigService {
 
     let cached = this.cache.get(cacheKey);
     if (cached) return cached;
-
-    const redisConnections = await getRedisAsync();
-    const cacheRedis = redisConnections?.cacheRedis;
-    if (cacheRedis) {
-      const redisData = await cacheRedis.get(cacheKey);
-      if (redisData) {
-        cached = JSON.parse(redisData);
-        this.cache.set(cacheKey, cached);
-        return cached;
-      }
-    }
 
     const multipliers = await storage.getAllIndustryMultipliers();
     const result: Record<string, { monthly: number; cleanup: number }> = {};
@@ -199,9 +144,6 @@ class PricingConfigService {
     });
 
     this.cache.set(cacheKey, result);
-    if (cacheRedis) {
-      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
-    }
 
     return result;
   }
@@ -213,17 +155,6 @@ class PricingConfigService {
     let cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const redisConnections = await getRedisAsync();
-    const cacheRedis = redisConnections?.cacheRedis;
-    if (cacheRedis) {
-      const redisData = await cacheRedis.get(cacheKey);
-      if (redisData) {
-        cached = JSON.parse(redisData);
-        this.cache.set(cacheKey, cached);
-        return cached;
-      }
-    }
-
     const settings = await storage.getAllServiceSettings();
     const result: Record<string, Record<string, number>> = {};
 
@@ -234,9 +165,6 @@ class PricingConfigService {
     });
 
     this.cache.set(cacheKey, result);
-    if (cacheRedis) {
-      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
-    }
 
     return result;
   }
@@ -249,17 +177,6 @@ class PricingConfigService {
 
     let cached = this.cache.get(cacheKey);
     if (cached) return cached;
-
-    const redisConnections = await getRedisAsync();
-    const cacheRedis = redisConnections?.cacheRedis;
-    if (cacheRedis) {
-      const redisData = await cacheRedis.get(cacheKey);
-      if (redisData) {
-        cached = JSON.parse(redisData);
-        this.cache.set(cacheKey, cached);
-        return cached;
-      }
-    }
 
     const tiers = await storage.getAllPricingTiers();
     const result: Record<
@@ -278,9 +195,6 @@ class PricingConfigService {
     });
 
     this.cache.set(cacheKey, result);
-    if (cacheRedis) {
-      await cacheRedis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
-    }
 
     return result;
   }
@@ -288,15 +202,6 @@ class PricingConfigService {
   // Clear all caches (call when pricing is updated)
   async clearCache(): Promise<void> {
     this.cache.clear();
-
-    const redisConnections = await getRedisAsync();
-    const cacheRedis = redisConnections?.cacheRedis;
-    if (cacheRedis) {
-      const keys = Object.values(CACHE_KEYS);
-      if (keys.length > 0) {
-        await cacheRedis.del(...keys);
-      }
-    }
   }
 
   // Fallback configuration using hardcoded values

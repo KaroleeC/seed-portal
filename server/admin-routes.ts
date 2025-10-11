@@ -5,9 +5,11 @@ import type { Express } from "express";
 import { GoogleAdminService } from "./google-admin";
 import { storage } from "./storage";
 import { requireAuth } from "./middleware/supabase-auth";
-import { scheduleWorkspaceSync } from "./jobs";
+// DISABLED: BullMQ jobs removed (migrated to Graphile Worker)
+// import { scheduleWorkspaceSync } from "./jobs";
 import { hubSpotService } from "./hubspot";
-import { getRedisAsync } from "./redis";
+// DISABLED: Redis removed
+// import { getRedisAsync } from "./redis";
 import {
   CalculatorContentResponseSchema,
   CalculatorContentItemResponseSchema,
@@ -508,72 +510,15 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
     }
   });
 
-  app.get("/api/admin/hubspot/pipeline-config", requireAuth, requireAdmin, async (_req, res) => {
-    try {
-      const redisConns = await getRedisAsync();
-      const cacheRedis: any = redisConns?.cacheRedis;
-      if (!cacheRedis) return res.status(503).json({ message: "Config store unavailable" });
+  // DISABLED: Redis-based HubSpot pipeline config (Redis removed)
+  // Pipeline/stage IDs now auto-detected from HubSpot API
+  // app.get("/api/admin/hubspot/pipeline-config", requireAuth, requireAdmin, async (_req, res) => {
+  //   return res.status(501).json({ message: "Pipeline config endpoints disabled (Redis removed)" });
+  // });
 
-      const [pipelineId, qualifiedStageId] = await Promise.all([
-        cacheRedis.get("config:hubspot:pipeline_id"),
-        cacheRedis.get("config:hubspot:qualified_stage_id"),
-      ]);
-
-      let valid = false;
-      if (hubSpotService && pipelineId && qualifiedStageId) {
-        try {
-          const raw = await hubSpotService.getPipelines();
-          const pipelines = raw?.results || [];
-          const p = pipelines.find((x: any) => String(x.id) === String(pipelineId));
-          const s = p?.stages?.find((st: any) => String(st.id) === String(qualifiedStageId));
-          valid = Boolean(p && s);
-        } catch {
-          valid = false;
-        }
-      }
-
-      return res.json({ pipelineId, qualifiedStageId, valid });
-    } catch (error: any) {
-      console.error("Failed to get pipeline config:", error);
-      return res.status(500).json({ message: `Failed to get pipeline config: ${error.message}` });
-    }
-  });
-
-  app.put("/api/admin/hubspot/pipeline-config", requireAuth, requireAdmin, async (req, res) => {
-    try {
-      const { pipelineId, qualifiedStageId } = req.body || {};
-      if (!pipelineId || !qualifiedStageId)
-        return res.status(400).json({ message: "pipelineId and qualifiedStageId are required" });
-
-      if (!hubSpotService)
-        return res.status(400).json({ message: "HubSpot integration not configured" });
-
-      const raw = await hubSpotService.getPipelines();
-      const pipelines = raw?.results || [];
-      const p = pipelines.find((x: any) => String(x.id) === String(pipelineId));
-      const s = p?.stages?.find((st: any) => String(st.id) === String(qualifiedStageId));
-      if (!p || !s) {
-        return res.status(400).json({ message: "Invalid pipeline or stage selection" });
-      }
-
-      const redisConns = await getRedisAsync();
-      const cacheRedis: any = redisConns?.cacheRedis;
-      if (!cacheRedis) return res.status(503).json({ message: "Config store unavailable" });
-
-      await cacheRedis.set("config:hubspot:pipeline_id", String(pipelineId));
-      await cacheRedis.set("config:hubspot:qualified_stage_id", String(qualifiedStageId));
-
-      return res.json({
-        message: "HubSpot pipeline configuration saved",
-        pipelineId: String(pipelineId),
-        qualifiedStageId: String(qualifiedStageId),
-        valid: true,
-      });
-    } catch (error: any) {
-      console.error("Failed to save pipeline config:", error);
-      return res.status(500).json({ message: `Failed to save pipeline config: ${error.message}` });
-    }
-  });
+  // app.put("/api/admin/hubspot/pipeline-config", requireAuth, requireAdmin, async (req, res) => {
+  //   return res.status(501).json({ message: "Pipeline config endpoints disabled (Redis removed)" });
+  // });
 
   // Get all Google Workspace users
   app.get("/api/admin/workspace-users", requireAuth, requireAdmin, async (req, res) => {
@@ -945,25 +890,11 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
     }
   );
 
-  // Trigger manual workspace sync
+  // DISABLED: Workspace sync (BullMQ removed, migrate to Graphile Worker if needed)
   app.post("/api/admin/sync-workspace", requireAuth, requireAdmin, async (req, res) => {
-    try {
-      const adminUserId = req.user?.id;
-      if (!adminUserId) {
-        return res.status(401).json({ message: "User ID required" });
-      }
-      const job = await scheduleWorkspaceSync("manual", adminUserId);
-      res.json({
-        message: "Workspace sync job scheduled successfully",
-        jobId: job.id,
-        status: "scheduled",
-      });
-    } catch (error: any) {
-      console.error("Error scheduling workspace sync:", error);
-      res.status(500).json({
-        message: `Failed to schedule workspace sync: ${error.message}`,
-      });
-    }
+    return res.status(501).json({
+      message: "Workspace sync disabled (BullMQ removed). Migrate to Graphile Worker if needed.",
+    });
   });
 
   // Test Google Admin API connection

@@ -1,9 +1,8 @@
 /**
  * Enhanced Cache Manager with Namespacing and TTL
- * Implements cache-bust hooks on data writes
+ * In-memory implementation (Redis removed)
  */
 
-import { getRedisAsync } from "./redis";
 import { logger } from "./logger";
 
 interface CacheOptions {
@@ -12,19 +11,13 @@ interface CacheOptions {
 }
 
 class CacheManager {
-  private redis: any = null;
+  private memoryCache: Map<string, { value: any; expiresAt: number }> = new Map();
   private initialized = false;
 
   async initialize() {
     if (this.initialized) return;
-
-    try {
-      this.redis = await getRedisAsync();
-      this.initialized = true;
-      logger.info("[Cache] Cache manager initialized with Redis");
-    } catch (error) {
-      logger.warn("[Cache] Redis not available, cache operations will be no-ops");
-    }
+    this.initialized = true;
+    logger.info("[Cache] Cache manager initialized (in-memory)");
   }
 
   private getKey(key: string, namespace: string = "cache"): string {
@@ -34,12 +27,19 @@ class CacheManager {
   async get<T>(key: string, options: CacheOptions = {}): Promise<T | null> {
     await this.initialize();
 
-    if (!this.redis) return null;
-
     try {
       const cacheKey = this.getKey(key, options.namespace);
-      const value = await this.redis.get(cacheKey);
-      return value ? JSON.parse(value) : null;
+      const entry = this.memoryCache.get(cacheKey);
+      
+      if (!entry) return null;
+      
+      // Check expiration
+      if (Date.now() > entry.expiresAt) {
+        this.memoryCache.delete(cacheKey);
+        return null;
+      }
+      
+      return entry.value;
     } catch (error) {
       logger.error("[Cache] Error getting cache value:", error);
       return null;
@@ -49,13 +49,12 @@ class CacheManager {
   async set<T>(key: string, value: T, options: CacheOptions = {}): Promise<void> {
     await this.initialize();
 
-    if (!this.redis) return;
-
     try {
       const cacheKey = this.getKey(key, options.namespace);
       const ttl = options.ttl || 300; // Default 5 minutes
+      const expiresAt = Date.now() + (ttl * 1000);
 
-      await this.redis.setex(cacheKey, ttl, JSON.stringify(value));
+      this.memoryCache.set(cacheKey, { value, expiresAt });
     } catch (error) {
       logger.error("[Cache] Error setting cache value:", error);
     }
@@ -64,11 +63,9 @@ class CacheManager {
   async del(key: string, options: CacheOptions = {}): Promise<void> {
     await this.initialize();
 
-    if (!this.redis) return;
-
     try {
       const cacheKey = this.getKey(key, options.namespace);
-      await this.redis.del(cacheKey);
+      this.memoryCache.delete(cacheKey);
     } catch (error) {
       logger.error("[Cache] Error deleting cache value:", error);
     }
@@ -77,16 +74,24 @@ class CacheManager {
   async invalidatePattern(pattern: string, options: CacheOptions = {}): Promise<void> {
     await this.initialize();
 
-    if (!this.redis) return;
-
     try {
       const searchPattern = this.getKey(pattern, options.namespace);
-      const keys = await this.redis.keys(searchPattern);
-
-      if (keys.length > 0) {
-        await this.redis.del(...keys);
+      let deletedCount = 0;
+      
+      // Convert glob pattern to regex (simple implementation)
+      const regexPattern = searchPattern.replace(/\*/g, '.*');
+      const regex = new RegExp(`^${regexPattern}$`);
+      
+      for (const key of this.memoryCache.keys()) {
+        if (regex.test(key)) {
+          this.memoryCache.delete(key);
+          deletedCount++;
+        }
+      }
+      
+      if (deletedCount > 0) {
         logger.info(
-          `[Cache] Invalidated ${keys.length} cache entries matching pattern: ${searchPattern}`
+          `[Cache] Invalidated ${deletedCount} cache entries matching pattern: ${searchPattern}`
         );
       }
     } catch (error) {

@@ -13,7 +13,6 @@ import {
   Star,
   Archive,
   Trash2,
-  MoreVertical,
   Paperclip,
   Clock,
   ChevronDown,
@@ -26,6 +25,10 @@ import { formatRelativeTime } from "@/lib/time-utils";
 import { RichTextEditor } from "./RichTextEditor";
 import { useEmailComposer } from "../hooks/useEmailComposer";
 import { DraftStatusIndicator } from "./DraftStatusIndicator";
+import { FailedSendAlert } from "./FailedSendAlert";
+import { useSendStatus } from "../hooks/useSendStatus";
+import { EmailThreadMenu } from "./EmailThreadMenu";
+import { LeadAssociationModal } from "./LeadAssociationModal";
 
 interface EmailMessage {
   id: string;
@@ -73,6 +76,99 @@ interface EmailDetailProps {
   onRestore?: () => void;
 }
 
+// Separate component to use hooks inside map
+function MessageWithStatus({
+  message,
+  isLast,
+  isSentMessage,
+  loadImages,
+  sanitizeHtml,
+}: {
+  message: EmailMessage;
+  isLast: boolean;
+  isSentMessage: boolean;
+  loadImages: boolean;
+  sanitizeHtml: (html: string, loadImages: boolean) => string;
+}) {
+  const { data: sendStatus } = useSendStatus(message.id, isSentMessage);
+  const showFailedAlert =
+    sendStatus && (sendStatus.status === "failed" || sendStatus.status === "bounced");
+
+  return (
+    <div
+      className={cn(
+        "space-y-4 rounded-lg border border-border bg-card p-4",
+        !isLast && "mb-2"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <Avatar>
+          <AvatarFallback className="bg-muted text-muted-foreground">
+            {(message.from.name ?? message.from.email).charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2">
+            <span className="font-semibold text-foreground">
+              {message.from.name || message.from.email}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {format(new Date(message.sentAt), "MMM d, yyyy 'at' h:mm a")}
+            </span>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            to {message.to.map((r) => r.email).join(", ")}
+            {message.cc && message.cc.length > 0 && (
+              <span className="ml-1">cc {message.cc.map((r) => r.email).join(", ")}</span>
+            )}
+          </div>
+
+          {/* Tracking Status - Show for messages with tracking enabled */}
+          {message.trackingEnabled && (
+            <div className="mt-2 flex items-center gap-1.5 text-xs">
+              {message.firstOpenedAt ? (
+                <>
+                  <span className="text-green-600 dark:text-green-400">📬</span>
+                  <span className="text-muted-foreground">
+                    Opened {formatRelativeTime(message.firstOpenedAt)}
+                    {message.openCount && message.openCount > 1 && (
+                      <span className="ml-1">({message.openCount} times)</span>
+                    )}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-yellow-600 dark:text-yellow-400">📭</span>
+                  <span className="text-muted-foreground">Not opened yet</span>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Failed Send Alert */}
+      {showFailedAlert && (
+        <FailedSendAlert
+          statusId={sendStatus.id}
+          errorMessage={sendStatus.errorMessage}
+          bounceType={sendStatus.bounceType}
+          bounceReason={sendStatus.bounceReason}
+          retryCount={sendStatus.retryCount}
+          maxRetries={sendStatus.maxRetries}
+        />
+      )}
+
+      <div
+        className="prose prose-sm dark:prose-invert max-w-none"
+        dangerouslySetInnerHTML={{
+          __html: sanitizeHtml(message.bodyHtml || message.bodyText || "", loadImages),
+        }}
+      />
+    </div>
+  );
+}
+
 export function EmailDetail({
   threadId,
   accountId,
@@ -85,6 +181,7 @@ export function EmailDetail({
   onRestore,
 }: EmailDetailProps) {
   const [loadImages, setLoadImages] = useState(false);
+  const [showLeadAssociation, setShowLeadAssociation] = useState(false);
   const { data, isLoading } = useQuery<{ thread: EmailThread; messages: EmailMessage[] }>({
     queryKey: ["/api/email/threads", threadId],
     queryFn: () => apiRequest(`/api/email/threads/${threadId}`),
@@ -324,9 +421,14 @@ export function EmailDetail({
                 Restore
               </Button>
             )}
-            <Button variant="ghost" size="icon" title="More actions">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
+            <EmailThreadMenu
+              threadId={threadId}
+              onCreateLead={() => {
+                // TODO: Implement create lead modal
+                console.log("Create lead for thread:", threadId);
+              }}
+              onAssociateLead={() => setShowLeadAssociation(true)}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -359,67 +461,17 @@ export function EmailDetail({
         <div className="p-6 space-y-6">
           {messages.map((message, index) => {
             const isLast = index === messages.length - 1;
-
+            const isSentMessage = message.labels?.includes("SENT");
+            
             return (
-              <div
+              <MessageWithStatus
                 key={message.id}
-                className={cn(
-                  "space-y-4 rounded-lg border border-border bg-card p-4",
-                  !isLast && "mb-2"
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <Avatar>
-                    <AvatarFallback className="bg-muted text-muted-foreground">
-                      {(message.from.name ?? message.from.email).charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-semibold text-foreground">
-                        {message.from.name || message.from.email}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(message.sentAt), "MMM d, yyyy 'at' h:mm a")}
-                      </span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      to {message.to.map((r) => r.email).join(", ")}
-                      {message.cc && message.cc.length > 0 && (
-                        <span className="ml-1">cc {message.cc.map((r) => r.email).join(", ")}</span>
-                      )}
-                    </div>
-
-                    {/* Tracking Status - Show for messages with tracking enabled */}
-                    {message.trackingEnabled && (
-                      <div className="mt-2 flex items-center gap-1.5 text-xs">
-                        {message.firstOpenedAt ? (
-                          <>
-                            <span className="text-green-600 dark:text-green-400">📬</span>
-                            <span className="text-muted-foreground">
-                              Opened {formatRelativeTime(message.firstOpenedAt)}
-                              {message.openCount && message.openCount > 1 && (
-                                <span className="ml-1">({message.openCount} times)</span>
-                              )}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-yellow-600 dark:text-yellow-400">📭</span>
-                            <span className="text-muted-foreground">Not opened yet</span>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div
-                  className="prose prose-sm dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizeHtml(message.bodyHtml || message.bodyText || "", loadImages),
-                  }}
-                />
-              </div>
+                message={message}
+                isLast={isLast}
+                isSentMessage={isSentMessage}
+                loadImages={loadImages}
+                sanitizeHtml={sanitizeHtml}
+              />
             );
           })}
         </div>
@@ -712,6 +764,13 @@ export function EmailDetail({
           </div>
         </div>
       )}
+
+      {/* Lead Association Modal */}
+      <LeadAssociationModal
+        threadId={threadId}
+        open={showLeadAssociation}
+        onOpenChange={setShowLeadAssociation}
+      />
     </div>
   );
 }

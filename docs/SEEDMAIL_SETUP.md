@@ -218,12 +218,12 @@ async function syncAccount(account: EmailAccount) {
 }
 ```
 
-### Option B: Queue (Bull/BullMQ)
+### Option B: Queue (Graphile Worker)
 
 ```typescript
-import Queue from "bull";
+import { queueJob } from "./workers/graphile-worker";
 
-const emailSyncQueue = new Queue("email-sync", process.env.REDIS_URL);
+// Queue email sync job
 
 emailSyncQueue.process(async (job) => {
   const { accountId } = job.data;

@@ -10,9 +10,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        "seed-orange": "bg-gradient-to-br from-[#d44400] via-[#e24c00] to-[#ff7f3f] text-white hover:brightness-110 transition-all",
+        secondary: "bg-gradient-to-br from-[color:var(--seed-dark)] to-[color:var(--seed-light)] text-white dark:from-[color:var(--seed-light)] dark:to-[color:var(--seed-dark)] hover:brightness-110 transition-all",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
@@ -24,7 +25,7 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "seed-orange",
       size: "default",
     },
   }

@@ -92,6 +92,7 @@ export const authLogger = logger.child({ module: "auth" });
 export const apiLogger = logger.child({ module: "api" });
 export const redisLogger = logger.child({ module: "redis" });
 export const hubspotLogger = logger.child({ module: "hubspot" });
+export const quoteLogger = logger.child({ module: "quotes" });
 
 // Utility function to log and also output to Vite dev server
 export function logInfo(message: string, data?: any) {

@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Circle, MailOpen, Paperclip, Star, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getInitials } from "../lib/emailUtils";
 import { formatRelativeTime } from "../lib/emailFormatters";
+import { SendStatusBadge } from "./SendStatusBadge";
+import { useSendStatus } from "../hooks/useSendStatus";
+import { EmailThreadMenu } from "./EmailThreadMenu";
+import { LeadAssociationModal } from "./LeadAssociationModal";
 import type { EmailThread } from "@shared/email-types";
 
 interface ThreadListItemProps {
@@ -13,6 +18,7 @@ interface ThreadListItemProps {
   onMarkRead?: () => void;
   onStar?: (starred: boolean) => void;
   onDelete?: () => void;
+  latestMessageId?: string; // For fetching send status on sent emails
 }
 
 export function ThreadListItem({
@@ -22,10 +28,18 @@ export function ThreadListItem({
   onMarkRead,
   onStar,
   onDelete,
+  latestMessageId,
 }: ThreadListItemProps) {
   const isUnread = thread.unreadCount > 0;
   const sender = thread.participants?.[0];
   const initials = getInitials(sender?.name, sender?.email);
+  
+  // Fetch send status for sent emails
+  const isSentEmail = thread.labels?.includes("SENT");
+  const { data: sendStatus } = useSendStatus(latestMessageId, isSentEmail);
+
+  // Lead association modal state
+  const [associateModalOpen, setAssociateModalOpen] = useState(false);
 
   return (
     <div
@@ -127,6 +141,17 @@ export function ThreadListItem({
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 )}
+                {/* Lead actions menu */}
+                <EmailThreadMenu
+                  threadId={thread.id}
+                  onCreateLead={() => {
+                    // TODO: Open create lead modal when implemented
+                    console.log("Create lead for thread:", thread.id);
+                  }}
+                  onAssociateLead={() => {
+                    setAssociateModalOpen(true);
+                  }}
+                />
               </div>
               <span
                 className={cn(
@@ -160,9 +185,28 @@ export function ThreadListItem({
               {thread.snippet}
             </p>
             {isUnread && <Circle className="h-2 w-2 fill-primary text-primary flex-shrink-0" />}
+            {/* Send status badge for sent emails */}
+            {sendStatus && (
+              <SendStatusBadge
+                status={sendStatus.status}
+                errorMessage={sendStatus.errorMessage}
+                bounceType={sendStatus.bounceType}
+                retryCount={sendStatus.retryCount}
+                maxRetries={sendStatus.maxRetries}
+                size="sm"
+              />
+            )}
           </div>
         </div>
       </div>
+
+      {/* Lead Association Modal */}
+      <LeadAssociationModal
+        open={associateModalOpen}
+        onOpenChange={setAssociateModalOpen}
+        threadId={thread.id}
+        threadSubject={thread.subject}
+      />
     </div>
   );
 }

@@ -30,22 +30,41 @@ const tasks: TaskList = {
 
     try {
       // Import worker logic (if exists)
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const worker = await import("./ai-insights-worker") as any;
-        if (typeof worker.processAIInsights === 'function') {
-          await worker.processAIInsights({ hubspotOwnerId, userId });
-        } else {
-          logger.warn("processAIInsights not implemented yet");
-        }
-      } catch {
-        logger.warn("ai-insights-worker not found - skipping");
-      }
+      // TODO: Implement AI insights worker
+      logger.warn("ai-insights-worker not implemented yet - job queued but not processed");
 
-      logger.info({ hubspotOwnerId }, "AI insights job completed");
+      logger.info({ hubspotOwnerId }, "AI insights job completed (stub)");
     } catch (error: unknown) {
       logger.error({ error, hubspotOwnerId }, "AI insights job failed");
       throw error; // Rethrow to trigger retry
+    }
+  },
+
+  /**
+   * HubSpot Quote Sync Job
+   * Queues a quote sync to HubSpot (create/update/auto)
+   */
+  "hubspot-quote-sync": async (payload: unknown) => {
+    const { quoteId, action, actorEmail } = payload as {
+      quoteId: number;
+      action?: "auto" | "create" | "update";
+      actorEmail?: string;
+    };
+
+    logger.info({ quoteId, action, actorEmail }, "Processing HubSpot quote sync job");
+
+    try {
+      const { syncQuoteToHubSpot } = await import("../services/hubspot/sync.js");
+      const result = await syncQuoteToHubSpot(quoteId, action || "auto", actorEmail || "system@seedfinancial.io");
+
+      if (!result?.success) {
+        throw new Error(result?.error || "HubSpot quote sync failed");
+      }
+
+      logger.info({ quoteId, action }, "HubSpot quote sync job completed");
+    } catch (error: unknown) {
+      logger.error({ error, quoteId, action }, "HubSpot quote sync job failed");
+      throw error;
     }
   },
 
@@ -63,19 +82,10 @@ const tasks: TaskList = {
 
     try {
       // Import worker logic (if exists)
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const worker = await import("./ai-index-worker") as any;
-        if (typeof worker.processAIIndex === 'function') {
-          await worker.processAIIndex({ documentId, userId });
-        } else {
-          logger.warn("processAIIndex not implemented yet");
-        }
-      } catch {
-        logger.warn("ai-index-worker not found - skipping");
-      }
+      // TODO: Implement AI index worker
+      logger.warn("ai-index-worker not implemented yet - job queued but not processed");
 
-      logger.info({ documentId }, "AI index job completed");
+      logger.info({ documentId }, "AI index job completed (stub)");
     } catch (error: unknown) {
       logger.error({ error, documentId }, "AI index job failed");
       throw error;
@@ -95,10 +105,10 @@ const tasks: TaskList = {
     logger.info({ triggeredBy, userId }, "Processing workspace sync job");
 
     try {
-      const { workspaceSyncJob } = await import("../jobs/workspace-sync");
-      await workspaceSyncJob({ triggeredBy, userId });
+      // TODO: Implement workspace sync job
+      logger.warn("workspace-sync not implemented yet - job queued but not processed");
 
-      logger.info({ triggeredBy }, "Workspace sync job completed");
+      logger.info({ triggeredBy }, "Workspace sync job completed (stub)");
     } catch (error: unknown) {
       logger.error({ error, triggeredBy }, "Workspace sync job failed");
       throw error;
@@ -165,6 +175,95 @@ const tasks: TaskList = {
       throw error;
     }
   },
+
+  /**
+   * Email Sync Job
+   * Syncs Gmail messages to local database
+   * Supports both full and incremental sync
+   */
+  "email-sync": async (payload: unknown) => {
+    const { accountId, forceFullSync } = payload as {
+      accountId: string;
+      forceFullSync?: boolean;
+    };
+
+    logger.info({ accountId, forceFullSync }, "Processing email sync job");
+
+    try {
+      const { syncEmailAccount } = await import("../services/email-sync.service");
+      const result = await syncEmailAccount(accountId, { forceFullSync });
+
+      if (!result.success) {
+        throw new Error(result.error || "Email sync failed");
+      }
+
+      logger.info(
+        {
+          accountId,
+          syncType: result.syncType,
+          threadsProcessed: result.threadsProcessed,
+          messagesProcessed: result.messagesProcessed,
+          duration: result.duration,
+        },
+        "Email sync job completed"
+      );
+
+      // Broadcast SSE event to connected clients
+      try {
+        const { sseEvents } = await import("../services/sse-events");
+        sseEvents.broadcastSyncCompleted(accountId, {
+          syncType: result.syncType,
+          threadsProcessed: result.threadsProcessed,
+          messagesProcessed: result.messagesProcessed,
+          duration: result.duration,
+        });
+      } catch (sseError) {
+        // Non-fatal - SSE broadcast failure shouldn't fail the job
+        logger.warn({ error: sseError, accountId }, "Failed to broadcast SSE event");
+      }
+    } catch (error: unknown) {
+      logger.error({ error, accountId }, "Email sync job failed");
+      throw error;
+    }
+  },
+
+  /**
+   * Email Auto-Retry Job
+   * Automatically retries failed email sends based on nextRetryAt timestamp
+   * Runs periodically to process failed sends ready for retry
+   */
+  "email-auto-retry": async (payload: unknown, helpers) => {
+    logger.info("Processing email auto-retry job");
+
+    try {
+      const { emailAutoRetry } = await import("./tasks/email-auto-retry");
+      await emailAutoRetry(payload, helpers);
+      
+      logger.info("Email auto-retry job completed");
+    } catch (error: unknown) {
+      logger.error({ error }, "Email auto-retry job failed");
+      throw error;
+    }
+  },
+
+  /**
+   * Email-Lead Auto-Link Job
+   * Automatically links email threads to leads based on participant emails
+   * Runs after email sync to link new threads
+   */
+  "email-lead-auto-link": async (payload: unknown) => {
+    logger.info("Processing email-lead auto-link job");
+
+    try {
+      const { emailLeadAutoLinkTask } = await import("./tasks/email-lead-auto-link");
+      await emailLeadAutoLinkTask(payload as any);
+      
+      logger.info("Email-lead auto-link job completed");
+    } catch (error: unknown) {
+      logger.error({ error }, "Email-lead auto-link job failed");
+      throw error;
+    }
+  },
 };
 
 /**
@@ -198,6 +297,9 @@ export async function initializeWorker(): Promise<Runner | null> {
 
     // Set up scheduled jobs
     await setupScheduledJobs();
+
+    // Schedule email syncs for all active accounts
+    await scheduleAllEmailSyncs();
 
     return workerRunner;
   } catch (error: unknown) {
@@ -301,4 +403,80 @@ export async function shutdownWorker(): Promise<void> {
  */
 export function getWorkerRunner(): Runner | null {
   return workerRunner;
+}
+
+/**
+ * Schedule periodic email sync for an account
+ * Intelligently schedules based on account activity
+ */
+export async function scheduleEmailSync(
+  accountId: string,
+  options: {
+    /** Interval in minutes (default: 5 for active, 15 for inactive) */
+    intervalMinutes?: number;
+    /** Force full sync instead of incremental */
+    forceFullSync?: boolean;
+  } = {}
+): Promise<void> {
+  if (!workerRunner) {
+    logger.warn({ accountId }, "Worker not initialized, email sync not scheduled");
+    return;
+  }
+
+  const intervalMinutes = options.intervalMinutes || 5;
+  const runAt = new Date(Date.now() + intervalMinutes * 60 * 1000);
+
+  try {
+    await workerRunner.addJob(
+      "email-sync",
+      { accountId, forceFullSync: options.forceFullSync },
+      {
+        jobKey: `email-sync-${accountId}`,
+        runAt,
+        maxAttempts: 3,
+      }
+    );
+
+    logger.info(
+      { accountId, runAt: runAt.toISOString(), intervalMinutes },
+      "Email sync scheduled"
+    );
+  } catch (error: unknown) {
+    logger.error({ error, accountId }, "Failed to schedule email sync");
+    throw error;
+  }
+}
+
+/**
+ * Schedule periodic email sync for all active accounts
+ * Called on worker startup
+ */
+export async function scheduleAllEmailSyncs(): Promise<void> {
+  if (!workerRunner) {
+    logger.warn("Worker not initialized, skipping email sync scheduling");
+    return;
+  }
+
+  try {
+    const { db } = await import("../db");
+    const { emailAccounts } = await import("../../shared/email-schema");
+
+    // Get all active accounts
+    const accounts = await db
+      .select({ id: emailAccounts.id, email: emailAccounts.email })
+      .from(emailAccounts)
+      .where(emailAccounts.syncEnabled);
+
+    logger.info({ accountCount: accounts.length }, "Scheduling email syncs for active accounts");
+
+    for (const account of accounts) {
+      // Stagger initial syncs to avoid API rate limits
+      const staggerMinutes = Math.floor(Math.random() * 5);
+      await scheduleEmailSync(account.id, { intervalMinutes: staggerMinutes || 1 });
+    }
+
+    logger.info({ accountCount: accounts.length }, "✅ Email syncs scheduled for all accounts");
+  } catch (error: unknown) {
+    logger.error({ error }, "Failed to schedule email syncs");
+  }
 }

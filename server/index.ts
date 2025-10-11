@@ -1,5 +1,3 @@
-// Disable Redis OpenTelemetry instrumentation before any imports
-import "./disable-redis-instrumentation";
 // Load and validate environment (non-fatal in development)
 import { loadEnv } from "./config/env";
 loadEnv();
@@ -12,11 +10,11 @@ import { setupVite, serveStatic, log } from "./vite";
 import { checkDatabaseHealth, closeDatabaseConnections } from "./db";
 import { initializeSentry } from "./sentry";
 import { requestLogger } from "./logger";
-import "./jobs"; // Initialize job workers and cron jobs
+import { shouldDebugRequests, shouldLogResponses } from "./config/environment";
+// DISABLED: Old BullMQ jobs (migrated to Graphile Worker)
+// import "./jobs"; // Initialize job workers and cron jobs
 
-import { redisDebug } from "./utils/debug-logger";
-
-redisDebug("Server initialization starting...");
+console.log("Server initialization starting...");
 
 // Feature flags for CRM integrations (read at boot)
 const FEATURE_FLAGS = {
@@ -100,7 +98,7 @@ app.use(
 );
 
 // Add CSRF debugging middleware BEFORE CSRF is applied (guarded)
-if (process.env.DEBUG_HTTP === "1") {
+if (shouldDebugRequests()) {
   app.use((req, res, next) => {
     if (req.originalUrl.startsWith("/api/")) {
       const rawCsrf = req.headers["x-csrf-token"];
@@ -121,7 +119,7 @@ if (process.env.DEBUG_HTTP === "1") {
 }
 
 // Add response header debugging middleware (guarded)
-if (process.env.DEBUG_HTTP === "1") {
+if (shouldDebugRequests()) {
   app.use((req, res, next) => {
     if (req.originalUrl.startsWith("/api/")) {
       const originalSend = res.send;
@@ -235,35 +233,43 @@ app.use(express.urlencoded({ extended: false }));
 // Add structured logging
 app.use(requestLogger());
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, unknown> | undefined = undefined;
+// Heavy response logging (gated behind DEBUG_HTTP=1, disabled in production)
+// This middleware captures and logs full JSON responses - expensive operation
+if (shouldLogResponses()) {
+  app.use((req, res, next) => {
+    const start = Date.now();
+    const path = req.path;
+    let capturedJsonResponse: Record<string, unknown> | undefined = undefined;
 
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
+    const originalResJson = res.json;
+    res.json = function (bodyJson, ...args) {
+      capturedJsonResponse = bodyJson;
+      return originalResJson.apply(res, [bodyJson, ...args]);
+    };
 
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+    res.on("finish", () => {
+      const duration = Date.now() - start;
+      if (path.startsWith("/api")) {
+        let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+        if (capturedJsonResponse) {
+          logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        }
+
+        if (logLine.length > 80) {
+          logLine = `${logLine.slice(0, 79)}…`;
+        }
+
+        log(logLine);
       }
+    });
 
-      if (logLine.length > 80) {
-        logLine = `${logLine.slice(0, 79)}…`;
-      }
-
-      log(logLine);
-    }
+    next();
   });
-
-  next();
-});
+  
+  console.log("[Server] ⚠️  Heavy response logging ENABLED (DEBUG_HTTP=1)");
+} else {
+  console.log("[Server] Response logging disabled (set DEBUG_HTTP=1 to enable in development)");
+}
 
 // Function to initialize services with timeout protection
 async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
@@ -282,9 +288,15 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
         const { initializeWorker } = await import("./workers/graphile-worker");
         await initializeWorker();
         console.log("[Server] ✅ Graphile Worker initialized");
+
+        // Start email auto-retry scheduler
+        console.log("[Server] Starting email auto-retry scheduler...");
+        const { startEmailRetryScheduler } = await import("./services/email-retry-scheduler");
+        startEmailRetryScheduler();
+        console.log("[Server] ✅ Email auto-retry scheduler started");
       } catch (workerError) {
         console.warn(
-          "[Server] Graphile Worker initialization failed, continuing without background jobs:",
+          "[Server] ⚠️ Graphile Worker failed to initialize - background jobs will not run:",
           workerError
         );
       }
@@ -333,7 +345,7 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
       cdnService.setupCDNMiddleware(app);
 
       console.log("[Server] CDN and asset optimization initialized successfully");
-      console.log("[Server] BullMQ workers and cache pre-warming started successfully");
+      console.log("[Server] Background job processing initialized successfully");
     } catch (error) {
       console.error("[Server] ❌ Service initialization error:", error);
       // Don't crash - continue with basic functionality
@@ -354,17 +366,18 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
 (async () => {
   console.log("[Server] ===== SERVER STARTUP BEGIN =====");
   try {
-    // Supabase Auth: stateless JWT – no express-session required
-    console.log("[Server] Skipping session middleware (Supabase JWT)");
-
-    // No session configuration – continue with stateless pipeline
-    const storeType = "none";
-    console.log("[Server] ✅ Session middleware skipped (stateless)");
+    // Configure Postgres session store (for impersonation & admin features)
+    console.log("[Server] Initializing Postgres session store...");
+    const { sessionMiddleware } = await import("./session-store");
+    app.use(sessionMiddleware);
+    
+    const storeType = "PostgresSessionStore";
+    console.log("[Server] ✅ Session middleware configured (Postgres)");
     console.log("[Server] Session store type:", storeType);
-    console.log("[Server] Production mode: N/A");
+    console.log("[Server] Production mode:", process.env.NODE_ENV === "production");
 
     // Add comprehensive request logging middleware (guarded)
-    if (process.env.DEBUG_HTTP === "1") {
+    if (shouldDebugRequests()) {
       app.use((req, res, next) => {
         if (req.originalUrl.startsWith("/api/")) {
           console.log("🎯 [Request Pipeline] Processing API request:", {
@@ -383,7 +396,7 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
     }
 
     // Add API route protection logging BEFORE route registration (guarded)
-    if (process.env.DEBUG_HTTP === "1") {
+    if (shouldDebugRequests()) {
       app.use("/api/*", (req, res, next) => {
         console.log("🛡️ API Route Protection - Ensuring Express handles:", req.originalUrl);
         next();
@@ -534,12 +547,30 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
 // Graceful shutdown handlers
 process.on("SIGINT", async () => {
   console.log("Received SIGINT, shutting down gracefully");
+  
+  // Stop email retry scheduler
+  try {
+    const { stopEmailRetryScheduler } = await import("./services/email-retry-scheduler");
+    stopEmailRetryScheduler();
+  } catch (error) {
+    console.warn("Failed to stop email retry scheduler:", error);
+  }
+  
   await closeDatabaseConnections();
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
   console.log("Received SIGTERM, shutting down gracefully");
+  
+  // Stop email retry scheduler
+  try {
+    const { stopEmailRetryScheduler } = await import("./services/email-retry-scheduler");
+    stopEmailRetryScheduler();
+  } catch (error) {
+    console.warn("Failed to stop email retry scheduler:", error);
+  }
+  
   await closeDatabaseConnections();
   process.exit(0);
 });

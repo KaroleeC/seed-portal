@@ -32,7 +32,8 @@
     "paths": {
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"],
-      "@server/*": ["./server/*"]
+      "@server/*": ["./server/*"],
+      "@test/*": ["./test/*"]
     },
 
     /* Type Checking */
@@ -52,6 +53,7 @@
     "shared/**/*",
     "server/**/*",
     "test/**/*",
+    "config/**/*",
     "vite.config.ts",
     "vitest.config.ts",
     "tailwind.config.ts",

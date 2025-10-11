@@ -5,11 +5,12 @@
  * Import this in your test setup file.
  */
 
-import { setupServer } from "msw/node";
-import { handlers } from "./handlers";
+import { setupServer } from 'msw/node'
+import { handlers } from './handlers'
+import { gmailHandlers } from './gmail-handlers'
 
-// Create MSW server with all handlers
-export const server = setupServer(...handlers);
+// Combine all MSW handlers
+export const server = setupServer(...handlers, ...gmailHandlers)
 
 // Export handlers for test-specific overrides
 export { handlers };

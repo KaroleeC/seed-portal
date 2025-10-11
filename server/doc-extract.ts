@@ -191,10 +191,10 @@ export async function extractTextFromBoxFile(
     if (!info) return null;
     // Build versioned cache key
     const versionKey = makeFileCacheKey(info);
-    const redisKey = versionKey ? cache.generateKey(CachePrefix.AI_BOX_TEXT, versionKey) : null;
-    // Check Redis cache first (cross-process)
-    if (redisKey) {
-      const cached = await cache.get<{ name: string; text: string }>(redisKey);
+    const cacheKey = versionKey ? cache.generateKey(CachePrefix.AI_BOX_TEXT, versionKey) : null;
+    // Check in-memory cache first
+    if (cacheKey) {
+      const cached = await cache.get<{ name: string; text: string }>(cacheKey);
       if (cached) return cached;
     }
     // Fallback local in-memory cache
@@ -211,7 +211,7 @@ export async function extractTextFromBoxFile(
     const text = String(raw || "").slice(0, MAX_PER_DOC_CHARS);
     const out = { name: info.name, text };
     if (versionKey) EXTRACT_CACHE.set(versionKey, { ...out, ts: Date.now() });
-    if (redisKey) await cache.set(redisKey, out, CacheTTL.ONE_DAY);
+    if (cacheKey) await cache.set(cacheKey, out, CacheTTL.ONE_DAY);
     return out;
   } catch (e: any) {
     logger.warn("[DocExtract] extractTextFromBoxFile failed", {

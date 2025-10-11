@@ -27,30 +27,42 @@ const preview: Preview = {
       },
     },
     backgrounds: {
-      default: "dark",
-      values: [
-        {
+      options: {
+        dark: {
           name: "dark",
           value: "hsl(222.2 84% 4.9%)",
         },
-        {
+
+        light: {
           name: "light",
           value: "hsl(0 0% 100%)",
-        },
-      ],
+        }
+      }
     },
   },
+
   decorators: [
-    (Story) => (
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-        <QueryClientProvider client={queryClient}>
-          <div className="min-h-screen bg-background text-foreground">
-            <Story />
-          </div>
-        </QueryClientProvider>
-      </ThemeProvider>
-    ),
+    (Story, context) => {
+      const theme = context.globals.theme || "dark";
+      
+      React.useEffect(() => {
+        const root = document.documentElement;
+        root.classList.remove("light", "dark");
+        root.classList.add(theme);
+      }, [theme]);
+
+      return (
+        <ThemeProvider attribute="class" forcedTheme={theme} enableSystem={false}>
+          <QueryClientProvider client={queryClient}>
+            <div className="min-h-screen bg-background text-foreground p-4">
+              <Story />
+            </div>
+          </QueryClientProvider>
+        </ThemeProvider>
+      );
+    },
   ],
+
   globalTypes: {
     theme: {
       description: "Global theme for components",
@@ -58,11 +70,20 @@ const preview: Preview = {
       toolbar: {
         title: "Theme",
         icon: "circlehollow",
-        items: ["light", "dark"],
+        items: [
+          { value: "light", icon: "sun", title: "Light" },
+          { value: "dark", icon: "moon", title: "Dark" },
+        ],
         dynamicTitle: true,
       },
     },
   },
+
+  initialGlobals: {
+    backgrounds: {
+      value: "dark"
+    }
+  }
 };
 
 export default preview;

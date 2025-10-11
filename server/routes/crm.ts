@@ -465,6 +465,57 @@ router.get("/api/crm/leads", requireAuth, searchRateLimit, async (req, res) => {
   }
 });
 
+// GET /api/crm/leads/emails - Get all lead email addresses for filtering
+// MUST come before /api/crm/leads/:id to avoid matching "emails" as an ID
+router.get("/api/crm/leads/emails", requireAuth, async (req, res) => {
+  try {
+    // Query all leads - just get payload which contains email
+    const leads = await db
+      .select({
+        payload: crmLeads.payload,
+        contactId: crmLeads.contactId,
+      })
+      .from(crmLeads);
+
+    // Collect all unique emails from payload
+    const emailSet = new Set<string>();
+    
+    for (const lead of leads) {
+      // Get email from payload.email
+      const payloadEmail = (lead.payload as any)?.email;
+      if (payloadEmail && typeof payloadEmail === 'string') {
+        emailSet.add(payloadEmail.toLowerCase());
+      }
+    }
+    
+    // If we need contact emails too, query them separately for leads with contactId
+    const contactIds = leads
+      .map(l => l.contactId)
+      .filter((id): id is string => id !== null && id !== undefined);
+    
+    if (contactIds.length > 0) {
+      const { crmContacts } = await import("@shared/schema");
+      const { inArray } = await import("drizzle-orm");
+      
+      const contacts = await db
+        .select({ email: crmContacts.email })
+        .from(crmContacts)
+        .where(inArray(crmContacts.id, contactIds));
+      
+      for (const contact of contacts) {
+        if (contact.email) {
+          emailSet.add(contact.email.toLowerCase());
+        }
+      }
+    }
+
+    return res.json({ emails: Array.from(emailSet) });
+  } catch (error: any) {
+    logger.error({ err: error }, "[CRM] fetch lead emails error");
+    return res.status(500).json({ message: "Failed to fetch lead emails" });
+  }
+});
+
 // GET /api/crm/leads/:id
 router.get("/api/crm/leads/:id", requireAuth, async (req, res) => {
   const id = String(req.params.id || "");

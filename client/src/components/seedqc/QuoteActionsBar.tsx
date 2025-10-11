@@ -37,6 +37,7 @@ export function QuoteActionsBar({
           type="button"
           onClick={onSave}
           disabled={isSaveDisabled}
+          data-testid="qa-save-quote"
           className="flex-1 bg-[#253e31] text-white font-semibold py-4 px-6 rounded-lg hover:bg-[#253e31]/90 active:bg-[#253e31]/80 focus:ring-2 focus:ring-[#e24c00] focus:ring-offset-2 button-shimmer transition-all duration-300"
         >
           <Save className="w-4 h-4 mr-2" />
@@ -47,6 +48,7 @@ export function QuoteActionsBar({
           type="button"
           onClick={onReset}
           variant="outline"
+          data-testid="qa-reset-quote"
           className="px-4 py-4 border text-muted-foreground hover:bg-muted"
         >
           Reset
@@ -59,6 +61,7 @@ export function QuoteActionsBar({
             type="button"
             onClick={onPushToHubSpot}
             disabled={isPushDisabled}
+            data-testid="qa-push-hubspot"
             className="flex-1 bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-orange-700 active:bg-orange-800 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50 button-shimmer transition-all duration-300"
           >
             <Upload className="w-4 h-4 mr-2" />
@@ -68,7 +71,7 @@ export function QuoteActionsBar({
       )}
 
       {showNotFoundAlert && (
-        <Alert className="border-amber-200 bg-amber-50">
+        <Alert className="border-amber-200 bg-amber-50" data-testid="qa-hubspot-not-found-alert">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertDescription className="text-amber-800">
             Contact not found in HubSpot. Please verify the email address or add the contact to

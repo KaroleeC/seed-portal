@@ -168,6 +168,7 @@ export function useEmailComposer({
           attachments,
           sendAt,
           trackingEnabled,
+          draftId, // Link to draft for retry support
         },
       });
 

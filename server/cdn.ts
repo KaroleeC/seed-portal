@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import crypto from "crypto";
 import { promises as fs } from "fs";
+import { ASSETS_PATH } from "./constants";
 
 interface AssetManifest {
   [key: string]: {
@@ -20,7 +21,7 @@ class CDNService {
   private version: string;
 
   constructor() {
-    this.assetsPath = path.join(process.cwd(), "client", "dist", "assets");
+    this.assetsPath = ASSETS_PATH;
     this.baseUrl = process.env.CDN_BASE_URL || "";
     this.version = process.env.DEPLOYMENT_VERSION || Date.now().toString();
   }

@@ -88,7 +88,7 @@ npm uninstall bullmq ioredis
 
 **No longer needed:**
 
-- ~~`REDIS_URL`~~ ❌ (Can be removed from Doppler)
+- ~~`REDIS_URL`~~ ❌ (Removed - migrated to Postgres sessions and Graphile Worker)
 
 **Still required:**
 

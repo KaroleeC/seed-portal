@@ -165,43 +165,139 @@ router.get("/api/email/send-status/:messageId", requireAuth, async (req: any, re
 });
 
 /**
- * POST /api/email/retry-send/:draftId
- * Retry sending a failed email
+ * POST /api/email/retry-send/:statusId
+ * Retry sending a failed email using send status ID
  */
-router.post("/api/email/retry-send/:draftId", requireAuth, async (req: any, res: Response) => {
+router.post("/api/email/retry-send/:statusId", requireAuth, async (req: any, res: Response) => {
   try {
-    const { draftId } = req.params;
+    const { statusId } = req.params;
+    const userId = String(req.user?.id || req.principal?.userId || "");
 
-    // Get draft
-    const [draft] = await db
+    // Get send status
+    const [sendStatus] = await db
+      .select()
+      .from(emailSendStatus)
+      .where(eq(emailSendStatus.id, statusId))
+      .limit(1);
+
+    if (!sendStatus) {
+      return res.status(404).json({ error: "Send status not found" });
+    }
+
+    // Check retry count
+    if (sendStatus.retryCount >= sendStatus.maxRetries) {
+      return res.status(400).json({ 
+        error: "Maximum retry attempts exceeded",
+        retryCount: sendStatus.retryCount,
+        maxRetries: sendStatus.maxRetries,
+      });
+    }
+
+    // Get draft if available
+    if (!sendStatus.draftId) {
+      return res.status(400).json({ error: "No draft associated with this send status" });
+    }
+
+    const [draftData] = await db
       .select()
       .from(emailDrafts)
       .innerJoin(emailAccounts, eq(emailDrafts.accountId, emailAccounts.id))
-      .where(eq(emailDrafts.id, draftId))
+      .where(eq(emailDrafts.id, sendStatus.draftId))
       .limit(1);
 
-    if (!draft) {
+    if (!draftData) {
       return res.status(404).json({ error: "Draft not found" });
     }
 
-    // Check send attempts
-    const sendAttempts = (draft.email_drafts.sendAttempts || 0) + 1;
-    if (sendAttempts > 3) {
-      return res.status(400).json({ error: "Maximum retry attempts exceeded" });
+    // Verify user owns the account
+    if (draftData.email_accounts.userId !== userId) {
+      return res.status(403).json({ error: "Unauthorized" });
     }
 
-    // Update draft
-    await db
-      .update(emailDrafts)
-      .set({
-        sendStatus: "sending",
-        sendAttempts,
-      })
-      .where(eq(emailDrafts.id, draftId));
+    const draft = draftData.email_drafts;
+    const account = draftData.email_accounts;
 
-    // TODO: Trigger actual send (integrate with send endpoint)
-    // For now, just return success
-    res.json({ success: true, attempts: sendAttempts });
+    // Import send service
+    const { createEmailSendService } = await import("../../services/email-send.service");
+    const { decryptEmailTokens } = await import("../../services/email-tokens");
+
+    // Decrypt tokens
+    const { accessToken, refreshToken } = decryptEmailTokens(account as any);
+    const emailSendService = createEmailSendService(accessToken, refreshToken);
+
+    // Update retry count
+    await db
+      .update(emailSendStatus)
+      .set({
+        status: "sending",
+        retryCount: sendStatus.retryCount + 1,
+        updatedAt: new Date(),
+      })
+      .where(eq(emailSendStatus.id, statusId));
+
+    // Attempt to send
+    try {
+      const toRecipients = draft.to || [];
+      const ccRecipients = draft.cc || [];
+      const bccRecipients = draft.bcc || [];
+
+      const result = await emailSendService.sendEmail({
+        accountEmail: account.email,
+        to: toRecipients.map((r: any) => r.email),
+        cc: ccRecipients.length > 0 ? ccRecipients.map((r: any) => r.email) : undefined,
+        bcc: bccRecipients.length > 0 ? bccRecipients.map((r: any) => r.email) : undefined,
+        subject: draft.subject,
+        html: draft.bodyHtml,
+        text: draft.bodyText || undefined,
+        inReplyTo: draft.inReplyToMessageId || undefined,
+        attachments: draft.attachments || undefined,
+      });
+
+      // Update status to sent (sendEmail already does this, but we update our original record)
+      await db
+        .update(emailSendStatus)
+        .set({
+          status: "sent",
+          gmailMessageId: result.id,
+          gmailThreadId: result.threadId,
+          messageId: result.messageId,
+          sentAt: new Date(),
+          errorMessage: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(emailSendStatus.id, statusId));
+
+      res.json({ 
+        success: true, 
+        retryCount: sendStatus.retryCount + 1,
+        messageId: result.messageId,
+      });
+    } catch (error: any) {
+      // Update status to failed again
+      const { determineBounceType, calculateNextRetry } = await import("../../services/email-tracking");
+      const { type: bounceType, reason } = determineBounceType(error.message || String(error));
+
+      await db
+        .update(emailSendStatus)
+        .set({
+          status: bounceType || "failed",
+          errorMessage: error.message || String(error),
+          bounceType: bounceType || undefined,
+          bounceReason: reason,
+          failedAt: new Date(),
+          nextRetryAt: calculateNextRetry(sendStatus.retryCount + 1),
+          updatedAt: new Date(),
+        })
+        .where(eq(emailSendStatus.id, statusId));
+
+      res.status(500).json({ 
+        success: false,
+        error: "Retry failed",
+        message: error.message,
+        retryCount: sendStatus.retryCount + 1,
+        canRetry: (sendStatus.retryCount + 1) < sendStatus.maxRetries,
+      });
+    }
   } catch (error) {
     console.error("[Email] Failed to retry send:", error);
     res.status(500).json({ error: "Failed to retry send" });

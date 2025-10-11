@@ -162,8 +162,8 @@ If fails, install pgvector on your Postgres instance.
 
 ### Worker not starting
 
-- Check REDIS_URL is set
-- Verify Redis is running: `redis-cli ping`
+- Check DATABASE_URL is set
+- Verify Postgres is accessible
 - Check logs for connection errors
 
 ### Retrieval returns empty

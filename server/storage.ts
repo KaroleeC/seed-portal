@@ -348,7 +348,6 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   constructor() {
     console.log("[Storage] Initializing storage...");
-    console.log("[Storage] REDIS_URL:", process.env.REDIS_URL ? "Set" : "Not set");
   }
 
   // ===== Calculator Service Content =====

@@ -5,6 +5,7 @@ import { createGmailService } from "../../services/gmail-service";
 import { requireAuth } from "../../middleware/supabase-auth";
 import { eq, desc } from "drizzle-orm";
 import { emailAccounts, emailThreads, emailMessages } from "../../../shared/email-schema";
+import { withETag } from "../../middleware/etag.js";
 
 const router = Router();
 
@@ -15,8 +16,10 @@ const router = Router();
 /**
  * GET /api/email/threads
  * List email threads for an account
+ * 
+ * Cacheable: ETag enabled with 1-minute cache
  */
-router.get("/api/email/threads", requireAuth, async (req: any, res: Response) => {
+router.get("/api/email/threads", requireAuth, withETag({ maxAge: 60 }), async (req: any, res: Response) => {
   try {
     const accountId = req.query.accountId as string;
     const label = req.query.label as string | undefined;
@@ -73,6 +76,19 @@ router.get("/api/email/threads", requireAuth, async (req: any, res: Response) =>
               !t.labels?.includes("SENT") &&
               !t.labels?.includes("DRAFT")
           );
+          break;
+
+        case "LEADS":
+          // Threads linked to leads in LEADIQ
+          // Query email_thread_leads to get linked thread IDs
+          const linkedThreadsQuery = await db.query(`
+            SELECT DISTINCT thread_id
+            FROM email_thread_leads
+            WHERE thread_id = ANY($1)
+          `, [threads.map(t => t.id)]);
+          
+          const linkedThreadIds = new Set(linkedThreadsQuery.rows.map(r => r.thread_id));
+          filteredThreads = threads.filter((t) => linkedThreadIds.has(t.id));
           break;
 
         case "INBOX_LEADS":

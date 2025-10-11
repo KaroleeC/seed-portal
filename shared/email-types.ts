@@ -146,7 +146,7 @@ export interface SyncStatusResponse {
 // UI State Types
 // ============================================================================
 
-export type EmailFolder = "INBOX" | "SENT" | "STARRED" | "DRAFT" | "TRASH" | "ARCHIVE";
+export type EmailFolder = "INBOX" | "SENT" | "STARRED" | "DRAFT" | "TRASH" | "ARCHIVE" | "LEADS";
 
 export interface FolderConfig {
   id: EmailFolder;
