@@ -11,7 +11,7 @@ interface CacheOptions {
 }
 
 class CacheManager {
-  private memoryCache: Map<string, { value: any; expiresAt: number }> = new Map();
+  private memoryCache: Map<string, { value: unknown; expiresAt: number }> = new Map();
   private initialized = false;
 
   async initialize() {
@@ -39,9 +39,9 @@ class CacheManager {
         return null;
       }
 
-      return entry.value;
+      return entry.value as T;
     } catch (error) {
-      logger.error("[Cache] Error getting cache value:", error);
+      logger.error({ error }, "[Cache] Error getting cache value");
       return null;
     }
   }
@@ -56,7 +56,7 @@ class CacheManager {
 
       this.memoryCache.set(cacheKey, { value, expiresAt });
     } catch (error) {
-      logger.error("[Cache] Error setting cache value:", error);
+      logger.error({ error }, "[Cache] Error setting cache value");
     }
   }
 
@@ -67,7 +67,7 @@ class CacheManager {
       const cacheKey = this.getKey(key, options.namespace);
       this.memoryCache.delete(cacheKey);
     } catch (error) {
-      logger.error("[Cache] Error deleting cache value:", error);
+      logger.error({ error }, "[Cache] Error deleting cache value");
     }
   }
 
@@ -95,7 +95,7 @@ class CacheManager {
         );
       }
     } catch (error) {
-      logger.error("[Cache] Error invalidating cache pattern:", error);
+      logger.error({ error }, "[Cache] Error invalidating cache pattern");
     }
   }
 

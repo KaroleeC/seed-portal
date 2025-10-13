@@ -22,6 +22,7 @@
 // Middleware intentionally mutates req/res objects
 import type { Request, Response, NextFunction } from "express";
 import type { z } from "zod";
+import { getErrorMessage as getErrorMessageUtil } from "../utils/error-handling";
 
 // ============================================================================
 // AUTHENTICATION
@@ -33,9 +34,14 @@ import type { z } from "zod";
  *
  * Usage: Apply to all non-public routes
  */
-export function requireAuth(req: Request, res: Response, next: NextFunction) {
+export function requireAuth(
+  req: Request & { isAuthenticated?: () => boolean },
+  res: Response,
+  next: NextFunction
+): void {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized" });
+    void res.status(401).json({ message: "Unauthorized" });
+    return;
   }
   next();
 }
@@ -81,14 +87,17 @@ export function validateRequest<T extends z.ZodType>(schema: T, data: unknown): 
 /**
  * Middleware factory for validating request bodies
  */
-export function validateBody<T extends z.ZodType>(schema: T) {
-  return (req: Request, res: Response, next: NextFunction) => {
+export function validateBody<T extends z.ZodType>(
+  schema: T
+): (req: Request, res: Response, next: NextFunction) => void {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.body);
     if (!result.success) {
-      return res.status(400).json({
+      void res.status(400).json({
         message: "Validation failed",
         errors: result.error.errors,
       });
+      return;
     }
     req.body = result.data;
     next();
@@ -98,15 +107,19 @@ export function validateBody<T extends z.ZodType>(schema: T) {
 /**
  * Middleware factory for validating query parameters
  */
-export function validateQuery<T extends z.ZodType>(schema: T) {
-  return (req: Request, res: Response, next: NextFunction) => {
+export function validateQuery<T extends z.ZodType>(
+  schema: T
+): (req: Request, res: Response, next: NextFunction) => void {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.query);
     if (!result.success) {
-      return res.status(400).json({
+      void res.status(400).json({
         message: "Invalid query parameters",
         errors: result.error.errors,
       });
+      return;
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     req.query = result.data as any;
     next();
   };
@@ -118,26 +131,16 @@ export function validateQuery<T extends z.ZodType>(schema: T) {
 
 /**
  * Extract error message from various error types
+ * Re-exported from utils/error-handling for convenience
  */
-export function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  if (typeof error === "string") {
-    return error;
-  }
-  if (error && typeof error === "object" && "message" in error) {
-    return String(error.message);
-  }
-  return "An unknown error occurred";
-}
+export const getErrorMessage = getErrorMessageUtil;
 
 /**
  * Standard error response handler
  * Logs error and sends appropriate HTTP response
  */
 export function handleError(error: unknown, res: Response, context?: string): void {
-  const message = getErrorMessage(error);
+  const message = getErrorMessageUtil(error);
   console.error(`[Error${context ? ` - ${context}` : ""}]:`, error);
 
   // Determine status code based on error type
@@ -169,9 +172,9 @@ export function handleError(error: unknown, res: Response, context?: string): vo
  * Catches errors and passes them to error handler
  */
 export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
-) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
+): (req: Request, res: Response, next: NextFunction) => void {
+  return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch((error) => {
       handleError(error, res);
     });
@@ -188,8 +191,12 @@ export function asyncHandler(
  */
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
-export function createRateLimiter(options: { windowMs: number; max: number; message?: string }) {
-  return (req: Request, res: Response, next: NextFunction) => {
+export function createRateLimiter(options: {
+  windowMs: number;
+  max: number;
+  message?: string;
+}): (req: Request, res: Response, next: NextFunction) => void {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const key = req.ip || req.socket.remoteAddress || "unknown";
     const now = Date.now();
 
@@ -202,9 +209,10 @@ export function createRateLimiter(options: { windowMs: number; max: number; mess
     record.count++;
 
     if (record.count > options.max) {
-      return res.status(429).json({
+      void res.status(429).json({
         message: options.message || "Too many requests, please try again later",
       });
+      return;
     }
 
     next();
@@ -219,17 +227,23 @@ export function createRateLimiter(options: { windowMs: number; max: number; mess
  * CSRF token validation middleware
  * Validates CSRF token from header or body
  */
-export function validateCsrf(req: Request, res: Response, next: NextFunction) {
+export function validateCsrf(
+  req: Request & { session?: { csrfToken?: string } },
+  res: Response,
+  next: NextFunction
+): void {
   // Skip CSRF for GET, HEAD, OPTIONS
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
-    return next();
+    next();
+    return;
   }
 
   const token = req.headers["x-csrf-token"] || req.body?._csrf;
-  const sessionToken = (req.session as any)?.csrfToken;
+  const sessionToken = req.session?.csrfToken;
 
   if (!token || !sessionToken || token !== sessionToken) {
-    return res.status(403).json({ message: "Invalid CSRF token" });
+    void res.status(403).json({ message: "Invalid CSRF token" });
+    return;
   }
 
   next();

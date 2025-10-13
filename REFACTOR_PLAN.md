@@ -10,13 +10,13 @@ Refactoring 920-line `index.tsx` + 1056-line `email.ts` into modular, maintainab
 **Lines:** ~150
 **Benefit:** Single source of truth, better IntelliSense
 
-### Extract from index.tsx:
+### Extract from index.tsx
 
 - `EmailAccount`
 - `EmailThread`
 - `EmailDraft`
 
-### Extract from server:
+### Extract from server
 
 - Request/Response types
 - Gmail API types
@@ -29,7 +29,7 @@ Refactoring 920-line `index.tsx` + 1056-line `email.ts` into modular, maintainab
 - `client/src/pages/seedmail/lib/emailFormatters.ts`
 - `client/src/pages/seedmail/lib/emailUtils.ts`
 
-### Functions to extract from index.tsx:
+### Functions to extract from index.tsx
 
 - `getInitials()` → emailUtils.ts
 - `formatRelativeTime()` → emailFormatters.ts
@@ -40,7 +40,7 @@ Refactoring 920-line `index.tsx` + 1056-line `email.ts` into modular, maintainab
 **File:** `client/src/pages/seedmail/hooks/useEmailThreads.ts`
 **Lines:** ~100-150
 
-### Extract from index.tsx:
+### Extract from index.tsx
 
 - Thread fetching logic with useQuery
 - Thread filtering

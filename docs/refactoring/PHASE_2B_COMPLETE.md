@@ -337,8 +337,8 @@ All services are **production-ready** and can be integrated into Calculator:
 
 ### **Medium Priority (Soon)**
 
-6. 🚧 `useContactVerification` - Works but needs async test fixes
-7. ✅ `quote-validator` - Ready for form validation
+1. 🚧 `useContactVerification` - Works but needs async test fixes
+2. ✅ `quote-validator` - Ready for form validation
 
 ---
 

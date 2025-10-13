@@ -1,4 +1,4 @@
-# ✅ Graphile Worker Migration Complete!
+# ✅ Graphile Worker Migration Complete
 
 **Date:** October 9, 2025  
 **Migration Time:** ~10 minutes  
@@ -269,7 +269,7 @@ For this deployment, we started fresh since the system was in development.
 
 ## 📚 Documentation
 
-**Graphile Worker Docs:** https://worker.graphile.org/
+**Graphile Worker Docs:** <https://worker.graphile.org/>
 
 **Key Concepts:**
 
@@ -286,7 +286,7 @@ For this deployment, we started fresh since the system was in development.
 
 ---
 
-## ✅ Migration Complete!
+## ✅ Migration Complete
 
 **Graphile Worker is now your primary job queue system.** 🎉
 

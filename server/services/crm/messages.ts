@@ -7,6 +7,7 @@ import { db } from "../../db";
 import { crmMessages, crmContacts, crmLeads } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { eq, and, desc, or } from "drizzle-orm";
+import { logger } from "../../logger";
 
 export interface CreateMessageInput {
   contactId: string;
@@ -35,37 +36,29 @@ export async function handleContactedStopConditions(contactId: string): Promise<
     const now = new Date();
 
     // 1) Always stamp lastContactedAt
-    await (db as any)
+    await db
       .update(crmLeads)
-      .set({ lastContactedAt: now, updatedAt: now } as any)
-      .where(eq(crmLeads.contactId as any, contactId as any));
+      .set({ lastContactedAt: now, updatedAt: now })
+      .where(eq(crmLeads.contactId, contactId));
 
     // 2) new -> validated
-    await (db as any)
+    await db
       .update(crmLeads)
-      .set({ status: "validated", updatedAt: now } as any)
-      .where(
-        and(
-          eq(crmLeads.contactId as any, contactId as any),
-          eq(crmLeads.status as any, "new" as any)
-        ) as any
-      );
+      .set({ status: "validated", updatedAt: now })
+      .where(and(eq(crmLeads.contactId, contactId), eq(crmLeads.status, "new")));
 
     // 3) stage: unassigned/assigned -> contact_made
-    await (db as any)
+    await db
       .update(crmLeads)
-      .set({ stage: "contact_made", updatedAt: now } as any)
+      .set({ stage: "contact_made", updatedAt: now })
       .where(
         and(
-          eq(crmLeads.contactId as any, contactId as any),
-          or(
-            eq(crmLeads.stage as any, "unassigned" as any),
-            eq(crmLeads.stage as any, "assigned" as any)
-          ) as any
-        ) as any
+          eq(crmLeads.contactId, contactId),
+          or(eq(crmLeads.stage, "unassigned"), eq(crmLeads.stage, "assigned"))
+        )
       );
   } catch (error) {
-    console.error("[Messages] Failed to apply contacted stop conditions:", error);
+    logger.error({ error }, "[Messages] Failed to apply contacted stop conditions");
   }
 }
 
@@ -278,11 +271,15 @@ async function autoTransitionLeadStatus(contactId: string): Promise<void> {
       })
       .where(and(eq(crmLeads.contactId, contactId), eq(crmLeads.status, "new")));
 
-    console.log(
+    logger.info(
+      {
+        contactId,
+        leadsCount: leads.length,
+      },
       `[Messages] Auto-transitioned ${leads.length} lead(s) to "validated" for contact ${contactId}`
     );
   } catch (error) {
-    console.error("[Messages] Failed to auto-transition lead status:", error);
+    logger.error({ error }, "[Messages] Failed to auto-transition lead status");
     // Don't throw - message was stored successfully, this is just a bonus feature
   }
 }

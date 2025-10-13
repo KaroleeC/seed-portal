@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { Redirect } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { logger } from "@/lib/logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,8 +39,8 @@ export default function AuthPage() {
 
     try {
       await loginMutation.mutateAsync({ email, password });
-    } catch (error: any) {
-      console.error("[Auth] Login error:", error);
+    } catch (error) {
+      logger.error("[Auth] Login error", error);
     }
   };
 

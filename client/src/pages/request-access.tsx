@@ -33,7 +33,7 @@ export default function RequestAccess() {
         duration: 3000,
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Request Failed",
         description: error.message || "Failed to send access request. Please try again.",

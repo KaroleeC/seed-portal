@@ -1,8 +1,4 @@
-export function getErrorMessage(err: unknown): string {
-  if (err instanceof Error) return err.message;
-  try {
-    return JSON.stringify(err);
-  } catch {
-    return String(err);
-  }
-}
+/**
+ * Re-export from error-handling.ts for backward compatibility
+ */
+export { getErrorMessage } from "./error-handling";

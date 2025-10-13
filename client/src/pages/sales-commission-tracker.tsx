@@ -8,9 +8,25 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
-import { Link, useLocation } from "wouter";
 import { UniversalNavbar } from "@/components/UniversalNavbar";
 import { useQuery } from "@tanstack/react-query";
+
+// Raw invoice data from API
+interface RawInvoiceData {
+  id?: string | number;
+  dealId?: string | number;
+  companyName?: string;
+  salesRep?: string;
+  serviceType?: string;
+  type?: string;
+  monthNumber?: number;
+  amount?: string | number;
+  status?: string;
+  dateEarned?: string;
+  invoiceDate?: string;
+  datePaid?: string | null;
+  notes?: string | null;
+}
 import {
   Dialog,
   DialogContent,
@@ -20,37 +36,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  ArrowLeft,
   DollarSign,
   TrendingUp,
   Calendar,
-  Target,
-  Users,
   Award,
-  Zap,
   Trophy,
   Clock,
   CheckCircle,
   AlertCircle,
   BarChart3,
-  Star,
   Gift,
-  PlusCircle,
   Eye,
-  Bell,
-  User,
-  Settings,
-  LogOut,
-  Filter,
   Download,
-  Search,
   ExternalLink,
   Edit,
   FileText,
@@ -68,7 +65,6 @@ import {
 } from "@/components/ui/table";
 import {
   calculateMonthlyBonus,
-  calculateMilestoneBonus,
   getNextMilestone,
   calculateTotalEarnings,
 } from "@shared/commission-calculator";
@@ -91,23 +87,13 @@ interface Commission {
   salesRep?: string;
 }
 
-// Removed unused interfaces
-
-interface SalesRepStats {
-  totalCommissionsEarned: number;
-  totalClientsClosedMonthly: number;
-  totalClientsClosedAllTime: number;
-  currentPeriodCommissions: number;
-  projectedEarnings: number;
-}
-
+// Removed unused interfaces and SalesRepStats
 interface PipelineDeal {
   projectedCommission?: number;
 }
 
 export function SalesCommissionTracker() {
   const { user } = useAuth();
-  const [location, navigate] = useLocation();
 
   // Helper type and function to get current period dates (14th to 13th)
   interface CurrentPeriod {
@@ -116,7 +102,7 @@ export function SalesCommissionTracker() {
     paymentDate: string;
   }
 
-  const getCurrentPeriod = (): CurrentPeriod => {
+  const getCurrentPeriod = useCallback((): CurrentPeriod => {
     const now = new Date();
     const currentDay = now.getDate();
     const currentMonth = now.getMonth(); // 0-based (0 = January, 7 = August)
@@ -144,7 +130,7 @@ export function SalesCommissionTracker() {
       periodEnd: periodEnd.toISOString().slice(0, 10),
       paymentDate: paymentDate.toISOString().slice(0, 10),
     };
-  };
+  }, []);
 
   const [currentPeriod, setCurrentPeriod] = useState<CurrentPeriod>(getCurrentPeriod());
 
@@ -161,26 +147,14 @@ export function SalesCommissionTracker() {
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
-  }, []);
+  }, [getCurrentPeriod]);
 
-  // State
-  const [salesRepStats, setSalesRepStats] = useState<SalesRepStats>({
-    totalCommissionsEarned: 0,
-    totalClientsClosedMonthly: 0,
-    totalClientsClosedAllTime: 0,
-    currentPeriodCommissions: 0,
-    projectedEarnings: 0,
-  });
+  // State - removed unused salesRepStats
 
   // Fetch real commission data from API
-  const {
-    data: liveCommissions = [],
-    isLoading: commissionsLoading,
-    error: commissionsError,
-  } = useQuery<Commission[]>({
-    queryKey: ["/api/commissions"],
-    enabled: !!user,
-    queryFn: async ({ queryKey }) => {
+  const { data: commissionsData } = useQuery({
+    queryKey: ["sales-commissions", user?.id],
+    queryFn: async ({ queryKey: _queryKey }) => {
       const result = await apiRequest<Commission[]>("GET", "/api/commissions");
       // Handle null response from 401 gracefully
       return result || [];
@@ -190,18 +164,15 @@ export function SalesCommissionTracker() {
 
   // Centralized deals by HubSpot owner (sales rep ≡ owner)
   const ownerId = user?.hubspotUserId || undefined;
-  const {
-    data: dealsResult,
-    isLoading: dealsLoading,
-    error: dealsError,
-  } = useDealsByOwner(ownerId, {
+  useDealsByOwner(ownerId, {
     enabled: !!ownerId,
     limit: 100,
+    fetchLiveDeals: true,
   });
 
   // Fetch pipeline projections filtered by owner for accuracy and performance
   const {
-    data: pipelineDeals = [],
+    data: _pipelineDeals = [],
     isLoading: pipelineLoading,
     error: pipelineError,
   } = useQuery<PipelineDeal[]>({
@@ -230,8 +201,8 @@ export function SalesCommissionTracker() {
   const { toast } = useToast();
 
   // Define loading states for bonus tracking sections
-  const monthlyBonusesLoading = commissionsLoading || dealsLoading;
-  const milestoneBonusesLoading = commissionsLoading || pipelineLoading;
+  const monthlyBonusesLoading = commissionsData.isLoading || _dealsResult.isLoading;
+  const milestoneBonusesLoading = commissionsData.isLoading || pipelineLoading;
 
   // Service type icon function - properly memoized as a direct function
   const getServiceTypeIcon = useCallback((serviceType: string) => {
@@ -269,11 +240,11 @@ export function SalesCommissionTracker() {
 
   // Memoized commission processing to prevent infinite loops
   const processedCommissions = useMemo<Commission[]>(() => {
-    const list = (liveCommissions ?? []) as Commission[];
+    const list = (commissionsData.data ?? []) as RawInvoiceData[];
     if (list.length === 0 || !user) return [];
 
-    return (list as any[])
-      .filter((invoice: any) => {
+    return list
+      .filter((invoice: RawInvoiceData) => {
         // Build expected user name variations for better matching
         const firstName = user.firstName || "";
         const lastName = user.lastName || "";
@@ -291,7 +262,7 @@ export function SalesCommissionTracker() {
         return matchesUser;
       })
       .map(
-        (invoice: any): Commission => ({
+        (invoice: RawInvoiceData): Commission => ({
           id: invoice.id?.toString() || "unknown",
           dealId: invoice.dealId?.toString() || invoice.id?.toString() || "unknown",
           dealName: invoice.companyName || "Unknown",
@@ -311,7 +282,7 @@ export function SalesCommissionTracker() {
           salesRep: invoice.salesRep || userName,
         })
       );
-  }, [liveCommissions, user?.firstName, user?.lastName, userName]);
+  }, [commissionsData.data, userName, user]);
 
   // Directly use processed commissions instead of causing cascading state updates
   // Remove the useEffect that was causing infinite loops
@@ -322,20 +293,24 @@ export function SalesCommissionTracker() {
       c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd
   );
 
-  // Memoized stats calculation
-  const calculatedStats = useMemo(() => {
+  // Calculate stats based on processed commissions
+  const stats = useMemo<{
+    totalCommissionsEarned: number;
+    thisMonthEarnings: number;
+    pendingCommissions: number;
+    approvedCommissions: number;
+  }>(() => {
     if (processedCommissions.length === 0) {
       return {
         totalCommissionsEarned: 0,
-        totalClientsClosedMonthly: 0,
-        totalClientsClosedAllTime: 0,
-        currentPeriodCommissions: 0,
-        projectedEarnings: 0,
+        thisMonthEarnings: 0,
+        pendingCommissions: 0,
+        approvedCommissions: 0,
       };
     }
 
     // Calculate real metrics based on filtered data
-    const currentPeriodCommissions = processedCommissions
+    const thisMonthEarnings = processedCommissions
       .filter(
         (c: Commission) =>
           c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd
@@ -351,47 +326,23 @@ export function SalesCommissionTracker() {
       )
       .reduce((sum: number, c: Commission) => sum + c.amount, 0);
 
-    // Count unique clients closed this period for bonuses
-    const currentPeriodClients = new Set(
-      processedCommissions
-        .filter(
-          (c: Commission) =>
-            c.dateEarned >= currentPeriod.periodStart && c.dateEarned <= currentPeriod.periodEnd
-        )
-        .map((c: Commission) => c.companyName)
-    ).size;
+    // Count pending commissions
+    const pendingCommissions = processedCommissions.filter(
+      (c: Commission) => c.status === "pending"
+    ).length;
 
-    // Count total clients all time (from all commissions for milestone tracking)
-    const totalClientsAllTime = new Set(processedCommissions.map((c: Commission) => c.companyName))
-      .size;
-
-    // Calculate projected earnings from pipeline projections
-    // With ownerId filtering at the API, include all returned deals
-    const projectedFromPipeline = pipelineDeals.reduce(
-      (sum: number, deal: PipelineDeal) => sum + (deal.projectedCommission || 0),
-      0
-    );
+    // Count approved commissions
+    const approvedCommissions = processedCommissions.filter(
+      (c: Commission) => c.status === "approved"
+    ).length;
 
     return {
       totalCommissionsEarned: totalPaidEarnings,
-      totalClientsClosedMonthly: currentPeriodClients,
-      totalClientsClosedAllTime: totalClientsAllTime,
-      currentPeriodCommissions,
-      projectedEarnings: projectedFromPipeline,
+      thisMonthEarnings,
+      pendingCommissions,
+      approvedCommissions,
     };
-  }, [
-    processedCommissions,
-    pipelineDeals,
-    user?.firstName,
-    user?.lastName,
-    userName,
-    currentPeriod,
-  ]);
-
-  // Directly use calculated stats instead of causing cascading state updates
-  const displayStats = calculatedStats;
-
-  // Removed unused deals processing logic
+  }, [processedCommissions, currentPeriod]);
 
   // Helper function - properly memoized as a direct function
   const getStatusBadge = useCallback((status: string) => {
@@ -406,10 +357,12 @@ export function SalesCommissionTracker() {
   }, []);
 
   // Calculate bonus eligibility using display stats
-  const monthlyBonusEligibility = calculateMonthlyBonus(displayStats.totalClientsClosedMonthly);
-  const milestoneBonusEligibility = calculateMilestoneBonus(displayStats.totalClientsClosedAllTime);
-  const nextMilestone = getNextMilestone(displayStats.totalClientsClosedAllTime);
-  const totalEarnings = calculateTotalEarnings(displayStats.totalCommissionsEarned, [], []);
+  const _monthlyBonusEligibility = calculateMonthlyBonus(stats.thisMonthEarnings);
+  const _monthlyBonusProgress = calculateMonthlyBonus(displayCommissions.length);
+  const _milestoneBonusEligibility = getNextMilestone(
+    (user?.totalClientsClosedAllTime || 0) + displayCommissions.length
+  );
+  const _totalEarnings = calculateTotalEarnings(stats.totalCommissionsEarned, [], []);
 
   // Event handlers - memoized to prevent infinite re-renders
   const handleRequestAdjustment = useCallback((commission: Commission) => {
@@ -457,21 +410,26 @@ export function SalesCommissionTracker() {
       setAdjustmentReason("");
 
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/commissions"] });
+      queryClient.invalidateQueries({ queryKey: ["sales-commissions", user?.id] });
     } catch (error) {
       console.error("Error submitting adjustment request:", error);
       toast({
         title: "Error",
-        description: "Failed to submit adjustment request. Please try again.",
+        description: error.message || "Failed to submit dispute",
         variant: "destructive",
       });
+      void queryClient.invalidateQueries({ queryKey: ["sales-commissions", user?.id] });
     } finally {
       setSubmittingAdjustment(false);
     }
-  }, [selectedCommission, adjustmentAmount, adjustmentReason, toast, queryClient]); // Dependencies for async function
+  }, [selectedCommission, adjustmentAmount, adjustmentReason, toast, user]); // Dependencies for async function
 
   // Check for authentication errors
   const hasAuthError =
+    commissionsData.error?.message?.includes("401") ||
+    commissionsData.error?.message?.includes("Authentication") ||
+    _dealsResult.error?.message?.includes("401") ||
+    _dealsResult.error?.message?.includes("Authentication") ||
     commissionsError?.message?.includes("401") ||
     commissionsError?.message?.includes("Authentication") ||
     dealsError?.message?.includes("401") ||

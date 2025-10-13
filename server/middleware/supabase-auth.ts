@@ -1,7 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { storage } from "../storage";
 import { logger } from "../logger";
+import { db } from "../db";
 import type { Request, Response, NextFunction } from "express";
+import type { Role, Permission } from "@shared/schema";
 
 // Initialize Supabase client for server-side auth verification
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -26,14 +28,26 @@ const supabase =
     : null;
 
 // Extended request interface for Supabase Auth
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface AuthenticatedRequest extends Request {
   principal?: {
     userId: number;
     authUserId: string;
     email: string;
     role: string;
-    roles?: any[];
-    permissions?: any[];
+    roles?: Role[];
+    permissions?: Permission[];
+  };
+  user?: {
+    id: number;
+    email: string;
+    role: string;
+    firstName?: string;
+    lastName?: string;
+    profilePhoto?: string | null;
+    defaultDashboard?: string;
+    authUserId?: string | null;
+    authProvider?: string | null;
   };
 }
 
@@ -55,7 +69,6 @@ export async function requireSupabaseAuth(
       logger.debug(`E2E Test: Bypassing auth for ${testEmail}`);
 
       // Look up user by email
-      const db = storage.db;
       const user = await db
         .selectFrom("users")
         .selectAll()
@@ -67,6 +80,7 @@ export async function requireSupabaseAuth(
           userId: user.id,
           authUserId: user.auth_user_id || "",
           email: user.email,
+          // eslint-disable-next-line rbac/no-direct-role-checks -- Reading role from database for session, not for authorization
           role: user.role || "employee",
           roles: [],
           permissions: [],
@@ -190,7 +204,7 @@ export async function requireSupabaseAuth(
           authProvider: "supabase",
           role,
           profilePhoto: authUser.user_metadata?.avatar_url ?? null,
-        } as any);
+        } as unknown as Parameters<typeof storage.createUser>[0]);
 
         logger.info(
           { userId: appUser.id, email: appUser.email, role: appUser.role },
@@ -203,8 +217,8 @@ export async function requireSupabaseAuth(
     await storage.updateUserLastLogin(appUser.id);
 
     // Load user's RBAC information
-    let userRoles: any[] = [];
-    let userPermissions: any[] = [];
+    let userRoles: Role[] = [];
+    let userPermissions: Permission[] = [];
     try {
       const { getUserAuthzInfo } = await import("../services/authz/authorize");
       const authzInfo = await getUserAuthzInfo(appUser.id);
@@ -227,7 +241,7 @@ export async function requireSupabaseAuth(
 
     // For backward compatibility, also attach user to req.user
     // eslint-disable-next-line no-param-reassign
-    (req as any).user = appUser;
+    (req as AuthenticatedRequest).user = appUser;
 
     logger.info(
       { userId: appUser.id, email: appUser.email, role: appUser.role },
@@ -235,7 +249,7 @@ export async function requireSupabaseAuth(
     );
 
     next();
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error({ err: error, url: req.originalUrl }, "SupabaseAuth: authentication error");
 
     return res.status(500).json({
@@ -248,6 +262,10 @@ export async function requireSupabaseAuth(
  * Main authentication middleware - uses Supabase Auth for all requests
  * This is the canonical requireAuth export used by all routes
  */
-export async function requireAuth(req: any, res: any, next: any): Promise<any> {
-  return requireSupabaseAuth(req, res, next);
+export async function requireAuth(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response | void> {
+  return requireSupabaseAuth(req as AuthenticatedRequest, res, next);
 }

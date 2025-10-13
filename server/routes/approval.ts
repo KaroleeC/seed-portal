@@ -7,7 +7,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { storage } from "../storage.js";
-import { requireAuth, asyncHandler, validateBody, handleError } from "./_shared";
+import { requireAuth, asyncHandler, validateBody } from "./_shared";
 
 const router = Router();
 
@@ -60,9 +60,9 @@ router.post(
       ...({
         status: "pending_approval",
         approvalRequestedAt: new Date().toISOString(),
-        approvalRequestedBy: requestedBy || (req.user as any)?.email,
+        approvalRequestedBy: requestedBy || (req.user as { email?: string })?.email,
         approvalNotes: notes,
-      } as any),
+      } as Record<string, unknown>),
     });
 
     res.json({
@@ -96,9 +96,9 @@ router.post(
       ...({
         status: "approved",
         approvedAt: new Date().toISOString(),
-        approvedBy: approvedBy || (req.user as any)?.email,
+        approvedBy: approvedBy || (req.user as { email?: string })?.email,
         approvalNotes: notes,
-      } as any),
+      } as Record<string, unknown>),
     });
 
     res.json({
@@ -132,9 +132,9 @@ router.post(
       ...({
         status: "rejected",
         rejectedAt: new Date().toISOString(),
-        rejectedBy: rejectedBy || (req.user as any)?.email,
+        rejectedBy: rejectedBy || (req.user as { email?: string })?.email,
         rejectionReason: reason,
-      } as any),
+      } as Record<string, unknown>),
     });
 
     res.json({
@@ -155,7 +155,7 @@ router.get(
   asyncHandler(async (req, res) => {
     // TODO: Implement listQuotes method in storage
     // For now, return empty array
-    const quotes: any[] = [];
+    const quotes: unknown[] = [];
 
     res.json({
       quotes,
@@ -184,17 +184,29 @@ router.get(
     }
 
     // Extract approval history from quote
+    type QuoteWithApproval = typeof quote & {
+      status?: string;
+      approvalRequestedAt?: string;
+      approvalRequestedBy?: string;
+      approvedAt?: string;
+      approvedBy?: string;
+      rejectedAt?: string;
+      rejectedBy?: string;
+      rejectionReason?: string;
+      approvalNotes?: string;
+    };
+    const quoteWithApproval = quote as QuoteWithApproval;
     const history = {
       quoteId,
-      status: (quote as any).status || "draft",
-      requestedAt: (quote as any).approvalRequestedAt,
-      requestedBy: (quote as any).approvalRequestedBy,
-      approvedAt: (quote as any).approvedAt,
-      approvedBy: (quote as any).approvedBy,
-      rejectedAt: (quote as any).rejectedAt,
-      rejectedBy: (quote as any).rejectedBy,
-      rejectionReason: (quote as any).rejectionReason,
-      notes: (quote as any).approvalNotes,
+      status: quoteWithApproval.status || "draft",
+      requestedAt: quoteWithApproval.approvalRequestedAt,
+      requestedBy: quoteWithApproval.approvalRequestedBy,
+      approvedAt: quoteWithApproval.approvedAt,
+      approvedBy: quoteWithApproval.approvedBy,
+      rejectedAt: quoteWithApproval.rejectedAt,
+      rejectedBy: quoteWithApproval.rejectedBy,
+      rejectionReason: quoteWithApproval.rejectionReason,
+      notes: quoteWithApproval.approvalNotes,
     };
 
     res.json(history);

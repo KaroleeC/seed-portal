@@ -215,15 +215,15 @@ const loadQuoteIntoForm = (quote: Quote) => {
 
 ### **Medium Priority**
 
-5. **Pricing Display Logic**
+1. **Pricing Display Logic**
    - Already using `shared/pricing.ts` ✅
    - Could extract display formatting
 
-6. **Quote Actions** (Reset, Clear, Archive)
+2. **Quote Actions** (Reset, Clear, Archive)
    - Extract action handlers
    - Add tests for each action
 
-7. **Contact Search Logic**
+3. **Contact Search Logic**
    - HubSpot contact search
    - Live results handling
    - Selection logic

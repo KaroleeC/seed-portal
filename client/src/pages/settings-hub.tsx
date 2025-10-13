@@ -1,15 +1,14 @@
 import React, { useMemo } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import { usePermissions } from "@/hooks/use-permissions";
 import { UniversalNavbar } from "@/components/UniversalNavbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { Calculator, DollarSign, BookOpen, Users, Wrench } from "lucide-react";
+import { Calculator, DollarSign, BookOpen, Users, Wrench, type LucideIcon } from "lucide-react";
 import { SettingsLayout, type SettingsNavItem } from "@/components/settings/SettingsLayout";
 export default function SettingsHub() {
-  const { user } = useAuth();
+  const { isAdmin } = usePermissions();
   const [, setLocation] = useLocation();
-  const isAdmin = user?.role === "admin";
 
   const nav: SettingsNavItem[] = useMemo(
     () => [
@@ -38,7 +37,7 @@ export default function SettingsHub() {
       to: string;
       variant?: "default" | "outline" | "ghost" | "secondary";
     }>;
-    icon: any;
+    icon: LucideIcon;
     id: string;
   }) => (
     <div id={id} className="scroll-mt-20">

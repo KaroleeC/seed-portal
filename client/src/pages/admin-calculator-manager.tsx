@@ -28,6 +28,40 @@ interface ServiceContentItem {
   updatedAt?: string;
 }
 
+// Type for included fields configuration
+interface ServiceIncludedFields {
+  bookkeeping?: {
+    includeIndustry?: boolean;
+    includeTransactions?: boolean;
+    includeCleanupMonths?: boolean;
+  };
+  taas?: {
+    includeEntities?: boolean;
+    includeStatesFiled?: boolean;
+    includeInternational?: boolean;
+    includeOwners?: boolean;
+  };
+  ap?: {
+    includeTier?: boolean;
+    includeVolumeBand?: boolean;
+    includeVendorCount?: boolean;
+  };
+  ar?: {
+    includeTier?: boolean;
+    includeInvoicesBand?: boolean;
+    includeCustomerCount?: boolean;
+  };
+  payroll?: {
+    includeEmployeeCount?: boolean;
+    includeStateCount?: boolean;
+  };
+  agentOfService?: {
+    includeAdditionalStates?: boolean;
+    includeComplexCase?: boolean;
+  };
+  [key: string]: Record<string, boolean> | undefined;
+}
+
 function defaultAgreementLink(serviceKey: string): string {
   // Client fallback; server also supplies env-configurable defaults
   return `https://agreements.example.com/${serviceKey}`;
@@ -71,7 +105,7 @@ function defaultSowTemplate(serviceKey: string): string {
 }
 
 // Provide sensible defaults for Included Fields so the UI shows expected items even without prior data
-function defaultIncluded(): any {
+function defaultIncluded(): ServiceIncludedFields {
   return {
     bookkeeping: {
       includeIndustry: true,
@@ -105,21 +139,21 @@ function defaultIncluded(): any {
   };
 }
 
-function deepMergeIncluded(base: any, override: any): any {
+function deepMergeIncluded(base: ServiceIncludedFields, override: Partial<ServiceIncludedFields>): ServiceIncludedFields {
   if (!override || typeof override !== "object") return base;
-  const result: any = { ...base };
+  const result: ServiceIncludedFields = { ...base };
   for (const key of Object.keys(override)) {
     const o = override[key];
     if (o && typeof o === "object" && !Array.isArray(o)) {
-      result[key] = deepMergeIncluded(base[key] || {}, o);
-    } else {
-      result[key] = o;
+      result[key] = deepMergeIncluded(base[key] || {}, o) as unknown as Record<string, boolean>;
+    } else if (o !== undefined) {
+      result[key] = o as unknown as Record<string, boolean>;
     }
   }
   return result;
 }
 
-function parseIncluded(json?: string | null): any {
+function parseIncluded(json?: string | null): ServiceIncludedFields {
   const base = defaultIncluded();
   if (!json) return base;
   try {
@@ -130,7 +164,7 @@ function parseIncluded(json?: string | null): any {
   }
 }
 
-function stringifyIncluded(obj: any): string {
+function stringifyIncluded(obj: ServiceIncludedFields): string {
   try {
     return JSON.stringify(obj || {});
   } catch {
@@ -138,13 +172,18 @@ function stringifyIncluded(obj: any): string {
   }
 }
 
-function tokenReplace(template: string, tokens: Record<string, any>): string {
+function tokenReplace(template: string, tokens: Record<string, unknown>): string {
   // Very safe, minimal token replacement: {{token}}
   return (template || "").replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_: string, key: string) => {
     const value = key
       .split(".")
-      .reduce<any>(
-        (acc: any, k: string) => (acc && acc[k] !== undefined ? acc[k] : undefined),
+      .reduce<unknown>(
+        (acc: unknown, k: string) => {
+          if (acc && typeof acc === "object" && k in acc) {
+            return (acc as Record<string, unknown>)[k];
+          }
+          return undefined;
+        },
         tokens
       );
     return value !== undefined && value !== null ? String(value) : "";
@@ -163,7 +202,7 @@ export default function AdminCalculatorManager() {
     refetch: refetchAdmin,
   } = useQuery<{ items: ServiceContentItem[]; msaLink?: string }>({
     queryKey: seedqcKeys.adminContent(),
-    queryFn: async () => await apiRequest("GET", "/api/admin/apps/seedqc/content"),
+    queryFn: async () => await apiRequest("POST", "/api/admin/apps/seedqc/content"),
   });
 
   // Fallback: load public calculator content (no admin requirement)
@@ -235,7 +274,7 @@ export default function AdminCalculatorManager() {
       ]);
       toast({ title: "Saved", description: "Calculator content updated" });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast({
         title: "Save failed",
         description: err?.message || "Unable to save content",
@@ -280,12 +319,12 @@ export default function AdminCalculatorManager() {
     const val = !!checked;
     const parts = path.split("."); // e.g. ["ap","includeVendorCount"]
     const obj = { ...(included[activeService] || {}) };
-    let ref: any = obj;
+    let ref: Record<string, unknown> = obj as Record<string, unknown>;
     // Safely walk all but the last segment
     for (const seg of parts.slice(0, -1)) {
       if (!seg) continue;
       ref[seg] = ref[seg] || {};
-      ref = ref[seg];
+      ref = ref[seg] as Record<string, unknown>;
     }
     const last = parts[parts.length - 1];
     if (!last) return;
@@ -376,8 +415,8 @@ export default function AdminCalculatorManager() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    refetchAdmin();
-                    refetchPublic();
+                    void refetchAdmin();
+                    void refetchPublic();
                   }}
                   className="flex items-center gap-2"
                 >

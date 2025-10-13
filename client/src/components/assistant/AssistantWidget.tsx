@@ -36,12 +36,13 @@ export function AssistantWidget() {
 
   const persona = useMemo(() => {
     const pref = (user?.defaultDashboard || "").toLowerCase();
-    if (user?.role === "admin") return "admin" as const;
+    // Determine persona based on default dashboard
     if (pref.includes("admin")) return "admin" as const;
     if (pref.includes("service")) return "service" as const;
     if (pref.includes("sales")) return "sales" as const;
-    return user?.role === "admin" ? ("admin" as const) : ("sales" as const);
-  }, [user?.defaultDashboard, user?.role]);
+    // Default to sales for any other dashboard
+    return "sales" as const;
+  }, [user?.defaultDashboard]);
 
   const allowBox = persona === "service" || persona === "admin";
 

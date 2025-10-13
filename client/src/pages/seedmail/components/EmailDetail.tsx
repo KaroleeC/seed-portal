@@ -317,9 +317,7 @@ export function EmailDetail({
     const to =
       mode === "reply_all"
         ? Array.from(
-            new Set(
-              [msg?.from?.email, ...(msg?.to?.map((r: any) => r.email) || [])].filter(Boolean)
-            )
+            new Set([msg?.from?.email, ...(msg?.to?.map((r) => r.email) || [])].filter(Boolean))
           ).join(", ")
         : msg?.from?.email || "";
 

@@ -45,6 +45,11 @@ export default defineConfig({
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "client", "src", "assets"),
       "@test": path.resolve(import.meta.dirname, "test"),
+      "@features": path.resolve(import.meta.dirname, "client", "src", "features"),
+      "@components": path.resolve(import.meta.dirname, "client", "src", "components"),
+      "@hooks": path.resolve(import.meta.dirname, "client", "src", "hooks"),
+      "@utils": path.resolve(import.meta.dirname, "client", "src", "lib"),
+      "@types": path.resolve(import.meta.dirname, "client", "src", "types"),
     },
   },
   optimizeDeps: {

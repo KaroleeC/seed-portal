@@ -57,13 +57,11 @@ router.get(
       });
     } catch (error) {
       console.error("Authorization check error:", error);
-      res
-        .status(500)
-        .json({
-          message: "Authorization check failed",
-          error: getErrorMessage(error),
-          timestamp: new Date().toISOString(),
-        });
+      res.status(500).json({
+        message: "Authorization check failed",
+        error: getErrorMessage(error),
+        timestamp: new Date().toISOString(),
+      });
     }
   }
 );
@@ -124,13 +122,11 @@ router.get(
       });
     } catch (error) {
       console.error("Cerbos explanation error:", error);
-      res
-        .status(500)
-        .json({
-          message: "Failed to get Cerbos decision explanation",
-          error: getErrorMessage(error),
-          timestamp: new Date().toISOString(),
-        });
+      res.status(500).json({
+        message: "Failed to get Cerbos decision explanation",
+        error: getErrorMessage(error),
+        timestamp: new Date().toISOString(),
+      });
     }
   }
 );

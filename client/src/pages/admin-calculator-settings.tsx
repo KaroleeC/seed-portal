@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -25,7 +24,6 @@ import {
   RefreshCw,
   FileText,
   Link as LinkIcon,
-  Eye,
   Sliders,
   DollarSign,
 } from "lucide-react";
@@ -82,7 +80,7 @@ function defaultSowTemplate(serviceKey: string): string {
   return `${header + body + tokens}\nDeliverables:\n- Outline of deliverables here...\n`;
 }
 
-function parseIncluded(json?: string | null): any {
+function parseIncluded(json?: string | null): Record<string, unknown> {
   if (!json) return {};
   try {
     return JSON.parse(json);
@@ -91,17 +89,23 @@ function parseIncluded(json?: string | null): any {
   }
 }
 
-function renderTemplate(template: string, tokens: Record<string, any>): string {
-  return (template || "").replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_: string, key: string) => {
-    const value = key
-      .split(".")
-      .reduce<any>(
-        (acc: any, k: string) => (acc && acc[k] !== undefined ? acc[k] : undefined),
-        tokens
-      );
-    return value !== undefined && value !== null ? String(value) : "";
-  });
-}
+// Unused function - commented out for now
+// function renderTemplate(template: string, tokens: Record<string, unknown>): string {
+//   return (template || "").replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_: string, key: string) => {
+//     const value = key
+//       .split(".")
+//       .reduce<unknown>(
+//         (acc: unknown, k: string) => {
+//           if (acc && typeof acc === "object" && k in acc) {
+//             return (acc as Record<string, unknown>)[k];
+//           }
+//           return undefined;
+//         },
+//         tokens
+//       );
+//     return value !== undefined && value !== null ? String(value) : "";
+//   });
+// }
 
 export default function AdminCalculatorSettings() {
   const { toast } = useToast();
@@ -175,9 +179,9 @@ export default function AdminCalculatorSettings() {
       await queryClient.invalidateQueries({
         queryKey: ["admin", "hubspot", "pipeline-config"],
       });
-      refetchHsConfig();
+      void refetchHsConfig();
     },
-    onError: (err: any) =>
+    onError: (err: Error) =>
       toast({
         title: "Save failed",
         description: err?.message,
@@ -208,14 +212,14 @@ export default function AdminCalculatorSettings() {
     }
     return initial;
   });
-  const [included, setIncluded] = useState<Record<string, any>>({});
+  const [included, setIncluded] = useState<Record<string, Record<string, unknown>>>({});
 
   // Hydrate local from API
   useEffect(() => {
     const src = adminCalc?.items?.length ? adminCalc : publicCalc;
     const sourceItems = src?.items || [];
     const nextLocal: Record<string, ServiceContentItem> = {};
-    const nextIncluded: Record<string, any> = {};
+    const nextIncluded: Record<string, Record<string, unknown>> = {};
     for (const svc of SERVICES) {
       const found = sourceItems.find((i) => i.service === svc.key);
       const base: ServiceContentItem = found || { service: svc.key };
@@ -242,10 +246,7 @@ export default function AdminCalculatorSettings() {
       agreementLink?: string | null;
       includedFieldsJson?: string;
     }) => {
-      return await apiRequest(`/api/admin/apps/seedqc/content/${payload.service}`, {
-        method: "PUT",
-        body: payload,
-      });
+      return await apiRequest("PUT", `/api/admin/apps/seedqc/content/${payload.service}`, payload);
     },
     onSuccess: async () => {
       toast({ title: "Saved successfully" });
@@ -261,10 +262,10 @@ export default function AdminCalculatorSettings() {
           queryKey: ["/api/apps/seedqc/content"],
         }),
       ]);
-      refetchAdminCalc();
-      refetchPublicCalc();
+      void refetchAdminCalc();
+      void refetchPublicCalc();
     },
-    onError: (err: any) =>
+    onError: (err: Error) =>
       toast({
         title: "Save failed",
         description: err?.message,
@@ -383,8 +384,8 @@ export default function AdminCalculatorSettings() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    refetchAdminCalc();
-                    refetchPublicCalc();
+                    void refetchAdminCalc();
+                    void refetchPublicCalc();
                   }}
                   className="flex items-center gap-2"
                 >
@@ -445,7 +446,7 @@ export default function AdminCalculatorSettings() {
                 <div className="flex items-center gap-3">
                   <Button
                     variant="outline"
-                    onClick={() => refetchHsPipelines()}
+                    onClick={() => void refetchHsPipelines()}
                     className="w-full md:w-auto"
                   >
                     <RefreshCw className="w-4 h-4" /> Refresh from HubSpot

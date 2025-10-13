@@ -63,7 +63,7 @@ export function ExistingQuotesModal({
                   <Card
                     key={quote.id}
                     className="hover:bg-muted/40 transition-colors"
-                    data-testid={`qa-existing-quote-item`}
+                    data-testid="qa-existing-quote-item"
                   >
                     <CardContent className="p-3">
                       <div className="flex items-center justify-between">

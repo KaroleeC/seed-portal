@@ -175,9 +175,11 @@ If fails, install pgvector on your Postgres instance.
 ### Slow queries
 
 - Verify HNSW index exists:
+
   ```sql
   SELECT indexname FROM pg_indexes WHERE tablename = 'ai_chunks';
   ```
+
 - Tune HNSW parameters if needed (m, ef_construction)
 
 ## Next Steps

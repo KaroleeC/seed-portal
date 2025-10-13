@@ -17,9 +17,26 @@ ON CONFLICT (name) DO NOTHING;
 INSERT INTO permissions (key, description, category, is_active) VALUES
   -- Admin permissions
   ('admin.*', 'Full administrative access', 'admin', true),
+  ('admin.access', 'Access admin dashboard and features', 'admin', true),
+  ('admin.debug', 'Access debugging and diagnostics tools', 'admin', true),
   ('diagnostics.view', 'View system diagnostics and health checks', 'admin', true),
-  ('users.manage', 'Manage user accounts and roles', 'admin', true),
-  ('roles.manage', 'Manage roles and permissions', 'admin', true),
+  
+  -- User management permissions
+  ('users.view', 'View user accounts', 'users', true),
+  ('users.manage', 'Manage user accounts', 'users', true),
+  ('users.create', 'Create new user accounts', 'users', true),
+  ('users.update', 'Update user accounts', 'users', true),
+  ('users.delete', 'Delete user accounts', 'users', true),
+  
+  -- Role management permissions
+  ('roles.view', 'View roles', 'roles', true),
+  ('roles.manage', 'Manage roles', 'roles', true),
+  ('roles.assign', 'Assign roles to users', 'roles', true),
+  ('roles.remove', 'Remove roles from users', 'roles', true),
+  
+  -- Permission management permissions
+  ('permissions.view', 'View permissions', 'permissions', true),
+  ('permissions.manage', 'Manage permissions', 'permissions', true),
   
   -- Commission permissions
   ('commissions.view', 'View all commission data', 'commissions', true),
@@ -66,7 +83,32 @@ INSERT INTO permissions (key, description, category, is_active) VALUES
   
   -- Client permissions
   ('clients.view', 'View client information', 'clients', true),
-  ('clients.manage', 'Manage client accounts', 'clients', true)
+  ('clients.manage', 'Manage client accounts', 'clients', true),
+  
+  -- Department management permissions
+  ('departments.view', 'View departments and organizational structure', 'departments', true),
+  ('departments.manage', 'Manage departments and organizational structure', 'departments', true),
+  
+  -- System administration permissions
+  ('admin.audit', 'View system audit logs', 'admin', true),
+  ('admin.cache', 'Manage system cache', 'admin', true),
+  ('admin.impersonate', 'Impersonate other users', 'admin', true),
+  ('admin.metrics', 'View system metrics and analytics', 'admin', true),
+  ('admin.logs', 'View system logs', 'admin', true),
+  ('admin.diagnostics', 'Run system diagnostics', 'admin', true),
+  ('admin.policies', 'Manage authorization policies', 'admin', true),
+  
+  -- CRM configuration permissions
+  ('crm.config.view', 'View CRM configuration', 'crm', true),
+  ('crm.config.manage', 'Manage CRM configuration (sources, statuses, stages)', 'crm', true),
+  
+  -- Commission adjustment permissions
+  ('commissions.update', 'Update commission records', 'commissions', true),
+  ('commissions.reject', 'Reject commission adjustments', 'commissions', true),
+  ('commissions.unreject', 'Unreject commission adjustments', 'commissions', true),
+  ('commissions.view_adjustments', 'View commission adjustments', 'commissions', true),
+  ('commissions.view_projections', 'View pipeline projections', 'commissions', true),
+  ('commissions.view_summary', 'View commission summaries', 'commissions', true)
 ON CONFLICT (key) DO NOTHING;
 
 -- Assign permissions to roles

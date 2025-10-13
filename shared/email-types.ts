@@ -4,6 +4,8 @@
  * Used by both client and server
  */
 
+import type React from "react";
+
 // ============================================================================
 // Core Email Types
 // ============================================================================
@@ -151,7 +153,7 @@ export type EmailFolder = "INBOX" | "SENT" | "STARRED" | "DRAFT" | "TRASH" | "AR
 export interface FolderConfig {
   id: EmailFolder;
   label: string;
-  icon: any; // Lucide icon component
+  icon: React.ComponentType<{ className?: string }>; // Lucide icon component
   color: string;
 }
 

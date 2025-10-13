@@ -52,10 +52,11 @@ export function FailedSendAlert({
       } else {
         throw new Error(response.message || "Retry failed");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Retry failed",
-        description: error?.message || "Failed to resend email. Please try again.",
+        description:
+          error instanceof Error ? error.message : "Failed to resend email. Please try again.",
         variant: "destructive",
       });
     } finally {

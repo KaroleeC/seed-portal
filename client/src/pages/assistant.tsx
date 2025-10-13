@@ -6,6 +6,7 @@ import { UniversalNavbar } from "@/components/UniversalNavbar";
 export default function AssistantPage() {
   const { user } = useAuth();
 
+  /* eslint-disable rbac/no-direct-role-checks -- Using role to personalize assistant persona, not for authorization */
   const persona = useMemo(() => {
     const pref = (user?.defaultDashboard || "").toLowerCase();
     if (user?.role === "admin") return "admin" as const;
@@ -14,6 +15,7 @@ export default function AssistantPage() {
     if (pref.includes("sales")) return "sales" as const;
     return user?.role === "admin" ? ("admin" as const) : ("sales" as const);
   }, [user?.defaultDashboard, user?.role]);
+  /* eslint-enable rbac/no-direct-role-checks */
 
   const initialMode = persona === "service" || persona === "admin" ? "support" : ("sell" as const);
   const allowBox = persona === "service" || persona === "admin";

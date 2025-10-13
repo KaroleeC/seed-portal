@@ -37,12 +37,13 @@ export class WeatherService {
         status: "healthy",
         responseTime: Date.now() - startTime,
       };
-    } catch (error: any) {
-      logger.error("Weather health check failed", { error: error.message });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error({ error: message }, "Weather health check failed");
 
       return {
         status: "unhealthy",
-        message: error.message,
+        message,
         responseTime: Date.now() - startTime,
       };
     }
@@ -59,11 +60,11 @@ export class WeatherService {
       // Check cache first
       const cached = await cache.get<WeatherData>(cacheKey);
       if (cached) {
-        logger.debug("Weather cache hit", { location });
+        logger.debug({ location }, "Weather cache hit");
         return cached;
       }
 
-      logger.debug("Weather API call", { location, latitude, longitude });
+      logger.debug({ location, latitude, longitude }, "Weather API call");
 
       const response = await fetch(
         `${this.baseUrl}/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`
@@ -87,9 +88,10 @@ export class WeatherService {
       // Cache the result
       await cache.set(cacheKey, JSON.stringify(weatherData), this.CACHE_TTL);
       return weatherData;
-    } catch (error: any) {
-      logger.error("Weather lookup failed", { location, error: error.message });
-      throw new Error(`Weather lookup failed: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error({ location, error: message }, "Weather lookup failed");
+      throw new Error(`Weather lookup failed: ${message}`);
     }
   }
 

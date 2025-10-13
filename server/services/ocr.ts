@@ -28,8 +28,11 @@ function getVisionClient(): ImageAnnotatorClient | null {
 
     logger.info("[OCR] Google Cloud Vision client initialized");
     return visionClient;
-  } catch (e: any) {
-    logger.error("[OCR] Failed to initialize Vision client:", e?.message);
+  } catch (e: unknown) {
+    logger.error(
+      "[OCR] Failed to initialize Vision client:",
+      e instanceof Error ? e.message : String(e)
+    );
     return null;
   }
 }
@@ -91,8 +94,11 @@ export async function extractTextWithOCR(buffer: Buffer, fileName: string): Prom
 
     logger.info(`[OCR] Extracted ${combinedText.length} chars from ${fileName} in ${duration}ms`);
     return combinedText;
-  } catch (e: any) {
-    logger.error(`[OCR] Failed to extract text from ${fileName}:`, e?.message);
+  } catch (e: unknown) {
+    logger.error(
+      `[OCR] Failed to extract text from ${fileName}:`,
+      e instanceof Error ? e.message : String(e)
+    );
     return null;
   }
 }

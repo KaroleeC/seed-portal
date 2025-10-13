@@ -2,7 +2,7 @@
 
 ## Current State Analysis
 
-### Main Components in index.tsx:
+### Main Components in index.tsx
 
 1. **State Management** (~20 lines)
    - selectedAccount, selectedFolder, selectedThread

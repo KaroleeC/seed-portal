@@ -1,6 +1,7 @@
 import type { QueryFunction } from "@tanstack/react-query";
 import { QueryClient } from "@tanstack/react-query";
 import { supabase } from "./supabaseClient";
+import { logger } from "./logger";
 
 const DEBUG_HTTP = import.meta.env.VITE_DEBUG_HTTP === "1";
 
@@ -81,12 +82,11 @@ async function throwIfResNotOk(res: Response) {
 
     // ENHANCED DEBUGGING for authentication issues (guarded)
     if (DEBUG_HTTP) {
-      console.error("[ApiRequest] ❌ HTTP Error:", {
+      logger.error("[ApiRequest] HTTP Error", undefined, {
         status: res.status,
         statusText: res.statusText,
         url: res.url,
         text,
-        timestamp: new Date().toISOString(),
       });
     }
 
@@ -95,14 +95,14 @@ async function throwIfResNotOk(res: Response) {
 }
 
 // Overloaded function to support both old and new calling patterns
-export async function apiRequest<T = any>(
+export async function apiRequest<T = unknown>(
   urlOrMethod: string,
-  optionsOrUrl?: any,
-  dataOrUndefined?: any
+  optionsOrUrl?: string | RequestInit,
+  dataOrUndefined?: unknown
 ): Promise<T> {
   let method: string;
   let url: string;
-  let data: any;
+  let data: unknown;
 
   // Check if called with new signature: apiRequest(method, url, data)
   if (typeof optionsOrUrl === "string" && dataOrUndefined !== undefined) {
@@ -119,7 +119,7 @@ export async function apiRequest<T = any>(
   // Old signature: apiRequest(url, options)
   else {
     url = getApiUrl(urlOrMethod);
-    const options = optionsOrUrl || {};
+    const options = (optionsOrUrl as RequestInit) || {};
     method = options.method || "GET";
     // Handle both raw data objects and pre-stringified JSON bodies
     if (options.body) {
@@ -135,6 +135,8 @@ export async function apiRequest<T = any>(
     const { data: sessionData } = await supabase.auth.getSession();
     const accessToken = sessionData?.session?.access_token;
 
+    const headersObj = options.headers as Record<string, string> | undefined;
+
     const requestOptions: RequestInit = {
       method,
       mode: "cors",
@@ -142,7 +144,7 @@ export async function apiRequest<T = any>(
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        ...(options.headers || {}), // Merge custom headers (like Authorization)
+        ...(headersObj || {}), // Merge custom headers (like Authorization)
       },
       credentials: "include", // This sends session cookies for authentication
     };
@@ -218,12 +220,11 @@ export async function apiRequest<T = any>(
 
   // CRITICAL: Log frontend request details for debugging (new signature)
   if (DEBUG_HTTP) {
-    console.log("[ApiRequest] 🚀 Frontend request details (new sig):", {
+    logger.debug("[ApiRequest] Frontend request details (new sig)", {
       url,
       method,
       hasCredentials: requestOptions.credentials === "include",
       headers: requestOptions.headers,
-      timestamp: new Date().toISOString(),
     });
   }
 
@@ -231,12 +232,11 @@ export async function apiRequest<T = any>(
 
   // Log response details for debugging (new signature)
   if (DEBUG_HTTP) {
-    console.log("[ApiRequest] 📥 Response details (new sig):", {
+    logger.debug("[ApiRequest] Response details (new sig)", {
       url,
       status: response.status,
       statusText: response.statusText,
       headers: Object.fromEntries(response.headers.entries()),
-      timestamp: new Date().toISOString(),
     });
   }
 
@@ -271,10 +271,9 @@ export const getQueryFn: <T>(options: { on401: UnauthorizedBehavior }) => QueryF
 
     // CRITICAL: Log query function request details
     if (DEBUG_HTTP) {
-      console.log("[QueryFn] 🔍 Query request details:", {
+      logger.debug("[QueryFn] Query request details", {
         url,
         queryKey,
-        timestamp: new Date().toISOString(),
         location: window.location.href,
         origin: window.location.origin,
       });
@@ -298,17 +297,16 @@ export const getQueryFn: <T>(options: { on401: UnauthorizedBehavior }) => QueryF
 
     // Log query function response details
     if (DEBUG_HTTP) {
-      console.log("[QueryFn] 📥 Query response details:", {
+      logger.debug("[QueryFn] Query response details", {
         url,
         status: res.status,
         statusText: res.statusText,
         headers: Object.fromEntries(res.headers.entries()),
-        timestamp: new Date().toISOString(),
       });
     }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      console.log("[QueryFn] ⚠️ 401 detected, returning null");
+      logger.info("[QueryFn] 401 detected, returning null");
       return null;
     }
 
@@ -316,7 +314,7 @@ export const getQueryFn: <T>(options: { on401: UnauthorizedBehavior }) => QueryF
     const contentType = res.headers.get("content-type") || "";
     if (!contentType.includes("application/json")) {
       const bodyText = await res.text();
-      console.warn("[QueryFn] ⚠️ Non-JSON response received:", {
+      logger.warn("[QueryFn] Non-JSON response received", {
         url,
         status: res.status,
         contentType,

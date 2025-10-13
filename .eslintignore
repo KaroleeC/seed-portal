@@ -41,6 +41,7 @@ postcss.config.*
 uploads/
 scripts/
 server/workers/
+.templates/
 
 # Temporary files
 worker.ts
@@ -64,3 +65,18 @@ temp_*.tsx
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# === TEMPORARY: Legacy integrations being removed ===
+# Don't waste time fixing lint in code that's going away
+server/services/hubspot/**
+server/services/box/**
+server/services/airtable/**
+server/hubspot*.ts
+server/box*.ts
+server/airtable*.ts
+client/src/components/**/Box*.tsx
+client/src/components/**/HubSpot*.tsx
+client/src/components/**/Airtable*.tsx
+client/src/hooks/**/use-hubspot*.ts
+client/src/hooks/**/use-box*.ts
+client/src/hooks/**/use-airtable*.ts

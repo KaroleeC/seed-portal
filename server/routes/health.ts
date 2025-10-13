@@ -34,7 +34,7 @@ router.get("/health", async (req, res) => {
       timestamp: new Date().toISOString(),
       services: healthResult.services,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Health check failed", { error: getErrorMessage(error) });
     res.status(500).json({
       status: "error",
@@ -66,7 +66,7 @@ router.get("/health/:service", async (req, res) => {
       ...serviceHealth,
       timestamp: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Service health check failed", {
       service,
       error: getErrorMessage(error),

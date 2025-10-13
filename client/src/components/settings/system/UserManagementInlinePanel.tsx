@@ -36,7 +36,7 @@ export default function UserManagementInlinePanel() {
     },
     onSuccess: () => {
       toast({ title: "Success", description: "User role updated successfully" });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
   });
 
@@ -54,7 +54,7 @@ export default function UserManagementInlinePanel() {
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Default dashboard updated successfully" });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
   });
 
@@ -82,11 +82,9 @@ export default function UserManagementInlinePanel() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        {isLoading ? (
-          <div className="text-center py-8">Loading users…</div>
-        ) : users.length === 0 ? (
-          <div className="text-center py-8">No users found</div>
-        ) : (
+        {isLoading && <div className="text-center py-8">Loading users…</div>}
+        {!isLoading && users.length === 0 && <div className="text-center py-8">No users found</div>}
+        {!isLoading && users.length > 0 && (
           <div className="divide-y">
             {users.map((user) => (
               <div key={user.id} className="flex items-center justify-between p-3 gap-3">
@@ -99,11 +97,11 @@ export default function UserManagementInlinePanel() {
                   <div className="text-xs text-muted-foreground truncate">{user.email}</div>
                 </div>
                 <div className="flex items-end gap-2">
-                  {/* Role Selector */}
+                  {/* Role Selector - reading user.role for management UI */}
                   <div className="flex flex-col min-w-[9rem]">
                     <span className="text-[11px] text-muted-foreground mb-1">Permission Level</span>
                     <Select
-                      value={user.role}
+                      value={user.role} // eslint-disable-line rbac/no-direct-role-checks
                       onValueChange={(newRole) =>
                         updateRoleMutation.mutate({ userId: user.id, role: newRole })
                       }

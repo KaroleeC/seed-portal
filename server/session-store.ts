@@ -13,7 +13,7 @@ import { pool } from "./db";
 const PgSession = connectPgSimple(session);
 
 export const sessionStore = new PgSession({
-  pool: pool,
+  pool,
   tableName: "user_sessions",
   createTableIfMissing: true, // Auto-creates the session table
   pruneSessionInterval: 60 * 15, // Cleanup old sessions every 15 min

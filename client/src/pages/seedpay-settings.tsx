@@ -3,11 +3,10 @@ import { UniversalNavbar } from "@/components/UniversalNavbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCommissionSummary } from "@/hooks/useCommissionSummary";
 import { Shield, DollarSign } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export default function SeedPaySettings() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { isAdmin } = usePermissions();
 
   const { data: summary } = useCommissionSummary();
 

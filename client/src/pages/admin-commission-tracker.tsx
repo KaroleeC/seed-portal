@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
+import { usePermissions } from "@/hooks/use-permissions";
 import { Link, useLocation } from "wouter";
 import { UniversalNavbar } from "@/components/UniversalNavbar";
 import {
@@ -252,11 +253,14 @@ export function AdminCommissionTracker() {
   const queryClient = useQueryClient();
 
   // Fetch commission adjustments from database
+  const { hasPermission } = usePermissions();
+  const canManageCommissions = hasPermission("manage_commissions" as any);
+
   const { data: adjustmentRequests = [], refetch: refetchAdjustments } = useQuery<
     AdjustmentRequest[]
   >({
     queryKey: ["/api/commission-adjustments"],
-    enabled: !!user?.role && user.role === "admin",
+    enabled: canManageCommissions,
   });
 
   // Mutations for commission adjustments
@@ -731,8 +735,8 @@ export function AdminCommissionTracker() {
     handleReviewAdjustment(request);
   }, []);
 
-  // Check if user is admin - MUST be after all hooks
-  if (!user || user.role !== "admin") {
+  // Check if user has commission management permission - MUST be after all hooks
+  if (!user || !canManageCommissions) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <SurfaceCard className="w-96">

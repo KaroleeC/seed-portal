@@ -9,36 +9,28 @@ import { boxService } from "./box-integration";
 import { msaGenerator } from "./msa-generator";
 import { requireAuth } from "./middleware/supabase-auth";
 import { sendOk, sendError } from "./utils/responses";
-import { doesHubSpotQuoteExist } from "./hubspot";
+import { getErrorMessage } from "./utils/errors";
+import { verifyHubSpotQuotes } from "./utils/hubspot-helpers";
 
 const router = express.Router();
 
-function getErrorMessage(err: unknown): string {
-  if (err instanceof Error) return err.message;
-  try {
-    return JSON.stringify(err);
-  } catch {
-    return String(err);
-  }
+// Type for Nominatim API response
+interface NominatimAddress {
+  road?: string;
+  house_number?: string;
+  city?: string;
+  town?: string;
+  village?: string;
+  state?: string;
+  postcode?: string;
+  country?: string;
 }
 
-// Helper to verify HubSpot quote existence for an array of quotes with hubspotQuoteId
-async function verifyHubSpotQuotes(
-  items: Array<{ id: number; hubspotQuoteId?: string | null }>
-): Promise<Array<{ id: number; hubspotQuoteId: string | null; existsInHubSpot: boolean }>> {
-  return await Promise.all(
-    items.map(async ({ id, hubspotQuoteId }) => {
-      let existsInHubSpot = false;
-      if (hubspotQuoteId) {
-        try {
-          existsInHubSpot = await doesHubSpotQuoteExist(String(hubspotQuoteId));
-        } catch {
-          existsInHubSpot = false;
-        }
-      }
-      return { id, hubspotQuoteId: hubspotQuoteId || null, existsInHubSpot };
-    })
-  );
+interface NominatimResult {
+  display_name: string;
+  place_id: string;
+  name?: string;
+  address: NominatimAddress;
 }
 
 /**
@@ -53,10 +45,13 @@ router.post("/quotes/:id/generate-documents", requireAuth, async (req, res) => {
       return sendError(res, "NOT_FOUND", "Quote not found", 404);
     }
 
-    logger.info("[Quote] Generating documents for quote", {
-      quoteId,
-      client: quote.companyName,
-    });
+    logger.info(
+      {
+        quoteId,
+        client: quote.companyName,
+      },
+      "[Quote] Generating documents for quote"
+    );
 
     // Extract selected services from quote
     const selectedServices = [];
@@ -110,7 +105,13 @@ router.post("/quotes/:id/generate-documents", requireAuth, async (req, res) => {
       boxFolderUrl: boxResult.webUrl,
       msaFileId: msaUploadResult.fileId,
       msaFileUrl: msaUploadResult.webUrl,
-    } as any);
+    } as {
+      id: number;
+      boxFolderId?: string;
+      boxFolderUrl?: string;
+      msaFileId?: string;
+      msaFileUrl?: string;
+    });
 
     return sendOk(
       res,
@@ -129,15 +130,21 @@ router.post("/quotes/:id/generate-documents", requireAuth, async (req, res) => {
       }
     );
 
-    logger.info("[Quote] Documents generated successfully", {
-      quoteId,
-      folderId: boxResult.folderId,
-      documentsCount: selectedServices.length + 1,
-    });
+    logger.info(
+      {
+        quoteId,
+        folderId: boxResult.folderId,
+        documentsCount: selectedServices.length + 1,
+      },
+      "[Quote] Documents generated successfully"
+    );
   } catch (error) {
-    logger.error("[Quote] Error generating documents", {
-      error: getErrorMessage(error),
-    });
+    logger.error(
+      {
+        error: getErrorMessage(error),
+      },
+      "[Quote] Error generating documents"
+    );
     return sendError(res, "GENERATE_DOCS_FAILED", "Failed to generate documents", 500, {
       error: "Failed to generate documents",
       message: getErrorMessage(error),
@@ -185,8 +192,8 @@ router.post("/quotes/:id/sync-hubspot", requireAuth, async (req, res) => {
       monthly_fee: quote.monthlyFee,
       setup_fee: quote.setupFee,
       // Box integration
-      box_folder_url: (quote as any).boxFolderUrl,
-      msa_document_url: (quote as any).msaFileUrl,
+      box_folder_url: (quote as Record<string, unknown>).boxFolderUrl as string | undefined,
+      msa_document_url: (quote as Record<string, unknown>).msaFileUrl as string | undefined,
     };
 
     // Import HubSpot service
@@ -210,12 +217,14 @@ router.post("/quotes/:id/sync-hubspot", requireAuth, async (req, res) => {
     const syncResults = { contact: false, company: false };
 
     // Prepare contact properties for sync (2-way sync with HubSpot override)
-    const contactProperties: any = {};
+    const contactProperties: Record<string, string | number | boolean> = {};
 
     // Basic contact fields - 2-way sync
     if (quote.contactFirstName) contactProperties.firstname = quote.contactFirstName;
     if (quote.contactLastName) contactProperties.lastname = quote.contactLastName;
-    if ((quote as any).contactPhone) contactProperties.phone = (quote as any).contactPhone;
+    const quoteWithPhone = quote as Record<string, unknown>;
+    if (quoteWithPhone.contactPhone)
+      contactProperties.phone = quoteWithPhone.contactPhone as string;
 
     // Business fields for contacts
     if (quote.industry) contactProperties.industry = quote.industry;
@@ -251,11 +260,14 @@ router.post("/quotes/:id/sync-hubspot", requireAuth, async (req, res) => {
     if (Object.keys(contactProperties).length > 0) {
       const contactResult = await hubSpotService.updateContact(contactId, contactProperties);
       syncResults.contact = !!contactResult;
-      logger.info("[Quote] Contact sync result", {
-        contactId,
-        success: syncResults.contact,
-        propertiesCount: Object.keys(contactProperties).length,
-      });
+      logger.info(
+        {
+          contactId,
+          success: syncResults.contact,
+          propertiesCount: Object.keys(contactProperties).length,
+        },
+        "[Quote] Contact sync result"
+      );
     }
 
     // Update or create company if company name exists
@@ -263,22 +275,31 @@ router.post("/quotes/:id/sync-hubspot", requireAuth, async (req, res) => {
       try {
         await hubSpotService.updateOrCreateCompanyFromQuote(contactId, quote);
         syncResults.company = true;
-        logger.info("[Quote] Company sync completed", {
-          companyName: quote.companyName,
-        });
+        logger.info(
+          {
+            companyName: quote.companyName,
+          },
+          "[Quote] Company sync completed"
+        );
       } catch (error) {
-        logger.error("[Quote] Company sync failed", {
-          error: getErrorMessage(error),
-        });
+        logger.error(
+          {
+            error: getErrorMessage(error),
+          },
+          "[Quote] Company sync failed"
+        );
         syncResults.company = false;
       }
     }
 
-    logger.info("[Quote] HubSpot sync completed", {
-      quoteId,
-      email: quote.contactEmail,
-      syncResults,
-    });
+    logger.info(
+      {
+        quoteId,
+        email: quote.contactEmail,
+        syncResults,
+      },
+      "[Quote] HubSpot sync completed"
+    );
 
     return sendOk(
       res,
@@ -303,9 +324,12 @@ router.post("/quotes/:id/sync-hubspot", requireAuth, async (req, res) => {
       }
     );
   } catch (error) {
-    logger.error("[Quote] Error syncing to HubSpot", {
-      error: getErrorMessage(error),
-    });
+    logger.error(
+      {
+        error: getErrorMessage(error),
+      },
+      "[Quote] Error syncing to HubSpot"
+    );
     return sendError(res, "SYNC_HUBSPOT_FAILED", "Failed to sync to HubSpot", 500, {
       error: "Failed to sync to HubSpot",
       message: getErrorMessage(error),
@@ -333,24 +357,25 @@ router.get("/address/autocomplete", requireAuth, async (req, res) => {
       },
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as NominatimResult[];
 
-    const suggestions = data.map((result: any) => ({
+    const suggestions = data.map((result) => ({
       description: result.display_name,
       place_id: result.place_id,
       structured_formatting: {
-        main_text: result.address?.road || result.address?.house_number || result.name,
-        secondary_text: [result.address?.city, result.address?.state, result.address?.country]
+        main_text:
+          result.address.road || result.address.house_number || result.name || result.display_name,
+        secondary_text: [result.address.city, result.address.state, result.address.country]
           .filter(Boolean)
           .join(", "),
       },
       address_components: {
-        street_number: result.address?.house_number || "",
-        route: result.address?.road || "",
-        locality: result.address?.city || result.address?.town || result.address?.village || "",
-        administrative_area_level_1: result.address?.state || "",
-        postal_code: result.address?.postcode || "",
-        country: result.address?.country || "",
+        street_number: result.address.house_number || "",
+        route: result.address.road || "",
+        locality: result.address.city || result.address.town || result.address.village || "",
+        administrative_area_level_1: result.address.state || "",
+        postal_code: result.address.postcode || "",
+        country: result.address.country || "",
       },
     }));
 
@@ -358,9 +383,12 @@ router.get("/address/autocomplete", requireAuth, async (req, res) => {
       predictions: suggestions,
     });
   } catch (error) {
-    logger.error("[Address] Error fetching autocomplete suggestions", {
-      error: getErrorMessage(error),
-    });
+    logger.error(
+      {
+        error: getErrorMessage(error),
+      },
+      "[Address] Error fetching autocomplete suggestions"
+    );
     return sendError(
       res,
       "ADDRESS_AUTOCOMPLETE_FAILED",
@@ -383,10 +411,12 @@ router.post("/quotes/check-existing", requireAuth, async (req, res) => {
 
     const allQuotes = await storage.getQuotesByEmail(email);
     // Filter to quotes owned by the current user to preserve existing behavior
-    const userId = (req as any).user?.id;
-    const quotes = userId ? allQuotes.filter((q) => (q as any).ownerId === userId) : allQuotes;
+    const userId = (req as { user?: { id: number } }).user?.id;
+    const quotes = userId
+      ? allQuotes.filter((q) => (q as Record<string, unknown>).ownerId === userId)
+      : allQuotes;
 
-    const input = quotes.map((q: any) => ({
+    const input = quotes.map((q) => ({
       id: q.id,
       hubspotQuoteId: q.hubspotQuoteId || null,
     }));
@@ -403,9 +433,12 @@ router.post("/quotes/check-existing", requireAuth, async (req, res) => {
       quotes,
     });
   } catch (error) {
-    logger.error("[Quote] Error checking existing quotes", {
-      error: getErrorMessage(error),
-    });
+    logger.error(
+      {
+        error: getErrorMessage(error),
+      },
+      "[Quote] Error checking existing quotes"
+    );
     return sendError(res, "CHECK_EXISTING_QUOTES_FAILED", "Failed to check existing quotes", 500);
   }
 });

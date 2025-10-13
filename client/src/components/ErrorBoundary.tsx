@@ -2,7 +2,7 @@ import React from "react";
 
 type Props = { children: React.ReactNode };
 
-type State = { hasError: boolean; error?: any };
+type State = { hasError: boolean; error?: Error };
 
 export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -10,11 +10,11 @@ export class ErrorBoundary extends React.Component<Props, State> {
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: any): State {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  override componentDidCatch(error: any, info: any) {
+  override componentDidCatch(error: Error, info: React.ErrorInfo) {
     // Log and continue
     console.error("SeedQC ErrorBoundary caught: ", error, info);
   }

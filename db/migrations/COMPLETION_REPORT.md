@@ -1,4 +1,4 @@
-# 🎉 Migration Complete - 100% Production Ready!
+# 🎉 Migration Complete - 100% Production Ready
 
 **Date:** October 9, 2025  
 **Total Time:** ~50 minutes  
@@ -191,6 +191,7 @@ If you already have email accounts in production with OAuth tokens, you need to:
    ```
 
 3. Run encryption migration:
+
    ```bash
    doppler run --project seed-portal-api --config prd -- \
      npx tsx server/scripts/encrypt-existing-tokens.ts
@@ -308,7 +309,7 @@ If you already have email accounts in production with OAuth tokens, you need to:
 
 ---
 
-## 🚀 You're Ready to Launch!
+## 🚀 You're Ready to Launch
 
 **Your production database is now:**
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { requireAuth } from "../middleware/supabase-auth";
@@ -6,6 +5,7 @@ import { searchRateLimit, apiRateLimit } from "../middleware/rate-limiter";
 import { db } from "../db";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { randomUUID, createHmac, timingSafeEqual } from "crypto";
+
 import {
   AvailabilityRequestSchema,
   AvailabilityResponseSchema,
@@ -21,6 +21,7 @@ import {
   BookFromLinkRequestSchema,
   BookFromLinkResponseSchema,
 } from "@shared/contracts";
+
 import {
   crmSchedulingLinks,
   crmAvailability,
@@ -31,6 +32,20 @@ import {
 } from "@shared/schema";
 import ical, { ICalCalendarMethod } from "ical-generator";
 import { sendEmail } from "../services/email-provider";
+
+// Helper function to safely get error messages from unknown error types
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error && typeof error === "object" && "message" in error) {
+    return String(error.message);
+  }
+  return "An unknown error occurred";
+}
 
 const router = Router();
 
@@ -63,7 +78,7 @@ router.get(
       const rows = await db
         .select({ id: crmEvents.id })
         .from(crmEvents)
-        .where(and(eq(crmEvents.id, eventId as any), eq(crmEvents.ownerUserId, userId)))
+        .where(and(eq(crmEvents.id, eventId), eq(crmEvents.ownerUserId, userId)))
         .limit(1);
       if (!rows[0]) return res.status(404).json({ message: "Event not found" });
 
@@ -76,10 +91,12 @@ router.get(
           status: crmEventAttendees.status,
         })
         .from(crmEventAttendees)
-        .where(eq(crmEventAttendees.eventId, eventId as any));
+        .where(eq(crmEventAttendees.eventId, eventId));
       return res.json(attendees);
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to load attendees" });
+    } catch (error: unknown) {
+      return res
+        .status(500)
+        .json({ message: getErrorMessage(error) || "Failed to load attendees" });
     }
   }
 );
@@ -113,7 +130,7 @@ router.post(
           endAt: crmEvents.endAt,
         })
         .from(crmEvents)
-        .where(and(eq(crmEvents.id, eventId as any), eq(crmEvents.ownerUserId, userId)))
+        .where(and(eq(crmEvents.id, eventId), eq(crmEvents.ownerUserId, userId)))
         .limit(1);
       const ev = rows[0];
       if (!ev) return res.status(404).json({ message: "Event not found" });
@@ -121,19 +138,19 @@ router.post(
       const attendeeId = randomUUID();
       await db.insert(crmEventAttendees).values({
         id: attendeeId,
-        eventId: eventId as any,
+        eventId,
         email: parsed.data.email,
         name: parsed.data.name || null,
-        role: parsed.data.role || ("attendee" as any),
-        status: "pending" as any,
-      } as any);
+        role: parsed.data.role || "attendee",
+        status: "pending",
+      });
 
       // Send ICS invitation (best-effort) with RSVP links
       try {
         const cal = ical({ name: "Seed Financial Meeting", method: ICalCalendarMethod.REQUEST });
         cal.createEvent({
-          start: new Date(ev.startAt as any),
-          end: new Date(ev.endAt as any),
+          start: new Date(ev.startAt),
+          end: new Date(ev.endAt),
           summary: ev.title || "Meeting",
         });
         const ics = cal.toString();
@@ -153,8 +170,8 @@ router.post(
       }
 
       return res.json({ status: "ok", id: attendeeId });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to add attendee" });
+    } catch (error: unknown) {
+      return res.status(500).json({ message: getErrorMessage(error) || "Failed to add attendee" });
     }
   }
 );
@@ -175,18 +192,18 @@ router.delete(
       const rows = await db
         .select({ id: crmEvents.id })
         .from(crmEvents)
-        .where(and(eq(crmEvents.id, eventId as any), eq(crmEvents.ownerUserId, userId)))
+        .where(and(eq(crmEvents.id, eventId), eq(crmEvents.ownerUserId, userId)))
         .limit(1);
       if (!rows[0]) return res.status(404).json({ message: "Event not found" });
 
       await db
         .delete(crmEventAttendees)
-        .where(
-          and(eq(crmEventAttendees.eventId, eventId as any), eq(crmEventAttendees.email, email))
-        );
+        .where(and(eq(crmEventAttendees.eventId, eventId), eq(crmEventAttendees.email, email)));
       return res.json({ status: "ok", deleted: true });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to remove attendee" });
+    } catch (error: unknown) {
+      return res
+        .status(500)
+        .json({ message: getErrorMessage(error) || "Failed to remove attendee" });
     }
   }
 );
@@ -211,19 +228,14 @@ router.get(
     try {
       await db
         .update(crmEventAttendees)
-        .set({ status: normalized as any })
-        .where(
-          and(
-            eq(crmEventAttendees.id, attendeeId as any),
-            eq(crmEventAttendees.eventId, eventId as any)
-          )
-        );
+        .set({ status: normalized })
+        .where(and(eq(crmEventAttendees.id, attendeeId), eq(crmEventAttendees.eventId, eventId)));
       return res
         .status(200)
         .send(
           `<!doctype html><meta charset="utf-8" /><title>RSVP ${normalized}</title><div style="font:14px system-ui, -apple-system, Segoe UI, Roboto">Thanks! Your RSVP is recorded as <b>${normalized}</b>.</div>`
         );
-    } catch (error: any) {
+    } catch (error: unknown) {
       return res.status(500).send("Failed to record RSVP");
     }
   }
@@ -249,7 +261,7 @@ router.post(
           endAt: crmEvents.endAt,
         })
         .from(crmEvents)
-        .where(and(eq(crmEvents.id, eventId as any), eq(crmEvents.ownerUserId, userId)))
+        .where(and(eq(crmEvents.id, eventId), eq(crmEvents.ownerUserId, userId)))
         .limit(1);
       const ev = rows[0];
       if (!ev) return res.status(404).json({ message: "Event not found" });
@@ -257,12 +269,12 @@ router.post(
       const list = await db
         .select({ id: crmEventAttendees.id, email: crmEventAttendees.email })
         .from(crmEventAttendees)
-        .where(eq(crmEventAttendees.eventId, eventId as any));
+        .where(eq(crmEventAttendees.eventId, eventId));
 
       const cal = ical({ name: "Seed Financial Meeting", method: ICalCalendarMethod.REQUEST });
       cal.createEvent({
-        start: new Date(ev.startAt as any),
-        end: new Date(ev.endAt as any),
+        start: new Date(ev.startAt),
+        end: new Date(ev.endAt),
         summary: ev.title || "Meeting",
       });
       const ics = cal.toString();
@@ -282,8 +294,10 @@ router.post(
         })
       );
       return res.json({ status: "ok", sent: list.length });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to send reminders" });
+    } catch (error: unknown) {
+      return res
+        .status(500)
+        .json({ message: getErrorMessage(error) || "Failed to send reminders" });
     }
   }
 );
@@ -448,9 +462,9 @@ router.get("/api/scheduler/availability", searchRateLimit, async (req: Request, 
 
     // Build blocked intervals from events (apply default 15/15 buffers)
     const blocked: Array<{ start: number; end: number }> = events.map(
-      (e: { startAt: unknown; endAt: unknown }) => ({
-        start: new Date(e.startAt as unknown as string).getTime() - bufferBeforeMin * 60000,
-        end: new Date(e.endAt as unknown as string).getTime() + bufferAfterMin * 60000,
+      (e: { startAt: Date; endAt: Date }) => ({
+        start: new Date(e.startAt).getTime() - bufferBeforeMin * 60000,
+        end: new Date(e.endAt).getTime() + bufferAfterMin * 60000,
       })
     );
 
@@ -474,13 +488,13 @@ router.get("/api/scheduler/availability", searchRateLimit, async (req: Request, 
       Array<{ isAvailable: boolean; start?: number | null; end?: number | null }>
     >();
     for (const o of overrides) {
-      const obj = partsToObj(dtf.formatToParts(new Date(o.date as unknown as string)));
+      const obj = partsToObj(dtf.formatToParts(new Date(o.date)));
       const y = `${obj.year}-${obj.month}-${obj.day}`;
       const arr = overridesByDate.get(y) || [];
       arr.push({
-        isAvailable: o.isAvailable as unknown as boolean,
-        start: (o.startMinutes as number | null) ?? null,
-        end: (o.endMinutes as number | null) ?? null,
+        isAvailable: o.isAvailable,
+        start: o.startMinutes ?? null,
+        end: o.endMinutes ?? null,
       });
       overridesByDate.set(y, arr);
     }
@@ -546,8 +560,10 @@ router.get("/api/scheduler/availability", searchRateLimit, async (req: Request, 
     const payload = { slots, timezone: tz };
     const safe = AvailabilityResponseSchema.safeParse(payload);
     return res.json(safe.success ? safe.data : payload);
-  } catch (error: any) {
-    return res.status(500).json({ message: error?.message || "Failed to compute availability" });
+  } catch (error: unknown) {
+    return res
+      .status(500)
+      .json({ message: getErrorMessage(error) || "Failed to compute availability" });
   }
 });
 
@@ -593,20 +609,20 @@ router.post(
         ownerUserId: userId,
         contactId: null,
         leadId: null,
-        startAt: startAt as any,
-        endAt: endAt as any,
+        startAt,
+        endAt,
         location: parsed.data.location || null,
-        status: "scheduled" as any,
+        status: "scheduled",
         meetingLink: null,
         meetingMode: parsed.data.meetingMode || null,
         title: parsed.data.title || "Meeting",
         description: parsed.data.description || null,
-        createdAt: new Date() as any,
-        updatedAt: new Date() as any,
-      } as any);
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
       return res.json({ id, startAt: startAt.toISOString(), endAt: endAt.toISOString() });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to create event" });
+    } catch (error: unknown) {
+      return res.status(500).json({ message: getErrorMessage(error) || "Failed to create event" });
     }
   }
 );
@@ -628,15 +644,15 @@ router.delete(
       const rows = await db
         .select({ id: crmEvents.id })
         .from(crmEvents)
-        .where(and(eq(crmEvents.id, eventId as any), eq(crmEvents.ownerUserId, userId)))
+        .where(and(eq(crmEvents.id, eventId), eq(crmEvents.ownerUserId, userId)))
         .limit(1);
       if (!rows[0]) return res.status(404).json({ message: "Event not found" });
 
-      await db.delete(crmEventAttendees).where(eq(crmEventAttendees.eventId, eventId as any));
-      await db.delete(crmEvents).where(eq(crmEvents.id, eventId as any));
+      await db.delete(crmEventAttendees).where(eq(crmEventAttendees.eventId, eventId));
+      await db.delete(crmEvents).where(eq(crmEvents.id, eventId));
       return res.json({ status: "ok", deleted: true });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to delete event" });
+    } catch (error: unknown) {
+      return res.status(500).json({ message: getErrorMessage(error) || "Failed to delete event" });
     }
   }
 );
@@ -663,7 +679,7 @@ router.patch(
     const eventId = String(req.params.id || "");
     if (!eventId) return res.status(400).json({ message: "id is required" });
 
-    const update: Record<string, unknown> = { updatedAt: new Date() as any };
+    const update: Record<string, unknown> = { updatedAt: new Date() };
     if (Object.prototype.hasOwnProperty.call(parsed.data, "title"))
       update.title = parsed.data.title ?? null;
     if (Object.prototype.hasOwnProperty.call(parsed.data, "description"))
@@ -680,14 +696,14 @@ router.patch(
       // Update only if the current user owns the event
       await db
         .update(crmEvents)
-        .set(update as any)
-        .where(and(eq(crmEvents.id, eventId as any), eq(crmEvents.ownerUserId, userId)));
+        .set(update)
+        .where(and(eq(crmEvents.id, eventId), eq(crmEvents.ownerUserId, userId)));
       return res.json({
         status: "ok",
         updated: Object.keys(update).filter((k) => k !== "updatedAt"),
       });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to update event" });
+    } catch (error: unknown) {
+      return res.status(500).json({ message: getErrorMessage(error) || "Failed to update event" });
     }
   }
 );
@@ -706,10 +722,9 @@ router.get(
     const userId = req.query.userId ? String(req.query.userId) : currentUserId;
 
     try {
-      const where = [] as any[];
-      where.push(eq(crmEvents.ownerUserId, userId));
-      if (start) where.push(gte(crmEvents.startAt, start as any));
-      if (end) where.push(lte(crmEvents.startAt, end as any));
+      let condition = eq(crmEvents.ownerUserId, userId);
+      if (start) condition = and(condition, gte(crmEvents.startAt, start))!;
+      if (end) condition = and(condition, lte(crmEvents.startAt, end))!;
 
       const rows = await db
         .select({
@@ -726,11 +741,11 @@ router.get(
           location: crmEvents.location,
         })
         .from(crmEvents)
-        .where(where.length > 1 ? and(...where) : where[0]);
+        .where(condition);
 
       return res.json(rows);
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to load events" });
+    } catch (error: unknown) {
+      return res.status(500).json({ message: getErrorMessage(error) || "Failed to load events" });
     }
   }
 );
@@ -762,12 +777,14 @@ router.post(
             endMinutes: r.endMinutes,
             timezone: r.timezone,
             isActive: true,
-          })) as any
+          }))
         );
       }
       return res.json({ status: "ok", saved: parsed.data.length });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to save availability" });
+    } catch (error: unknown) {
+      return res
+        .status(500)
+        .json({ message: getErrorMessage(error) || "Failed to save availability" });
     }
   }
 );
@@ -793,18 +810,20 @@ router.post(
       const values = input.map((o) => ({
         id: randomUUID(),
         userId,
-        date: new Date(`${o.date}T00:00:00.000Z`) as any,
+        date: new Date(`${o.date}T00:00:00.000Z`),
         startMinutes: o.startMinutes ?? null,
         endMinutes: o.endMinutes ?? null,
         isAvailable: o.isAvailable,
         timezone: o.timezone || "America/Los_Angeles",
       }));
       if (values.length > 0) {
-        await db.insert(crmAvailabilityOverrides).values(values as any);
+        await db.insert(crmAvailabilityOverrides).values(values);
       }
       return res.json({ status: "ok", created: values.map((v) => v.id) });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to save overrides" });
+    } catch (error: unknown) {
+      return res
+        .status(500)
+        .json({ message: getErrorMessage(error) || "Failed to save overrides" });
     }
   }
 );
@@ -822,15 +841,18 @@ router.get(
     const endDate = req.query.endDate ? String(req.query.endDate) : undefined; // YYYY-MM-DD
 
     try {
-      const where = [] as any[];
-      where.push(eq(crmAvailabilityOverrides.userId, userId));
+      let condition = eq(crmAvailabilityOverrides.userId, userId);
       if (startDate) {
-        where.push(
-          gte(crmAvailabilityOverrides.date, new Date(`${startDate}T00:00:00.000Z`) as any)
-        );
+        condition = and(
+          condition,
+          gte(crmAvailabilityOverrides.date, new Date(`${startDate}T00:00:00.000Z`))
+        )!;
       }
       if (endDate) {
-        where.push(lte(crmAvailabilityOverrides.date, new Date(`${endDate}T23:59:59.999Z`) as any));
+        condition = and(
+          condition,
+          lte(crmAvailabilityOverrides.date, new Date(`${endDate}T23:59:59.999Z`))
+        )!;
       }
 
       const rows = await db
@@ -843,11 +865,13 @@ router.get(
           timezone: crmAvailabilityOverrides.timezone,
         })
         .from(crmAvailabilityOverrides)
-        .where(where.length > 1 ? and(...where) : where[0]);
+        .where(condition);
 
       return res.json(rows);
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to load overrides" });
+    } catch (error: unknown) {
+      return res
+        .status(500)
+        .json({ message: getErrorMessage(error) || "Failed to load overrides" });
     }
   }
 );
@@ -872,8 +896,10 @@ router.delete(
           and(eq(crmAvailabilityOverrides.id, id), eq(crmAvailabilityOverrides.userId, userId))
         );
       return res.json({ status: "ok", deleted: true });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to delete override" });
+    } catch (error: unknown) {
+      return res
+        .status(500)
+        .json({ message: getErrorMessage(error) || "Failed to delete override" });
     }
   }
 );
@@ -899,8 +925,10 @@ router.get(
         .from(crmAvailability)
         .where(eq(crmAvailability.userId, userId));
       return res.json(rows);
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to load availability" });
+    } catch (error: unknown) {
+      return res
+        .status(500)
+        .json({ message: getErrorMessage(error) || "Failed to load availability" });
     }
   }
 );
@@ -924,8 +952,10 @@ router.get(
         .from(crmEventTypes)
         .where(eq(crmEventTypes.userId, userId));
       return res.json(rows);
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to load event types" });
+    } catch (error: unknown) {
+      return res
+        .status(500)
+        .json({ message: getErrorMessage(error) || "Failed to load event types" });
     }
   }
 );
@@ -964,10 +994,12 @@ router.post(
         description: parsed.data.description || null,
         meetingMode: parsed.data.meetingMode || null,
         isActive: true,
-      } as any);
+      });
       return res.json({ id });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to create event type" });
+    } catch (error: unknown) {
+      return res
+        .status(500)
+        .json({ message: getErrorMessage(error) || "Failed to create event type" });
     }
   }
 );
@@ -998,7 +1030,7 @@ router.post("/api/scheduler/events/book", apiRateLimit, async (req: Request, res
     },
     confirmationCode: Math.random().toString(36).slice(2, 10),
   };
-  const safe = BookEventResponseSchema.safeParse(fake as any);
+  const safe = BookEventResponseSchema.safeParse(fake);
   return res.json(safe.success ? safe.data : fake);
 });
 
@@ -1053,9 +1085,7 @@ router.patch(
       const currentDurationMin = Math.max(
         5,
         Math.floor(
-          (new Date(existing.endAt as any).getTime() -
-            new Date(existing.startAt as any).getTime()) /
-            60000
+          (new Date(existing.endAt).getTime() - new Date(existing.startAt).getTime()) / 60000
         )
       );
       const newStart = new Date(parsed.data.startAt);
@@ -1066,10 +1096,10 @@ router.patch(
         .select({ id: crmEvents.id, startAt: crmEvents.startAt, endAt: crmEvents.endAt })
         .from(crmEvents)
         .where(eq(crmEvents.ownerUserId, userId));
-      const hasConflict = others.some((e: any) => {
+      const hasConflict = others.some((e: { id: string; startAt: Date; endAt: Date }) => {
         if (e.id === existing.id) return false;
-        const s = new Date(e.startAt as any).getTime() - 15 * 60000;
-        const eMs = new Date(e.endAt as any).getTime() + 15 * 60000;
+        const s = new Date(e.startAt).getTime() - 15 * 60000;
+        const eMs = new Date(e.endAt).getTime() + 15 * 60000;
         const blockStart = newStart.getTime() - 15 * 60000;
         const blockEnd = newEnd.getTime() + 15 * 60000;
         return blockStart < eMs && blockEnd > s;
@@ -1080,8 +1110,8 @@ router.patch(
       // Update event
       await db
         .update(crmEvents)
-        .set({ startAt: newStart as any, endAt: newEnd as any, updatedAt: new Date() as any })
-        .where(eq(crmEvents.id, existing.id as any));
+        .set({ startAt: newStart, endAt: newEnd, updatedAt: new Date() })
+        .where(eq(crmEvents.id, existing.id));
 
       // Notify attendees via ICS update (best-effort)
       try {
@@ -1116,8 +1146,8 @@ router.patch(
         startAt: newStart.toISOString(),
         endAt: newEnd.toISOString(),
       });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to reschedule" });
+    } catch (error: unknown) {
+      return res.status(500).json({ message: getErrorMessage(error) || "Failed to reschedule" });
     }
   }
 );
@@ -1155,8 +1185,8 @@ router.post(
 
       await db
         .update(crmEvents)
-        .set({ status: "cancelled" as any, updatedAt: new Date() as any })
-        .where(eq(crmEvents.id, event.id as any));
+        .set({ status: "cancelled", updatedAt: new Date() })
+        .where(eq(crmEvents.id, event.id));
 
       // Best-effort ICS cancellation
       try {
@@ -1167,8 +1197,8 @@ router.post(
         if (attendees.length > 0) {
           const cal = ical({ name: "Seed Financial Meeting", method: ICalCalendarMethod.CANCEL });
           cal.createEvent({
-            start: new Date(event.startAt as any),
-            end: new Date(event.endAt as any),
+            start: new Date(event.startAt),
+            end: new Date(event.endAt),
             summary: event.title || "Meeting",
           });
           const ics = cal.toString();
@@ -1190,8 +1220,8 @@ router.post(
       }
 
       return res.json({ status: "ok", cancelled: true });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to cancel" });
+    } catch (error: unknown) {
+      return res.status(500).json({ message: getErrorMessage(error) || "Failed to cancel" });
     }
   }
 );
@@ -1230,9 +1260,7 @@ router.patch(
       const durationMin = Math.max(
         5,
         Math.floor(
-          (new Date(existing.endAt as any).getTime() -
-            new Date(existing.startAt as any).getTime()) /
-            60000
+          (new Date(existing.endAt).getTime() - new Date(existing.startAt).getTime()) / 60000
         )
       );
       const newStart = new Date(parsed.data.startAt);
@@ -1243,10 +1271,10 @@ router.patch(
         .select({ id: crmEvents.id, startAt: crmEvents.startAt, endAt: crmEvents.endAt })
         .from(crmEvents)
         .where(eq(crmEvents.ownerUserId, userId));
-      const hasConflict = others.some((e: any) => {
+      const hasConflict = others.some((e: { id: string; startAt: Date; endAt: Date }) => {
         if (e.id === existing.id) return false;
-        const s = new Date(e.startAt as any).getTime() - 15 * 60000;
-        const eMs = new Date(e.endAt as any).getTime() + 15 * 60000;
+        const s = new Date(e.startAt).getTime() - 15 * 60000;
+        const eMs = new Date(e.endAt).getTime() + 15 * 60000;
         const blockStart = newStart.getTime() - 15 * 60000;
         const blockEnd = newEnd.getTime() + 15 * 60000;
         return blockStart < eMs && blockEnd > s;
@@ -1256,8 +1284,8 @@ router.patch(
 
       await db
         .update(crmEvents)
-        .set({ startAt: newStart as any, endAt: newEnd as any, updatedAt: new Date() as any })
-        .where(eq(crmEvents.id, existing.id as any));
+        .set({ startAt: newStart, endAt: newEnd, updatedAt: new Date() })
+        .where(eq(crmEvents.id, existing.id));
 
       // Best-effort ICS update
       try {
@@ -1292,8 +1320,8 @@ router.patch(
         startAt: newStart.toISOString(),
         endAt: newEnd.toISOString(),
       });
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to reschedule" });
+    } catch (error: unknown) {
+      return res.status(500).json({ message: getErrorMessage(error) || "Failed to reschedule" });
     }
   }
 );
@@ -1326,13 +1354,11 @@ router.post(
           typeof parsed.data.minLeadMinutes === "number" ? parsed.data.minLeadMinutes : null,
         maxHorizonDays:
           typeof parsed.data.maxHorizonDays === "number" ? parsed.data.maxHorizonDays : null,
-        customAvailability: parsed.data.customAvailability
-          ? (parsed.data.customAvailability as any)
-          : null,
-        brandTheme: parsed.data.brandTheme ? (parsed.data.brandTheme as any) : null,
-      } as any);
-    } catch (error: any) {
-      return res.status(500).json({ message: error?.message || "Failed to create link" });
+        customAvailability: parsed.data.customAvailability ? parsed.data.customAvailability : null,
+        brandTheme: parsed.data.brandTheme ? parsed.data.brandTheme : null,
+      });
+    } catch (error: unknown) {
+      return res.status(500).json({ message: getErrorMessage(error) || "Failed to create link" });
     }
 
     const safe = CreateShareLinkResponseSchema.safeParse({ id, slug });
@@ -1364,10 +1390,10 @@ router.get("/api/scheduler/links/:slug", async (req: Request, res: Response) => 
       minLeadMinutes: typeof row.minLeadMinutes === "number" ? row.minLeadMinutes : undefined,
       maxHorizonDays: typeof row.maxHorizonDays === "number" ? row.maxHorizonDays : undefined,
     };
-    const safe = ResolveShareLinkResponseSchema.safeParse(payload as any);
+    const safe = ResolveShareLinkResponseSchema.safeParse(payload);
     return res.json(safe.success ? safe.data : payload);
-  } catch (error: any) {
-    return res.status(500).json({ message: error?.message || "Failed to load link" });
+  } catch (error: unknown) {
+    return res.status(500).json({ message: getErrorMessage(error) || "Failed to load link" });
   }
 });
 
@@ -1432,9 +1458,9 @@ router.post("/api/scheduler/book/from-link", apiRateLimit, async (req: Request, 
     .select({ id: crmEvents.id, startAt: crmEvents.startAt, endAt: crmEvents.endAt })
     .from(crmEvents)
     .where(eq(crmEvents.ownerUserId, link.ownerUserId));
-  const hasConflict = conflict.some((e: any) => {
-    const s = new Date((e as any).startAt).getTime() - 15 * 60000;
-    const eMs = new Date((e as any).endAt).getTime() + 15 * 60000;
+  const hasConflict = conflict.some((e: { id: string; startAt: Date; endAt: Date }) => {
+    const s = new Date(e.startAt).getTime() - 15 * 60000;
+    const eMs = new Date(e.endAt).getTime() + 15 * 60000;
     const blockStart = startAt.getTime() - 15 * 60000;
     const blockEnd = endAt.getTime() + 15 * 60000;
     return blockStart < eMs && blockEnd > s;
@@ -1451,15 +1477,15 @@ router.post("/api/scheduler/book/from-link", apiRateLimit, async (req: Request, 
       ownerUserId: link.ownerUserId,
       contactId: parsed.data.contactId ?? null,
       leadId: parsed.data.leadId ?? null,
-      startAt: startAt as any,
-      endAt: endAt as any,
+      startAt,
+      endAt,
       location: null,
       status: "scheduled",
       meetingLink: null,
       meetingMode: meetingMode || null,
       title: "Meeting",
       description: parsed.data.notes ?? null,
-    } as any);
+    });
 
     const attendeeId = randomUUID();
     await db.insert(crmEventAttendees).values({
@@ -1470,16 +1496,16 @@ router.post("/api/scheduler/book/from-link", apiRateLimit, async (req: Request, 
       phone: parsed.data.attendee.phone || null,
       role: "attendee",
       status: "accepted",
-    } as any);
+    });
 
     // Increment link uses (best-effort)
     const newUses = ((link.uses as number) || 0) + 1;
     await db
       .update(crmSchedulingLinks)
-      .set({ uses: newUses as any })
-      .where(eq(crmSchedulingLinks.id, link.id as any));
-  } catch (error: any) {
-    return res.status(500).json({ message: error?.message || "Failed to save booking" });
+      .set({ uses: newUses })
+      .where(eq(crmSchedulingLinks.id, link.id));
+  } catch (error: unknown) {
+    return res.status(500).json({ message: getErrorMessage(error) || "Failed to save booking" });
   }
 
   // Best-effort ICS email to attendee
@@ -1504,26 +1530,9 @@ router.post("/api/scheduler/book/from-link", apiRateLimit, async (req: Request, 
   }
 
   const payload = {
-    event: {
-      id: eventId,
-      typeId: link.eventTypeId || null,
-      ownerUserId: link.ownerUserId,
-      contactId: parsed.data.contactId ?? null,
-      leadId: parsed.data.leadId ?? null,
-      startAt: startAt.toISOString(),
-      endAt: endAt.toISOString(),
-      location: null,
-      status: "scheduled",
-      meetingLink: null,
-      title: "Meeting",
-      description: parsed.data.notes ?? null,
-      meetingMode,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
     confirmationCode: Math.random().toString(36).slice(2, 10),
   };
-  const safe = BookFromLinkResponseSchema.safeParse(payload as any);
+  const safe = BookFromLinkResponseSchema.safeParse(payload);
   return res.json(safe.success ? safe.data : payload);
 });
 

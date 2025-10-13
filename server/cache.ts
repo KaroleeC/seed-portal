@@ -20,7 +20,7 @@ export interface CacheStats {
 }
 
 export class CacheService {
-  private memoryCache: Map<string, { value: any; expiresAt: number }> = new Map();
+  private memoryCache: Map<string, { value: unknown; expiresAt: number }> = new Map();
 
   /**
    * List keys matching a pattern (advanced use only)
@@ -69,7 +69,7 @@ export class CacheService {
         this.stats.hits++;
         this.stats.totalOperations++;
         cacheLogger.debug({ key }, "Cache hit");
-        return entry.value;
+        return entry.value as T;
       }
       if (entry) this.memoryCache.delete(key);
       this.stats.misses++;

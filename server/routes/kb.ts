@@ -199,7 +199,7 @@ router.post(
 // =============================
 
 // Helper to parse numeric user id from req.user
-function getUserId(req: any): number | undefined {
+function getUserId(req: { user?: { id?: string | number } }): number | undefined {
   const rawId = req?.user?.id;
   if (typeof rawId === "number") return rawId;
   if (typeof rawId === "string") {

@@ -3,7 +3,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -108,7 +107,7 @@ interface PricingHistory {
 export default function AdminPricingPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("base-fees");
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<Record<string, string | number> | null>(null);
 
   // Queries for all pricing data
   const { data: baseFees, isLoading: baseFeeLoading } = useQuery<PricingBase[]>({
@@ -142,7 +141,7 @@ export default function AdminPricingPage() {
       await apiRequest<ServiceSetting[]>("GET", "/api/admin/pricing/service-settings"),
   });
 
-  const { data: pricingTiers, isLoading: tiersLoading } = useQuery<PricingTier[]>({
+  const { data: _pricingTiers, isLoading: _tiersLoading } = useQuery<PricingTier[]>({
     queryKey: pricingKeys.admin.tiers(),
     queryFn: async () => await apiRequest<PricingTier[]>("GET", "/api/admin/pricing/tiers"),
   });
@@ -155,16 +154,13 @@ export default function AdminPricingPage() {
   // Mutations for updates
   const updateBaseFee = useMutation({
     mutationFn: (data: { id: number; baseFee: string }) =>
-      apiRequest(`/api/admin/pricing/base/${data.id}`, {
-        method: "PUT",
-        body: { baseFee: data.baseFee },
-      }),
+      apiRequest("PUT", `/api/admin/pricing/base/${data.id}`, { baseFee: data.baseFee }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.base() });
+      void queryClient.invalidateQueries({ queryKey: pricingKeys.admin.base() });
       toast({ title: "Base fee updated successfully" });
       setEditingItem(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error updating base fee",
         description: error.message,
@@ -175,21 +171,18 @@ export default function AdminPricingPage() {
 
   const updateIndustryMultiplier = useMutation({
     mutationFn: (data: { id: number; monthlyMultiplier: string; cleanupMultiplier: string }) =>
-      apiRequest(`/api/admin/pricing/industry-multipliers/${data.id}`, {
-        method: "PUT",
-        body: {
-          monthlyMultiplier: data.monthlyMultiplier,
-          cleanupMultiplier: data.cleanupMultiplier,
-        },
+      apiRequest("PUT", `/api/admin/pricing/industry/${data.id}`, {
+        monthlyMultiplier: data.monthlyMultiplier,
+        cleanupMultiplier: data.cleanupMultiplier,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: pricingKeys.admin.industryMultipliers(),
       });
       toast({ title: "Industry multiplier updated successfully" });
       setEditingItem(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error updating industry multiplier",
         description: error.message,
@@ -200,18 +193,15 @@ export default function AdminPricingPage() {
 
   const updateRevenueMultiplier = useMutation({
     mutationFn: (data: { id: number; multiplier: string }) =>
-      apiRequest(`/api/admin/pricing/revenue-multipliers/${data.id}`, {
-        method: "PUT",
-        body: { multiplier: data.multiplier },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+      apiRequest("PUT", `/api/admin/pricing/revenue/${data.id}`, { multiplier: data.multiplier }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: pricingKeys.admin.revenueMultipliers(),
       });
       toast({ title: "Revenue multiplier updated successfully" });
       setEditingItem(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error updating revenue multiplier",
         description: error.message,
@@ -222,18 +212,15 @@ export default function AdminPricingPage() {
 
   const updateTransactionSurcharge = useMutation({
     mutationFn: (data: { id: number; surcharge: string }) =>
-      apiRequest(`/api/admin/pricing/transaction-surcharges/${data.id}`, {
-        method: "PUT",
-        body: { surcharge: data.surcharge },
-      }),
+      apiRequest("PUT", `/api/admin/pricing/transaction/${data.id}`, { surcharge: data.surcharge }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: pricingKeys.admin.transactionSurcharges(),
       });
       toast({ title: "Transaction surcharge updated successfully" });
       setEditingItem(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error updating transaction surcharge",
         description: error.message,
@@ -244,18 +231,15 @@ export default function AdminPricingPage() {
 
   const updateServiceSetting = useMutation({
     mutationFn: (data: { id: number; settingValue: string }) =>
-      apiRequest(`/api/admin/pricing/service-settings/${data.id}`, {
-        method: "PUT",
-        body: { settingValue: data.settingValue },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+      apiRequest("PUT", `/api/admin/pricing/service/${data.id}`, { settingValue: data.settingValue }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: pricingKeys.admin.serviceSettings(),
       });
       toast({ title: "Service setting updated successfully" });
       setEditingItem(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error updating service setting",
         description: error.message,
@@ -264,21 +248,18 @@ export default function AdminPricingPage() {
     },
   });
 
-  const updatePricingTier = useMutation({
+  const _updatePricingTier = useMutation({
     mutationFn: (data: { id: number; baseFee: string; tierMultiplier: string }) =>
-      apiRequest(`/api/admin/pricing/tiers/${data.id}`, {
-        method: "PUT",
-        body: {
-          baseFee: data.baseFee,
-          tierMultiplier: data.tierMultiplier,
-        },
+      apiRequest("PUT", `/api/admin/pricing/tier/${data.id}`, {
+        baseFee: data.baseFee,
+        tierMultiplier: data.tierMultiplier,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.tiers() });
+      void queryClient.invalidateQueries({ queryKey: pricingKeys.admin.tiers() });
       toast({ title: "Pricing tier updated successfully" });
       setEditingItem(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error updating pricing tier",
         description: error.message,
@@ -288,27 +269,26 @@ export default function AdminPricingPage() {
   });
 
   const clearCache = useMutation({
-    mutationFn: () => apiRequest("/api/admin/pricing/clear-cache", { method: "POST" }),
+    mutationFn: () => apiRequest("POST", "/api/admin/pricing/clear-cache"),
     onSuccess: () => {
-      toast({ title: "Pricing cache cleared successfully" });
-      // Proactively refresh all pricing datasets
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.base() });
-      queryClient.invalidateQueries({
+      toast({ title: "Cache cleared", description: "All pricing data has been refreshed" });
+      void queryClient.invalidateQueries({ queryKey: pricingKeys.admin.base() });
+      void queryClient.invalidateQueries({
         queryKey: pricingKeys.admin.industryMultipliers(),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: pricingKeys.admin.revenueMultipliers(),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: pricingKeys.admin.transactionSurcharges(),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: pricingKeys.admin.serviceSettings(),
       });
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.tiers() });
-      queryClient.invalidateQueries({ queryKey: pricingKeys.admin.history() });
+      void queryClient.invalidateQueries({ queryKey: pricingKeys.admin.tiers() });
+      void queryClient.invalidateQueries({ queryKey: pricingKeys.admin.history() });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error clearing cache",
         description: error.message,
@@ -452,7 +432,7 @@ export default function AdminPricingPage() {
                                       onClick={() =>
                                         updateBaseFee.mutate({
                                           id: fee.id,
-                                          baseFee: editingItem.baseFee,
+                                          baseFee: String(editingItem.baseFee),
                                         })
                                       }
                                       disabled={updateBaseFee.isPending}
@@ -575,8 +555,8 @@ export default function AdminPricingPage() {
                                       onClick={() =>
                                         updateIndustryMultiplier.mutate({
                                           id: multiplier.id,
-                                          monthlyMultiplier: editingItem.monthlyMultiplier,
-                                          cleanupMultiplier: editingItem.cleanupMultiplier,
+                                          monthlyMultiplier: String(editingItem.monthlyMultiplier),
+                                          cleanupMultiplier: String(editingItem.cleanupMultiplier),
                                         })
                                       }
                                       disabled={updateIndustryMultiplier.isPending}
@@ -668,7 +648,7 @@ export default function AdminPricingPage() {
                                       onClick={() =>
                                         updateRevenueMultiplier.mutate({
                                           id: multiplier.id,
-                                          multiplier: editingItem.multiplier,
+                                          multiplier: String(editingItem.multiplier),
                                         })
                                       }
                                       disabled={updateRevenueMultiplier.isPending}
@@ -764,7 +744,7 @@ export default function AdminPricingPage() {
                                       onClick={() =>
                                         updateTransactionSurcharge.mutate({
                                           id: surcharge.id,
-                                          surcharge: editingItem.surcharge,
+                                          surcharge: String(editingItem.surcharge),
                                         })
                                       }
                                       disabled={updateTransactionSurcharge.isPending}
@@ -861,7 +841,7 @@ export default function AdminPricingPage() {
                                       onClick={() =>
                                         updateServiceSetting.mutate({
                                           id: setting.id,
-                                          settingValue: editingItem.settingValue,
+                                          settingValue: String(editingItem.settingValue),
                                         })
                                       }
                                       disabled={updateServiceSetting.isPending}

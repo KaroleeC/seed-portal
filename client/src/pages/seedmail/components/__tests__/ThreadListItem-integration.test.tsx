@@ -11,7 +11,15 @@ import type { EmailThread } from "@shared/email-types";
 
 // Mock the context menu and modal components
 vi.mock("../EmailThreadMenu", () => ({
-  EmailThreadMenu: ({ threadId, onCreateLead, onAssociateLead }: any) => (
+  EmailThreadMenu: ({
+    threadId,
+    onCreateLead,
+    onAssociateLead,
+  }: {
+    threadId: string;
+    onCreateLead?: () => void;
+    onAssociateLead?: () => void;
+  }) => (
     <div data-testid="email-thread-menu">
       <button onClick={onCreateLead}>Mock Create Lead</button>
       <button onClick={onAssociateLead}>Mock Associate Lead</button>
@@ -20,7 +28,7 @@ vi.mock("../EmailThreadMenu", () => ({
 }));
 
 vi.mock("../LeadAssociationModal", () => ({
-  LeadAssociationModal: ({ open, threadId }: any) =>
+  LeadAssociationModal: ({ open, threadId }: { open: boolean; threadId: string }) =>
     open ? <div data-testid="lead-association-modal">Modal for {threadId}</div> : null,
 }));
 

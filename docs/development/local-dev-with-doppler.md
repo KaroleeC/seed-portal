@@ -14,10 +14,13 @@ This guide shows how to run the Seed Portal locally using Doppler for environmen
 
 - Node.js 18+ (Node 20+ recommended). You currently have Node 24, which is fine.
 - Install dependencies:
+
   ```bash
   npm install
   ```
+
 - Install and log in to Doppler CLI:
+
   ```bash
   brew install dopplerhq/cli/doppler
   doppler login
@@ -42,8 +45,8 @@ doppler run --project seed-portal-api --config dev -- npm run dev
 
 The server binds to `127.0.0.1` by default and listens on `PORT` (defaults to `5000`).
 
-- App URL: http://127.0.0.1:5000
-- Health check: http://127.0.0.1:5000/api/health
+- App URL: <http://127.0.0.1:5000>
+- Health check: <http://127.0.0.1:5000/api/health>
 
 Note: In local dev, it’s normal for `/api/health` to report `unhealthy` if third-party credentials (OpenAI, HubSpot, Box) are not configured. Database and core HTTP server being up is enough to proceed.
 
@@ -96,28 +99,36 @@ Note: In this repo, Vite runs in middleware mode from the server process. If you
 ## Verifying the setup
 
 - Start the server with Doppler: `npm run dev:doppler`
-- Open http://127.0.0.1:5000 in the browser
+- Open <http://127.0.0.1:5000> in the browser
 - Check health (expected 503 if third-parties disabled):
+
   ```bash
   curl -i http://127.0.0.1:5000/api/health
   ```
+
 - Look for: `Database connection established` in the server logs.
 
 ## Troubleshooting
 
 - Port binding ENOTSUP:
   - We’ve updated `server/index.ts` to use:
+
     ```ts
     server.listen(port, process.env.HOST ?? "127.0.0.1", () => {
       /* ... */
     });
     ```
+
     This avoids unsupported socket options and mirrors the minimal test server that worked locally.
+
   - Ensure `HOST=127.0.0.1` in dev. In production, set `HOST=0.0.0.0` (see note below).
+
 - Port in use:
+
   ```bash
   lsof -ti :5000 | xargs kill
   ```
+
 - Missing third-party creds:
   - AI (OpenAI), CRM (HubSpot), Storage (Box), Google Admin will warn or report unhealthy on `/api/health`. Add the corresponding secrets to your Doppler dev configs when you need to exercise those features.
 

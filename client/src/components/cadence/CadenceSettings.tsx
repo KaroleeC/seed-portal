@@ -404,6 +404,8 @@ export function CadenceSettings({
                             {user.firstName && user.lastName
                               ? `${user.firstName} ${user.lastName}`
                               : user.email}
+                            {/* Displaying user role for informational purposes, not for authorization */}
+                            {/* eslint-disable-next-line rbac/no-direct-role-checks */}
                             {user.role && (
                               <span className="text-xs text-gray-400 ml-2">({user.role})</span>
                             )}

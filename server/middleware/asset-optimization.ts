@@ -64,7 +64,7 @@ class AssetOptimizationService {
       const originalSend = res.send;
       const originalJson = res.json;
 
-      const trackStats = (body: any) => {
+      const trackStats = (body: unknown) => {
         if (body && typeof body === "string") {
           const originalSize = Buffer.byteLength(body, "utf8");
           const encoding = res.getHeader("content-encoding");
@@ -84,12 +84,12 @@ class AssetOptimizationService {
         }
       };
 
-      res.send = function (body: any) {
+      res.send = function (body: unknown) {
         trackStats(body);
         return originalSend.call(this, body);
       };
 
-      res.json = function (obj: any) {
+      res.json = function (obj: unknown) {
         const body = JSON.stringify(obj);
         trackStats(body);
         return originalJson.call(this, obj);
@@ -114,7 +114,7 @@ class AssetOptimizationService {
 }
 
 // Middleware for setting optimal cache headers
-export function setCacheHeaders(req: Request, res: Response, next: NextFunction) {
+export function setCacheHeaders(req: Request, res: Response, next: NextFunction): void {
   const url = req.url;
 
   // Static assets with hash in filename - cache aggressively
@@ -142,7 +142,7 @@ export function setCacheHeaders(req: Request, res: Response, next: NextFunction)
 }
 
 // Middleware for serving pre-compressed assets
-export function servePrecompressed(req: Request, res: Response, next: NextFunction) {
+export function servePrecompressed(req: Request, res: Response, next: NextFunction): void {
   const acceptEncoding = req.headers["accept-encoding"] || "";
   const url = req.url;
 

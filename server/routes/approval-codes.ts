@@ -28,7 +28,7 @@ const router = Router();
  * @body contactEmail - Email address to associate with code
  * @returns { success: true, code: string }
  */
-router.post("/api/approval/request", requireAuth, async (req: any, res: Response) => {
+router.post("/api/approval/request", requireAuth, async (req, res: Response) => {
   try {
     const contactEmail = (req.body?.contactEmail || req.body?.email || "").toString().trim();
     if (!contactEmail) {
@@ -42,7 +42,7 @@ router.post("/api/approval/request", requireAuth, async (req: any, res: Response
       code,
       contactEmail,
       expiresAt,
-    } as any);
+    });
 
     // Optional: notify admins in Slack
     try {
@@ -52,7 +52,10 @@ router.post("/api/approval/request", requireAuth, async (req: any, res: Response
         "medium"
       );
     } catch (e) {
-      console.warn("[Approval] Slack notification failed:", (e as any)?.message);
+      console.warn(
+        "[Approval] Slack notification failed:",
+        e instanceof Error ? e.message : String(e)
+      );
     }
 
     return res.json({ success: true, code });
@@ -68,7 +71,7 @@ router.post("/api/approval/request", requireAuth, async (req: any, res: Response
  *
  * @deprecated Use /api/approval/request instead
  */
-router.post("/api/approval-request", requireAuth, async (req: any, res: Response) => {
+router.post("/api/approval-request", requireAuth, async (req, res: Response) => {
   // Delegate to the canonical endpoint logic
   try {
     const contactEmail = (req.body?.email || req.body?.contactEmail || "").toString().trim();
@@ -82,7 +85,7 @@ router.post("/api/approval-request", requireAuth, async (req: any, res: Response
       code,
       contactEmail,
       expiresAt,
-    } as any);
+    });
 
     try {
       await sendSystemAlert(

@@ -33,7 +33,7 @@ interface AirtableRecord {
 }
 
 export class AirtableService {
-  private base: any;
+  private base: ReturnType<typeof Airtable.prototype.base> | null = null;
   private tableName: string = "BK Leads"; // Correct table name from user
 
   constructor() {
@@ -187,7 +187,7 @@ export class AirtableService {
   }
 
   // Create new company record in Airtable
-  async createCompanyRecord(companyData: any): Promise<string | null> {
+  async createCompanyRecord(companyData: Record<string, unknown>): Promise<string | null> {
     if (!this.base) {
       console.log("Airtable base not initialized - skipping record creation");
       return null;
@@ -227,7 +227,7 @@ export class AirtableService {
   }
 
   // Update existing company record
-  async updateCompanyRecord(recordId: string, updates: any): Promise<boolean> {
+  async updateCompanyRecord(recordId: string, updates: Record<string, unknown>): Promise<boolean> {
     if (!this.base) return false;
 
     try {

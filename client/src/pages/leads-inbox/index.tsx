@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { usePermissions } from "@/hooks/use-permissions";
 import ProfileDrawer from "@/components/crm/profile-drawer";
 import { apps } from "@/assets";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -19,11 +20,9 @@ import type { SortField } from "./types/leads.types";
 
 export default function LeadsInboxPage() {
   const { user } = useAuth();
+  const { isAdmin, hasAnyPermission } = usePermissions();
   const { toast } = useToast();
-  const role = String(user?.role || "").toLowerCase();
-  const isAdmin = role === "admin";
-  const isManager = role === "manager";
-  const isPrivileged = isAdmin || isManager;
+  const isPrivileged = isAdmin || hasAnyPermission(["leads.manage", "leads.assign"]);
 
   // Selected lead for profile drawer
   const [selectedId, setSelectedId] = useState<string | null>(null);

@@ -184,8 +184,8 @@ export class AnthropicService {
       });
 
       const textContent = response.content.find(
-        (block: any) => (block as any).type === "text"
-      ) as any;
+        (block: { type: string }) => block.type === "text"
+      ) as { text?: string } | undefined;
       return textContent?.text || "";
     } catch (error) {
       console.error("Anthropic API error:", error);
@@ -542,8 +542,8 @@ Format as valid JSON only, no other text.`,
       });
 
       const textContent = response.content.find(
-        (block: any) => (block as any).type === "text"
-      ) as any;
+        (block: { type: string }) => block.type === "text"
+      ) as { text?: string } | undefined;
       let rawText = textContent?.text || "{}";
 
       // Clean up common JSON formatting issues from AI responses

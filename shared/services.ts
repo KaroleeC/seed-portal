@@ -252,39 +252,44 @@ export type ServiceDefinition = (typeof SERVICE_REGISTRY)[ServiceKey];
 export type ServiceCategory = (typeof SERVICE_CATEGORIES)[keyof typeof SERVICE_CATEGORIES];
 
 // UTILITY FUNCTIONS - Use these instead of hardcoding everywhere
-export const getAllServices = () => Object.values(SERVICE_REGISTRY);
+export const getAllServices = (): ServiceDefinition[] => Object.values(SERVICE_REGISTRY);
 
-export const getServicesByCategory = (category: ServiceCategory) =>
+export const getServicesByCategory = (category: ServiceCategory): ServiceDefinition[] =>
   getAllServices().filter((service) => service.category === category);
 
-export const getCoreServices = () => getAllServices().filter((service) => service.standalone);
+export const getCoreServices = (): ServiceDefinition[] =>
+  getAllServices().filter((service) => service.standalone);
 
-export const getAddonServices = () => getAllServices().filter((service) => !service.standalone);
+export const getAddonServices = (): ServiceDefinition[] =>
+  getAllServices().filter((service) => !service.standalone);
 
-export const getServiceByKey = (key: ServiceKey) => SERVICE_REGISTRY[key];
+export const getServiceByKey = (key: ServiceKey): ServiceDefinition => SERVICE_REGISTRY[key];
 
-export const getServiceKeys = () => Object.keys(SERVICE_REGISTRY) as ServiceKey[];
+export const getServiceKeys = (): ServiceKey[] => Object.keys(SERVICE_REGISTRY) as ServiceKey[];
 
-export const getHubSpotProductIds = () =>
+export const getHubSpotProductIds = (): Record<string, string> =>
   Object.fromEntries(
     Object.entries(SERVICE_REGISTRY).map(([key, service]) => [key, service.hubspotProductId])
   );
 
-export const getMsaDescriptions = () =>
+export const getMsaDescriptions = (): Record<string, string> =>
   Object.fromEntries(
-    Object.entries(SERVICE_REGISTRY).map(([key, service]) => [
+    Object.entries(SERVICE_REGISTRY).map(([_key, service]) => [
       service.pricingKey,
       service.msaDescription,
     ])
   );
 
-export const getServiceIcons = () =>
+export const getServiceIcons = (): Record<string, string> =>
   Object.fromEntries(
-    Object.entries(SERVICE_REGISTRY).map(([key, service]) => [service.pricingKey, service.icon])
+    Object.entries(SERVICE_REGISTRY).map(([_key, service]) => [service.pricingKey, service.icon])
   );
 
 // ZOD SCHEMA HELPERS - Generate form schemas automatically
-export const generateServiceZodFields = () => {
+export const generateServiceZodFields = (): Record<
+  string,
+  z.ZodBoolean | z.ZodDefault<z.ZodBoolean>
+> => {
   const fields: Record<string, z.ZodBoolean | z.ZodDefault<z.ZodBoolean>> = {};
   getServiceKeys().forEach((key) => {
     fields[key] = z.boolean().default(false);
@@ -295,7 +300,7 @@ export const generateServiceZodFields = () => {
 // SERVICE VALIDATION
 export const validateServiceSelection = (
   selectedServices: Partial<Record<ServiceKey, boolean>>
-) => {
+): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
   const selected = getServiceKeys().filter((key) => selectedServices[key]);
 
@@ -314,17 +319,19 @@ export const validateServiceSelection = (
 };
 
 // FORM DATA MAPPING - Convert between database and form formats
-export const mapQuoteToFormServices = (quote: any) => {
+export const mapQuoteToFormServices = (
+  quote: Record<string, unknown>
+): Partial<Record<ServiceKey, boolean>> => {
   const serviceFields: Partial<Record<ServiceKey, boolean>> = {};
   getServiceKeys().forEach((key) => {
-    serviceFields[key] = quote[key] ?? false;
+    serviceFields[key] = Boolean(quote[key] ?? false);
   });
   return serviceFields;
 };
 
 export const getSelectedServiceDescriptions = (
   selectedServices: Partial<Record<ServiceKey, boolean>>
-) => {
+): string[] => {
   const selected = getServiceKeys().filter((key) => selectedServices[key]);
   return selected.map((key) => SERVICE_REGISTRY[key].msaDescription);
 };

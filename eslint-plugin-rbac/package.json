@@ -1,0 +1,19 @@
+{
+  "name": "eslint-plugin-rbac",
+  "version": "1.0.0",
+  "description": "Custom ESLint rules for enforcing RBAC patterns in Seed Portal",
+  "main": "index.js",
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "rbac",
+    "security",
+    "authentication"
+  ],
+  "author": "Seed Financial",
+  "license": "UNLICENSED",
+  "private": true,
+  "peerDependencies": {
+    "eslint": ">=8.0.0"
+  }
+}

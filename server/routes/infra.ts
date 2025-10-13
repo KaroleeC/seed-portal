@@ -8,7 +8,7 @@ const router = Router();
 // Queue metrics
 router.get("/api/queue/metrics", requireAuth, async (req, res) => {
   try {
-    const mod: any = await import("../queue.js");
+    const mod = (await import("../queue.js")) as { getQueueMetrics?: () => unknown };
     const metrics =
       typeof mod.getQueueMetrics === "function" ? mod.getQueueMetrics() : { enabled: false };
     res.json(metrics);
@@ -33,8 +33,8 @@ router.get("/api/cache/stats", requireAuth, async (req, res) => {
 router.get("/api/jobs/:jobId/status", requireAuth, async (req, res) => {
   try {
     const { jobId } = req.params;
-    const mod: any = await import("../queue.js");
-    const getAIInsightsQueue = mod.getAIInsightsQueue as any;
+    const mod = (await import("../queue.js")) as { getAIInsightsQueue?: () => unknown };
+    const getAIInsightsQueue = mod.getAIInsightsQueue;
     const aiInsightsQueue = typeof getAIInsightsQueue === "function" ? getAIInsightsQueue() : null;
 
     if (!aiInsightsQueue) {
@@ -53,8 +53,8 @@ router.get("/api/jobs/:jobId/status", requireAuth, async (req, res) => {
       const result = job.returnvalue;
       const { contactId } = job.data;
       const { CacheTTL, CachePrefix } = await import("../cache");
-      const cacheKey = (cache as any).generateKey(CachePrefix.OPENAI_ANALYSIS, contactId);
-      await cache.set(cacheKey, result, (CacheTTL as any).OPENAI_ANALYSIS || 300);
+      const cacheKey = cache.generateKey(CachePrefix.OPENAI_ANALYSIS, contactId);
+      await cache.set(cacheKey, result, CacheTTL.OPENAI_ANALYSIS || 300);
       return res.json({ status: "completed", result });
     }
 

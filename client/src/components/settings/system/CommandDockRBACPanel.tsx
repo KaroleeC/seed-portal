@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Shield, Settings } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { usePermissions } from "@/hooks/use-permissions";
 
 // Local storage key used by CommandDock
 const RBAC_KEY = "commandDock.rbac";
@@ -32,8 +32,7 @@ function saveConfig(cfg: RBACConfig) {
 }
 
 export default function CommandDockRBACPanel() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { isAdmin } = usePermissions();
 
   const [cfg, setCfg] = useState<RBACConfig>(() => loadConfig());
   const [roleName, setRoleName] = useState<string>("");

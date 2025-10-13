@@ -12,15 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,20 +23,42 @@ import {
   Eye,
   Code,
   UserCheck,
-  Plus,
   Minus,
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Settings,
   Play,
   FileText,
-  Edit3,
   Save,
   RefreshCw,
 } from "lucide-react";
 import { BackButton } from "@/components/BackButton";
 import UserManagement from "@/pages/user-management";
+
+// Interfaces used across components
+interface Department {
+  id: number;
+  name: string;
+  description?: string;
+  isActive: boolean;
+}
+
+interface ManagerEdge {
+  manager_user_id: number;
+  member_user_id: number;
+  manager_email?: string;
+  member_email?: string;
+}
+
+interface AuditItem {
+  id: number;
+  action: string;
+  entity_type: string;
+  entity_id?: number;
+  created_at: string;
+  actor_email?: string;
+  diff_json?: Record<string, unknown>;
+}
 
 interface User {
   id: number;
@@ -64,21 +77,24 @@ function DepartmentsList() {
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["/api/admin/rbac/departments"],
-    queryFn: async () => apiRequest<{ departments: any[] }>("GET", "/api/admin/rbac/departments"),
+    queryFn: async () =>
+      apiRequest<{ departments: Department[] }>("GET", "/api/admin/rbac/departments"),
   });
 
   const toggleMutation = useMutation({
-    mutationFn: async (dept: any) =>
+    mutationFn: async (dept: Department) =>
       apiRequest("PUT", `/api/admin/rbac/departments/${dept.id}`, {
         isActive: !dept.isActive,
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/departments"] }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/departments"] }),
   });
 
   const deactivateMutation = useMutation({
-    mutationFn: async (dept: any) =>
+    mutationFn: async (dept: Department) =>
       apiRequest("DELETE", `/api/admin/rbac/departments/${dept.id}`, {}),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/departments"] }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/departments"] }),
   });
 
   if (isLoading) return <div>Loading departments…</div>;
@@ -112,16 +128,18 @@ function ManagerEdgesList() {
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["/api/admin/rbac/manager-edges"],
-    queryFn: async () => apiRequest<{ edges: any[] }>("GET", "/api/admin/rbac/manager-edges"),
+    queryFn: async () =>
+      apiRequest<{ edges: ManagerEdge[] }>("GET", "/api/admin/rbac/manager-edges"),
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (edge: any) =>
+    mutationFn: async (edge: ManagerEdge) =>
       apiRequest("DELETE", "/api/admin/rbac/manager-edges", {
         managerUserId: edge.manager_user_id,
         memberUserId: edge.member_user_id,
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/manager-edges"] }),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/manager-edges"] }),
   });
 
   if (isLoading) return <div>Loading edges…</div>;
@@ -152,7 +170,8 @@ function ManagerEdgesList() {
 function AuditList() {
   const { data, isLoading } = useQuery({
     queryKey: ["/api/admin/rbac/audit"],
-    queryFn: async () => apiRequest<{ items: any[] }>("GET", "/api/admin/rbac/audit?limit=100"),
+    queryFn: async () =>
+      apiRequest<{ items: AuditItem[] }>("GET", "/api/admin/rbac/audit?limit=100"),
   });
 
   if (isLoading) return <div>Loading audit…</div>;
@@ -192,13 +211,13 @@ interface Role {
   permissions?: Array<{ id: number; key: string; description: string }>;
 }
 
-interface Permission {
-  id: number;
-  key: string;
-  description: string;
-  category: string;
-  isActive: boolean;
-}
+// interface Permission {
+//   id: number;
+//   key: string;
+//   description: string;
+//   category: string;
+//   isActive: boolean;
+// }
 
 interface PolicyDecision {
   action: string;
@@ -206,15 +225,13 @@ interface PolicyDecision {
   allowed: boolean;
   reason: string;
   timestamp: string;
-  principal: any;
-  metadata?: any;
+  principal: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
 }
 
 export default function RBACManagement() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("users");
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [testScenario, setTestScenario] = useState({
     userEmail: "",
     action: "",
@@ -240,13 +257,13 @@ export default function RBACManagement() {
     },
   });
 
-  // Fetch all permissions
-  const { data: permissionsData, isLoading: permissionsLoading } = useQuery({
-    queryKey: ["/api/admin/rbac/permissions"],
-    queryFn: async () => {
-      return await apiRequest<{ permissions: Permission[] }>("GET", "/api/admin/rbac/permissions");
-    },
-  });
+  // Fetch all permissions - not currently used in UI
+  // const { data: permissionsData } = useQuery({
+  //   queryKey: ["/api/admin/rbac/permissions"],
+  //   queryFn: async () => {
+  //     return await apiRequest<{ permissions: Permission[] }>("GET", "/api/admin/rbac/permissions");
+  //   },
+  // });
 
   // Fetch policy content
   const { data: policyData, refetch: refetchPolicy } = useQuery({
@@ -263,16 +280,16 @@ export default function RBACManagement() {
   // Assign role to user mutation
   const assignRoleMutation = useMutation({
     mutationFn: async ({ userId, roleId }: { userId: number; roleId: number }) => {
-      return await apiRequest<any>("POST", "/api/admin/rbac/assign-role", {
+      return await apiRequest<{ success: boolean }>("POST", "/api/admin/rbac/assign-role", {
         userId,
         roleId,
       });
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Role assigned successfully" });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/users"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/users"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to assign role",
@@ -284,13 +301,16 @@ export default function RBACManagement() {
   // Remove role from user mutation
   const removeRoleMutation = useMutation({
     mutationFn: async ({ userId, roleId }: { userId: number; roleId: number }) => {
-      return await apiRequest<any>("DELETE", `/api/admin/rbac/user/${userId}/role/${roleId}`);
+      return await apiRequest<{ success: boolean }>(
+        "DELETE",
+        `/api/admin/rbac/user/${userId}/role/${roleId}`
+      );
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Role removed successfully" });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/users"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/users"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to remove role",
@@ -311,7 +331,7 @@ export default function RBACManagement() {
         variant: data.allowed ? "default" : "destructive",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Test Failed",
         description: error.message || "Failed to test authorization",
@@ -323,13 +343,17 @@ export default function RBACManagement() {
   // Update policy mutation
   const updatePolicyMutation = useMutation({
     mutationFn: async ({ policyName, content }: { policyName: string; content: string }) => {
-      return await apiRequest<any>("PUT", `/api/admin/cerbos/policy/${policyName}`, { content });
+      return await apiRequest<{ success: boolean }>(
+        "PUT",
+        `/api/admin/cerbos/policy/${policyName}`,
+        { content }
+      );
     },
     onSuccess: () => {
       toast({ title: "Success", description: "Policy updated successfully" });
-      refetchPolicy();
+      void refetchPolicy();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to update policy",
@@ -347,18 +371,22 @@ export default function RBACManagement() {
       userId: number;
       defaultDashboard: string;
     }) => {
-      return await apiRequest<any>("PATCH", `/api/admin/users/${userId}/dashboard`, {
-        defaultDashboard,
-      });
+      return await apiRequest<{ success: boolean }>(
+        "PATCH",
+        `/api/admin/users/${userId}/dashboard`,
+        {
+          defaultDashboard,
+        }
+      );
     },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Default dashboard updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/users"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/rbac/users"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to update default dashboard",
@@ -370,14 +398,16 @@ export default function RBACManagement() {
   // Impersonate user mutation
   const impersonateMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest<any>("POST", `/api/admin/impersonate/${userId}`, {});
+      return await apiRequest<{
+        user: { firstName?: string; lastName?: string; defaultDashboard?: string };
+      }>("POST", `/api/admin/impersonate/${userId}`, {});
     },
     onSuccess: (data) => {
       toast({
         title: "Impersonation Started",
         description: `Now signed in as ${data.user.firstName} ${data.user.lastName}`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
 
       // Navigate to their default dashboard
       const dashboard = data.user.defaultDashboard || "sales";
@@ -395,7 +425,7 @@ export default function RBACManagement() {
           window.location.href = "/";
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Impersonation Failed",
         description: error.message || "Failed to impersonate user",
@@ -406,7 +436,6 @@ export default function RBACManagement() {
 
   const users: User[] = usersData?.users || [];
   const roles: Role[] = rolesData?.roles || [];
-  const permissions: Permission[] = permissionsData?.permissions || [];
 
   React.useEffect(() => {
     if (policyData?.content) {

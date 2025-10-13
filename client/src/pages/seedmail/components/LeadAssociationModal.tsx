@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useLeadSearch } from "../hooks/useLeadSearch";
+import { useLeadSearch, type Lead } from "../hooks/useLeadSearch";
 import { useThreadLeads } from "../hooks/useThreadLeads";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -128,7 +128,7 @@ export function LeadAssociationModal({
     }
   };
 
-  const getLeadDisplayName = (lead: any) => {
+  const getLeadDisplayName = (lead: Lead) => {
     const name = [lead.contactFirstName, lead.contactLastName].filter(Boolean).join(" ");
     return name || lead.contactEmail || "Unknown";
   };

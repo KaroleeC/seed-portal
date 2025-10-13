@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Slack SDK has loose types - intentional any casts for blocks/attachments compatibility
 import { WebClient } from "@slack/web-api";
 import { logger } from "./logger";
 

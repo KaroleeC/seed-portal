@@ -70,11 +70,11 @@ export function createRateLimit(
     } else {
       // Track the original end method to detect success
       const originalEnd = res.end;
-      res.end = function (this: Response, ...args: any[]) {
+      res.end = function (this: Response, ...args: unknown[]) {
         if (res.statusCode < 400) {
           entry.count++;
         }
-        return (originalEnd as any).apply(this, args);
+        return (originalEnd as typeof res.end).apply(this, args as Parameters<typeof res.end>);
       };
     }
 
@@ -96,11 +96,13 @@ export const apiRateLimit = createRateLimit({
 export const searchRateLimit = createRateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 30, // 30 searches per minute per IP
-  keyGenerator: (req: Request) => `search:${req.ip}:${(req as any).user?.id || "anonymous"}`,
+  keyGenerator: (req: Request) =>
+    `search:${req.ip}:${(req as Request & { user?: { id: string } }).user?.id || "anonymous"}`,
 });
 
 export const enhancementRateLimit = createRateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 10, // 10 enhancements per minute per user
-  keyGenerator: (req: Request) => `enhance:${(req as any).user?.id || req.ip}`,
+  keyGenerator: (req: Request) =>
+    `enhance:${(req as Request & { user?: { id: string } }).user?.id || req.ip}`,
 });

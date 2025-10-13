@@ -29,24 +29,33 @@ import { hubspotProvider } from "./hubspot-provider";
  * Get the configured quote provider
  *
  * Environment-based provider selection:
- * - QUOTE_PROVIDER=hubspot → HubSpotQuoteProvider (default)
- * - QUOTE_PROVIDER=seedpay → SeedPayQuoteProvider (future)
+ * - QUOTE_PROVIDER=seedpay → SeedPayQuoteProvider (default, Phase 0+)
+ * - QUOTE_PROVIDER=hubspot → HubSpotQuoteProvider (legacy, rollback only)
  *
  * @returns Active quote provider instance
  */
 export function getQuoteProvider(): IQuoteProvider {
-  const providerName = process.env.QUOTE_PROVIDER || "hubspot";
+  const providerName = process.env.QUOTE_PROVIDER || "seedpay";
 
   switch (providerName.toLowerCase()) {
     case "hubspot":
+      console.warn(
+        "[PROVIDER] Using legacy HubSpot provider. This should only be used for rollback scenarios."
+      );
       return hubspotProvider;
 
-    // Future: SeedPay provider
-    // case "seedpay":
-    //   return seedpayProvider;
+    case "seedpay":
+      // Phase 1: Will return seedpayProvider
+      // For Phase 0, fall back to HubSpot with warning
+      console.warn(
+        "[PROVIDER] QUOTE_PROVIDER=seedpay is configured but SeedPay provider not yet implemented. Using HubSpot as temporary fallback. This will be implemented in Phase 1."
+      );
+      return hubspotProvider;
 
     default:
-      console.warn(`Unknown provider "${providerName}", falling back to HubSpot`);
+      console.warn(
+        `[PROVIDER] Unknown provider "${providerName}", falling back to HubSpot. Valid options: "seedpay" (default), "hubspot" (legacy)`
+      );
       return hubspotProvider;
   }
 }

@@ -25,7 +25,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -35,30 +34,26 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
+import { logger } from "@/lib/logger";
 import { Link } from "wouter";
 import {
   ArrowLeft,
   User,
   MapPin,
-  Phone,
   Mail,
   Camera,
   RefreshCw,
-  Info,
   Cloud,
   Sun,
   CloudRain,
   CloudSnow,
   CloudDrizzle,
   Zap,
-  Lock,
   Shield,
 } from "lucide-react";
 import { brand, getThemedLogo } from "@/assets";
 import { useTheme } from "@/theme";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface WeatherData {
   temperature: number | null;
@@ -125,7 +120,7 @@ export default function Profile() {
       passwordForm.reset();
       setIsPasswordModalOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Password Change Failed",
         description: error.message || "Failed to change password. Please try again.",
@@ -153,11 +148,11 @@ export default function Profile() {
   // Debounced search for address suggestions
   const searchAddresses = useCallback(
     debounce(async (query: string) => {
-      console.log("=== ADDRESS SEARCH START ===");
-      console.log("Search query:", query);
+      logger.debug("=== ADDRESS SEARCH START ===");
+      logger.debug("Search query", { query });
 
       if (query.length < 3) {
-        console.log("Query too short, clearing suggestions");
+        logger.debug("Query too short, clearing suggestions");
         setAddressSuggestions([]);
         setShowSuggestions(false);
         return;
@@ -165,42 +160,46 @@ export default function Profile() {
 
       try {
         const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&countrycodes=us&q=${encodeURIComponent(query)}`;
-        console.log("Fetching from URL:", url);
+        logger.debug("Fetching from URL", { url });
 
         const response = await fetch(url);
-        console.log("Response status:", response.status);
+        logger.debug("Response status", { status: response.status });
 
         if (response.ok) {
           const data = await response.json();
-          console.log("Search results:", data);
-          console.log("Number of results:", data.length);
+          logger.debug("Search results", { resultsCount: data.length, data });
 
           setAddressSuggestions(data);
           if (data.length > 0) {
             setShowSuggestions(true);
-            console.log("Showing suggestions dropdown");
+            logger.debug("Showing suggestions dropdown");
           } else {
-            console.log("No results, hiding dropdown");
+            logger.debug("No results, hiding dropdown");
             setShowSuggestions(false);
           }
         } else {
-          console.error("Search request failed:", response.statusText);
+          logger.error("Search request failed", undefined, { statusText: response.statusText });
         }
       } catch (error) {
-        console.error("Address search failed:", error);
+        logger.error("Address search failed", error);
       }
-      console.log("=== ADDRESS SEARCH END ===");
+      logger.debug("=== ADDRESS SEARCH END ===");
     }, 300),
     []
   );
 
   // Simple debounce function
-  function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+  function debounce<T extends (...args: string[]) => Promise<void>>(
+    func: T,
+    wait: number
+  ): (...args: Parameters<T>) => void {
     let timeout: NodeJS.Timeout;
-    return ((...args: any[]) => {
+    return (...args: Parameters<T>) => {
       clearTimeout(timeout);
-      timeout = setTimeout(() => func(...args), wait);
-    }) as T;
+      timeout = setTimeout(() => {
+        void func(...args);
+      }, wait);
+    };
   }
 
   // Close suggestions when clicking outside (but not on suggestions)
@@ -221,11 +220,11 @@ export default function Profile() {
 
   // Select an address from suggestions
   const selectAddress = (suggestion: AddressSuggestion) => {
-    console.log("=== ADDRESS SELECTION START ===");
-    console.log("Full suggestion object:", suggestion);
+    logger.debug("=== ADDRESS SELECTION START ===");
+    logger.debug("Full suggestion object", { suggestion });
 
     const address = suggestion.address;
-    console.log("Address object:", address);
+    logger.debug("Address object", { address });
 
     // Parse and set form fields with proper fallbacks
     const streetAddress = `${address.house_number || ""} ${address.road || ""}`.trim();
@@ -233,8 +232,8 @@ export default function Profile() {
     const state = address.state || "";
     const zipCode = address.postcode || "";
 
-    console.log("Parsed values:", { streetAddress, city, state, zipCode });
-    console.log("Current form values before setting:", form.getValues());
+    logger.debug("Parsed values", { streetAddress, city, state, zipCode });
+    logger.debug("Current form values before setting", { values: form.getValues() });
 
     // Use setValue with trigger to ensure form updates properly
     form.setValue("address", streetAddress, {
@@ -248,20 +247,20 @@ export default function Profile() {
       shouldDirty: true,
     });
 
-    console.log("Form values after setting:", form.getValues());
+    logger.debug("Form values after setting", { values: form.getValues() });
 
     // Force form to re-render with new values
-    form.trigger(["address", "city", "state", "zipCode"]);
+    void form.trigger(["address", "city", "state", "zipCode"]);
 
     // Update the search query to show selected address
     setAddressQuery(`${streetAddress}, ${city}, ${state} ${zipCode}`.trim());
     setShowSuggestions(false);
 
-    console.log("=== ADDRESS SELECTION END ===");
+    logger.debug("=== ADDRESS SELECTION END ===");
 
     // Automatically fetch weather for the selected address
     if (streetAddress && city && state) {
-      fetchWeatherForAddress(streetAddress, city, state, zipCode);
+      void fetchWeatherForAddress(streetAddress, city, state, zipCode);
     }
   };
 
@@ -300,6 +299,148 @@ export default function Profile() {
     }
   }, []);
 
+  // Geocoding service to convert address to coordinates
+  const geocodeAddress = async (
+    address: string,
+    city: string,
+    state: string,
+    _zipCode: string
+  ): Promise<GeocodeResult | null> => {
+    try {
+      // Known coordinates for common cities to avoid API issues
+      const knownLocations: Record<string, { latitude: number; longitude: number }> = {
+        "Marina Del Rey, CA": { latitude: 33.9802, longitude: -118.4517 },
+        "Los Angeles, CA": { latitude: 34.0522, longitude: -118.2437 },
+        "Los Angeles, California": { latitude: 34.0522, longitude: -118.2437 },
+        "San Francisco, CA": { latitude: 37.7749, longitude: -122.4194 },
+        "Cupertino, CA": { latitude: 37.3318, longitude: -122.0312 },
+        "Cupertino, California": { latitude: 37.3318, longitude: -122.0312 },
+        "New York, NY": { latitude: 40.7128, longitude: -74.006 },
+        "Chicago, IL": { latitude: 41.8781, longitude: -87.6298 },
+      };
+
+      const cityStateKey = `${city}, ${state}`;
+      logger.debug("Looking up coordinates for", { cityStateKey });
+
+      // Check if we have known coordinates first
+      if (knownLocations[cityStateKey]) {
+        const coords = knownLocations[cityStateKey];
+        if (!coords) return null;
+        logger.debug("Using known coordinates", { coords });
+        return {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          location: cityStateKey,
+        };
+      }
+
+      // Fall back to API for unknown locations
+      logger.debug("Geocoding via API", { cityStateKey });
+      const response = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityStateKey)}&count=1&language=en&format=json`
+      );
+
+      if (!response.ok) {
+        logger.error("Geocoding API error", undefined, { statusText: response.statusText });
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (!data.results || data.results.length === 0) {
+        logger.warn("No geocoding results found for", { cityStateKey });
+        return null;
+      }
+
+      const result = data.results[0];
+      logger.debug("Geocoding API success", {
+        latitude: result.latitude,
+        longitude: result.longitude,
+      });
+
+      return {
+        latitude: result.latitude,
+        longitude: result.longitude,
+        location: cityStateKey,
+      };
+    } catch (error) {
+      logger.error("Geocoding failed", error);
+      return null;
+    }
+  };
+
+  // Fetch weather based on coordinates
+  const fetchWeatherByCoordinates = async (lat: number, lon: number, location: string) => {
+    try {
+      setWeather((prev) => ({ ...prev, isLoading: true }));
+
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`
+      );
+
+      if (!response.ok) throw new Error("Weather API request failed");
+
+      const data = await response.json();
+      const currentWeather = data.current_weather;
+
+      // Map weather codes to conditions
+      const getCondition = (code: number) => {
+        if (code === 0) return "clear";
+        if (code <= 3) return "cloudy";
+        if (code <= 67) return "rainy";
+        if (code <= 77) return "snowy";
+        if (code <= 82) return "rainy";
+        if (code <= 86) return "snowy";
+        return "stormy";
+      };
+
+      setWeather({
+        temperature: Math.round(currentWeather.temperature),
+        condition: getCondition(currentWeather.weathercode),
+        location,
+        isLoading: false,
+      });
+    } catch (error) {
+      logger.error("Failed to fetch weather", error);
+      setWeather((prev) => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  // Combined address fetch function
+  const fetchWeatherForAddress = useCallback(
+    async (address: string, city: string, state: string, zipCode: string) => {
+      const geocodeResult = await geocodeAddress(address, city, state, zipCode);
+      if (geocodeResult) {
+        logger.info("Geocoding successful", { geocodeResult });
+        // Save coordinates to database
+        try {
+          logger.debug("Saving coordinates to database", {
+            latitude: geocodeResult.latitude,
+            longitude: geocodeResult.longitude,
+          });
+          void queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          logger.debug("User cache invalidated for dashboard weather update");
+          await apiRequest("PATCH", "/api/user/profile", {
+            latitude: geocodeResult.latitude.toString(),
+            longitude: geocodeResult.longitude.toString(),
+          });
+          logger.info("Coordinates saved successfully");
+        } catch (error) {
+          logger.error("Failed to save coordinates", error);
+        }
+
+        await fetchWeatherByCoordinates(
+          geocodeResult.latitude,
+          geocodeResult.longitude,
+          geocodeResult.location
+        );
+      } else {
+        logger.warn("Geocoding failed for address", { address, city, state, zipCode });
+      }
+    },
+    [queryClient]
+  );
+
   // Update form when user data changes
   useEffect(() => {
     if (user) {
@@ -324,11 +465,11 @@ export default function Profile() {
 
       // If user has address but no coordinates, geocode and fetch weather
       if (user.address && user.city && user.state && (!user.latitude || !user.longitude)) {
-        console.log("Address exists but coordinates missing, fetching weather...");
-        fetchWeatherForAddress(user.address, user.city, user.state, user.zipCode || "");
+        logger.info("Address exists but coordinates missing, fetching weather");
+        void fetchWeatherForAddress(user.address, user.city, user.state, user.zipCode || "");
       }
     }
-  }, [user, form, formatPhoneNumber]);
+  }, [user, form, formatPhoneNumber, fetchWeatherForAddress]);
 
   // Handle photo upload
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -361,8 +502,8 @@ export default function Profile() {
         const result = await response.json();
         // Update the form and user data
         form.setValue("profilePhoto", result.photoUrl);
-        queryClient.setQueryData(["/api/user"], (oldData: any) => ({
-          ...oldData,
+        queryClient.setQueryData(["/api/user"], (oldData: unknown) => ({
+          ...(typeof oldData === "object" && oldData !== null ? oldData : {}),
           profilePhoto: result.photoUrl,
         }));
 
@@ -386,152 +527,6 @@ export default function Profile() {
     }
   };
 
-  // Geocoding service to convert address to coordinates
-  const geocodeAddress = async (
-    address: string,
-    city: string,
-    state: string,
-    zipCode: string
-  ): Promise<GeocodeResult | null> => {
-    try {
-      // Known coordinates for common cities to avoid API issues
-      const knownLocations: Record<string, { latitude: number; longitude: number }> = {
-        "Marina Del Rey, CA": { latitude: 33.9802, longitude: -118.4517 },
-        "Los Angeles, CA": { latitude: 34.0522, longitude: -118.2437 },
-        "Los Angeles, California": { latitude: 34.0522, longitude: -118.2437 },
-        "San Francisco, CA": { latitude: 37.7749, longitude: -122.4194 },
-        "Cupertino, CA": { latitude: 37.3318, longitude: -122.0312 },
-        "Cupertino, California": { latitude: 37.3318, longitude: -122.0312 },
-        "New York, NY": { latitude: 40.7128, longitude: -74.006 },
-        "Chicago, IL": { latitude: 41.8781, longitude: -87.6298 },
-      };
-
-      const cityStateKey = `${city}, ${state}`;
-      console.log("Looking up coordinates for:", cityStateKey);
-
-      // Check if we have known coordinates first
-      if (knownLocations[cityStateKey]) {
-        const coords = knownLocations[cityStateKey];
-        if (!coords) return null;
-        console.log("Using known coordinates:", coords);
-        return {
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          location: cityStateKey,
-        };
-      }
-
-      // Fall back to API for unknown locations
-      console.log("Geocoding via API:", cityStateKey);
-      const response = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityStateKey)}&count=1&language=en&format=json`
-      );
-
-      if (!response.ok) {
-        console.error("Geocoding API error:", response.statusText);
-        return null;
-      }
-
-      const data = await response.json();
-
-      if (!data.results || data.results.length === 0) {
-        console.warn("No geocoding results found for:", cityStateKey);
-        return null;
-      }
-
-      const result = data.results[0];
-      console.log("Geocoding API success:", {
-        latitude: result.latitude,
-        longitude: result.longitude,
-      });
-
-      return {
-        latitude: result.latitude,
-        longitude: result.longitude,
-        location: cityStateKey,
-      };
-    } catch (error) {
-      console.error("Geocoding failed:", error);
-      return null;
-    }
-  };
-
-  // Fetch weather based on coordinates
-  const fetchWeatherByCoordinates = async (lat: number, lon: number, location: string) => {
-    try {
-      setWeather((prev) => ({ ...prev, isLoading: true }));
-
-      const response = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`
-      );
-
-      if (!response.ok) throw new Error("Weather fetch failed");
-
-      const data = await response.json();
-      const currentWeather = data.current_weather;
-
-      const getCondition = (code: number) => {
-        if (code === 0) return "clear";
-        if (code <= 3) return "partly cloudy";
-        if (code <= 48) return "cloudy";
-        if (code <= 67) return "rainy";
-        if (code <= 77) return "snowy";
-        if (code <= 82) return "showers";
-        return "stormy";
-      };
-
-      setWeather({
-        temperature: Math.round(currentWeather.temperature),
-        condition: getCondition(currentWeather.weathercode),
-        location,
-        isLoading: false,
-      });
-    } catch (error) {
-      console.error("Failed to fetch weather:", error);
-      setWeather((prev) => ({ ...prev, isLoading: false }));
-    }
-  };
-
-  // Combined address fetch function
-  const fetchWeatherForAddress = async (
-    address: string,
-    city: string,
-    state: string,
-    zipCode: string
-  ) => {
-    const geocodeResult = await geocodeAddress(address, city, state, zipCode);
-    if (geocodeResult) {
-      console.log("Geocoding successful:", geocodeResult);
-      // Save coordinates to database
-      try {
-        console.log(
-          "Saving coordinates to database:",
-          geocodeResult.latitude,
-          geocodeResult.longitude
-        );
-        await apiRequest("PATCH", "/api/user/profile", {
-          latitude: geocodeResult.latitude.toString(),
-          longitude: geocodeResult.longitude.toString(),
-        });
-        console.log("Coordinates saved successfully");
-
-        // Invalidate user cache to trigger dashboard weather update
-        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-        console.log("User cache invalidated for dashboard weather update");
-      } catch (error) {
-        console.error("Failed to save coordinates:", error);
-      }
-
-      await fetchWeatherByCoordinates(
-        geocodeResult.latitude,
-        geocodeResult.longitude,
-        geocodeResult.location
-      );
-    } else {
-      console.log("Geocoding failed for address:", address, city, state, zipCode);
-    }
-  };
-
   // Fetch weather when form values change OR when user data loads
   useEffect(() => {
     const address = form.watch("address") || user?.address;
@@ -539,19 +534,10 @@ export default function Profile() {
     const state = form.watch("state") || user?.state;
     const zipCode = form.watch("zipCode") || user?.zipCode;
 
-    if (address && city && state && zipCode) {
-      fetchWeatherForAddress(address, city, state, zipCode);
+    if (address && city && state) {
+      void fetchWeatherForAddress(address, city, state, zipCode || "");
     }
-  }, [
-    form.watch("address"),
-    form.watch("city"),
-    form.watch("state"),
-    form.watch("zipCode"),
-    user?.address,
-    user?.city,
-    user?.state,
-    user?.zipCode,
-  ]);
+  }, [form, user?.address, user?.city, user?.state, user?.zipCode, fetchWeatherForAddress]);
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
@@ -565,7 +551,7 @@ export default function Profile() {
       const currentState = form.getValues("state") || "";
       const currentZipCode = form.getValues("zipCode") || "";
 
-      console.log("Profile updated, refreshing weather with current form values:", {
+      logger.info("Profile updated, refreshing weather with current form values", {
         currentAddress,
         currentCity,
         currentState,
@@ -578,17 +564,17 @@ export default function Profile() {
       }
 
       // Force refresh user data immediately after all updates
-      console.log("Invalidating user cache for dashboard weather update...");
+      logger.debug("Invalidating user cache for dashboard weather update");
       await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       await queryClient.refetchQueries({ queryKey: ["/api/user"] });
-      console.log("User cache invalidated and refetched - dashboard should update");
+      logger.info("User cache invalidated and refetched - dashboard should update");
 
       toast({
         title: "Profile Updated",
         description: "Your profile and weather have been updated successfully.",
       });
     },
-    onError: (error) => {
+    onError: (_error) => {
       toast({
         title: "Update Failed",
         description: "Failed to update profile. Please try again.",
@@ -598,9 +584,9 @@ export default function Profile() {
   });
 
   // HubSpot sync mutation
-  const syncHubSpotMutation = useMutation({
+  const syncHubSpotMutation = useMutation<{ syncedFields?: string[] }, Error>({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/user/sync-hubspot", {});
+      return await apiRequest<{ syncedFields?: string[] }>("POST", "/api/user/sync-hubspot", {});
     },
     onSuccess: async (data) => {
       toast({
@@ -611,10 +597,10 @@ export default function Profile() {
       await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       await queryClient.refetchQueries({ queryKey: ["/api/user"] });
     },
-    onError: (error: any) => {
+    onError: (_error) => {
       toast({
         title: "Sync failed",
-        description: error.message || "Failed to sync with HubSpot",
+        description: _error.message || "Failed to sync with HubSpot",
         variant: "destructive",
       });
     },
@@ -843,12 +829,12 @@ export default function Profile() {
                                   type="button"
                                   onMouseDown={(e) => {
                                     e.preventDefault(); // Prevent focus loss
-                                    console.log("Button mousedown event triggered");
+                                    logger.debug("Button mousedown event triggered");
                                   }}
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    console.log("Address suggestion clicked:", suggestion);
+                                    logger.debug("Address suggestion clicked", { suggestion });
                                     selectAddress(suggestion);
                                   }}
                                   className="w-full px-4 py-3 text-left hover:bg-muted/70 focus:bg-muted/70 focus:outline-none border-b border-border last:border-b-0"

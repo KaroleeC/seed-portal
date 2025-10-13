@@ -33,7 +33,12 @@
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"],
       "@server/*": ["./server/*"],
-      "@test/*": ["./test/*"]
+      "@test/*": ["./test/*"],
+      "@features/*": ["./client/src/features/*"],
+      "@components/*": ["./client/src/components/*"],
+      "@hooks/*": ["./client/src/hooks/*"],
+      "@utils/*": ["./client/src/lib/*"],
+      "@types/*": ["./client/src/types/*"]
     },
 
     /* Type Checking */
@@ -54,6 +59,7 @@
     "server/**/*",
     "test/**/*",
     "config/**/*",
+    "scripts/**/*",
     "vite.config.ts",
     "vitest.config.ts",
     "tailwind.config.ts",

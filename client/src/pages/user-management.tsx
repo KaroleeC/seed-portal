@@ -3,7 +3,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -21,7 +20,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   Form,
@@ -37,7 +35,6 @@ import { z } from "zod";
 import {
   Users,
   UserPlus,
-  Settings,
   Trash2,
   RotateCcw,
   Copy,
@@ -102,11 +99,7 @@ export default function UserManagement() {
   });
 
   // Fetch all users
-  const {
-    data: usersData,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data: usersData, isLoading } = useQuery({
     queryKey: ["/api/admin/users"],
     queryFn: async () => {
       return await apiRequest<{ users: User[] }>("GET", "/api/admin/users");
@@ -116,7 +109,11 @@ export default function UserManagement() {
   // Create user mutation
   const createUserMutation = useMutation({
     mutationFn: async (userData: CreateUserForm) => {
-      return await apiRequest<any>("POST", "/api/admin/users", userData);
+      return await apiRequest<{ user: User; generatedPassword: string }>(
+        "POST",
+        "/api/admin/users",
+        userData
+      );
     },
     onSuccess: (data) => {
       toast({
@@ -126,9 +123,9 @@ export default function UserManagement() {
       setGeneratedPassword(data.generatedPassword);
       setIsCreateDialogOpen(false);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error Creating User",
         description: error.message || "Failed to create user",
@@ -140,7 +137,7 @@ export default function UserManagement() {
   // Update user role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: number; role: string }) => {
-      return await apiRequest<any>("PATCH", `/api/admin/users/${userId}/role`, {
+      return await apiRequest<{ success: boolean }>("PATCH", `/api/admin/users/${userId}/role`, {
         role,
       });
     },
@@ -149,9 +146,9 @@ export default function UserManagement() {
         title: "Success",
         description: "User role updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to update user role",
@@ -169,18 +166,22 @@ export default function UserManagement() {
       userId: number;
       defaultDashboard: string;
     }) => {
-      return await apiRequest<any>("PATCH", `/api/admin/users/${userId}/dashboard`, {
-        defaultDashboard,
-      });
+      return await apiRequest<{ success: boolean }>(
+        "PATCH",
+        `/api/admin/users/${userId}/dashboard`,
+        {
+          defaultDashboard,
+        }
+      );
     },
     onSuccess: () => {
       toast({
         title: "Success",
         description: "Default dashboard updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to update default dashboard",
@@ -192,7 +193,7 @@ export default function UserManagement() {
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest<any>("DELETE", `/api/admin/users/${userId}`);
+      return await apiRequest<{ deletedUser: User }>("DELETE", `/api/admin/users/${userId}`);
     },
     onSuccess: (data) => {
       toast({
@@ -201,9 +202,9 @@ export default function UserManagement() {
       });
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error Deleting User",
         description: error.message || "Failed to delete user",
@@ -215,7 +216,11 @@ export default function UserManagement() {
   // Reset password mutation
   const resetPasswordMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest<any>("POST", `/api/admin/users/${userId}/reset-password`, {});
+      return await apiRequest<{ user: User; newPassword: string }>(
+        "POST",
+        `/api/admin/users/${userId}/reset-password`,
+        {}
+      );
     },
     onSuccess: (data) => {
       toast({
@@ -224,7 +229,7 @@ export default function UserManagement() {
       });
       setGeneratedPassword(data.newPassword);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error Resetting Password",
         description: error.message || "Failed to reset password",
@@ -248,7 +253,7 @@ export default function UserManagement() {
 
   const impersonateMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return await apiRequest<any>("POST", `/api/admin/impersonate/${userId}`, {});
+      return await apiRequest<{ user: User }>("POST", `/api/admin/impersonate/${userId}`, {});
     },
     onSuccess: (data) => {
       toast({
@@ -257,7 +262,7 @@ export default function UserManagement() {
       });
 
       // Invalidate auth queries to refresh with impersonated user
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      void queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
 
       // Navigate to their default dashboard
       const dashboard = data.user.defaultDashboard || "sales";
@@ -275,7 +280,7 @@ export default function UserManagement() {
           window.location.href = "/";
       }
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Impersonation Failed",
         description: error.message || "Failed to impersonate user",
@@ -297,45 +302,8 @@ export default function UserManagement() {
   };
 
   const copyPasswordToClipboard = () => {
-    navigator.clipboard.writeText(generatedPassword);
+    void navigator.clipboard.writeText(generatedPassword);
     toast({ title: "Copied", description: "Password copied to clipboard" });
-  };
-
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "employee":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  const getDashboardBadgeColor = (dashboard: string) => {
-    switch (dashboard) {
-      case "admin":
-        return "bg-purple-100 text-purple-800 border-purple-200";
-      case "sales":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "service":
-        return "bg-orange-100 text-orange-800 border-orange-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  const getDashboardDisplayName = (dashboard: string) => {
-    switch (dashboard) {
-      case "admin":
-        return "Admin";
-      case "sales":
-        return "Sales";
-      case "service":
-        return "Service";
-      default:
-        return dashboard;
-    }
   };
 
   const users: User[] = usersData?.users || [];
@@ -543,17 +511,19 @@ export default function UserManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {isLoading ? (
+            {isLoading && (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
                 <p className="mt-3 text-gray-600 dark:text-gray-400 text-sm">Loading users...</p>
               </div>
-            ) : users.length === 0 ? (
+            )}
+            {!isLoading && users.length === 0 && (
               <div className="text-center py-12">
                 <Users className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
                 <p className="text-gray-600 dark:text-gray-400 text-sm">No users found</p>
               </div>
-            ) : (
+            )}
+            {!isLoading && users.length > 0 && (
               <div className="divide-y divide-gray-200 dark:divide-gray-800">
                 {users.map((user) => (
                   <div
@@ -580,15 +550,21 @@ export default function UserManagement() {
                     <div className="flex items-end space-x-3">
                       {/* Role Selector */}
                       <div className="flex flex-col">
-                        <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        <label
+                          htmlFor={`role-select-${user.id}`}
+                          className="text-xs text-gray-500 dark:text-gray-400 mb-1"
+                        >
                           Permission Level
                         </label>
+                        {/* eslint-disable rbac/no-direct-role-checks -- Displaying role in form field, not for authorization */}
                         <Select
                           value={user.role}
                           onValueChange={(newRole) => handleRoleUpdate(user.id, newRole)}
                           disabled={updateRoleMutation.isPending}
                         >
+                          {/* eslint-enable rbac/no-direct-role-checks */}
                           <SelectTrigger
+                            id={`role-select-${user.id}`}
                             className="w-32 h-9 text-xs"
                             data-testid={`select-role-${user.id}`}
                           >
@@ -603,7 +579,10 @@ export default function UserManagement() {
 
                       {/* Dashboard Selector */}
                       <div className="flex flex-col">
-                        <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        <label
+                          htmlFor={`dashboard-select-${user.id}`}
+                          className="text-xs text-gray-500 dark:text-gray-400 mb-1"
+                        >
                           Default Dashboard
                         </label>
                         <Select
@@ -614,6 +593,7 @@ export default function UserManagement() {
                           disabled={updateDashboardMutation.isPending}
                         >
                           <SelectTrigger
+                            id={`dashboard-select-${user.id}`}
                             className="w-32 h-9 text-xs"
                             data-testid={`select-dashboard-${user.id}`}
                           >

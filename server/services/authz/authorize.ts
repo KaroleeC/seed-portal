@@ -1,7 +1,8 @@
+import type { Request, Response, NextFunction } from "express";
 import { db } from "../../db";
 import { safeDbQuery } from "../../db-utils";
+import { logger } from "../../logger";
 import {
-  users,
   roles,
   permissions,
   userRoles,
@@ -9,7 +10,7 @@ import {
   type Role,
   type Permission,
 } from "@shared/schema";
-import { eq, and, inArray, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 // Principal interface - represents the authenticated user with their context
 export interface Principal {
@@ -25,7 +26,7 @@ export interface Principal {
 export interface Resource {
   type: string; // 'commission', 'quote', 'deal', etc.
   id?: string | number; // Resource ID if applicable
-  attrs?: Record<string, any>; // Additional resource attributes
+  attrs?: Record<string, unknown>; // Additional resource attributes
 }
 
 // Authorization result
@@ -50,13 +51,16 @@ export async function authorize(
   resource?: Resource
 ): Promise<AuthzResult> {
   try {
-    console.log("🔐 [Authz] Authorization check:", {
-      userId: principal.userId,
-      email: principal.email,
-      action,
-      resourceType: resource?.type,
-      resourceId: resource?.id,
-    });
+    logger.debug(
+      {
+        userId: principal.userId,
+        email: principal.email,
+        action,
+        resourceType: resource?.type,
+        resourceId: resource?.id,
+      },
+      "🔐 [Authz] Authorization check"
+    );
 
     // Special case: Super admin bypass via allowlist
     const allowlist = (process.env.ADMIN_EMAIL_ALLOWLIST || "")
@@ -64,7 +68,7 @@ export async function authorize(
       .map((s) => s.trim().toLowerCase())
       .filter(Boolean);
     if (allowlist.includes(String(principal.email || "").toLowerCase())) {
-      console.log("✅ [Authz] Super admin bypass granted (allowlist)");
+      logger.info({ email: principal.email }, "✅ [Authz] Super admin bypass granted (allowlist)");
       return { allowed: true, reason: "super_admin" };
     }
 
@@ -108,7 +112,7 @@ async function authorizeWithCerbos(
   const { checkWithCerbos, toCerbosPrincipal, toCerbosResource } = await import("./cerbos-client");
   const { loadPrincipalAttributes, loadResourceAttributes } = await import("./attribute-loader");
 
-  console.log("🎯 [Authz] Using Cerbos authorization");
+  logger.debug("🎯 [Authz] Using Cerbos authorization");
 
   // Load enriched attributes from database
   const principalAttributes = await loadPrincipalAttributes(principal);
@@ -142,7 +146,7 @@ async function authorizeWithRBAC(
   action: string,
   resource?: Resource
 ): Promise<AuthzResult> {
-  console.log("🗄️ [Authz] Using RBAC authorization");
+  logger.debug("🗄️ [Authz] Using RBAC authorization");
 
   // Load user permissions if not cached or expired
   const userPermissions = await getUserPermissions(principal.userId);
@@ -153,7 +157,7 @@ async function authorizeWithRBAC(
   );
 
   if (hasPermission) {
-    console.log("✅ [Authz] Permission granted:", action);
+    logger.debug({ action }, "✅ [Authz] Permission granted");
     return { allowed: true, reason: "permission_granted" };
   }
 
@@ -165,7 +169,7 @@ async function authorizeWithRBAC(
     );
 
     if (hasWildcard) {
-      console.log("✅ [Authz] Wildcard permission granted:", wildcardPermission);
+      logger.debug({ wildcardPermission }, "✅ [Authz] Wildcard permission granted");
       return { allowed: true, reason: "wildcard_permission" };
     }
   }
@@ -183,11 +187,14 @@ async function authorizeWithRBAC(
     }
   }
 
-  console.log("❌ [Authz] Permission denied:", {
-    action,
-    userPermissions: userPermissions.map((p) => p.key),
-    reason: "insufficient_permissions",
-  });
+  logger.warn(
+    {
+      action,
+      userPermissions: userPermissions.map((p) => p.key),
+      reason: "insufficient_permissions",
+    },
+    "❌ [Authz] Permission denied"
+  );
 
   return {
     allowed: false,
@@ -227,7 +234,7 @@ async function getUserPermissions(userId: number): Promise<Permission[]> {
           )
         );
 
-      return result.map((row: any) => row.permission);
+      return result.map((row: { permission: string }) => row.permission);
     }, "getUserPermissions")) || [];
 
   // Cache the result
@@ -315,7 +322,7 @@ async function checkQuoteAuthorization(
   principal: Principal,
   action: string,
   resource: Resource,
-  userPermissions: Permission[]
+  _userPermissions: Permission[]
 ): Promise<AuthzResult> {
   // Users can edit their own quotes
   if (action === "quotes.update" || action === "quotes.delete") {
@@ -334,7 +341,7 @@ async function checkDealAuthorization(
   principal: Principal,
   action: string,
   resource: Resource,
-  userPermissions: Permission[]
+  _userPermissions: Permission[]
 ): Promise<AuthzResult> {
   // Sales reps can manage their own deals
   if (action === "deals.update" || action === "deals.sync") {
@@ -374,7 +381,7 @@ export async function getUserAuthzInfo(userId: number): Promise<{
         .from(userRoles)
         .innerJoin(roles, eq(userRoles.roleId, roles.id))
         .where(and(eq(userRoles.userId, userId), eq(roles.isActive, true)));
-      return result.map((row: any) => row.role);
+      return result.map((row: { role: { name: string } }) => row.role);
     }, "getUserRoles"),
     getUserPermissions(userId),
   ]);
@@ -389,28 +396,34 @@ export async function getUserAuthzInfo(userId: number): Promise<{
  * Express middleware wrapper for authorization
  */
 export function requirePermission(action: string, resourceType?: string) {
-  return async (req: any, res: any, next: any) => {
+  return async (
+    req: Request & { principal?: Principal },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const principal = req.principal as Principal;
       if (!principal) {
-        return res.status(401).json({ message: "Authentication required" });
+        void res.status(401).json({ message: "Authentication required" });
+        return;
       }
 
       const resource = resourceType ? { type: resourceType } : undefined;
       const authzResult = await authorize(principal, action, resource);
 
       if (!authzResult.allowed) {
-        return res.status(403).json({
+        void res.status(403).json({
           message: "Insufficient permissions",
           required: authzResult.requiredPermissions,
           reason: authzResult.reason,
         });
+        return;
       }
 
       next();
     } catch (error) {
-      console.error("Authorization middleware error:", error);
-      return res.status(500).json({ message: "Authorization error" });
+      logger.error({ error }, "Authorization middleware error");
+      void res.status(500).json({ message: "Authorization error" });
     }
   };
 }

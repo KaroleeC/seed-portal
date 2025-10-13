@@ -54,7 +54,7 @@ class MockEventSource {
   }
 
   // Helper to emit events in tests
-  emit(eventName: string, data: any) {
+  emit(eventName: string, data: unknown) {
     const listeners = this.listeners.get(eventName);
     if (listeners) {
       const event = new MessageEvent("message", {

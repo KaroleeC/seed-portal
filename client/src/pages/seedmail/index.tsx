@@ -14,7 +14,13 @@ import { Sidebar } from "./components/Sidebar";
 import { ThreadList } from "./components/ThreadList";
 import { useEmailThreads } from "./hooks/useEmailThreads";
 import { useEmailEvents } from "./hooks/useEmailEvents";
-import type { EmailAccount, EmailThread, EmailDraft, EmailFolder } from "@shared/email-types";
+import type {
+  EmailAccount,
+  EmailThread,
+  EmailDraft,
+  EmailFolder,
+  EmailMessage,
+} from "@shared/email-types";
 
 export default function SeedMailPage() {
   // Opt-in to SeedKB theme variant for this app route
@@ -96,9 +102,10 @@ export default function SeedMailPage() {
             );
             // Find thread containing the message we're replying to
             for (const thread of allThreads) {
-              const threadDetail = await apiRequest<{ thread: EmailThread; messages: any[] }>(
-                `/api/email/threads/${thread.id}`
-              );
+              const threadDetail = await apiRequest<{
+                thread: EmailThread;
+                messages: EmailMessage[];
+              }>(`/api/email/threads/${thread.id}`);
               if (threadDetail.messages.some((m) => m.id === draft.inReplyToMessageId)) {
                 // Found the thread - open it with reply and load draft
                 setSelectedThread(thread.id);

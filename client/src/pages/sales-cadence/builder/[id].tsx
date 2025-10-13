@@ -3,6 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { usePermissions } from "@/hooks/use-permissions";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Save, Plus, CheckCircle2, Loader2 } from "lucide-react";
@@ -19,6 +20,7 @@ export default function SalesCadenceBuilderPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isAdmin } = usePermissions();
 
   const id = params?.id || "";
   const [model, setModel] = useState<CadenceModel | null>(null);
@@ -247,7 +249,7 @@ export default function SalesCadenceBuilderPage() {
           model={model}
           onUpdate={onUpdateModel}
           currentUser={user}
-          isAdmin={user?.role?.toLowerCase() === "admin"}
+          isAdmin={isAdmin}
         />
       </div>
 

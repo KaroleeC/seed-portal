@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/node";
 import type { Express } from "express";
 import { logger } from "./logger";
 
-export function initializeSentry(app: Express): boolean {
+export function initializeSentry(_app: Express): boolean {
   const sentryDsn = process.env.SENTRY_DSN;
 
   if (!sentryDsn) {
@@ -36,11 +36,9 @@ export function initializeSentry(app: Express): boolean {
 
           // Skip database connection errors (handled gracefully)
           if (error && typeof error === "object" && "code" in error) {
-            const code = (error as any).code;
+            const code = (error as { code: string }).code;
             if (["ECONNRESET", "ENOTFOUND", "ETIMEDOUT"].includes(code)) {
-              logger.debug("Skipping Sentry report for connection error", {
-                code,
-              });
+              logger.debug({ code }, "Skipping Sentry report for connection error");
               return null;
             }
           }
@@ -97,7 +95,11 @@ export function initializeSentry(app: Express): boolean {
 
 // Middleware to attach user context to Sentry
 export function sentryUserContext() {
-  return (req: any, res: any, next: any) => {
+  return (
+    req: { user?: { id: number; email: string }; ip?: string },
+    _res: unknown,
+    next: () => void
+  ): void => {
     if (req.user) {
       Sentry.setUser({
         id: req.user.id.toString(),
@@ -111,7 +113,11 @@ export function sentryUserContext() {
 }
 
 // Helper to capture custom events
-export function captureMessage(message: string, level: Sentry.SeverityLevel = "info", extra?: any) {
+export function captureMessage(
+  message: string,
+  level: Sentry.SeverityLevel = "info",
+  extra?: Record<string, unknown>
+): void {
   logger.info({ extra }, `Sentry: ${message}`);
   Sentry.captureMessage(message, {
     level,
@@ -120,7 +126,7 @@ export function captureMessage(message: string, level: Sentry.SeverityLevel = "i
 }
 
 // Helper to capture exceptions with context
-export function captureException(error: Error, context?: any) {
+export function captureException(error: Error, context?: Record<string, unknown>): void {
   logger.error({ err: error, context }, "Captured exception");
   Sentry.captureException(error, {
     extra: context,

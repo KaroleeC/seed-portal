@@ -1,2 +1,5 @@
 # Lint and format staged files
 npm run lint:staged
+
+# Check for banned SDK imports (Phase 0 guardrail)
+npm run check:banned-imports

@@ -1,4 +1,4 @@
-# ✅ Priorities 1, 2, 3 - COMPLETE!
+# ✅ Priorities 1, 2, 3 - COMPLETE
 
 **Date:** October 9, 2025  
 **Time:** ~10 minutes  
@@ -35,9 +35,9 @@ optimizeDeps: {
 
 **Features:**
 
-- `loginAsAdmin(page)` - Login as admin user (default: test-admin@seed.com)
-- `loginAsSales(page)` - Login as sales user (default: test-sales@seed.com)
-- `loginAsService(page)` - Login as service user (default: test-service@seed.com)
+- `loginAsAdmin(page)` - Login as admin user (default: <test-admin@seed.com>)
+- `loginAsSales(page)` - Login as sales user (default: <test-sales@seed.com>)
+- `loginAsService(page)` - Login as service user (default: <test-service@seed.com>)
 - `logout(page)` - Logout current user
 - `isAuthenticated(page)` - Check if logged in
 - `getAuthState(page)` - Get auth token from localStorage
@@ -75,9 +75,9 @@ test("calculator loads", async ({ page }) => {
 **Quick Setup (5 minutes):**
 
 1. **Create 3 users in Supabase:**
-   - test-admin@seed.com (admin, /admin dashboard)
-   - test-sales@seed.com (employee, /sales dashboard)
-   - test-service@seed.com (employee, /service dashboard)
+   - <test-admin@seed.com> (admin, /admin dashboard)
+   - <test-sales@seed.com> (employee, /sales dashboard)
+   - <test-service@seed.com> (employee, /service dashboard)
 
 2. **Set roles in database:**
 

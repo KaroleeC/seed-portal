@@ -278,26 +278,35 @@ export default function CommissionTracker() {
   useEffect(() => {
     const normalizedDeals = dealsResult?.deals || [];
     if (Array.isArray(normalizedDeals)) {
-      const transformed: Deal[] = normalizedDeals.map((d: any) => ({
-        id: String(d.id),
-        dealName: d.name || "Untitled Deal",
-        companyName: d.companyName || "Unknown Company",
-        amount: Number(d.amount) || 0,
-        setupFee: 0,
-        monthlyFee: 0,
-        status:
-          typeof d.stage === "string" && /won/i.test(d.stage)
-            ? "closed_won"
-            : typeof d.stage === "string" && /lost/i.test(d.stage)
-              ? "closed_lost"
-              : "open",
-        closedDate: d.closeDate || undefined,
-        serviceType: "bookkeeping",
-        salesRep: "Unknown Rep",
-        hubspotDealId: String(d.id),
-        pipelineStage: d.stage || undefined,
-        probability: undefined,
-      }));
+      const transformed: Deal[] = normalizedDeals.map(
+        (d: {
+          id?: string | number;
+          name?: string;
+          companyName?: string;
+          amount?: string | number;
+          stage?: string;
+          closeDate?: string;
+        }) => ({
+          id: String(d.id),
+          dealName: d.name || "Untitled Deal",
+          companyName: d.companyName || "Unknown Company",
+          amount: Number(d.amount) || 0,
+          setupFee: 0,
+          monthlyFee: 0,
+          status:
+            typeof d.stage === "string" && /won/i.test(d.stage)
+              ? "closed_won"
+              : typeof d.stage === "string" && /lost/i.test(d.stage)
+                ? "closed_lost"
+                : "open",
+          closedDate: d.closeDate || undefined,
+          serviceType: "bookkeeping",
+          salesRep: "Unknown Rep",
+          hubspotDealId: String(d.id),
+          pipelineStage: d.stage || undefined,
+          probability: undefined,
+        })
+      );
       setDeals(transformed);
     }
   }, [dealsResult]);

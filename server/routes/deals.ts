@@ -48,7 +48,7 @@ router.post(
   validateBody(queueSyncSchema),
   asyncHandler(async (req, res) => {
     const { quoteId, action = "auto" } = req.body;
-    const actorEmail = (req.user as any)?.email || "unknown@seedfinancial.io";
+    const actorEmail = (req.user as { email?: string })?.email || "unknown@seedfinancial.io";
 
     // Use provider pattern for queue (DRY: single point of abstraction)
     const provider = getQuoteProvider();
@@ -74,7 +74,7 @@ router.post(
   validateBody(pushQuoteSchema),
   asyncHandler(async (req, res) => {
     const { quoteId } = req.body;
-    const actorEmail = (req.user as any)?.email || "unknown@seedfinancial.io";
+    const actorEmail = (req.user as { email?: string })?.email || "unknown@seedfinancial.io";
 
     // Use provider pattern (DRY: consistent abstraction)
     const provider = getQuoteProvider();
@@ -97,7 +97,7 @@ router.post(
   validateBody(updateQuoteSchema),
   asyncHandler(async (req, res) => {
     const { quoteId } = req.body;
-    const actorEmail = (req.user as any)?.email || "unknown@seedfinancial.io";
+    const actorEmail = (req.user as { email?: string })?.email || "unknown@seedfinancial.io";
 
     try {
       // Use provider pattern (DRY: consistent abstraction)
@@ -199,7 +199,7 @@ router.get(
       contactEmail: quote.contactEmail,
       companyName: quote.companyName,
       // status field may not exist in schema - use type assertion if needed
-      status: (quote as any).status || "draft",
+      status: (quote as { status?: string }).status || "draft",
     });
   })
 );
@@ -281,7 +281,7 @@ router.post(
   "/api/deals/cache/invalidate",
   requireAuth,
   requirePermission("admin.cache", "system"),
-  async (req: any, res) => {
+  async (req, res) => {
     try {
       // Clear in-memory cache (Redis removed)
       const pattern = `${CachePrefix.HUBSPOT_DEALS_LIST}*`;

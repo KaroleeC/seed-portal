@@ -1,5 +1,5 @@
 import { apiRequest } from "@/lib/queryClient";
-import type { Quote } from "@shared/schema";
+import type { Quote, InsertQuote } from "@shared/schema";
 
 export type QuoteSortOrder = "asc" | "desc";
 
@@ -16,11 +16,11 @@ export async function fetchQuotes(params: {
   return data || [];
 }
 
-export async function createQuote(data: any): Promise<Quote> {
+export async function createQuote(data: Partial<InsertQuote>): Promise<Quote> {
   return await apiRequest<Quote>("POST", "/api/quotes", data);
 }
 
-export async function updateQuote(id: number, data: any): Promise<Quote> {
+export async function updateQuote(id: number, data: Partial<Quote>): Promise<Quote> {
   return await apiRequest<Quote>("PUT", `/api/quotes/${id}`, data);
 }
 

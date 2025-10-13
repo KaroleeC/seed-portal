@@ -28,6 +28,8 @@ module.exports = {
     'vitest',
     'testing-library',
     'jest-dom',
+    'rbac',
+    'filenames',
   ],
   extends: ['eslint:recommended', 'plugin:react/recommended', 'plugin:react-hooks/recommended', 'plugin:@typescript-eslint/recommended', 'plugin:jsx-a11y/recommended', 'prettier', 'plugin:storybook/recommended'],
   rules: {
@@ -80,6 +82,42 @@ module.exports = {
 
     // Import/Export rules temporarily disabled due to compatibility issues
 
+    // File naming conventions (Phase 0)
+    'filenames/match-regex': [2, '^[A-Z][a-zA-Z]+$|^[a-z][a-z0-9-]+(\\.[a-z]+)?$', true],
+    'filenames/match-exported': [2, 'kebab'],
+
+    // SDK Import Restrictions (Phase 0: Integration Removal)
+    // Block direct imports of external SDKs - use provider abstractions instead
+    'no-restricted-imports': [
+      'error',
+      {
+        paths: [
+          {
+            name: '@hubspot/api-client',
+            message: 'Direct HubSpot SDK imports are restricted. Use server/services/providers instead. See docs/INTEGRATION_REMOVAL_PLAN.md',
+          },
+          {
+            name: 'box-node-sdk',
+            message: 'Direct Box SDK imports are restricted. Use server/services/storage-service.ts abstraction. See docs/INTEGRATION_REMOVAL_PLAN.md',
+          },
+          {
+            name: 'airtable',
+            message: 'Airtable integration is deprecated and will be removed. Use internal CLIENTIQ instead. See docs/INTEGRATION_REMOVAL_PLAN.md',
+          },
+        ],
+        patterns: [
+          {
+            group: ['@hubspot/*'],
+            message: 'Direct HubSpot imports are restricted. Use provider abstraction.',
+          },
+          {
+            group: ['box-node-sdk*'],
+            message: 'Direct Box imports are restricted. Use storage service abstraction.',
+          },
+        ],
+      },
+    ],
+
     // Security: Prevent inline authorization checks
     // All routes must use requirePermission middleware instead
     'no-restricted-syntax': [
@@ -104,6 +142,15 @@ module.exports = {
         message: 'Use shouldDebugRequests() or shouldLogResponses() from server/config/environment instead of direct process.env.DEBUG_HTTP checks. This ensures production safety.'
       },
     ],
+
+    // RBAC: Prevent direct role checks in frontend (use usePermissions hook instead)
+    'rbac/no-direct-role-checks': ['warn', {
+      allowedFiles: [
+        'shared/permissions.ts',
+        'hooks/use-permissions.tsx',
+        'lib/can.ts',
+      ],
+    }],
   },
   overrides: [
     // TypeScript files
@@ -172,13 +219,72 @@ module.exports = {
         'vitest/expect-expect': 'warn',
       },
     },
-    // Server/middleware files - allow Express patterns
+    // Frontend components - enforce authenticated API usage
+    {
+      files: [
+        'client/src/components/**/*.{ts,tsx}',
+        'client/src/pages/**/*.{ts,tsx}',
+        'client/src/features/**/*.{ts,tsx}',
+      ],
+      excludedFiles: ['**/*.test.{ts,tsx}', '**/__tests__/**'],
+      rules: {
+        // Prevent raw fetch() in components - use apiFetch() instead
+        'no-restricted-globals': [
+          'error',
+          {
+            name: 'fetch',
+            message: [
+              'Do not use raw fetch() in components for authenticated API calls.',
+              'Use apiFetch() from @/lib/api which automatically adds Authorization headers.',
+              'Example: apiFetch<T>("GET", "/api/admin/rbac/users")',
+              '',
+              'If you need unauthenticated fetch (e.g., public APIs), add an ESLint disable comment:',
+              '// eslint-disable-next-line no-restricted-globals',
+            ].join('\n'),
+          },
+        ],
+      },
+    },
+    // Server/middleware files - allow Express patterns + enforce RBAC
     {
       files: ['server/**/*.ts', 'server/**/*.js'],
       rules: {
         // Express middleware commonly mutates req/res properties (e.g., req.user, res.locals)
         // This is an intentional and standard pattern in Express
         'no-param-reassign': ['error', { props: false }],
+
+        // RBAC: Enforce permission middleware on routes
+        'rbac/require-permission-middleware': ['warn', {
+          exemptRoutes: [
+            '/api/user',
+            '/api/csrf-token',
+            '/api/auth',
+            '/api/health',
+          ],
+        }],
+
+        // RBAC: Prevent inline auth checks (use middleware)
+        'rbac/no-inline-auth-checks': 'warn',
+
+        // RBAC: Require route documentation
+        'rbac/require-route-documentation': ['warn', {
+          exemptRoutes: ['/api/csrf-token', '/api/health'],
+        }],
+      },
+    },
+    // Provider implementation files - allow SDK imports (temporary during Phase 0-1)
+    {
+      files: [
+        'server/services/providers/hubspot-provider.ts',
+        'server/services/hubspot/**/*.ts',
+        'server/services/storage-service.ts',
+        'server/box-integration.ts',
+        'server/services/crm-service.ts',
+        'server/airtable.ts',
+        'server/client-intel.ts',
+      ],
+      rules: {
+        'no-restricted-imports': 'off',
       },
     },
   ],

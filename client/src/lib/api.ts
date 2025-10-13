@@ -13,10 +13,10 @@ async function getCsrfToken(): Promise<string | undefined> {
   }
 }
 
-export async function apiFetch<T = any>(
+export async function apiFetch<T = unknown>(
   method: HttpMethod,
   url: string,
-  body?: any,
+  body?: unknown,
   extraHeaders?: Record<string, string>
 ): Promise<T> {
   // Get Supabase session access token for Authorization header
@@ -38,10 +38,15 @@ export async function apiFetch<T = any>(
     if (csrf) headers["x-csrf-token"] = csrf;
   }
 
+  let requestBody: string | undefined;
+  if (body !== undefined) {
+    requestBody = typeof body === "string" ? body : JSON.stringify(body);
+  }
+
   const resp = await fetch(url, {
     method,
     headers,
-    body: body !== undefined ? (typeof body === "string" ? body : JSON.stringify(body)) : undefined,
+    body: requestBody,
     credentials: "include",
   });
 

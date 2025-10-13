@@ -4,6 +4,20 @@
  */
 
 import type { Request, Response } from "express";
+import type { User } from "../../shared/schema";
+
+// Extend Request type for auth middleware
+interface AuthenticatedRequest extends Request {
+  user?: User;
+  principal?: {
+    userId: number;
+    authUserId: string;
+    email: string;
+    role: string;
+    roles?: unknown[];
+    permissions?: unknown[];
+  };
+}
 import { Router } from "express";
 import { nanoid } from "nanoid";
 import { db } from "../db";
@@ -16,6 +30,7 @@ import {
   emailThreads,
   emailMessages,
   emailSyncState,
+  type InsertEmailAccount,
 } from "../../shared/email-schema";
 import { users } from "../../shared/schema";
 import trackingRoutes from "./email/tracking.routes.js";
@@ -51,29 +66,33 @@ setInterval(
  * GET /api/email/oauth/start
  * Initiate Gmail OAuth flow
  */
-router.get("/api/email/oauth/start", requireAuth, async (req: Request, res: Response) => {
-  try {
-    const userId = String(req.user?.id || req.principal?.userId || "");
-    if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+router.get(
+  "/api/email/oauth/start",
+  requireAuth,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = String(req.user?.id || req.principal?.userId || "");
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+      const gmail = createGmailService();
+      const state = nanoid(); // CSRF protection
+      // Store state for verification
+      oauthStates.set(state, { userId, createdAt: Date.now() });
+      const authUrl = gmail.getAuthUrl(state);
+      res.json({ authUrl });
+    } catch (error) {
+      console.error("[Email OAuth] Failed to start OAuth:", error);
+      res.status(500).json({ error: "Failed to initiate OAuth" });
     }
-    const gmail = createGmailService();
-    const state = nanoid(); // CSRF protection
-    // Store state for verification
-    oauthStates.set(state, { userId, createdAt: Date.now() });
-    const authUrl = gmail.getAuthUrl(state);
-    res.json({ authUrl });
-  } catch (error) {
-    console.error("[Email OAuth] Failed to start OAuth:", error);
-    res.status(500).json({ error: "Failed to initiate OAuth" });
   }
-});
+);
 
 /**
  * GET /api/email/oauth/callback
  * Handle Gmail OAuth callback
  */
-router.get("/api/email/oauth/callback", async (req: Request, res: Response) => {
+router.get("/api/email/oauth/callback", async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { code, state } = req.query;
 
@@ -159,7 +178,7 @@ router.get("/api/email/oauth/callback", async (req: Request, res: Response) => {
  * GET /api/email/accounts
  * List connected email accounts
  */
-router.get("/api/email/accounts", requireAuth, async (req: Request, res: Response) => {
+router.get("/api/email/accounts", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = String(req.user?.id || req.principal?.userId || "");
     if (!userId) {
@@ -193,7 +212,7 @@ router.get("/api/email/accounts", requireAuth, async (req: Request, res: Respons
  * POST /api/email/send
  * Send email via Mailgun
  */
-router.post("/api/email/send", requireAuth, async (req: Request, res: Response) => {
+router.post("/api/email/send", requireAuth, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const {
       accountId,
@@ -254,6 +273,7 @@ router.post("/api/email/send", requireAuth, async (req: Request, res: Response) 
 
     if (user?.emailSignatureEnabled && user?.emailSignatureHtml && finalHtml) {
       finalHtml += `<br/><br/>${user.emailSignatureHtml}`;
+      // eslint-disable-next-line no-console
       console.log("[Email] Pre-rendered signature appended");
     }
 
@@ -300,7 +320,10 @@ router.post("/api/email/send", requireAuth, async (req: Request, res: Response) 
 
     // Create email send service with decrypted credentials
     const { decryptEmailTokens } = await import("../services/email-tokens");
-    const { accessToken, refreshToken } = decryptEmailTokens(account as any);
+    const { accessToken, refreshToken } = decryptEmailTokens({
+      accessToken: account.accessToken,
+      refreshToken: account.refreshToken,
+    });
     const emailSendService = createEmailSendService(accessToken, refreshToken);
 
     // Optional scheduling (in-memory best-effort)
@@ -345,17 +368,20 @@ router.post("/api/email/send", requireAuth, async (req: Request, res: Response) 
     });
 
     res.json({ success: true, messageId: result.id, statusId: result.statusId });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // eslint-disable-next-line no-console
     console.error("[Email] Failed to send email:", error);
     // eslint-disable-next-line no-console
     console.error("[Email] Error details:", {
-      message: error?.message,
-      stack: error?.stack,
-      code: error?.code,
-      name: error?.name,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      code: (error as { code?: string })?.code,
+      name: error instanceof Error ? error.name : undefined,
     });
-    res.status(500).json({ error: "Failed to send email", details: error?.message });
+    res.status(500).json({
+      error: "Failed to send email",
+      details: error instanceof Error ? error.message : String(error),
+    });
   }
 });
 
@@ -444,30 +470,34 @@ router.use(trackingRoutes);
  * GET /api/email/debug/signature
  * Debug endpoint to check user's signature
  */
-router.get("/api/email/debug/signature", requireAuth, async (req: any, res: Response) => {
-  try {
-    const userId = String(req.user?.id || req.principal?.userId || "");
-    const [user] = await db
-      .select({
-        emailSignature: users.emailSignature,
-        emailSignatureEnabled: users.emailSignatureEnabled,
-      })
-      .from(users)
-      .where(eq(users.id, parseInt(userId)))
-      .limit(1);
+router.get(
+  "/api/email/debug/signature",
+  requireAuth,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = String(req.user?.id || req.principal?.userId || "");
+      const [user] = await db
+        .select({
+          emailSignature: users.emailSignature,
+          emailSignatureEnabled: users.emailSignatureEnabled,
+        })
+        .from(users)
+        .where(eq(users.id, parseInt(userId)))
+        .limit(1);
 
-    res.json({
-      userId,
-      signatureEnabled: user?.emailSignatureEnabled,
-      signatureExists: !!user?.emailSignature,
-      signatureLength: user?.emailSignature?.length || 0,
-      signaturePreview: user?.emailSignature?.substring(0, 200),
-      signatureFull: user?.emailSignature,
-    });
-  } catch (error) {
-    console.error("[Email Debug] Failed to get signature:", error);
-    res.status(500).json({ error: "Failed to get signature" });
+      res.json({
+        userId,
+        signatureEnabled: user?.emailSignatureEnabled,
+        signatureExists: !!user?.emailSignature,
+        signatureLength: user?.emailSignature?.length || 0,
+        signaturePreview: user?.emailSignature?.substring(0, 200),
+        signatureFull: user?.emailSignature,
+      });
+    } catch (error) {
+      console.error("[Email Debug] Failed to get signature:", error);
+      res.status(500).json({ error: "Failed to get signature" });
+    }
   }
-});
+);
 
 export default router;

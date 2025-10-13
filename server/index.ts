@@ -442,38 +442,45 @@ async function initializeServicesWithTimeout(timeoutMs: number = 30000) {
     // Sentry error handling is integrated via expressIntegration
 
     // Enhanced error handler with database error handling
-    app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
-      let message = err.message || "Internal Server Error";
+    app.use(
+      (
+        err: Error & { status?: number; statusCode?: number; code?: string },
+        req: Request,
+        res: Response,
+        _next: NextFunction
+      ) => {
+        const status = err.status || err.statusCode || 500;
+        let message = err.message || "Internal Server Error";
 
-      // Handle database connection errors gracefully
-      if (
-        err.code === "ECONNRESET" ||
-        err.code === "ENOTFOUND" ||
-        err.message?.includes("connection") ||
-        err.message?.includes("timeout")
-      ) {
-        console.error("Database connection error:", err);
-        message = "Database temporarily unavailable. Please try again.";
-        res.status(503).json({ message });
-        return; // Don't throw - just log and return error response
+        // Handle database connection errors gracefully
+        if (
+          err.code === "ECONNRESET" ||
+          err.code === "ENOTFOUND" ||
+          err.message?.includes("connection") ||
+          err.message?.includes("timeout")
+        ) {
+          console.error("Database connection error:", err);
+          message = "Database temporarily unavailable. Please try again.";
+          res.status(503).json({ message });
+          return; // Don't throw - just log and return error response
+        }
+
+        console.error("Server error:", err);
+        res.status(status).json({ message });
+
+        // Only throw for critical errors that should crash the app.
+        // In development, never crash on Vite transform or middleware errors.
+        const isDev = req.app.get("env") === "development";
+        const isLikelyViteError = Boolean(
+          (err?.stack && /vite|transformIndexHtml|plugin/i.test(String(err.stack))) ||
+            (err?.message && /vite|pre-transform/i.test(String(err.message))) ||
+            (req?.originalUrl && /@vite|__vite|\/src\//i.test(String(req.originalUrl)))
+        );
+        if (!isDev && status >= 500 && !err.message?.includes("connection")) {
+          throw err;
+        }
       }
-
-      console.error("Server error:", err);
-      res.status(status).json({ message });
-
-      // Only throw for critical errors that should crash the app.
-      // In development, never crash on Vite transform or middleware errors.
-      const isDev = req.app.get("env") === "development";
-      const isLikelyViteError = Boolean(
-        (err?.stack && /vite|transformIndexHtml|plugin/i.test(String(err.stack))) ||
-          (err?.message && /vite|pre-transform/i.test(String(err.message))) ||
-          (req?.originalUrl && /@vite|__vite|\/src\//i.test(String(req.originalUrl)))
-      );
-      if (!isDev && status >= 500 && !err.message?.includes("connection")) {
-        throw err;
-      }
-    });
+    );
 
     // Add explicit 404 handler for unmatched API routes BEFORE static serving
     app.use("/api/*", (req, res) => {

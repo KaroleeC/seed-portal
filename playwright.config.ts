@@ -75,19 +75,22 @@ export default defineConfig({
 
   // Run local dev servers before starting the tests
   // Start both the Web (Vite) and API servers via Doppler
-  webServer: [
-    {
-      command: "doppler run --project seed-portal-web --config dev -- npm run dev:web",
-      url: "http://localhost:3000",
-      reuseExistingServer: !process.env.CI,
-      timeout: 120 * 1000,
-    },
-    {
-      command:
-        "doppler run --project seed-portal-api --config dev -- sh -c 'PORT_OVERRIDE=5001 USE_SUPABASE_AUTH=true SKIP_EMAIL_RETRY_SCHEDULER=true npm run dev:api'",
-      url: "http://127.0.0.1:5001/health",
-      reuseExistingServer: !process.env.CI,
-      timeout: 120 * 1000,
-    },
-  ],
+  // Skip if SKIP_WEBSERVER=1 is set (for testing with existing servers)
+  webServer: process.env.SKIP_WEBSERVER
+    ? undefined
+    : [
+        {
+          command: "doppler run --project seed-portal-web --config dev -- npm run dev:web",
+          url: "http://localhost:3000",
+          reuseExistingServer: !process.env.CI,
+          timeout: 120 * 1000,
+        },
+        {
+          command:
+            "doppler run --project seed-portal-api --config dev -- sh -c 'PORT_OVERRIDE=5001 USE_SUPABASE_AUTH=true SKIP_EMAIL_RETRY_SCHEDULER=true npm run dev:api'",
+          url: "http://127.0.0.1:5001/health",
+          reuseExistingServer: !process.env.CI,
+          timeout: 120 * 1000,
+        },
+      ],
 });

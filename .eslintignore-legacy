@@ -1,0 +1,13 @@
+# Legacy integrations being removed - don't waste time fixing
+**/hubspot*.ts
+**/hubspot*.tsx
+**/airtable*.ts
+**/airtable*.tsx
+**/box*.ts
+**/box*.tsx
+server/services/hubspot/**
+server/services/box/**
+server/services/airtable/**
+client/src/components/**/Box*.tsx
+client/src/components/**/HubSpot*.tsx
+client/src/components/**/Airtable*.tsx

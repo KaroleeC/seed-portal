@@ -1,131 +1,58 @@
 /* eslint-disable no-param-reassign */
 // Express route handlers intentionally mutate req/res objects
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
+import type { User } from "@shared/schema";
+import type { Principal } from "./services/authz/authorize";
+
+// Extend Express Request type with auth properties
+interface AuthenticatedRequest extends Request {
+  user?: User;
+  principal?: Principal;
+}
 import { storage } from "./storage";
-import { createClient } from "@supabase/supabase-js";
-import {
-  insertQuoteSchema,
-  updateQuoteSchema,
-  updateProfileSchema,
-  changePasswordSchema,
-  insertKbCategorySchema,
-  insertKbArticleSchema,
-  insertKbBookmarkSchema,
-  insertKbSearchHistorySchema,
-  insertCommissionAdjustmentSchema,
-  users,
-} from "@shared/schema";
+import { insertQuoteSchema, updateQuoteSchema } from "@shared/schema";
 import { z } from "zod";
-import { sendSystemAlert } from "./slack";
 import { hubSpotService } from "./hubspot";
-import { doesHubSpotQuoteExist } from "./hubspot";
 import { requireAuth } from "./middleware/supabase-auth";
 import { registerAdminRoutes } from "./admin-routes";
-import { getHubspotMetrics } from "./metrics";
-import { getModuleLogs } from "./logs-feed";
-import { checkDatabaseHealth } from "./db";
-// HubSpotService class is no longer instantiated directly in routes; use singleton hubSpotService
 import { registerHubspotRoutes } from "./hubspot-routes";
 import quoteRoutes from "./quote-routes";
-import { calculateCombinedFees, calculateQuotePricing } from "@shared/pricing";
-import { buildServiceConfig } from "./services/hubspot/compose";
-// Domain routers (Chunk 8)
+import { calculateCombinedFees } from "@shared/pricing";
 import { mountRouters } from "./routes/index";
-import { pricingConfigService } from "./pricing-config";
-import type { PricingData } from "@shared/pricing";
-import { clientIntelEngine } from "./client-intel";
-import { apiRateLimit, searchRateLimit, enhancementRateLimit } from "./middleware/rate-limiter";
+import { apiRateLimit } from "./middleware/rate-limiter";
 import { conditionalCsrf, provideCsrfToken } from "./middleware/csrf";
-import multer from "multer";
-import { scrypt, randomBytes, timingSafeEqual, randomUUID } from "crypto";
-import { promisify } from "util";
-import path from "path";
-import { promises as fs } from "fs";
 import express from "express";
-import { cache, CacheTTL, CachePrefix } from "./cache";
 import { db } from "./db";
-import { sql, eq, and } from "drizzle-orm";
-import { aiConversations, aiMessages, userPreferences } from "@shared/schema";
+import { sql } from "drizzle-orm";
 import { hubspotSync } from "./hubspot-sync";
-import { syncQuoteToHubSpot } from "./services/hubspot/sync";
-import { Client } from "@hubspot/api-client";
-import { dealsService } from "./services/deals-service";
-import { calculateProjectedCommission } from "@shared/commission-calculator";
-import { DealsResultSchema } from "@shared/deals";
-import {
-  CommissionSummarySchema,
-  PricingConfigSchema,
-  CalculatorContentResponseSchema,
-} from "@shared/contracts";
-import { boxService } from "./box-integration";
-import { AIService } from "./services/ai-service";
-import { extractTextFromBoxAttachments } from "./doc-extract";
-import { Limits, type ClientKind } from "./ai/config";
-import { resolveBoxAttachmentsForClient, extractTextForClient } from "./ai/pipeline";
 import { requirePermission, authorize } from "./services/authz/authorize";
-import { generateApprovalCode } from "./utils/approval";
 import { getErrorMessage } from "./utils/error-handling";
 import { toPricingData } from "./utils/pricing-normalization";
 import { sanitizeQuoteFields, prepareQuoteForValidation } from "./utils/quote-sanitization";
-import { quoteLogger } from "./logger";
-import type { QuoteCreationData, QuoteUpdateData, PricingCalculation } from "./types/quote";
+import { quoteLogger, logger } from "./logger";
+import type { PricingCalculation } from "./types/quote";
+import { verifyHubSpotQuotes } from "./utils/hubspot-helpers";
+import { buildServiceConfig } from "./services/hubspot/compose";
+import path from "path";
 
-// Configure multer for file uploads
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: async (req, file, cb) => {
-      const uploadsDir = path.join(process.cwd(), "uploads", "profiles");
-      try {
-        await fs.mkdir(uploadsDir, { recursive: true });
-        cb(null, uploadsDir);
-      } catch (error) {
-        cb(error as Error, uploadsDir);
-      }
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      cb(null, `${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`);
-    },
-  }),
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only image files are allowed"));
-    }
-  },
-});
-
-// Password utilities
-const scryptAsync = promisify(scrypt);
-
-async function hashPassword(password: string) {
-  const bcrypt = await import("bcryptjs");
-  const saltRounds = 12;
-  return await bcrypt.hash(password, saltRounds);
-}
-
-async function comparePasswords(supplied: string, stored: string) {
-  // Check if this is a bcrypt hash (starts with $2a$, $2b$, or $2y$)
-  if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
-    // Use bcrypt for comparison
-    const bcrypt = await import("bcryptjs");
-    return await bcrypt.compare(supplied, stored);
-  }
-
-  // Legacy scrypt hash format (hash.salt)
-  const [hashed, salt] = stored.split(".");
-  if (!hashed || !salt) {
-    throw new Error("Invalid password hash format");
-  }
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
-}
+// Type for quotes with potential legacy field names
+type QuoteWithLegacyFields = Record<string, unknown> & {
+  serviceBookkeeping?: boolean;
+  serviceTaas?: boolean;
+  servicePayroll?: boolean;
+  serviceApLite?: boolean;
+  serviceArLite?: boolean;
+  serviceAgentOfService?: boolean;
+  serviceCfoAdvisory?: boolean;
+  contactFirstName?: string | null;
+  contactLastName?: string | null;
+  contactEmail?: string;
+  monthlyFee: string;
+  setupFee: string;
+  hubspotQuoteId?: string | number | null;
+  serviceTier?: string | null;
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Session-based auth removed; all routes use Supabase Auth via requireAuth
@@ -252,436 +179,455 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Removed duplicate logout endpoint - using /api/logout from auth.ts instead
 
-  // Quote routes with structured logging
-  app.post("/api/quotes", requireAuth, async (req, res) => {
-    const requestId = req.headers["x-request-id"] || "unknown";
+  /**
+   * POST /api/quotes
+   * Action: quotes.create
+   * Create a new quote with pricing calculation and approval flow
+   */
+  app.post(
+    "/api/quotes",
+    requireAuth,
+    requirePermission("quotes.create", "department"),
+    async (req: AuthenticatedRequest, res) => {
+      const requestId = req.headers["x-request-id"] || "unknown";
 
-    try {
-      quoteLogger.info(
-        {
-          requestId,
-          userId: req.user?.id,
-          userEmail: req.user?.email,
-          contactEmail: req.body?.contactEmail,
-        },
-        "Quote creation request received"
-      );
+      try {
+        quoteLogger.info(
+          {
+            requestId,
+            userId: req.user?.id,
+            userEmail: req.user?.email,
+            contactEmail: req.body?.contactEmail,
+          },
+          "Quote creation request received"
+        );
 
-      if (!req.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
+        // Note: req.user is guaranteed to exist due to requireAuth middleware
 
-      // Extract service flags with defaults
-      const includesBookkeeping = req.body.includesBookkeeping !== false; // Default to true
-      const includesTaas = req.body.includesTaas === true;
+        // Sanitize numeric fields using shared utility
+        const sanitizedBody = sanitizeQuoteFields(req.body);
+        const validationData = prepareQuoteForValidation(sanitizedBody);
 
-      // Sanitize numeric fields using shared utility
-      const sanitizedBody = sanitizeQuoteFields(req.body);
-      const validationData = prepareQuoteForValidation(sanitizedBody);
-
-      // Check for existing quotes - use approval system if needed
-      const { contactEmail, approvalCode } = req.body;
-      quoteLogger.debug(
-        {
-          requestId,
-          contactEmail,
-          hasApprovalCode: !!approvalCode,
-        },
-        "Checking approval requirements"
-      );
-
-      if (contactEmail) {
-        const existingQuotes = await storage.getQuotesByEmail(contactEmail);
+        // Check for existing quotes - use approval system if needed
+        const { contactEmail, approvalCode } = req.body;
         quoteLogger.debug(
           {
             requestId,
             contactEmail,
-            count: existingQuotes.length,
+            hasApprovalCode: !!approvalCode,
           },
-          "Existing quotes found"
+          "Checking approval requirements"
         );
 
-        // Only block if there are quotes that still exist in HubSpot
-        // Quotes that no longer exist in HubSpot should NOT require approval
-        let liveInHubSpotCount = 0;
-        try {
-          const verifications = await Promise.all(
-            existingQuotes.map(async (q: any) => {
-              const hq = q?.hubspotQuoteId ? String(q.hubspotQuoteId) : null;
-              if (!hq) return false;
-              try {
-                return await doesHubSpotQuoteExist(hq);
-              } catch {
-                return false;
-              }
-            })
-          );
-          liveInHubSpotCount = verifications.filter(Boolean).length;
-        } catch (e) {
-          // In case of verification failure, be conservative: treat as zero to avoid blocking valid flows
-          quoteLogger.warn(
+        if (contactEmail) {
+          const existingQuotes = await storage.getQuotesByEmail(contactEmail);
+          quoteLogger.debug(
             {
               requestId,
               contactEmail,
-              error: getErrorMessage(e),
+              count: existingQuotes.length,
             },
-            "HubSpot existence verification failed, allowing creation"
+            "Existing quotes found"
           );
-          liveInHubSpotCount = 0;
-        }
 
-        if (liveInHubSpotCount > 0) {
-          // There are active HubSpot quotes; require approval code
-          if (!approvalCode) {
+          // Only block if there are quotes that still exist in HubSpot
+          // Quotes that no longer exist in HubSpot should NOT require approval
+          let liveInHubSpotCount = 0;
+          try {
+            const verifications = await verifyHubSpotQuotes(
+              existingQuotes.map((q: { id: number; hubspotQuoteId?: string | number | null }) => ({
+                id: q.id,
+                hubspotQuoteId: q.hubspotQuoteId ?? null,
+              }))
+            );
+            liveInHubSpotCount = verifications.filter((v) => v.existsInHubSpot).length;
+          } catch (e) {
+            // In case of verification failure, be conservative: treat as zero to avoid blocking valid flows
             quoteLogger.warn(
               {
                 requestId,
                 contactEmail,
-                liveQuotesCount: liveInHubSpotCount,
+                error: getErrorMessage(e),
               },
-              "Approval code required but not provided"
+              "HubSpot existence verification failed, allowing creation"
             );
-            res.status(400).json({
-              message: "Approval code required for creating additional quotes",
-              requiresApproval: true,
-              existingQuotesCount: liveInHubSpotCount,
-            });
-            return;
+            liveInHubSpotCount = 0;
           }
 
-          quoteLogger.debug({ requestId, contactEmail }, "Validating approval code");
-          const isValidCode = await storage.validateApprovalCode(approvalCode, contactEmail);
+          if (liveInHubSpotCount > 0) {
+            // There are active HubSpot quotes; require approval code
+            if (!approvalCode) {
+              quoteLogger.warn(
+                {
+                  requestId,
+                  contactEmail,
+                  liveQuotesCount: liveInHubSpotCount,
+                },
+                "Approval code required but not provided"
+              );
+              res.status(400).json({
+                message: "Approval code required for creating additional quotes",
+                requiresApproval: true,
+                existingQuotesCount: liveInHubSpotCount,
+              });
+              return;
+            }
 
-          if (!isValidCode) {
-            quoteLogger.warn({ requestId, contactEmail }, "Invalid approval code provided");
-            res.status(400).json({
-              message: "Invalid or expired approval code",
-              requiresApproval: true,
-            });
-            return;
+            quoteLogger.debug({ requestId, contactEmail }, "Validating approval code");
+            const isValidCode = await storage.validateApprovalCode(approvalCode, contactEmail);
+
+            if (!isValidCode) {
+              quoteLogger.warn({ requestId, contactEmail }, "Invalid approval code provided");
+              res.status(400).json({
+                message: "Invalid or expired approval code",
+                requiresApproval: true,
+              });
+              return;
+            }
+
+            await storage.markApprovalCodeUsed(approvalCode, contactEmail);
+            quoteLogger.info({ requestId, contactEmail }, "Approval code validated and used");
+          } else {
+            quoteLogger.debug({ requestId, contactEmail }, "No approval required");
           }
-
-          await storage.markApprovalCodeUsed(approvalCode, contactEmail);
-          quoteLogger.info({ requestId, contactEmail }, "Approval code validated and used");
-        } else {
-          quoteLogger.debug({ requestId, contactEmail }, "No approval required");
         }
-      }
 
-      // Validate the data first (without ownerId)
-      quoteLogger.debug(
-        {
-          requestId,
-          contactEmail: validationData.contactEmail,
-          industry: validationData.industry,
-          monthlyRevenueRange: validationData.monthlyRevenueRange,
-        },
-        "Validating quote data"
-      );
-      const validationResult = insertQuoteSchema.safeParse(validationData);
-
-      if (!validationResult.success) {
-        quoteLogger.error(
-          {
-            requestId,
-            contactEmail: req.body.contactEmail,
-            errors: validationResult.error.errors,
-          },
-          "Quote validation failed"
-        );
-
-        throw validationResult.error;
-      }
-
-      const validatedQuoteData = validationResult.data;
-      quoteLogger.debug({ requestId }, "Quote validation passed");
-
-      // Compute canonical pricing totals on the server
-      // Do NOT trust client-provided totals; derive from validated inputs
-      let quote;
-      try {
-        const calc: PricingCalculation = calculateCombinedFees(validatedQuoteData as any);
+        // Validate the data first (without ownerId)
         quoteLogger.debug(
           {
             requestId,
-            monthlyFee: calc.combined.monthlyFee,
-            setupFee: calc.combined.setupFee,
+            contactEmail: validationData.contactEmail,
+            industry: validationData.industry,
+            monthlyRevenueRange: validationData.monthlyRevenueRange,
           },
-          "Pricing calculated"
+          "Validating quote data"
         );
+        const validationResult = insertQuoteSchema.safeParse(validationData);
 
-        // Add ownerId and override totals from server calc
-        const quoteData = {
-          ...validatedQuoteData,
-          ownerId: req.user.id,
-          monthlyFee: calc.combined.monthlyFee.toFixed(2),
-          setupFee: calc.combined.setupFee.toFixed(2),
-          taasMonthlyFee: calc.taas.monthlyFee.toFixed(2),
-          taasPriorYearsFee: calc.priorYearFilingsFee.toFixed(2),
-        } as QuoteCreationData;
+        if (!validationResult.success) {
+          quoteLogger.error(
+            {
+              requestId,
+              contactEmail: req.body.contactEmail,
+              errors: validationResult.error.errors,
+            },
+            "Quote validation failed"
+          );
 
-        quoteLogger.debug({ requestId }, "Creating quote in database");
-        quote = await storage.createQuote(quoteData);
-      } catch (calcError) {
-        quoteLogger.error(
-          {
-            requestId,
-            error: getErrorMessage(calcError),
-          },
-          "Pricing calculation failed"
-        );
-        return res.status(400).json({
-          message: "Pricing calculation failed",
-          reason: (calcError as any)?.message,
-        });
-      }
-
-      if (!quote) {
-        quoteLogger.error({ requestId }, "Quote creation returned null");
-        return res.status(500).json({ message: "Quote creation failed - no data returned" });
-      }
-
-      quoteLogger.info(
-        {
-          requestId,
-          quoteId: quote.id,
-          contactEmail: quote.contactEmail,
-          monthlyFee: quote.monthlyFee,
-          setupFee: quote.setupFee,
-        },
-        "Quote created successfully"
-      );
-      res.json(quote);
-    } catch (error: unknown) {
-      quoteLogger.error(
-        {
-          requestId,
-          error: getErrorMessage(error),
-          userId: req.user?.id,
-        },
-        "Quote creation failed"
-      );
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid quote data", errors: error.errors });
-      }
-      return res.status(500).json({
-        message: "Failed to create quote",
-        debug: getErrorMessage(error),
-      });
-    }
-  });
-
-  // Get all quotes with optional search and sort (protected)
-  app.get("/api/quotes", requireAuth, async (req, res) => {
-    const requestId = req.headers["x-request-id"] || "unknown";
-
-    try {
-      const email = req.query.email as string;
-      const search = req.query.search as string;
-      const sortField = req.query.sortField as string;
-      const sortOrder = req.query.sortOrder as "asc" | "desc";
-
-      quoteLogger.debug(
-        {
-          requestId,
-          userId: req.user?.id,
-          email,
-          search,
-          sortField,
-          sortOrder,
-        },
-        "Fetching quotes"
-      );
-
-      if (!req.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      if (email) {
-        const quotes = await storage.getQuotesByEmail(email);
-        const userQuotes = quotes.filter((quote) => quote.ownerId === req.user!.id);
-        quoteLogger.debug(
-          {
-            requestId,
-            email,
-            count: userQuotes.length,
-          },
-          "Quotes fetched by email"
-        );
-        res.json(userQuotes);
-      } else if (search) {
-        const quotes = await storage.getAllQuotes(req.user.id, search, sortField, sortOrder);
-        quoteLogger.debug(
-          {
-            requestId,
-            search,
-            count: quotes.length,
-          },
-          "Quotes fetched by search"
-        );
-        res.json(quotes);
-      } else {
-        const quotes = await storage.getAllQuotes(req.user.id, undefined, sortField, sortOrder);
-        quoteLogger.debug(
-          {
-            requestId,
-            count: quotes.length,
-          },
-          "All quotes fetched"
-        );
-        res.json(quotes);
-      }
-    } catch (error: any) {
-      quoteLogger.error(
-        {
-          requestId,
-          userId: req.user?.id,
-          error: getErrorMessage(error),
-        },
-        "Failed to fetch quotes"
-      );
-      res.status(500).json({
-        message: "Failed to fetch quotes",
-        error: getErrorMessage(error),
-      });
-    }
-  });
-
-  // Update a quote (protected)
-  app.put("/api/quotes/:id", requireAuth, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        res.status(400).json({ message: "Invalid quote ID" });
-        return;
-      }
-
-      // Sanitize numeric fields using shared utility
-      const sanitizedBody = sanitizeQuoteFields(req.body);
-
-      // Parse incoming update, read existing, merge, then recompute totals on the server
-      const parsedUpdate = updateQuoteSchema.parse({ ...sanitizedBody, id });
-      let quote;
-      try {
-        const existing = await storage.getQuote(id);
-        if (!existing) {
-          return res.status(404).json({ message: "Quote not found" });
+          throw validationResult.error;
         }
-        const calcInput = { ...existing, ...parsedUpdate };
-        const cfg = buildServiceConfig(calcInput);
-        const quoteData = {
-          ...parsedUpdate,
-          monthlyFee: cfg.fees.combinedMonthly.toFixed(2),
-          setupFee: cfg.fees.combinedOneTimeFees.toFixed(2),
-          taasMonthlyFee: cfg.fees.taasMonthly.toFixed(2),
-          taasPriorYearsFee: cfg.fees.priorYearFilings.toFixed(2),
-        } as any;
-        quote = await storage.updateQuote(quoteData);
-      } catch (calcErr) {
-        quoteLogger.error(
-          { quoteId: id, error: getErrorMessage(calcErr) },
-          "Pricing calculation failed on update"
-        );
-        return res.status(400).json({
-          message: "Pricing calculation failed on update",
-          reason: (calcErr as any)?.message,
-        });
-      }
 
-      // Update HubSpot when quote is updated
-      if (quote.hubspotQuoteId && hubSpotService) {
-        quoteLogger.debug(
-          {
-            requestId: req.headers["x-request-id"] || "unknown",
-            quoteId: id,
-            hubspotQuoteId: quote.hubspotQuoteId,
-          },
-          "Syncing quote to HubSpot"
-        );
+        const validatedQuoteData = validationResult.data;
+        quoteLogger.debug({ requestId }, "Quote validation passed");
+
+        // Compute canonical pricing totals on the server
+        // Do NOT trust client-provided totals; derive from validated inputs
+        let quote;
         try {
-          const feeCalculation = calculateCombinedFees(toPricingData(quote));
-          await hubSpotService.updateQuote(
-            quote.hubspotQuoteId,
-            quote.hubspotDealId || undefined,
-            quote.companyName || "Unknown Company",
-            parseFloat(quote.monthlyFee),
-            parseFloat(quote.setupFee),
-            (req.user?.email as string) || quote.contactEmail,
-            quote.contactFirstName || "Contact",
-            quote.contactLastName || "",
-            Boolean(quote.serviceBookkeeping || (quote as any).serviceMonthlyBookkeeping),
-            Boolean(quote.serviceTaas || (quote as any).serviceTaasMonthly),
-            Number(feeCalculation.taas.monthlyFee || 0),
-            Number(feeCalculation.priorYearFilingsFee || 0),
-            Number(feeCalculation.bookkeeping.monthlyFee || 0),
-            Number(feeCalculation.bookkeeping.setupFee || 0),
-            quote as any,
-            quote.serviceTier || undefined,
-            Boolean(quote.servicePayroll || (quote as any).servicePayrollService),
-            Number(feeCalculation.payrollFee || 0),
-            Boolean(
-              quote.serviceApLite ||
-                (quote as any).serviceApAdvanced ||
-                (quote as any).serviceApArService
-            ),
-            Number(feeCalculation.apFee || 0),
-            Boolean(
-              quote.serviceArLite ||
-                (quote as any).serviceArAdvanced ||
-                (quote as any).serviceArService
-            ),
-            Number(feeCalculation.arFee || 0),
-            Boolean(quote.serviceAgentOfService),
-            Number(feeCalculation.agentOfServiceFee || 0),
-            Boolean(quote.serviceCfoAdvisory),
-            Number(feeCalculation.cfoAdvisoryFee || 0),
-            Number(feeCalculation.cleanupProjectFee || 0),
-            Number(feeCalculation.priorYearFilingsFee || 0),
-            Boolean((quote as any).serviceFpaBuild),
-            0,
-            Number(feeCalculation.bookkeeping.monthlyFee || 0),
-            Number(feeCalculation.taas.monthlyFee || 0),
-            Number(feeCalculation.serviceTierFee || 0)
-          );
-          quoteLogger.info(
+          const calc: PricingCalculation = calculateCombinedFees(toPricingData(validatedQuoteData));
+          quoteLogger.debug(
             {
-              quoteId: id,
-              hubspotQuoteId: quote.hubspotQuoteId,
+              requestId,
+              monthlyFee: calc.combined.monthlyFee,
+              setupFee: calc.combined.setupFee,
             },
-            "Quote synced to HubSpot"
+            "Pricing calculated"
           );
-        } catch (hubspotError) {
-          quoteLogger.warn(
-            {
-              quoteId: id,
-              hubspotQuoteId: quote.hubspotQuoteId,
-              error: getErrorMessage(hubspotError),
-            },
-            "Failed to sync quote to HubSpot"
-          );
-          // Don't fail the entire request - quote was updated in database
-        }
-      }
 
-      res.json(quote);
-    } catch (error: unknown) {
-      quoteLogger.error(
-        {
-          quoteId: parseInt(req.params.id),
-          error: getErrorMessage(error),
-        },
-        "Quote update failed"
-      );
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid quote data", errors: error.errors });
-      } else {
+          // Add ownerId and override totals from server calc
+          const quoteData = {
+            ...validatedQuoteData,
+            ownerId: req.user.id,
+            monthlyFee: calc.combined.monthlyFee.toFixed(2),
+            setupFee: calc.combined.setupFee.toFixed(2),
+            taasMonthlyFee: calc.taas.monthlyFee.toFixed(2),
+            taasPriorYearsFee: calc.priorYearFilingsFee.toFixed(2),
+          };
+
+          quoteLogger.debug({ requestId }, "Creating quote in database");
+          quote = await storage.createQuote(quoteData);
+        } catch (calcError) {
+          quoteLogger.error(
+            {
+              requestId,
+              error: getErrorMessage(calcError),
+            },
+            "Pricing calculation failed"
+          );
+          return res.status(400).json({
+            message: "Pricing calculation failed",
+            reason: calcError instanceof Error ? calcError.message : String(calcError),
+          });
+        }
+
+        if (!quote) {
+          quoteLogger.error({ requestId }, "Quote creation returned null");
+          return res.status(500).json({ message: "Quote creation failed - no data returned" });
+        }
+
+        quoteLogger.info(
+          {
+            requestId,
+            quoteId: quote.id,
+            contactEmail: quote.contactEmail,
+            monthlyFee: quote.monthlyFee,
+            setupFee: quote.setupFee,
+          },
+          "Quote created successfully"
+        );
+        res.json(quote);
+      } catch (error: unknown) {
+        quoteLogger.error(
+          {
+            requestId,
+            error: getErrorMessage(error),
+            userId: req.user?.id,
+          },
+          "Quote creation failed"
+        );
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ message: "Invalid quote data", errors: error.errors });
+        }
+        return res.status(500).json({
+          message: "Failed to create quote",
+          debug: getErrorMessage(error),
+        });
+      }
+    }
+  );
+
+  /**
+   * GET /api/quotes
+   * Action: quotes.read
+   * Get all quotes with optional search and sort
+   */
+  app.get(
+    "/api/quotes",
+    requireAuth,
+    requirePermission("quotes.read", "department"),
+    async (req: AuthenticatedRequest, res) => {
+      const requestId = req.headers["x-request-id"] || "unknown";
+
+      try {
+        const email = req.query.email as string;
+        const search = req.query.search as string;
+        const sortField = req.query.sortField as string;
+        const sortOrder = req.query.sortOrder as "asc" | "desc";
+
+        quoteLogger.debug(
+          {
+            requestId,
+            userId: req.user?.id,
+            email,
+            search,
+            sortField,
+            sortOrder,
+          },
+          "Fetching quotes"
+        );
+
+        // Note: req.user is guaranteed to exist due to requireAuth middleware
+
+        if (email) {
+          const quotes = await storage.getQuotesByEmail(email);
+          const userQuotes = quotes.filter((quote) => quote.ownerId === req.user!.id);
+          quoteLogger.debug(
+            {
+              requestId,
+              email,
+              count: userQuotes.length,
+            },
+            "Quotes fetched by email"
+          );
+          res.json(userQuotes);
+        } else if (search) {
+          const quotes = await storage.getAllQuotes(req.user.id, search, sortField, sortOrder);
+          quoteLogger.debug(
+            {
+              requestId,
+              search,
+              count: quotes.length,
+            },
+            "Quotes fetched by search"
+          );
+          res.json(quotes);
+        } else {
+          const quotes = await storage.getAllQuotes(req.user.id, undefined, sortField, sortOrder);
+          quoteLogger.debug(
+            {
+              requestId,
+              count: quotes.length,
+            },
+            "All quotes fetched"
+          );
+          res.json(quotes);
+        }
+      } catch (error: unknown) {
+        quoteLogger.error(
+          {
+            requestId,
+            userId: req.user?.id,
+            error: getErrorMessage(error),
+          },
+          "Failed to fetch quotes"
+        );
         res.status(500).json({
-          message: "Failed to update quote",
+          message: "Failed to fetch quotes",
           error: getErrorMessage(error),
         });
       }
     }
-  });
+  );
+
+  /**
+   * PUT /api/quotes/:id
+   * Action: quotes.update
+   * Update an existing quote with recalculated pricing
+   */
+  app.put(
+    "/api/quotes/:id",
+    requireAuth,
+    requirePermission("quotes.update", "department"),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id || "");
+        if (isNaN(id)) {
+          res.status(400).json({ message: "Invalid quote ID" });
+          return;
+        }
+
+        // Sanitize numeric fields using shared utility
+        const sanitizedBody = sanitizeQuoteFields(req.body);
+
+        // Parse incoming update, read existing, merge, then recompute totals on the server
+        const parsedUpdate = updateQuoteSchema.parse({ ...sanitizedBody, id });
+        let quote;
+        try {
+          const existing = await storage.getQuote(id);
+          if (!existing) {
+            return res.status(404).json({ message: "Quote not found" });
+          }
+          const calcInput = { ...existing, ...parsedUpdate };
+          const cfg = buildServiceConfig(calcInput);
+          const quoteData = {
+            ...parsedUpdate,
+            monthlyFee: cfg.fees.combinedMonthly.toFixed(2),
+            setupFee: cfg.fees.combinedOneTimeFees.toFixed(2),
+            taasMonthlyFee: cfg.fees.taasMonthly.toFixed(2),
+            taasPriorYearsFee: cfg.fees.priorYearFilings.toFixed(2),
+          };
+          quote = await storage.updateQuote(quoteData);
+        } catch (calcErr) {
+          quoteLogger.error(
+            { quoteId: id, error: getErrorMessage(calcErr) },
+            "Pricing calculation failed on update"
+          );
+          return res.status(400).json({
+            message: "Pricing calculation failed on update",
+            reason: calcErr instanceof Error ? calcErr.message : String(calcErr),
+          });
+        }
+
+        // Update HubSpot when quote is updated
+        if (quote.hubspotQuoteId && hubSpotService) {
+          quoteLogger.debug(
+            {
+              requestId: req.headers["x-request-id"] || "unknown",
+              quoteId: id,
+              hubspotQuoteId: quote.hubspotQuoteId,
+            },
+            "Syncing quote to HubSpot"
+          );
+          try {
+            const feeCalculation = calculateCombinedFees(toPricingData(quote));
+            await hubSpotService.updateQuote(
+              quote.hubspotQuoteId,
+              quote.hubspotDealId || undefined,
+              quote.companyName || "Unknown Company",
+              parseFloat(quote.monthlyFee),
+              parseFloat(quote.setupFee),
+              (req.user?.email as string) || quote.contactEmail,
+              quote.contactFirstName || "Contact",
+              quote.contactLastName || "",
+              Boolean(
+                quote.serviceBookkeeping ||
+                  (quote as QuoteWithLegacyFields).serviceMonthlyBookkeeping
+              ),
+              Boolean(quote.serviceTaas || (quote as QuoteWithLegacyFields).serviceTaasMonthly),
+              Number(feeCalculation.taas.monthlyFee || 0),
+              Number(feeCalculation.priorYearFilingsFee || 0),
+              Number(feeCalculation.bookkeeping.monthlyFee || 0),
+              Number(feeCalculation.bookkeeping.setupFee || 0),
+              quote as QuoteWithLegacyFields,
+              quote.serviceTier || undefined,
+              Boolean(
+                quote.servicePayroll || (quote as QuoteWithLegacyFields).servicePayrollService
+              ),
+              Number(feeCalculation.payrollFee || 0),
+              Boolean(
+                quote.serviceApLite ||
+                  (quote as QuoteWithLegacyFields).serviceApAdvanced ||
+                  (quote as QuoteWithLegacyFields).serviceApArService
+              ),
+              Number(feeCalculation.apFee || 0),
+              Boolean(
+                quote.serviceArLite ||
+                  (quote as QuoteWithLegacyFields).serviceArAdvanced ||
+                  (quote as QuoteWithLegacyFields).serviceArService
+              ),
+              Number(feeCalculation.arFee || 0),
+              Boolean(quote.serviceAgentOfService),
+              Number(feeCalculation.agentOfServiceFee || 0),
+              Boolean(quote.serviceCfoAdvisory),
+              Number(feeCalculation.cfoAdvisoryFee || 0),
+              Number(feeCalculation.cleanupProjectFee || 0),
+              Number(feeCalculation.priorYearFilingsFee || 0),
+              Boolean((quote as QuoteWithLegacyFields).serviceFpaBuild),
+              0,
+              Number(feeCalculation.bookkeeping.monthlyFee || 0),
+              Number(feeCalculation.taas.monthlyFee || 0),
+              Number(feeCalculation.serviceTierFee || 0)
+            );
+            quoteLogger.info(
+              {
+                quoteId: id,
+                hubspotQuoteId: quote.hubspotQuoteId,
+              },
+              "Quote synced to HubSpot"
+            );
+          } catch (hubspotError) {
+            quoteLogger.warn(
+              {
+                quoteId: id,
+                hubspotQuoteId: quote.hubspotQuoteId,
+                error: getErrorMessage(hubspotError),
+              },
+              "Failed to sync quote to HubSpot"
+            );
+            // Don't fail the entire request - quote was updated in database
+          }
+        }
+
+        res.json(quote);
+      } catch (error: unknown) {
+        quoteLogger.error(
+          {
+            quoteId: parseInt(req.params.id || ""),
+            error: getErrorMessage(error),
+          },
+          "Quote update failed"
+        );
+        if (error instanceof z.ZodError) {
+          res.status(400).json({ message: "Invalid quote data", errors: error.errors });
+        } else {
+          res.status(500).json({
+            message: "Failed to update quote",
+            error: getErrorMessage(error),
+          });
+        }
+      }
+    }
+  );
 
   // Moved to hubspot-routes.ts: /api/hubspot/push-quote
 
@@ -731,27 +677,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Sales Inbox API endpoints
 
-  // Get active leads for sales inbox
-  app.get("/api/sales-inbox/leads", requireAuth, async (req, res) => {
-    try {
-      if (!hubSpotService) {
-        res.status(400).json({ message: "HubSpot integration not configured" });
-        return;
+  /**
+   * GET /api/sales-inbox/leads
+   * Action: sales.read
+   * Get active leads for sales inbox from HubSpot
+   */
+  app.get(
+    "/api/sales-inbox/leads",
+    requireAuth,
+    requirePermission("sales.read", "department"),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        if (!hubSpotService) {
+          res.status(400).json({ message: "HubSpot integration not configured" });
+          return;
+        }
+
+        const { limit = "8", showAll = "false" } = req.query;
+
+        // For debugging, allow showing all leads regardless of owner
+        const userEmail = showAll === "true" ? undefined : req.user?.email;
+
+        const leads = await hubSpotService.getSalesInboxLeads(
+          userEmail,
+          parseInt(limit.toString())
+        );
+
+        res.json({ leads });
+      } catch (error) {
+        logger.error({ error }, "Error fetching sales inbox leads");
+        res.status(500).json({ message: "Failed to fetch sales inbox leads" });
       }
-
-      const { limit = "8", showAll = "false" } = req.query;
-
-      // For debugging, allow showing all leads regardless of owner
-      const userEmail = showAll === "true" ? undefined : req.user?.email;
-
-      const leads = await hubSpotService.getSalesInboxLeads(userEmail, parseInt(limit.toString()));
-
-      res.json({ leads });
-    } catch (error) {
-      console.error("Error fetching sales inbox leads:", error);
-      res.status(500).json({ message: "Failed to fetch sales inbox leads" });
     }
-  });
+  );
 
   // Client Intel API endpoints
   // Moved to server/routes/client-intel.ts
@@ -789,17 +747,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Commission tracking routes
 
-  // TEST: Debug sales reps endpoint
-  app.get("/api/debug-sales-reps-test", requireAuth, async (req, res) => {
-    console.log("🚨🚨🚨 DEBUG SALES REPS TEST API CALLED 🚨🚨🚨");
+  /**
+   * GET /api/debug-sales-reps-test
+   * Action: diagnostics.view
+   * Debug endpoint to test sales reps query
+   */
+  app.get(
+    "/api/debug-sales-reps-test",
+    requireAuth,
+    requirePermission("diagnostics.view", "system"),
+    async (req: AuthenticatedRequest, res) => {
+      logger.info("DEBUG SALES REPS TEST API CALLED");
 
-    try {
-      const testResult = await db.execute(
-        sql`SELECT COUNT(*) as count FROM sales_reps WHERE is_active = true`
-      );
-      console.log("📊 Sales reps count:", testResult.rows);
+      try {
+        const testResult = await db.execute(
+          sql`SELECT COUNT(*) as count FROM sales_reps WHERE is_active = true`
+        );
+        logger.debug({ count: testResult.rows }, "Sales reps count");
 
-      const result = await db.execute(sql`
+        const result = await db.execute(sql`
         SELECT 
           sr.id,
           sr.first_name,
@@ -811,29 +777,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ORDER BY sr.id ASC
       `);
 
-      console.log("📊 Raw sales reps from DB:", result.rows);
-      res.json({
-        debug: true,
-        count: testResult.rows[0],
-        salesReps: result.rows,
-      });
-    } catch (error) {
-      console.error("🚨 ERROR in debug sales reps API:", error);
-      res.status(500).json({ error: getErrorMessage(error) });
+        logger.debug({ count: result.rows.length }, "Raw sales reps from DB");
+        res.json({
+          debug: true,
+          count: testResult.rows[0],
+          salesReps: result.rows,
+        });
+      } catch (error) {
+        logger.error({ error }, "ERROR in debug sales reps API");
+        res.status(500).json({ error: getErrorMessage(error) });
+      }
     }
-  });
+  );
 
-  // TEST: Debug sales reps endpoint
-  app.get("/api/debug-sales-reps", requireAuth, async (req, res) => {
-    console.log("🚨🚨🚨 DEBUG SALES REPS API CALLED 🚨🚨🚨");
+  /**
+   * GET /api/debug-sales-reps
+   * Action: diagnostics.view
+   * Debug endpoint for sales reps data
+   */
+  app.get(
+    "/api/debug-sales-reps",
+    requireAuth,
+    requirePermission("diagnostics.view", "system"),
+    async (req: AuthenticatedRequest, res) => {
+      logger.info("DEBUG SALES REPS API CALLED");
 
-    try {
-      const testResult = await db.execute(
-        sql`SELECT COUNT(*) as count FROM sales_reps WHERE is_active = true`
-      );
-      console.log("📊 Sales reps count:", testResult.rows);
+      try {
+        const testResult = await db.execute(
+          sql`SELECT COUNT(*) as count FROM sales_reps WHERE is_active = true`
+        );
+        logger.debug({ count: testResult.rows }, "Sales reps count");
 
-      const result = await db.execute(sql`
+        const result = await db.execute(sql`
         SELECT 
           sr.id,
           sr.first_name,
@@ -845,17 +820,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ORDER BY sr.id ASC
       `);
 
-      console.log("📊 Raw sales reps from DB:", result.rows);
-      res.json({
-        debug: true,
-        count: testResult.rows[0],
-        salesReps: result.rows,
-      });
-    } catch (error) {
-      console.error("🚨 ERROR in debug sales reps API:", getErrorMessage(error));
-      res.status(500).json({ error: getErrorMessage(error) });
+        logger.debug({ count: result.rows.length }, "Raw sales reps from DB");
+        res.json({
+          debug: true,
+          count: testResult.rows[0],
+          salesReps: result.rows,
+        });
+      } catch (error) {
+        logger.error({ error: getErrorMessage(error) }, "ERROR in debug sales reps API");
+        res.status(500).json({ error: getErrorMessage(error) });
+      }
     }
-  });
+  );
 
   // =============================
   // Sales Reps Routes (Extracted)
@@ -882,12 +858,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Diagnostics Routes (Admin Only)
   // =============================
 
-  // Admin-triggered HubSpot commissions full sync
+  /**
+   * POST /api/commissions/sync-hubspot
+   * Action: commissions.sync
+   * Admin-triggered HubSpot commissions full sync
+   */
   app.post(
     "/api/commissions/sync-hubspot",
     requireAuth,
     requirePermission("commissions.sync", "commission"),
-    async (req, res) => {
+    async (req: AuthenticatedRequest, res) => {
       try {
         const results = await hubspotSync.performFullSync();
         res.json({
@@ -896,7 +876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: new Date().toISOString(),
         });
       } catch (error) {
-        console.error("❌ HubSpot commissions full sync failed:", error);
+        logger.error({ error }, "HubSpot commissions full sync failed");
         res.status(500).json({
           message: "HubSpot commissions full sync failed",
           error: getErrorMessage(error),
@@ -905,12 +885,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
-  // Version and build information
+  /**
+   * GET /api/_version
+   * Action: diagnostics.view
+   * Version and build information
+   */
   app.get(
     "/api/_version",
     requireAuth,
     requirePermission("diagnostics.view", "system"),
-    (req, res) => {
+    async (req: AuthenticatedRequest, res) => {
       try {
         const version = {
           commitSha:
@@ -924,7 +908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         res.json(version);
       } catch (error) {
-        console.error("Version endpoint error:", error);
+        logger.error({ error }, "Version endpoint error");
         res.status(500).json({
           message: "Failed to retrieve version information",
           error: getErrorMessage(error),
@@ -933,12 +917,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
-  // Schema health check
+  /**
+   * GET /api/_schema-health
+   * Action: diagnostics.view
+   * Schema health check for critical tables
+   */
   app.get(
     "/api/_schema-health",
     requireAuth,
     requirePermission("diagnostics.view", "system"),
-    async (req, res) => {
+    async (req: AuthenticatedRequest, res) => {
       try {
         const healthChecks = [];
 
@@ -980,7 +968,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           AND column_name IN ('auth_user_id', 'last_login_at');
         `);
 
-          const authColumns = authColumnsResult.rows.map((row: any) => row.column_name);
+          const authColumns = authColumnsResult.rows.map(
+            (row: { column_name: string }) => row.column_name
+          );
           healthChecks.push({
             check: "supabase_auth_columns",
             auth_user_id: authColumns.includes("auth_user_id"),
@@ -1007,7 +997,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           checks: healthChecks,
         });
       } catch (error) {
-        console.error("Schema health check error:", error);
+        logger.error({ error }, "Schema health check error");
         res.status(500).json({
           status: "error",
           message: "Failed to perform schema health check",
@@ -1018,12 +1008,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
-  // Authorization diagnostics endpoint (admin-only)
+  /**
+   * GET /api/_authz-check
+   * Action: admin.debug
+   * Authorization diagnostics endpoint (admin-only)
+   */
   app.get(
     "/api/_authz-check",
     requireAuth,
     requirePermission("admin.debug", "system"),
-    async (req, res) => {
+    async (req: AuthenticatedRequest, res) => {
       try {
         const { authorize, getUserAuthzInfo } = await import("./services/authz/authorize");
 
@@ -1065,7 +1059,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           result: authzResult,
           userInfo: {
             email: principal.email,
-            legacyRole: principal.role,
+            legacyRole: (principal as Record<string, unknown>).role,
             roles: authzInfo.roles.map((r) => ({ id: r.id, name: r.name })),
             permissions: authzInfo.permissions.map((p) => ({
               id: p.id,
@@ -1076,7 +1070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: new Date().toISOString(),
         });
       } catch (error) {
-        console.error("Authorization check error:", error);
+        logger.error({ error }, "Authorization check error");
         res.status(500).json({
           message: "Authorization check failed",
           error: getErrorMessage(error),
@@ -1086,12 +1080,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
-  // Cerbos decision explanation endpoint (admin-only)
+  /**
+   * GET /api/_cerbos-explain
+   * Action: admin.debug
+   * Cerbos decision explanation endpoint (admin-only)
+   */
   app.get(
     "/api/_cerbos-explain",
     requireAuth,
     requirePermission("admin.debug", "system"),
-    async (req, res) => {
+    async (req: AuthenticatedRequest, res) => {
       try {
         const { explainDecision } = await import("./services/authz/cerbos-client");
         const { loadPrincipalAttributes, loadResourceAttributes } = await import(
@@ -1154,7 +1152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           timestamp: new Date().toISOString(),
         });
       } catch (error) {
-        console.error("Cerbos explanation error:", error);
+        logger.error({ error }, "Cerbos explanation error");
         res.status(500).json({
           message: "Failed to get Cerbos decision explanation",
           error: getErrorMessage(error),
@@ -1166,9 +1164,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Migration endpoint (development only)
   if (process.env.NODE_ENV === "development") {
-    app.post("/api/_apply-migration", async (req, res) => {
+    app.post("/api/_apply-migration", async (req: AuthenticatedRequest, res) => {
       try {
-        console.log("🔧 [Migration] Applying user table column migrations...");
+        logger.info("[Migration] Applying user table column migrations...");
 
         const fs = await import("fs");
         const results = [];
@@ -1181,16 +1179,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
           await db.execute(sql.raw(authUserIdSQL));
           results.push({ migration: "add-auth-user-id-column", status: "success" });
-          console.log("✅ [Migration] auth_user_id column migration completed");
+          logger.info("[Migration] auth_user_id column migration completed");
         } catch (error) {
           results.push({
             migration: "add-auth-user-id-column",
             status: "error",
             error: (error as Error).message,
           });
-          console.log(
-            "ℹ️ [Migration] auth_user_id column migration skipped (likely already exists)"
-          );
+          logger.info("[Migration] auth_user_id column migration skipped (likely already exists)");
         }
 
         // Apply last_login_at column migration
@@ -1201,19 +1197,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
           await db.execute(sql.raw(lastLoginSQL));
           results.push({ migration: "add-last-login-column", status: "success" });
-          console.log("✅ [Migration] last_login_at column migration completed");
+          logger.info("[Migration] last_login_at column migration completed");
         } catch (error) {
           results.push({
             migration: "add-last-login-column",
             status: "error",
             error: (error as Error).message,
           });
-          console.log(
-            "ℹ️ [Migration] last_login_at column migration skipped (likely already exists)"
-          );
+          logger.info("[Migration] last_login_at column migration skipped (likely already exists)");
         }
 
-        console.log("✅ [Migration] All user table migrations processed");
+        logger.info("[Migration] All user table migrations processed");
 
         res.json({
           success: true,
@@ -1222,7 +1216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           result: "User table migrations completed",
         });
       } catch (error) {
-        console.error("❌ [Migration] Migration failed:", error);
+        logger.error({ error }, "[Migration] Migration failed");
         res.status(500).json({
           error: "Migration failed",
           message: (error as Error).message,
@@ -1234,7 +1228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Assign Role endpoint (development only)
   if (process.env.NODE_ENV === "development") {
-    app.post("/api/_assign-role", async (req, res) => {
+    app.post("/api/_assign-role", async (req: AuthenticatedRequest, res) => {
       try {
         const { email, roleName } = req.body;
 
@@ -1242,10 +1236,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "Email and roleName are required" });
         }
 
-        console.log(`🎭 [Role Assignment] Assigning role "${roleName}" to user "${email}"`);
+        logger.info({ email, roleName }, "[Role Assignment] Assigning role to user");
 
         // Get user by email
         const user = await storage.getUserByEmail(email);
+        // eslint-disable-next-line rbac/no-inline-auth-checks -- False positive: checking database user lookup, not req.user auth
         if (!user) {
           return res.status(404).json({ error: "User not found" });
         }
@@ -1259,9 +1254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Assign role to user
         await storage.assignRoleToUser(user.id, role.id);
 
-        console.log(
-          `✅ [Role Assignment] Successfully assigned role "${roleName}" to user "${email}"`
-        );
+        logger.info({ email, roleName }, "[Role Assignment] Successfully assigned role to user");
 
         res.json({
           success: true,
@@ -1271,7 +1264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: `Role "${roleName}" assigned to user "${email}"`,
         });
       } catch (error) {
-        console.error("❌ [Role Assignment] Assignment failed:", error);
+        logger.error({ error }, "[Role Assignment] Assignment failed");
         res.status(500).json({
           error: "Role assignment failed",
           message: (error as Error).message,
@@ -1283,9 +1276,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // RBAC Seed endpoint (development only)
   if (process.env.NODE_ENV === "development") {
-    app.post("/api/_rbac-seed", async (req, res) => {
+    app.post("/api/_rbac-seed", async (req: AuthenticatedRequest, res) => {
       try {
-        console.log("🌱 [RBAC Seed] Starting RBAC data seeding...");
+        logger.info("[RBAC Seed] Starting RBAC data seeding...");
 
         // Seed roles
         const rolesToCreate = [
@@ -1393,7 +1386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
         });
       } catch (error) {
-        console.error("❌ [RBAC Seed] Seeding failed:", error);
+        logger.error({ error }, "[RBAC Seed] Seeding failed");
         res.status(500).json({
           error: "RBAC seeding failed",
           message: (error as Error).message,
@@ -1403,183 +1396,293 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   }
 
-  // RBAC Management API endpoints
-  app.get("/api/admin/rbac/users", requireAuth, async (req, res) => {
-    try {
-      const users = await storage.getAllUsers();
-      const result = await Promise.all(
-        users.map(async (u) => {
-          const roles = await storage.getUserRoles(u.id);
-          return {
-            id: u.id,
-            email: u.email,
-            firstName: (u as any).firstName,
-            lastName: (u as any).lastName,
-            roles: roles.map((r) => ({ id: r.id, name: r.name })),
-          };
-        })
-      );
-      res.json({ users: result });
-    } catch (error) {
-      console.error("Error fetching users with roles:", error);
-      res.status(500).json({ error: "Failed to fetch users" });
-    }
-  });
-
-  app.get("/api/admin/rbac/roles", requireAuth, async (req, res) => {
-    try {
-      const roles = await storage.getAllRoles();
-      const result = await Promise.all(
-        roles.map(async (r) => {
-          const perms = await storage.getRolePermissions(r.id);
-          return {
-            id: r.id,
-            name: r.name,
-            description: (r as any).description,
-            permissions: perms.map((p) => ({
-              id: p.id,
-              key: p.key,
-              category: (p as any).category,
-            })),
-          };
-        })
-      );
-      res.json({ roles: result });
-    } catch (error) {
-      console.error("Error fetching roles:", error);
-      res.status(500).json({ error: "Failed to fetch roles" });
-    }
-  });
-
-  app.get("/api/admin/rbac/permissions", requireAuth, async (req, res) => {
-    try {
-      const permissions = await storage.getAllPermissions();
-      res.json({ permissions });
-    } catch (error) {
-      console.error("Error fetching permissions:", error);
-      res.status(500).json({ error: "Failed to fetch permissions" });
-    }
-  });
-
-  app.post("/api/admin/rbac/assign-role", requireAuth, async (req, res) => {
-    try {
-      const { userId, roleId } = req.body;
-      await storage.assignRoleToUser(userId, roleId);
-      res.json({ success: true, message: "Role assigned successfully" });
-    } catch (error) {
-      console.error("Error assigning role:", error);
-      res.status(500).json({ error: "Failed to assign role" });
-    }
-  });
-
-  app.delete("/api/admin/rbac/user/:userId/role/:roleId", requireAuth, async (req, res) => {
-    try {
-      const { userId, roleId } = req.params;
-      await storage.removeRoleFromUser(parseInt(userId), parseInt(roleId));
-      res.json({ success: true, message: "Role removed successfully" });
-    } catch (error) {
-      console.error("Error removing role:", error);
-      res.status(500).json({ error: "Failed to remove role" });
-    }
-  });
-
-  app.post("/api/admin/rbac/test-authz", requireAuth, async (req, res) => {
-    try {
-      const { userEmail, action, resourceType, resourceId } = req.body;
-
-      // Get user by email
-      const user = await storage.getUserByEmail(userEmail);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
+  /**
+   * GET /api/admin/rbac/users
+   * Action: admin.rbac.read
+   * Get all users with their roles
+   */
+  app.get(
+    "/api/admin/rbac/users",
+    requireAuth,
+    requirePermission("admin.rbac.read", "system"),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const users = await storage.getAllUsers();
+        const result = await Promise.all(
+          users.map(async (u) => {
+            const roles = await storage.getUserRoles(u.id);
+            return {
+              id: u.id,
+              email: u.email,
+              firstName: (u as Record<string, unknown>).firstName as string | undefined,
+              lastName: (u as Record<string, unknown>).lastName as string | undefined,
+              roles: roles.map((r) => ({ id: r.id, name: r.name })),
+            };
+          })
+        );
+        res.json({ users: result });
+      } catch (error) {
+        logger.error({ error }, "Error fetching users with roles");
+        res.status(500).json({ error: "Failed to fetch users" });
       }
+    }
+  );
 
-      // Get user roles
-      const userRoles = await storage.getUserRoles(user.id);
+  /**
+   * GET /api/admin/rbac/roles
+   * Action: admin.rbac.read
+   * Get all roles with their permissions
+   */
+  app.get(
+    "/api/admin/rbac/roles",
+    requireAuth,
+    requirePermission("admin.rbac.read", "system"),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const roles = await storage.getAllRoles();
+        const result = await Promise.all(
+          roles.map(async (r) => {
+            const perms = await storage.getRolePermissions(r.id);
+            return {
+              id: r.id,
+              name: r.name,
+              description: (r as Record<string, unknown>).description as string | undefined,
+              permissions: perms.map((p) => ({
+                id: p.id,
+                key: p.key,
+                category: (p as Record<string, unknown>).category as string | undefined,
+              })),
+            };
+          })
+        );
+        res.json({ roles: result });
+      } catch (error) {
+        logger.error({ error }, "Error fetching roles");
+        res.status(500).json({ error: "Failed to fetch roles" });
+      }
+    }
+  );
 
-      // Create test principal
-      const testPrincipal = {
-        userId: user.id,
-        email: user.email,
-        role: user.role, // Legacy role
-        roles: userRoles,
-        authUserId: user.authUserId,
-      };
+  /**
+   * GET /api/admin/rbac/permissions
+   * Action: admin.rbac.read
+   * Get all available permissions
+   */
+  app.get(
+    "/api/admin/rbac/permissions",
+    requireAuth,
+    requirePermission("admin.rbac.read", "system"),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const permissions = await storage.getAllPermissions();
+        res.json({ permissions });
+      } catch (error) {
+        logger.error({ error }, "Error fetching permissions");
+        res.status(500).json({ error: "Failed to fetch permissions" });
+      }
+    }
+  );
 
-      // Create test resource
-      const testResource = {
-        type: resourceType,
-        id: resourceId,
-        attrs: {},
-      };
+  /**
+   * POST /api/admin/rbac/assign-role
+   * Action: admin.rbac.write
+   * Assign a role to a user
+   */
+  app.post(
+    "/api/admin/rbac/assign-role",
+    requireAuth,
+    requirePermission("admin.rbac.write", "system"),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { userId, roleId } = req.body;
+        await storage.assignRoleToUser(userId, roleId);
+        res.json({ success: true, message: "Role assigned successfully" });
+      } catch (error) {
+        logger.error({ error }, "Error assigning role");
+        res.status(500).json({ error: "Failed to assign role" });
+      }
+    }
+  );
 
-      // Test authorization
-      const result = await authorize(testPrincipal, action, testResource);
+  /**
+   * DELETE /api/admin/rbac/user/:userId/role/:roleId
+   * Action: admin.rbac.write
+   * Remove a role from a user
+   */
+  app.delete(
+    "/api/admin/rbac/user/:userId/role/:roleId",
+    requireAuth,
+    requirePermission("admin.rbac.write", "system"),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { userId, roleId } = req.params;
+        await storage.removeRoleFromUser(parseInt(userId || ""), parseInt(roleId || ""));
+        res.json({ success: true, message: "Role removed successfully" });
+      } catch (error) {
+        logger.error({ error }, "Error removing role");
+        res.status(500).json({ error: "Failed to remove role" });
+      }
+    }
+  );
 
-      res.json({
-        action,
-        resource: resourceType,
-        allowed: result.allowed,
-        reason: result.reason,
-        timestamp: new Date().toISOString(),
-        principal: {
+  /**
+   * POST /api/admin/rbac/test-authz
+   * Action: admin.debug
+   * Test authorization for a user
+   */
+  app.post(
+    "/api/admin/rbac/test-authz",
+    requireAuth,
+    requirePermission("admin.debug", "system"),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { userEmail, action, resourceType, resourceId } = req.body;
+
+        // Get user by email
+        const user = await storage.getUserByEmail(userEmail);
+        // eslint-disable-next-line rbac/no-inline-auth-checks -- False positive: checking database user lookup, not req.user auth
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        // Get user roles
+        const userRoles = await storage.getUserRoles(user.id);
+
+        // Create test principal
+        const testPrincipal = {
           userId: user.id,
           email: user.email,
-          roles: userRoles.map((r) => r.name),
-        },
-      });
-    } catch (error) {
-      console.error("Error testing authorization:", error);
-      res.status(500).json({ error: "Failed to test authorization" });
-    }
-  });
+          // eslint-disable-next-line rbac/no-direct-role-checks -- Reading role from database to construct test principal, not for authorization
+          role: user.role, // Legacy role
+          roles: userRoles,
+          authUserId: user.authUserId,
+        };
 
-  app.get("/api/admin/cerbos/policy/:policyName", requireAuth, async (req, res) => {
-    try {
-      const { policyName } = req.params;
-      const fs = await import("fs");
-      const path = await import("path");
+        // Create test resource
+        const testResource = {
+          type: resourceType,
+          id: resourceId,
+          attrs: {},
+        };
 
-      const policyPath = path.join(process.cwd(), "cerbos", "policies", `${policyName}.yaml`);
+        // Test authorization
+        const result = await authorize(testPrincipal, action, testResource);
 
-      if (!fs.existsSync(policyPath)) {
-        return res.status(404).json({ error: "Policy not found" });
+        res.json({
+          action,
+          resource: resourceType,
+          allowed: result.allowed,
+          reason: result.reason,
+          timestamp: new Date().toISOString(),
+          principal: {
+            userId: user.id,
+            email: user.email,
+            roles: userRoles.map((r) => r.name),
+          },
+        });
+      } catch (error) {
+        logger.error({ error }, "Error testing authorization");
+        res.status(500).json({ error: "Failed to test authorization" });
       }
-
-      const content = fs.readFileSync(policyPath, "utf8");
-      res.json({ content });
-    } catch (error) {
-      console.error("Error reading policy:", error);
-      res.status(500).json({ error: "Failed to read policy" });
     }
-  });
+  );
 
-  app.put("/api/admin/cerbos/policy/:policyName", requireAuth, async (req, res) => {
-    try {
-      const { policyName } = req.params;
-      const { content } = req.body;
-      const fs = await import("fs");
-      const path = await import("path");
+  /**
+   * GET /api/admin/cerbos/policy/:policyName
+   * Action: admin.policy.read
+   * Get a Cerbos policy file content
+   */
+  app.get(
+    "/api/admin/cerbos/policy/:policyName",
+    requireAuth,
+    requirePermission("admin.policy.read", "system"),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { policyName } = req.params;
+        const fs = await import("fs");
+        const path = await import("path");
 
-      const policyPath = path.join(process.cwd(), "cerbos", "policies", `${policyName}.yaml`);
+        const policyPath = path.join(process.cwd(), "cerbos", "policies", `${policyName}.yaml`);
 
-      // Write the policy file
-      fs.writeFileSync(policyPath, content, "utf8");
+        if (!fs.existsSync(policyPath)) {
+          return res.status(404).json({ error: "Policy not found" });
+        }
 
-      // TODO: Trigger Railway deployment or Cerbos reload
-      console.log(`📝 [Policy] Updated ${policyName}.yaml policy`);
-
-      res.json({ success: true, message: "Policy updated successfully" });
-    } catch (error) {
-      console.error("Error updating policy:", error);
-      res.status(500).json({ error: "Failed to update policy" });
+        const content = fs.readFileSync(policyPath, "utf8");
+        res.json({ content });
+      } catch (error) {
+        logger.error({ error }, "Error reading policy");
+        res.status(500).json({ error: "Failed to read policy" });
+      }
     }
-  });
+  );
+
+  /**
+   * GET /api/admin/cerbos/policies
+   * Action: admin.policy.read
+   * List all Cerbos policy files
+   */
+  app.get(
+    "/api/admin/cerbos/policies",
+    requireAuth,
+    requirePermission("admin.policy.read", "system"),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+
+        const policiesPath = path.join(process.cwd(), "cerbos", "policies");
+        const policyFiles = fs.readdirSync(policiesPath);
+
+        const policies = policyFiles
+          .filter((file) => file.endsWith(".yaml"))
+          .map((file) => file.replace(".yaml", ""));
+
+        res.json({ policies });
+      } catch (error) {
+        logger.error({ error }, "Error listing policies");
+        res.status(500).json({ error: "Failed to list policies" });
+      }
+    }
+  );
+
+  /**
+   * PUT /api/admin/cerbos/policy/:policyName
+   * Action: admin.policy.write
+   * Update a Cerbos policy file
+   */
+  app.put(
+    "/api/admin/cerbos/policy/:policyName",
+    requireAuth,
+    requirePermission("admin.policy.write", "system"),
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { policyName } = req.params;
+        const { content } = req.body;
+        const fs = await import("fs");
+        const path = await import("path");
+
+        const policyPath = path.join(process.cwd(), "cerbos", "policies", `${policyName}.yaml`);
+
+        // Write the policy file
+        fs.writeFileSync(policyPath, content, "utf8");
+
+        // TODO: Trigger Railway deployment or Cerbos reload
+        logger.info({ policyName }, "[Policy] Updated policy");
+
+        res.json({ success: true, message: "Policy updated successfully" });
+      } catch (error) {
+        logger.error({ error }, "Error updating policy");
+        res.status(500).json({ error: "Failed to update policy" });
+      }
+    }
+  );
 
   // RBAC Test endpoint (development only)
   if (process.env.NODE_ENV === "development") {
-    app.get("/api/_rbac-test", async (req, res) => {
+    app.get("/api/_rbac-test", async (req: AuthenticatedRequest, res) => {
       try {
-        console.log("🧪 [RBAC Test] Starting RBAC system test...");
+        logger.info("[RBAC Test] Starting RBAC system test...");
 
         // Test 1: Check if RBAC tables exist
         const tableCheck = await db.execute(sql`
@@ -1589,7 +1692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ORDER BY table_name;
         `);
 
-        const existingTables = tableCheck.rows.map((row: any) => row.table_name);
+        const existingTables = tableCheck.rows.map((row: { table_name: string }) => row.table_name);
 
         // Test 2: Try to create RBAC tables if they don't exist
         let migrationResult = "skipped";
@@ -1624,7 +1727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           storageMethods,
         });
       } catch (error) {
-        console.error("❌ [RBAC Test] Test failed:", error);
+        logger.error({ error }, "[RBAC Test] Test failed");
         res.status(500).json({
           error: "RBAC test failed",
           message: (error as Error).message,

@@ -96,13 +96,11 @@ router.get("/api/stripe/revenue", requireAuth, async (req, res) => {
     });
   } catch (error: any) {
     console.error("Stripe revenue fetch error:", getErrorMessage(error));
-    res
-      .status(500)
-      .json({
-        status: "error",
-        message: "Failed to fetch revenue data from Stripe",
-        error: getErrorMessage(error),
-      });
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch revenue data from Stripe",
+      error: getErrorMessage(error),
+    });
   }
 });
 
@@ -131,13 +129,11 @@ router.get("/api/stripe/recent-transactions", requireAuth, async (req, res) => {
     res.json({ transactions, lastUpdated: new Date().toISOString() });
   } catch (error: any) {
     console.error("Stripe transactions fetch error:", getErrorMessage(error));
-    res
-      .status(500)
-      .json({
-        status: "error",
-        message: "Failed to fetch recent transactions from Stripe",
-        error: getErrorMessage(error),
-      });
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch recent transactions from Stripe",
+      error: getErrorMessage(error),
+    });
   }
 });
 

@@ -33,7 +33,7 @@ router.get("/api/cdn/performance", requireAuth, async (req, res) => {
 
     const totalAssets = Object.keys(manifest).length;
     const totalSize = Object.values(manifest).reduce(
-      (sum: any, asset: any) => sum + (asset as any).size,
+      (sum: number, asset: { size?: number }) => sum + (asset.size || 0),
       0
     );
     const averageSize = totalAssets > 0 ? totalSize / totalAssets : 0;

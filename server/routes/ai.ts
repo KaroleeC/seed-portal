@@ -4,7 +4,11 @@ import { requireAuth, asyncHandler, validateBody, handleError, createRateLimiter
 import { cache, CacheTTL, CachePrefix } from "../cache";
 import { boxService } from "../box-integration";
 import { AIService } from "../services/ai-service";
-import { extractTextForClient, resolveBoxAttachmentsForClient } from "../ai/pipeline";
+import {
+  extractTextForClient,
+  resolveBoxAttachmentsForClient,
+  type BoxAttachment,
+} from "../ai/pipeline";
 import type { ClientKind } from "../ai/config";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
@@ -22,13 +26,14 @@ const aiRateLimiter = createRateLimiter({
 
 const aiService = new AIService();
 
-const getPersona = (user: any): "sales" | "service" | "admin" => {
-  const pref = String(user?.defaultDashboard || "").toLowerCase();
-  if (pref.includes("admin")) return "admin";
-  if (pref.includes("service")) return "service";
-  if (pref.includes("sales")) return "sales";
-  return user?.role === "admin" ? "admin" : "sales";
-};
+// Unused - kept for potential future use
+// const _getPersona = (user: { defaultDashboard?: string | null; role?: string }): "sales" | "service" | "admin" => {
+//   const pref = String(user?.defaultDashboard || "").toLowerCase();
+//   if (pref.includes("admin")) return "admin";
+//   if (pref.includes("service")) return "service";
+//   if (pref.includes("sales")) return "sales";
+//   return user?.role === "admin" ? "admin" : "sales";
+// };
 
 // ============================================================================
 // SCHEMAS
@@ -51,7 +56,7 @@ const chatSchema = z.object({
 router.get(
   "/api/ai/box/list",
   requireAuth,
-  asyncHandler(async (req: any, res) => {
+  asyncHandler(async (req: { query: { folderId?: string }; user?: { id: number } }, res) => {
     const probe = await boxService.getFolderInfo("0");
     if (!probe) {
       return res
@@ -80,31 +85,41 @@ router.get(
 router.post(
   "/api/ai/box/resolve",
   requireAuth,
-  asyncHandler(async (req: any, res) => {
-    const clientKind: ClientKind = req.body?.client === "widget" ? "widget" : "assistant";
-    const question = typeof req.body?.question === "string" ? req.body.question : "";
-    const raw = Array.isArray(req.body?.attachments) ? req.body.attachments : [];
-    const { files } = await resolveBoxAttachmentsForClient(question, raw, clientKind);
-    if (files.length) {
-      const mod: any = await import("../queue.js");
-      const getAIIndexQueue = mod.getAIIndexQueue as any;
-      const queue = typeof getAIIndexQueue === "function" ? getAIIndexQueue() : null;
-      if (queue) {
-        await queue
-          .add(
-            "index-files",
-            {
-              fileIds: files.map((f: any) => f.id),
+  asyncHandler(
+    async (
+      req: {
+        body?: { client?: string; question?: string; attachments?: BoxAttachment[] };
+        user?: { id: number };
+      },
+      res
+    ) => {
+      const clientKind: ClientKind = req.body?.client === "widget" ? "widget" : "assistant";
+      const question = typeof req.body?.question === "string" ? req.body.question : "";
+      const raw = Array.isArray(req.body?.attachments) ? req.body.attachments : [];
+      const { files } = await resolveBoxAttachmentsForClient(
+        question,
+        raw as BoxAttachment[],
+        clientKind
+      );
+      if (files.length) {
+        const mod = (await import("../queue.js")) as {
+          getAIIndexQueue?: () => { add: (name: string, data: unknown) => Promise<unknown> } | null;
+        };
+        const getAIIndexQueue = mod.getAIIndexQueue;
+        const queue = typeof getAIIndexQueue === "function" ? getAIIndexQueue() : null;
+        if (queue) {
+          await queue
+            .add("index-files", {
+              fileIds: files.map((f) => (f as { id: string }).id),
               userId: Number(req.user?.id) || 0,
               timestamp: Date.now(),
-            },
-            { priority: 5 }
-          )
-          .catch(() => {});
+            })
+            .catch(() => {});
+        }
       }
+      return res.json({ files });
     }
-    return res.json({ files });
-  })
+  )
 );
 
 router.post(
@@ -172,43 +187,57 @@ router.post(
 router.post(
   "/api/ai/query",
   requireAuth,
-  asyncHandler(async (req: any, res) => {
-    const mode: "sell" | "support" = req.body?.mode === "support" ? "support" : "sell";
-    const question = (req.body?.question || "").toString().trim();
-    const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : [];
-    const providedConversationId =
-      typeof req.body?.conversationId === "string" ? req.body.conversationId.trim() : "";
-    if (!question) return res.status(400).json({ message: "question is required" });
-    if (attachments.length > 0 && mode !== "support") {
-      return res
-        .status(403)
-        .json({ message: "Box attachments are only permitted in support mode" });
-    }
-    let fileNames: string[] = [];
-    let combinedText = "";
-    if (attachments.length > 0 && mode === "support") {
-      const valid: Array<{ type: "box_file" | "box_folder"; id: string }> = [];
-      for (const a of attachments) {
-        const type = a?.type === "box_folder" ? "folder" : "file";
-        const id = String(a?.id || "");
-        if (!id) continue;
-        const ok = await cache.wrap(
-          cache.generateKey(CachePrefix.AI_BOX_CHECK, { id, type }),
-          () => boxService.isUnderClientsRoot(id, type as any),
-          { ttl: CacheTTL.FIFTEEN_MINUTES }
-        );
-        if (!ok) continue;
-        valid.push({ type: type === "file" ? "box_file" : "box_folder", id });
+  asyncHandler(
+    async (
+      req: {
+        body?: {
+          mode?: string;
+          question?: string;
+          attachments?: unknown[];
+          conversationId?: string;
+          client?: string;
+        };
+        user?: { id: number };
+      },
+      res
+    ) => {
+      const mode: "sell" | "support" = req.body?.mode === "support" ? "support" : "sell";
+      const question = (req.body?.question || "").toString().trim();
+      const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : [];
+      const providedConversationId =
+        typeof req.body?.conversationId === "string" ? req.body.conversationId.trim() : "";
+      if (!question) return res.status(400).json({ message: "question is required" });
+      if (attachments.length > 0 && mode !== "support") {
+        return res
+          .status(403)
+          .json({ message: "Box attachments are only permitted in support mode" });
       }
-      if (valid.length) {
-        const clientKind: ClientKind = req.body?.client === "widget" ? "widget" : "assistant";
-        const extracted = await extractTextForClient(question, valid, clientKind);
-        combinedText = extracted.combinedText || "";
-        fileNames = extracted.citations || [];
+      let fileNames: string[] = [];
+      let combinedText = "";
+      if (attachments.length > 0 && mode === "support") {
+        const valid: Array<{ type: "box_file" | "box_folder"; id: string }> = [];
+        for (const a of attachments) {
+          const attachment = a as { type?: string; id?: string };
+          const type = attachment?.type === "box_folder" ? "folder" : "file";
+          const id = String(attachment?.id || "");
+          if (!id) continue;
+          const ok = await cache.wrap(
+            cache.generateKey(CachePrefix.AI_BOX_CHECK, { id, type }),
+            () => boxService.isUnderClientsRoot(id, type as "file" | "folder"),
+            { ttl: CacheTTL.FIFTEEN_MINUTES }
+          );
+          if (!ok) continue;
+          valid.push({ type: type === "file" ? "box_file" : "box_folder", id });
+        }
+        if (valid.length) {
+          const clientKind: ClientKind = req.body?.client === "widget" ? "widget" : "assistant";
+          const extracted = await extractTextForClient(question, valid, clientKind);
+          combinedText = extracted.combinedText || "";
+          fileNames = extracted.citations || [];
+        }
       }
-    }
-    const promptClientKind: ClientKind = req.body?.client === "widget" ? "widget" : "assistant";
-    let systemSell = `You are Seed Assistant (Sell Mode).
+      const promptClientKind: ClientKind = req.body?.client === "widget" ? "widget" : "assistant";
+      let systemSell = `You are Seed Assistant (Sell Mode).
 You are a real-time sales conversation copilot. Your output helps a sales rep speak directly to a client/prospect during a live call.
 Be concise, natural, and client-safe. Use real-talk phrasing. Never fabricate facts or specific numbers.
 
@@ -220,8 +249,8 @@ Output format:
 - Guardrails — remind the rep to avoid promises, discounts, or tax/legal advice without approval.
 
 Do not include CTAs or next-step scheduling language. Focus only on in-call guidance.`;
-    if (promptClientKind === "widget") {
-      systemSell = `You are Seed Assistant (Sell Mode, Widget).
+      if (promptClientKind === "widget") {
+        systemSell = `You are Seed Assistant (Sell Mode, Widget).
 Condensed, skimmable call coaching. No fabrication.
 
 Output format (short):
@@ -232,8 +261,8 @@ Output format (short):
 - Guardrails (1 bullet)
 
 No CTAs.`;
-    }
-    const systemSupport = `You are Seed Assistant (Support Mode).
+      }
+      const systemSupport = `You are Seed Assistant (Support Mode).
 Use ONLY the provided Knowledge Base (KB) from attached files. Do NOT generalize. If a fact is not present in the KB, say "Not found in sources".
 Tasks:
 - Extract concrete figures and dates (revenue, gross profit, operating income, net income, cash, AR, AP, debt, equity) from the KB.
@@ -248,145 +277,176 @@ Tasks:
 Rules:
 - Short quotes and exact numbers are allowed; avoid long verbatim passages.
 - If the KB is empty or unreadable, respond exactly with: "No readable data extracted from the attached files. Please attach text-based PDFs/CSV/XLSX or OCR the documents." and stop.`;
-    const sys = mode === "support" ? systemSupport : systemSell;
-    const sourceNote = fileNames.length
-      ? `\n\nWhen stating a fact, append the file in brackets [name]. Files available:\n- ${fileNames.slice(0, 20).join("\n- ")}`
-      : "";
-    const kb = combinedText ? `\n\nKnowledge Base:\n${combinedText}` : "";
-    const fullPrompt = `${sys}\n\nUser question:\n${question}${sourceNote}${kb}`;
-    const model = mode === "support" ? "gpt-4o" : "gpt-4o-mini";
-    const maxTokens = mode === "support" ? 900 : 600;
-    const temperature = mode === "sell" ? 0.25 : 0.35;
-    const conversationId = providedConversationId || randomUUID();
-    if (db) {
-      try {
-        await db
-          .insert(aiConversations)
-          .values({
-            id: conversationId,
-            userId: Number(req.user?.id) || 0,
-            mode,
-            startedAt: new Date(),
-            lastActivityAt: new Date(),
-          })
-          .onConflictDoNothing?.({ target: aiConversations.id });
-        await db
-          .insert(aiMessages)
-          .values({
+      const sys = mode === "support" ? systemSupport : systemSell;
+      const sourceNote = fileNames.length
+        ? `\n\nWhen stating a fact, append the file in brackets [name]. Files available:\n- ${fileNames.slice(0, 20).join("\n- ")}`
+        : "";
+      const kb = combinedText ? `\n\nKnowledge Base:\n${combinedText}` : "";
+      const fullPrompt = `${sys}\n\nUser question:\n${question}${sourceNote}${kb}`;
+      const model = mode === "support" ? "gpt-4o" : "gpt-4o-mini";
+      const maxTokens = mode === "support" ? 900 : 600;
+      const temperature = mode === "sell" ? 0.25 : 0.35;
+      const conversationId = providedConversationId || randomUUID();
+      if (db) {
+        try {
+          await db
+            .insert(aiConversations)
+            .values({
+              id: conversationId,
+              userId: Number(req.user?.id) || 0,
+              mode,
+              startedAt: new Date(),
+              lastActivityAt: new Date(),
+            })
+            .onConflictDoNothing?.({ target: aiConversations.id });
+          await db.insert(aiMessages).values({
             conversationId,
             role: "user",
             content: question,
-            attachments: attachments && attachments.length ? (attachments as any) : null,
+            attachments:
+              attachments && attachments.length
+                ? (attachments as unknown as Record<string, unknown>[])
+                : null,
           });
-      } catch (e) {
-        console.warn("[AI] DB persist (query, user msg) failed:", (e as any)?.message);
+        } catch (e) {
+          console.warn(
+            "[AI] DB persist (query, user msg) failed:",
+            e instanceof Error ? e.message : String(e)
+          );
+        }
       }
-    }
-    const answer = await aiService.generateContent(fullPrompt, { model, maxTokens, temperature });
-    if (db) {
-      try {
-        await db
-          .insert(aiMessages)
-          .values({ conversationId, role: "assistant", content: answer, attachments: null });
-        await db
-          .update(aiConversations)
-          .set({ lastActivityAt: new Date() })
-          .where(eq(aiConversations.id, conversationId));
-      } catch (e) {
-        console.warn("[AI] DB persist (query, assistant msg) failed:", (e as any)?.message);
+      const answer = await aiService.generateContent(fullPrompt, { model, maxTokens, temperature });
+      if (db) {
+        try {
+          await db
+            .insert(aiMessages)
+            .values({ conversationId, role: "assistant", content: answer, attachments: null });
+          await db
+            .update(aiConversations)
+            .set({ lastActivityAt: new Date() })
+            .where(eq(aiConversations.id, conversationId));
+        } catch (e) {
+          console.warn(
+            "[AI] DB persist (query, assistant msg) failed:",
+            e instanceof Error ? e.message : String(e)
+          );
+        }
       }
+      return res.json({ conversationId, answer, citations: fileNames });
     }
-    return res.json({ conversationId, answer, citations: fileNames });
-  })
+  )
 );
 
 router.post(
   "/api/ai/query/stream",
   requireAuth,
-  asyncHandler(async (req: any, res) => {
-    const mode: "sell" | "support" = req.body?.mode === "support" ? "support" : "sell";
-    const question = (req.body?.question || "").toString().trim();
-    const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : [];
-    const providedConversationId =
-      typeof req.body?.conversationId === "string" ? req.body.conversationId.trim() : "";
-    if (!question) {
-      res.status(400);
-      return res.end();
-    }
-    if (attachments.length > 0 && mode !== "support") {
-      res.status(403);
-      return res.end();
-    }
-    let fileNames: string[] = [];
-    let combinedText = "";
-    if (attachments.length > 0 && mode === "support") {
-      const valid: Array<{ type: "box_file" | "box_folder"; id: string }> = [];
-      for (const a of attachments) {
-        const type = a?.type === "box_folder" ? "folder" : "file";
-        const id = String(a?.id || "");
-        if (!id) continue;
-        const ok = await cache.wrap(
-          cache.generateKey(CachePrefix.AI_BOX_CHECK, { id, type }),
-          () => boxService.isUnderClientsRoot(id, type as any),
-          { ttl: CacheTTL.FIFTEEN_MINUTES }
-        );
-        if (!ok) continue;
-        valid.push({ type: type === "file" ? "box_file" : "box_folder", id });
+  asyncHandler(
+    async (
+      req: {
+        body?: {
+          mode?: string;
+          question?: string;
+          attachments?: unknown[];
+          conversationId?: string;
+          client?: string;
+        };
+        user?: { id: number };
+      },
+      res
+    ) => {
+      const mode: "sell" | "support" = req.body?.mode === "support" ? "support" : "sell";
+      const question = (req.body?.question || "").toString().trim();
+      const attachments = Array.isArray(req.body?.attachments) ? req.body.attachments : [];
+      const providedConversationId =
+        typeof req.body?.conversationId === "string" ? req.body.conversationId.trim() : "";
+      if (!question) {
+        res.status(400);
+        return res.end();
       }
-      if (valid.length) {
-        const clientKind: ClientKind = req.body?.client === "widget" ? "widget" : "assistant";
-        const extracted = await extractTextForClient(question, valid, clientKind);
-        combinedText = extracted.combinedText || "";
-        fileNames = extracted.citations || [];
+      if (attachments.length > 0 && mode !== "support") {
+        res.status(403);
+        return res.end();
+      }
+      let fileNames: string[] = [];
+      let combinedText = "";
+      if (attachments.length > 0 && mode === "support") {
+        const valid: Array<{ type: "box_file" | "box_folder"; id: string }> = [];
+        for (const a of attachments) {
+          const attachment = a as { type?: string; id?: string };
+          const type = attachment?.type === "box_folder" ? "folder" : "file";
+          const id = String(attachment?.id || "");
+          if (!id) continue;
+          const ok = await cache.wrap(
+            cache.generateKey(CachePrefix.AI_BOX_CHECK, { id, type }),
+            () => boxService.isUnderClientsRoot(id, type as "file" | "folder"),
+            { ttl: CacheTTL.FIFTEEN_MINUTES }
+          );
+          if (!ok) continue;
+          valid.push({ type: type === "file" ? "box_file" : "box_folder", id });
+        }
+        if (valid.length) {
+          const clientKind: ClientKind = req.body?.client === "widget" ? "widget" : "assistant";
+          const extracted = await extractTextForClient(question, valid, clientKind);
+          combinedText = extracted.combinedText || "";
+          fileNames = extracted.citations || [];
+        }
+      }
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache, no-transform");
+      res.setHeader("X-Accel-Buffering", "no");
+      res.setHeader("Connection", "keep-alive");
+      (res as { flushHeaders?: () => void }).flushHeaders?.();
+      const write = (obj: Record<string, unknown>) => {
+        try {
+          res.write(`data: ${JSON.stringify(obj)}\n\n`);
+        } catch {}
+      };
+      const conversationId = providedConversationId || randomUUID();
+      write({ meta: { citations: fileNames, conversationId } });
+      let assistantText = "";
+      await aiService.streamChat(
+        `${question}${combinedText ? `\n\nKnowledge Base:\n${combinedText}` : ""}`,
+        {
+          model: mode === "support" ? "gpt-4o" : "gpt-4o-mini",
+          maxTokens: mode === "support" ? 900 : 600,
+          temperature: mode === "sell" ? 0.25 : 0.35,
+          onDelta: (delta: string) => {
+            assistantText += delta || "";
+            write({ delta });
+          },
+        }
+      );
+      res.write("data: [DONE]\n\n");
+      res.end();
+      if (db) {
+        try {
+          await db
+            .insert(aiMessages)
+            .values({
+              conversationId,
+              role: "assistant",
+              content: assistantText,
+              attachments: null,
+            });
+          await db
+            .update(aiConversations)
+            .set({ lastActivityAt: new Date() })
+            .where(eq(aiConversations.id, conversationId));
+        } catch (e) {
+          console.warn(
+            "[AI] DB persist (stream, assistant msg) failed:",
+            e instanceof Error ? e.message : String(e)
+          );
+        }
       }
     }
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache, no-transform");
-    res.setHeader("X-Accel-Buffering", "no");
-    res.setHeader("Connection", "keep-alive");
-    (res as any).flushHeaders?.();
-    const write = (obj: any) => {
-      try {
-        res.write(`data: ${JSON.stringify(obj)}\n\n`);
-      } catch {}
-    };
-    const conversationId = providedConversationId || randomUUID();
-    write({ meta: { citations: fileNames, conversationId } });
-    let assistantText = "";
-    await aiService.streamChat(
-      `${question}${combinedText ? `\n\nKnowledge Base:\n${combinedText}` : ""}`,
-      {
-        model: mode === "support" ? "gpt-4o" : "gpt-4o-mini",
-        maxTokens: mode === "support" ? 900 : 600,
-        temperature: mode === "sell" ? 0.25 : 0.35,
-        onDelta: (delta: string) => {
-          assistantText += delta || "";
-          write({ delta });
-        },
-      }
-    );
-    res.write("data: [DONE]\n\n");
-    res.end();
-    if (db) {
-      try {
-        await db
-          .insert(aiMessages)
-          .values({ conversationId, role: "assistant", content: assistantText, attachments: null });
-        await db
-          .update(aiConversations)
-          .set({ lastActivityAt: new Date() })
-          .where(eq(aiConversations.id, conversationId));
-      } catch (e) {
-        console.warn("[AI] DB persist (stream, assistant msg) failed:", (e as any)?.message);
-      }
-    }
-  })
+  )
 );
 
 router.post(
   "/api/ai/conversations/end",
   requireAuth,
-  asyncHandler(async (req: any, res) => {
+  asyncHandler(async (req: { body?: { conversationId?: string } }, res) => {
     const conversationId = String(req.body?.conversationId || "").trim();
     if (!conversationId)
       return res.status(400).json({ ok: false, message: "conversationId is required" });

@@ -190,7 +190,7 @@ export default function KbAdmin() {
         description: "Article created successfully",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to create article",
@@ -223,7 +223,7 @@ export default function KbAdmin() {
         description: "Article updated successfully",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to update article",
@@ -246,7 +246,7 @@ export default function KbAdmin() {
         description: "Article permanently deleted from database",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to delete article",
@@ -269,7 +269,7 @@ export default function KbAdmin() {
         description: "Article archived successfully",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to archive article",
@@ -294,7 +294,7 @@ export default function KbAdmin() {
         description: `Article ${newStatus === "published" ? "published" : "unpublished"} successfully`,
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to update article status",
@@ -320,7 +320,7 @@ export default function KbAdmin() {
         description: "Excerpt and tags have been auto-generated based on your content.",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Generation Failed",
         description: error.message || "Failed to generate metadata",

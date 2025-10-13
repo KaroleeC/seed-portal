@@ -1,5 +1,6 @@
 import {
   pgTable,
+  pgEnum,
   text,
   serial,
   integer,
@@ -22,8 +23,32 @@ const vector = customType<{ data: number[]; driverData: string }>({
     return JSON.parse(value);
   },
 });
+
+// ============================================================================
+// Scheduler Enums
+// ============================================================================
+
+export const eventStatusEnum = pgEnum("event_status", [
+  "scheduled",
+  "completed",
+  "cancelled",
+  "no_show",
+]);
+
+export const attendeeRoleEnum = pgEnum("attendee_role", ["organizer", "attendee", "optional"]);
+
+export const attendeeStatusEnum = pgEnum("attendee_status", [
+  "pending",
+  "accepted",
+  "declined",
+  "tentative",
+]);
+
+export const meetingModeEnum = pgEnum("meeting_mode", ["in_person", "phone", "video"]);
+
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import type { PgTableWithColumns } from "drizzle-orm/pg-core";
 
 export const quotes = pgTable("quotes", {
   id: serial("id").primaryKey(),
@@ -232,7 +257,8 @@ export type InsertWorkspaceUser = z.infer<typeof insertWorkspaceUserSchema>;
 export type WorkspaceUser = typeof workspaceUsers.$inferSelect;
 
 // Users with HubSpot integration
-export const users: any = pgTable("users", {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const users: PgTableWithColumns<any> = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(), // @seedfinancial.io email
   password: text("password"), // Optional for OAuth users
@@ -245,7 +271,9 @@ export const users: any = pgTable("users", {
   authProvider: text("auth_provider").default("local"), // 'local' or 'google'
   role: text("role").default("employee"), // 'admin', 'employee'
   defaultDashboard: text("default_dashboard").default("sales"), // 'admin', 'sales', 'service'
-  roleAssignedBy: integer("role_assigned_by").references((): any => users.id),
+  roleAssignedBy: integer("role_assigned_by").references(function () {
+    return users.id;
+  }),
   roleAssignedAt: timestamp("role_assigned_at"),
   // Supabase Auth integration fields
   authUserId: text("auth_user_id").unique(), // Supabase Auth user UUID (nullable initially for migration)
@@ -307,7 +335,9 @@ export const userPreferences = pgTable("user_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
     .notNull()
-    .references((): any => users.id),
+    .references(function () {
+      return users.id;
+    }),
   scope: text("scope").notNull(), // e.g., 'leads-inbox'
   prefs: jsonb("prefs").notNull(), // arbitrary JSON for that scope
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -344,7 +374,9 @@ export const aiConversations = pgTable("ai_conversations", {
   id: text("id").primaryKey(), // uuid string
   userId: integer("user_id")
     .notNull()
-    .references((): any => users.id),
+    .references(function () {
+      return users.id;
+    }),
   mode: text("mode").notNull(), // 'sell' | 'support'
   title: text("title"),
   startedAt: timestamp("started_at").defaultNow().notNull(),
@@ -356,7 +388,9 @@ export const aiMessages = pgTable("ai_messages", {
   id: serial("id").primaryKey(),
   conversationId: text("conversation_id")
     .notNull()
-    .references((): any => aiConversations.id),
+    .references(function () {
+      return aiConversations.id;
+    }),
   role: text("role").notNull(), // 'user' | 'assistant'
   content: text("content").notNull(),
   attachments: jsonb("attachments"),
@@ -387,7 +421,9 @@ export const aiChunks = pgTable("ai_chunks", {
   id: serial("id").primaryKey(),
   documentId: integer("document_id")
     .notNull()
-    .references((): any => aiDocuments.id),
+    .references(function () {
+      return aiDocuments.id;
+    }),
   chunkIndex: integer("chunk_index").notNull(),
   text: text("text").notNull(),
   embedding: vector("embedding").notNull(), // vector(1536)
@@ -888,11 +924,14 @@ export const userRoles = pgTable(
 );
 
 // Optional: Departments table for organizational modeling (Phase 3)
-export const departments = pgTable("departments", {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const departments: PgTableWithColumns<any> = pgTable("departments", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description"),
-  parentId: integer("parent_id").references((): any => departments.id),
+  parentId: integer("parent_id").references(function () {
+    return departments.id;
+  }),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -1375,13 +1414,11 @@ export const crmEventTypes = pgTable("crm_event_types", {
   userId: text("user_id").notNull(), // references users.id
   name: text("name").notNull(), // e.g., "Discovery Call"
   durationMin: integer("duration_min").notNull().default(30),
-  bufferBeforeMin: integer("buffer_before_min").notNull().default(15),
-  bufferAfterMin: integer("buffer_after_min").notNull().default(15),
-  meetingLinkTemplate: text("meeting_link_template"), // e.g., "https://zoom.us/j/{meeting_id}"
-  meetingMode: text("meeting_mode"), // 'in_person' | 'phone' | 'video'
-  minLeadMinutes: integer("min_lead_minutes").notNull().default(120), // default 2h
-  maxHorizonDays: integer("max_horizon_days").notNull().default(14), // default 14d
+  bufferBeforeMin: integer("buffer_before_min").notNull().default(15), // gap before event
+  bufferAfterMin: integer("buffer_after_min").notNull().default(15), // gap after event
+  meetingLinkTemplate: text("meeting_link_template"), // optional Zoom, etc.
   description: text("description"),
+  meetingMode: meetingModeEnum("meeting_mode"), // 'in_person' | 'phone' | 'video'
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -1422,9 +1459,9 @@ export const crmEvents = pgTable("crm_events", {
   startAt: timestamp("start_at").notNull(),
   endAt: timestamp("end_at").notNull(),
   location: text("location"), // physical location or "Zoom", etc.
-  status: text("status").notNull().default("scheduled"), // 'scheduled' | 'completed' | 'cancelled' | 'no_show'
+  status: eventStatusEnum("status").notNull().default("scheduled"), // 'scheduled' | 'completed' | 'cancelled' | 'no_show'
   meetingLink: text("meeting_link"), // actual meeting URL
-  meetingMode: text("meeting_mode"), // 'in_person' | 'phone' | 'video'
+  meetingMode: meetingModeEnum("meeting_mode"), // 'in_person' | 'phone' | 'video'
   title: text("title").notNull(),
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -1438,8 +1475,8 @@ export const crmEventAttendees = pgTable("crm_event_attendees", {
   email: text("email").notNull(),
   phone: text("phone"),
   name: text("name"),
-  role: text("role").notNull().default("attendee"), // 'organizer' | 'attendee' | 'optional'
-  status: text("status").notNull().default("pending"), // 'pending' | 'accepted' | 'declined' | 'tentative'
+  role: attendeeRoleEnum("role").notNull().default("attendee"), // 'organizer' | 'attendee' | 'optional'
+  status: attendeeStatusEnum("status").notNull().default("pending"), // 'pending' | 'accepted' | 'declined' | 'tentative'
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -1454,7 +1491,7 @@ export const crmSchedulingLinks = pgTable("crm_scheduling_links", {
   maxUses: integer("max_uses"),
   uses: integer("uses").notNull().default(0),
   timezone: text("timezone").notNull().default("America/Los_Angeles"),
-  meetingMode: text("meeting_mode"), // preferred meeting mode for link
+  meetingMode: meetingModeEnum("meeting_mode"), // preferred meeting mode for link
   minLeadMinutes: integer("min_lead_minutes"), // optional override
   maxHorizonDays: integer("max_horizon_days"), // optional override
   customAvailability: jsonb("custom_availability"), // array of {weekday,startMinutes,endMinutes}

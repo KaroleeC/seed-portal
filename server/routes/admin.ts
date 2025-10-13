@@ -12,8 +12,15 @@
  * - POST /api/admin/apps/seedpay/cache/clear - Clear SeedPay cache (redirect)
  */
 
-import { Router, type Request, type Response } from "express";
+import { Router } from "express";
+import type { Request } from "express";
+import type { User } from "../../shared/schema";
 import { requireAuth, requirePermission } from "./_shared";
+
+// Extend Request type for auth middleware
+interface AuthenticatedRequest extends Request {
+  user?: User;
+}
 import { getErrorMessage } from "../utils/error-handling";
 import { getQuoteProvider } from "../services/providers/index";
 import { hubSpotService } from "../hubspot";
@@ -87,9 +94,15 @@ router.post(
     try {
       const includeConnectivity = Boolean(req.body?.includeConnectivity);
 
-      const checks: any[] = [];
+      const checks: Array<{
+        key: string;
+        label: string;
+        ok: boolean;
+        note?: string;
+        error?: string;
+      }> = [];
       const failures: string[] = [];
-      const detail: Record<string, any> = {};
+      const detail: Record<string, unknown> = {};
 
       // DB check
       const dbOk = await checkDatabaseHealth();
@@ -125,7 +138,9 @@ router.post(
           // Light endpoints to avoid side effects
           const pipelines = await svc.getPipelines();
           const products = await svc.getProductsCached();
-          const verify = await (svc as any).verifyAndGetProductIds?.();
+          const verify = await (
+            svc as { verifyAndGetProductIds?: () => Promise<{ valid: boolean }> }
+          ).verifyAndGetProductIds?.();
           detail.hubspot = {
             pipelinesOk: Boolean(pipelines),
             productsCount: Array.isArray(products) ? products.length : 0,
@@ -151,12 +166,12 @@ router.post(
               ok: true,
             });
           }
-        } catch (e: any) {
+        } catch (e: unknown) {
           checks.push({
             key: "hubspotConnectivity",
             label: "HubSpot connectivity",
             ok: false,
-            error: e?.message,
+            error: e instanceof Error ? e.message : String(e),
           });
           failures.push("HubSpot connectivity");
         }
@@ -189,7 +204,7 @@ router.post(
   "/api/admin/actions/hubspot/sync",
   requireAuth,
   requirePermission("admin.actions", "system"),
-  async (req: any, res) => {
+  async (req: AuthenticatedRequest, res) => {
     try {
       const { quoteId, action, dryRun, includeConnectivity } = req.body || {};
       if (!quoteId) {

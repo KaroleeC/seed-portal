@@ -5,8 +5,13 @@ export interface ErrorEnvelope {
   message: string;
 }
 
-export function sendOk<T = any>(res: Response, data?: T, meta?: any, legacy?: Record<string, any>) {
-  const body: any = { success: true };
+export function sendOk<T = unknown>(
+  res: Response,
+  data?: T,
+  meta?: Record<string, unknown>,
+  legacy?: Record<string, unknown>
+): Response {
+  const body: Record<string, unknown> = { success: true };
   if (typeof data !== "undefined") body.data = data;
   if (typeof meta !== "undefined") body.meta = meta;
   if (legacy) Object.assign(body, legacy);
@@ -18,9 +23,12 @@ export function sendError(
   code: string | undefined,
   message: string,
   status = 500,
-  legacy?: Record<string, any>
-) {
-  const body: any = { success: false, error: { message } as ErrorEnvelope };
+  legacy?: Record<string, unknown>
+): Response {
+  const body: { success: boolean; error: ErrorEnvelope } & Record<string, unknown> = {
+    success: false,
+    error: { message },
+  };
   if (code) body.error.code = code;
   if (legacy) Object.assign(body, legacy);
   return res.status(status).json(body);

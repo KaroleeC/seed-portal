@@ -11,7 +11,7 @@
 
 ### Step 1: Create Supabase Storage Bucket (5 min)
 
-1. Go to: https://supabase.com/dashboard/project/pacowjgyxbhgyrfrkmxf/storage/buckets
+1. Go to: <https://supabase.com/dashboard/project/pacowjgyxbhgyrfrkmxf/storage/buckets>
 2. Click **"New bucket"**
 3. Configure:
    - **Name:** `seed-portal-assets`
@@ -55,7 +55,7 @@ doppler secrets set VITE_SUPABASE_STORAGE_URL="https://pacowjgyxbhgyrfrkmxf.supa
 
 **How to add via dashboard:**
 
-1. Go to: https://dashboard.doppler.com/workplace/[your-workspace]/projects/seed-portal-web/configs/dev
+1. Go to: <https://dashboard.doppler.com/workplace/[your-workspace]/projects/seed-portal-web/configs/dev>
 2. Click **"Add Secret"**
 3. Name: `VITE_SUPABASE_STORAGE_URL`
 4. Value: `https://pacowjgyxbhgyrfrkmxf.supabase.co/storage/v1/object/public/seed-portal-assets`

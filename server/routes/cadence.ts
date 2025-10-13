@@ -18,16 +18,24 @@ type InsertCadenceRow = typeof crmCadences.$inferInsert;
 type InsertCadenceDayRow = typeof crmCadenceDays.$inferInsert;
 type InsertCadenceActionRow = typeof crmCadenceActions.$inferInsert;
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface ExtendedRequest extends Request {
+  principal?: { userId: number; role: string };
+  user?: { id: number; role: string };
+}
+
 function getPrincipal(req: Request): { userId: number; role: string } | null {
   // Try Supabase auth principal first
-  const principal = (req as any).principal as { userId: number; role: string } | undefined;
+  const extReq = req as ExtendedRequest;
+  const principal = extReq.principal;
   if (principal && typeof principal.userId === "number") {
     return { userId: principal.userId, role: principal.role || "employee" };
   }
 
   // Fallback to legacy session user
-  const user = (req as any).user as { id: number; role: string } | undefined;
+  const user = extReq.user;
   if (user && typeof user.id === "number") {
+    // eslint-disable-next-line rbac/no-direct-role-checks -- Reading role from session for backward compatibility, not for authorization
     return { userId: user.id, role: user.role || "employee" };
   }
 
@@ -67,7 +75,7 @@ router.get("/api/cadence", requireAuth, async (_req: Request, res: Response) => 
     const parsed = z.array(CadenceSummarySchema).safeParse(payload);
     return res.json(parsed.success ? parsed.data : payload);
   } catch (error: unknown) {
-    const msg = (error as any)?.message || "Failed to list cadences";
+    const msg = error instanceof Error ? error.message : "Failed to list cadences";
     return res.status(500).json({ message: msg });
   }
 });
@@ -125,7 +133,7 @@ router.get("/api/cadence/:id", requireAuth, async (req: Request, res: Response) 
     const parsed = CadenceSchema.safeParse(model);
     return res.json(parsed.success ? parsed.data : model);
   } catch (error: unknown) {
-    const msg = (error as any)?.message || "Failed to load cadence";
+    const msg = error instanceof Error ? error.message : "Failed to load cadence";
     return res.status(500).json({ message: msg });
   }
 });
@@ -222,15 +230,18 @@ router.post("/api/cadence", requireAuth, apiRateLimit, async (req: Request, res:
 
     // Return the saved model directly
     const [saved] = await db.select().from(crmCadences).where(eq(crmCadences.id, m.id)).limit(1);
+    if (!saved) {
+      return res.status(404).json({ message: "Cadence not found after save" });
+    }
     const days = await db.select().from(crmCadenceDays).where(eq(crmCadenceDays.cadenceId, m.id));
-    const dayIds = days.map((d) => d.id);
+    const dayIds = days.map((d: CadenceDayRow) => d.id);
     const actions = dayIds.length
       ? await db.select().from(crmCadenceActions).where(inArray(crmCadenceActions.dayId, dayIds))
       : [];
-    const grouped: Record<string, typeof actions> = {};
+    const grouped: Record<string, CadenceActionRow[]> = {};
     for (const a of actions) {
-      if (!grouped[a.dayId]) grouped[a.dayId] = [] as any;
-      grouped[a.dayId].push(a);
+      if (!grouped[a.dayId]) grouped[a.dayId] = [];
+      grouped[a.dayId]!.push(a);
     }
     const model = {
       id: saved.id,
@@ -240,23 +251,25 @@ router.post("/api/cadence", requireAuth, apiRateLimit, async (req: Request, res:
       timezone: saved.timezone,
       trigger: saved.trigger || { type: "lead_assigned", config: {} },
       days: days
-        .sort((a, b) => (a.dayNumber || 0) - (b.dayNumber || 0))
-        .map((d) => ({
+        .sort((a: CadenceDayRow, b: CadenceDayRow) => (a.dayNumber || 0) - (b.dayNumber || 0))
+        .map((d: CadenceDayRow) => ({
           dayNumber: d.dayNumber,
           actions: (grouped[d.id] || [])
-            .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-            .map((a) => ({
+            .sort(
+              (a: CadenceActionRow, b: CadenceActionRow) => (a.sortOrder || 0) - (b.sortOrder || 0)
+            )
+            .map((a: CadenceActionRow) => ({
               id: a.id,
-              type: a.actionType as any,
-              scheduleRule: a.scheduleRule as any,
-              config: (a.config as any) || {},
+              type: a.actionType,
+              scheduleRule: a.scheduleRule,
+              config: a.config || {},
             })),
         })),
     };
     const parsed = CadenceSchema.safeParse(model);
     return res.json(parsed.success ? parsed.data : model);
   } catch (error: unknown) {
-    const msg = (error as any)?.message || "Failed to save cadence";
+    const msg = error instanceof Error ? error.message : "Failed to save cadence";
     return res.status(500).json({ message: msg });
   }
 });
@@ -276,11 +289,11 @@ router.post("/api/cadence/:id/activate", requireAuth, async (req: Request, res: 
       return res.status(403).json({ message: "Forbidden" });
     await db
       .update(crmCadences)
-      .set({ isActive: true, updatedAt: new Date() } as InsertCadenceRow)
+      .set({ isActive: true, updatedAt: new Date() })
       .where(eq(crmCadences.id, id));
     return res.json({ success: true });
   } catch (error: unknown) {
-    const msg = (error as any)?.message || "Failed to activate cadence";
+    const msg = error instanceof Error ? error.message : "Failed to activate cadence";
     return res.status(500).json({ message: msg });
   }
 });
@@ -300,11 +313,11 @@ router.post("/api/cadence/:id/deactivate", requireAuth, async (req: Request, res
       return res.status(403).json({ message: "Forbidden" });
     await db
       .update(crmCadences)
-      .set({ isActive: false, updatedAt: new Date() } as InsertCadenceRow)
+      .set({ isActive: false, updatedAt: new Date() })
       .where(eq(crmCadences.id, id));
     return res.json({ success: true });
   } catch (error: unknown) {
-    const msg = (error as any)?.message || "Failed to deactivate cadence";
+    const msg = error instanceof Error ? error.message : "Failed to deactivate cadence";
     return res.status(500).json({ message: msg });
   }
 });

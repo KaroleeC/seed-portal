@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Shield, Settings } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { usePermissions } from "@/hooks/use-permissions";
 
 // Local storage key used by CommandDock
 const RBAC_KEY = "commandDock.rbac";
@@ -33,8 +33,7 @@ function saveConfig(cfg: RBACConfig) {
 }
 
 export default function CommandDockSettings() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const { isAdmin } = usePermissions();
 
   const [cfg, setCfg] = useState<RBACConfig>(() => loadConfig());
   const [roleName, setRoleName] = useState<string>("");
@@ -128,18 +127,22 @@ export default function CommandDockSettings() {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-sm text-white/90">Role</label>
+                  <label htmlFor="role-name" className="text-sm text-white/90">
+                    Role
+                  </label>
                   <Input
+                    id="role-name"
                     value={roleName}
                     onChange={(e) => setRoleName(e.target.value)}
                     placeholder="e.g. admin, employee"
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-sm text-white/90">
+                  <label htmlFor="role-hide-csv" className="text-sm text-white/90">
                     Hide command IDs (comma or newline separated)
                   </label>
                   <Textarea
+                    id="role-hide-csv"
                     rows={3}
                     value={roleHideCSV}
                     onChange={(e) => setRoleHideCSV(e.target.value)}
@@ -160,16 +163,22 @@ export default function CommandDockSettings() {
             <CardContent className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                 <div className="sm:col-span-2">
-                  <label className="text-sm text-white/90">Command ID</label>
+                  <label htmlFor="cmd-id" className="text-sm text-white/90">
+                    Command ID
+                  </label>
                   <Input
+                    id="cmd-id"
                     value={cmdId}
                     onChange={(e) => setCmdId(e.target.value)}
                     placeholder="e.g. settings.seedpay"
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-white/90">Required permissions (CSV)</label>
+                  <label htmlFor="cmd-req-csv" className="text-sm text-white/90">
+                    Required permissions (CSV)
+                  </label>
                   <Input
+                    id="cmd-req-csv"
                     value={cmdReqCSV}
                     onChange={(e) => setCmdReqCSV(e.target.value)}
                     placeholder="manage_commissions,manage_pricing"
