@@ -182,12 +182,12 @@ Use path aliases for cleaner imports:
 
 ```typescript
 // ❌ Avoid
-import { Button } from '../../../components/ui/button';
+import { Button } from "../../../components/ui/button";
 
 // ✅ Use path aliases
-import { Button } from '@components/ui/button';
-import { useAuth } from '@hooks/use-auth';
-import { QuoteCalculator } from '@features/quote-calculator';
+import { Button } from "@components/ui/button";
+import { useAuth } from "@hooks/use-auth";
+import { QuoteCalculator } from "@features/quote-calculator";
 ```
 
 Available aliases: `@/*`, `@features/*`, `@components/*`, `@hooks/*`, `@utils/*`, `@types/*`, `@shared/*`, `@server/*`
