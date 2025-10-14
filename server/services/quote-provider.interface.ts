@@ -1,85 +1,109 @@
 /**
  * Quote Provider Interface (Server-Side)
  *
- * Abstract interface for quote sync operations on the backend.
- * Mirrors the client-side IQuoteProvider for consistency.
+ * Abstract interface for quote management operations.
+ * Phase 1: Replaces HubSpot sync with full CRUD operations.
  *
  * Migration Strategy:
- * - Current: HubSpotQuoteProvider
- * - Future: SeedPayQuoteProvider
- * - No changes to routes or business logic required
+ * - Phase 0: HubSpotQuoteProvider (sync only)
+ * - Phase 1: SeedPayQuoteProvider (full CRUD)
+ * - Routes switch to CRUD operations via provider factory
  */
 
-import type { Quote } from "@shared/schema";
-
-export interface QuoteSyncResult {
-  success: boolean;
-  quoteId: number;
-  externalQuoteId?: string;
-  externalDealId?: string;
-  message?: string;
-  error?: string;
-  jobId?: string;
-  queued?: boolean;
-}
-
-export interface QuoteSyncOptions {
-  action?: "auto" | "create" | "update";
-  actorEmail?: string;
-  dryRun?: boolean;
-  includeConnectivity?: boolean;
-}
+import type { Quote, CreateQuoteInput, UpdateQuoteInput, QuoteFilters } from "@shared/types/quote";
 
 /**
  * Abstract Quote Provider Interface (Server-Side)
  *
- * All CRM integrations (HubSpot, SeedPay, etc.) must implement this interface.
+ * All quote management implementations must implement this interface.
  * This ensures consistent behavior across different providers.
+ *
+ * Phase 1 Focus: CRUD operations for SEEDPAY provider
  */
 export interface IQuoteProvider {
-  /**
-   * Sync a quote to the external system
-   * @param quoteId - Internal quote ID
-   * @param options - Sync options
-   * @returns Sync result with external IDs
-   */
-  syncQuote(quoteId: number, options?: QuoteSyncOptions): Promise<QuoteSyncResult>;
+  // === CRUD Operations ===
 
   /**
-   * Queue a sync operation for background processing
-   * @param quoteId - Internal quote ID
-   * @param options - Sync options
-   * @returns Job ID for status tracking
+   * Create a new quote
+   *
+   * @param data - Quote data including line items
+   * @returns Created quote with generated ID
+   *
+   * @example
+   * ```typescript
+   * const quote = await provider.createQuote({
+   *   companyName: 'Acme Corp',
+   *   contactEmail: 'john@acme.com',
+   *   lineItems: [
+   *     { productName: 'Monthly Bookkeeping', quantity: 1, unitPrice: 7500 }
+   *   ],
+   *   ownerId: 1
+   * });
+   * ```
    */
-  queueSync(
-    quoteId: number,
-    options?: QuoteSyncOptions
-  ): Promise<{
-    queued: boolean;
-    jobId?: string;
-    result?: QuoteSyncResult;
-  }>;
+  createQuote(data: CreateQuoteInput): Promise<Quote>;
 
   /**
-   * Check sync job status (for queued operations)
-   * @param jobId - Job ID from queued sync
-   * @returns Current job status
+   * Get a quote by ID
+   *
+   * @param quoteId - Quote ID (string UUID or number)
+   * @returns Quote with line items, or null if not found
    */
-  checkSyncStatus(jobId: string): Promise<{
-    status: "pending" | "running" | "completed" | "failed";
-    result?: QuoteSyncResult;
-    error?: string;
-  }>;
+  getQuote(quoteId: string | number): Promise<Quote | null>;
 
   /**
-   * Provider name (e.g., "hubspot", "seedpay")
+   * Update an existing quote
+   *
+   * @param quoteId - Quote ID
+   * @param updates - Fields to update (partial)
+   * @returns Updated quote
+   * @throws Error if quote not found
+   */
+  updateQuote(quoteId: string | number, updates: UpdateQuoteInput): Promise<Quote>;
+
+  /**
+   * Delete a quote
+   *
+   * Soft delete (archives) or hard delete depending on provider.
+   * SEEDPAY: Sets status to 'archived'
+   *
+   * @param quoteId - Quote ID
+   * @returns void
+   */
+  deleteQuote(quoteId: string | number): Promise<void>;
+
+  /**
+   * List quotes with optional filters
+   *
+   * @param filters - Query filters (status, owner, dates, etc.)
+   * @returns Array of quotes matching filters
+   *
+   * @example
+   * ```typescript
+   * const quotes = await provider.listQuotes({
+   *   status: ['draft', 'pending'],
+   *   ownerId: 1,
+   *   sortBy: 'createdAt',
+   *   sortOrder: 'desc'
+   * });
+   * ```
+   */
+  listQuotes(filters?: QuoteFilters): Promise<Quote[]>;
+
+  // === Provider Metadata ===
+
+  /**
+   * Provider name (e.g., "seedpay", "hubspot")
    */
   readonly name: string;
 
   /**
-   * Whether this provider supports async/queued operations
+   * Whether this provider supports full CRUD operations
+   *
+   * - SEEDPAY: true (system of record)
+   * - HubSpot: false (sync only, legacy)
    */
-  readonly supportsAsync: boolean;
+  readonly supportsCRUD: boolean;
 }
 
 /**
