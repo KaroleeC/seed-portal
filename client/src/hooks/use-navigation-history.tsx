@@ -3,7 +3,7 @@ import React, {
   useContext,
   useEffect,
   useReducer,
-  ReactNode,
+  type ReactNode,
 } from "react";
 import { useLocation } from "wouter";
 
@@ -50,7 +50,7 @@ function clampHistory(history: string[]): string[] {
 
 function navigationReducer(
   state: NavigationState,
-  action: NavigationAction,
+  action: NavigationAction
 ): NavigationState {
   switch (action.type) {
     case "INITIALIZE":
@@ -111,7 +111,7 @@ function navigationReducer(
       const hydratedHistory = clampHistory(action.history || []);
       const idx = Math.max(
         0,
-        Math.min(action.index ?? 0, hydratedHistory.length - 1),
+        Math.min(action.index ?? 0, hydratedHistory.length - 1)
       );
       return {
         history: hydratedHistory,
@@ -247,7 +247,7 @@ export function useNavigationHistory() {
   const context = useContext(NavigationHistoryContext);
   if (context === undefined) {
     throw new Error(
-      "useNavigationHistory must be used within a NavigationHistoryProvider",
+      "useNavigationHistory must be used within a NavigationHistoryProvider"
     );
   }
   return context;

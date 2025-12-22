@@ -5,7 +5,7 @@
  */
 
 import React from "react";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -21,7 +21,7 @@ import {
   Scale,
 } from "lucide-react";
 
-import {
+import type {
   QuoteFormData,
   PricingCalculationResult,
   ServiceCardProps,

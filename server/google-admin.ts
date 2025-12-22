@@ -1,5 +1,5 @@
 import { OAuth2Client } from "google-auth-library";
-import { admin_directory_v1, google } from "googleapis";
+import  { google, type admin_directory_v1 } from "googleapis";
 
 export interface GoogleWorkspaceUser {
   id: string;

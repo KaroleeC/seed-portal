@@ -1,4 +1,4 @@
-import { Control, UseFormReturn } from "react-hook-form";
+import type { Control, UseFormReturn } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
 import {
   FormField,
@@ -224,7 +224,7 @@ export function BookkeepingCleanupSection({
                                   {selectedMonthsCount > 0 && (
                                     <span className="bg-muted text-foreground px-2 py-1 rounded-full text-xs font-medium">
                                       {selectedMonthsCount} month
-                                      {selectedMonthsCount !== 1 ? "s" : ""} {""}
+                                      {selectedMonthsCount !== 1 ? "s" : ""} 
                                       selected
                                     </span>
                                   )}

@@ -1,5 +1,5 @@
 // HubSpot Quote Sync Background Jobs
-import { Job } from "bullmq";
+import type { Job } from "bullmq";
 import { logger } from "../logger";
 import { storage } from "../storage";
 

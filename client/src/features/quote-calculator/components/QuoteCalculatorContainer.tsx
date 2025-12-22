@@ -14,7 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { calculatePricingDisplay } from "@shared/pricing";
 
 // Import our new strongly-typed interfaces
-import {
+import type {
   QuoteFormData,
   PricingCalculationResult,
   HubSpotContact,

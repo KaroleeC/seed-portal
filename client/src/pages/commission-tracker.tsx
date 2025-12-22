@@ -792,7 +792,7 @@ export default function CommissionTracker() {
                 </span>
                 {hubspotCommissionData && (
                   <span className="ml-4 inline-flex items-center gap-1 text-green-200">
-                    <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                    <span className="w-2 h-2 bg-green-400 rounded-full" />
                     Live HubSpot Data
                   </span>
                 )}

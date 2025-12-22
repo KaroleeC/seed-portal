@@ -674,7 +674,7 @@ export function AIArticleGenerator({
     // Just trigger the callback with the article data - modal will handle actual creation
     onArticleGenerated({
       title: formData.title,
-      content: content,
+      content,
       categoryId: formData.categoryId,
       excerpt:
         autoExcerpt || "AI-generated article with advanced content analysis",
@@ -844,7 +844,7 @@ export function AIArticleGenerator({
                                           key={index}
                                           className="flex items-start gap-2"
                                         >
-                                          <div className="w-1 h-1 bg-orange-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                                          <div className="w-1 h-1 bg-orange-500 rounded-full mt-1.5 flex-shrink-0" />
                                           <span className="leading-relaxed">
                                             {section}
                                           </span>

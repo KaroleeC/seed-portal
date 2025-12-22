@@ -199,7 +199,7 @@ export function UniversalNavbar({
             className="relative p-2 hover:bg-white/10 text-white"
           >
             <Bell className="h-4 w-4" />
-            <span className="absolute top-1 right-1 h-1.5 w-1.5 bg-orange-500 rounded-full"></span>
+            <span className="absolute top-1 right-1 h-1.5 w-1.5 bg-orange-500 rounded-full" />
           </Button>
           {showSeedPaySettings && (
             <Button
@@ -242,7 +242,7 @@ export function UniversalNavbar({
                 <p className="text-xs text-gray-500">{userInfo.email}</p>
                 {userInfo.isImpersonating && (
                   <div className="mt-1 flex items-center gap-1">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-500 rounded-full" />
                     <p className="text-xs text-orange-600 font-medium">
                       Admin View
                     </p>
