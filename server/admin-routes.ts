@@ -77,7 +77,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         console.error("Failed to fetch HubSpot pipelines:", error);
         return res
           .status(500)
-          .json({ message: "Failed to fetch pipelines: " + error.message });
+          .json({ message: `Failed to fetch pipelines: ${  error.message}` });
       }
     },
   );
@@ -118,7 +118,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         console.error("Failed to get pipeline config:", error);
         return res
           .status(500)
-          .json({ message: "Failed to get pipeline config: " + error.message });
+          .json({ message: `Failed to get pipeline config: ${  error.message}` });
       }
     },
   );
@@ -171,7 +171,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         console.error("Failed to save pipeline config:", error);
         return res
           .status(500)
-          .json({ message: "Failed to save pipeline config: " + error.message });
+          .json({ message: `Failed to save pipeline config: ${  error.message}` });
       }
     },
   );
@@ -294,7 +294,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         }
 
         res.status(500).json({
-          message: "Failed to fetch workspace users: " + error.message,
+          message: `Failed to fetch workspace users: ${  error.message}`,
         });
       }
     },
@@ -308,7 +308,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
     } catch (error: any) {
       console.error("Error fetching users:", error);
       res.status(500).json({
-        message: "Failed to fetch users: " + error.message,
+        message: `Failed to fetch users: ${  error.message}`,
       });
     }
   });
@@ -350,7 +350,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
       } catch (error: any) {
         console.error("Error updating user role:", error);
         res.status(500).json({
-          message: "Failed to update user role: " + error.message,
+          message: `Failed to update user role: ${  error.message}`,
         });
       }
     },
@@ -409,7 +409,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
       } catch (error: any) {
         console.error("Error syncing workspace user:", error);
         res.status(500).json({
-          message: "Failed to sync workspace user: " + error.message,
+          message: `Failed to sync workspace user: ${  error.message}`,
         });
       }
     },
@@ -488,7 +488,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
     } catch (error: any) {
       console.error("Error creating user:", error);
       res.status(500).json({
-        message: "Failed to create user: " + error.message,
+        message: `Failed to create user: ${  error.message}`,
       });
     }
   });
@@ -536,7 +536,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
       } catch (error: any) {
         console.error("Error deleting user:", error);
         res.status(500).json({
-          message: "Failed to delete user: " + error.message,
+          message: `Failed to delete user: ${  error.message}`,
         });
       }
     },
@@ -580,7 +580,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
       } catch (error: any) {
         console.error("Error resetting password:", error);
         res.status(500).json({
-          message: "Failed to reset password: " + error.message,
+          message: `Failed to reset password: ${  error.message}`,
         });
       }
     },
@@ -606,7 +606,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
       } catch (error: any) {
         console.error("Error scheduling workspace sync:", error);
         res.status(500).json({
-          message: "Failed to schedule workspace sync: " + error.message,
+          message: `Failed to schedule workspace sync: ${  error.message}`,
         });
       }
     },
@@ -639,7 +639,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         res.json({
           connected: false,
           configured: true,
-          message: "Connection test failed: " + error.message,
+          message: `Connection test failed: ${  error.message}`,
         });
       }
     },
@@ -697,7 +697,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
           if (err) {
             console.error("Error logging in as impersonated user:", err);
             return res.status(500).json({
-              message: "Failed to start impersonation: " + err.message,
+              message: `Failed to start impersonation: ${  err.message}`,
             });
           }
 
@@ -710,7 +710,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
       } catch (error: any) {
         console.error("Error starting impersonation:", error);
         res.status(500).json({
-          message: "Failed to start impersonation: " + error.message,
+          message: `Failed to start impersonation: ${  error.message}`,
         });
       }
     },
@@ -755,7 +755,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         if (err) {
           console.error("Error restoring original user session:", err);
           return res.status(500).json({
-            message: "Failed to stop impersonation: " + err.message,
+            message: `Failed to stop impersonation: ${  err.message}`,
           });
         }
 
@@ -768,7 +768,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
     } catch (error: any) {
       console.error("Error stopping impersonation:", error);
       res.status(500).json({
-        message: "Failed to stop impersonation: " + error.message,
+        message: `Failed to stop impersonation: ${  error.message}`,
       });
     }
   });
@@ -800,7 +800,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         res
           .status(500)
           .json({
-            message: "Failed to load pricing configuration: " + error.message,
+            message: `Failed to load pricing configuration: ${  error.message}`,
           });
       }
     },
@@ -819,7 +819,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         console.error("Error fetching base pricing:", error);
         res
           .status(500)
-          .json({ message: "Failed to fetch base pricing: " + error.message });
+          .json({ message: `Failed to fetch base pricing: ${  error.message}` });
       }
     },
   );
@@ -853,7 +853,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         console.error("Error updating base pricing:", error);
         res
           .status(500)
-          .json({ message: "Failed to update base pricing: " + error.message });
+          .json({ message: `Failed to update base pricing: ${  error.message}` });
       }
     },
   );
@@ -872,7 +872,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         res
           .status(500)
           .json({
-            message: "Failed to fetch industry multipliers: " + error.message,
+            message: `Failed to fetch industry multipliers: ${  error.message}`,
           });
       }
     },
@@ -910,7 +910,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         res
           .status(500)
           .json({
-            message: "Failed to update industry multiplier: " + error.message,
+            message: `Failed to update industry multiplier: ${  error.message}`,
           });
       }
     },
@@ -930,7 +930,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         res
           .status(500)
           .json({
-            message: "Failed to fetch revenue multipliers: " + error.message,
+            message: `Failed to fetch revenue multipliers: ${  error.message}`,
           });
       }
     },
@@ -968,7 +968,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         res
           .status(500)
           .json({
-            message: "Failed to update revenue multiplier: " + error.message,
+            message: `Failed to update revenue multiplier: ${  error.message}`,
           });
       }
     },
@@ -988,7 +988,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         res
           .status(500)
           .json({
-            message: "Failed to fetch transaction surcharges: " + error.message,
+            message: `Failed to fetch transaction surcharges: ${  error.message}`,
           });
       }
     },
@@ -1026,7 +1026,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         res
           .status(500)
           .json({
-            message: "Failed to update transaction surcharge: " + error.message,
+            message: `Failed to update transaction surcharge: ${  error.message}`,
           });
       }
     },
@@ -1054,7 +1054,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         res
           .status(500)
           .json({
-            message: "Failed to fetch service settings: " + error.message,
+            message: `Failed to fetch service settings: ${  error.message}`,
           });
       }
     },
@@ -1092,7 +1092,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         res
           .status(500)
           .json({
-            message: "Failed to update service setting: " + error.message,
+            message: `Failed to update service setting: ${  error.message}`,
           });
       }
     },
@@ -1119,7 +1119,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         console.error("Error fetching pricing tiers:", error);
         res
           .status(500)
-          .json({ message: "Failed to fetch pricing tiers: " + error.message });
+          .json({ message: `Failed to fetch pricing tiers: ${  error.message}` });
       }
     },
   );
@@ -1153,7 +1153,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         console.error("Error updating pricing tier:", error);
         res
           .status(500)
-          .json({ message: "Failed to update pricing tier: " + error.message });
+          .json({ message: `Failed to update pricing tier: ${  error.message}` });
       }
     },
   );
@@ -1178,7 +1178,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         res
           .status(500)
           .json({
-            message: "Failed to fetch pricing history: " + error.message,
+            message: `Failed to fetch pricing history: ${  error.message}`,
           });
       }
     },
@@ -1197,7 +1197,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
         console.error("Error clearing pricing cache:", error);
         res
           .status(500)
-          .json({ message: "Failed to clear pricing cache: " + error.message });
+          .json({ message: `Failed to clear pricing cache: ${  error.message}` });
       }
     },
   );
@@ -1319,7 +1319,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
             .status(500)
             .json({
               message:
-                "Failed to fetch calculator service content: " + error.message,
+                `Failed to fetch calculator service content: ${  error.message}`,
             });
         }
       },
@@ -1357,7 +1357,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
             .status(500)
             .json({
               message:
-                "Failed to fetch calculator service content: " + error.message,
+                `Failed to fetch calculator service content: ${  error.message}`,
             });
         }
       },
@@ -1409,7 +1409,7 @@ export async function registerAdminRoutes(app: Express): Promise<void> {
             .status(500)
             .json({
               message:
-                "Failed to update calculator service content: " + error.message,
+                `Failed to update calculator service content: ${  error.message}`,
             });
         }
       },

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
 import {
   FormField,

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 // Badge component not available in current setup, using inline styles instead
 import { Archive, Edit, ArrowUpDown } from "lucide-react";
-import { Quote } from "@shared/schema";
+import type { Quote } from "@shared/schema";
 
 interface QuoteTableProps {
   quotes: Quote[];

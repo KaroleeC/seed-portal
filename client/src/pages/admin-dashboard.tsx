@@ -877,7 +877,7 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2" />
                       <div>
                         <p className="font-medium text-foreground">
                           New client onboarded
@@ -891,7 +891,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2" />
                       <div>
                         <p className="font-medium text-foreground">
                           Commission approved
@@ -905,7 +905,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-2" />
                       <div>
                         <p className="font-medium text-foreground">
                           System backup completed

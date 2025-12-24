@@ -2,7 +2,7 @@ import session from "express-session";
 import Redis from "ioredis";
 import RedisStore from "connect-redis";
 import MemoryStore from "memorystore";
-import { Express } from "express";
+import type { Express } from "express";
 
 // Direct session setup that bypasses the auth.ts complexity
 export async function setupDirectSessions(app: Express): Promise<void> {

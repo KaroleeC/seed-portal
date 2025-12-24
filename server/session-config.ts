@@ -104,13 +104,13 @@ export async function createSessionConfig(): Promise<
         callback: (err: any, session?: session.SessionData | null) => void,
       ) {
         console.log("[SessionStore] 🔍 GET operation:", {
-          sid: sid?.substring(0, 10) + "...",
+          sid: `${sid?.substring(0, 10)  }...`,
         });
         return originalGet(
           sid,
           (err: any, session: session.SessionData | null) => {
             console.log("[SessionStore] 🔍 GET result:", {
-              sid: sid?.substring(0, 10) + "...",
+              sid: `${sid?.substring(0, 10)  }...`,
               hasSession: !!session,
               error: err?.message,
               sessionKeys: session ? Object.keys(session) : [],
@@ -126,13 +126,13 @@ export async function createSessionConfig(): Promise<
         callback?: (err?: any) => void,
       ) {
         console.log("[SessionStore] 🔍 SET operation:", {
-          sid: sid?.substring(0, 10) + "...",
+          sid: `${sid?.substring(0, 10)  }...`,
           sessionKeys: Object.keys(sess || {}),
           hasPassport: !!(sess as any)?.passport,
         });
         return originalSet(sid, sess, (err: any) => {
           console.log("[SessionStore] 🔍 SET result:", {
-            sid: sid?.substring(0, 10) + "...",
+            sid: `${sid?.substring(0, 10)  }...`,
             error: err?.message,
             success: !err,
           });
@@ -145,11 +145,11 @@ export async function createSessionConfig(): Promise<
         callback?: (err?: any) => void,
       ) {
         console.log("[SessionStore] 🔍 DESTROY operation:", {
-          sid: sid?.substring(0, 10) + "...",
+          sid: `${sid?.substring(0, 10)  }...`,
         });
         return originalDestroy(sid, (err: any) => {
           console.log("[SessionStore] 🔍 DESTROY result:", {
-            sid: sid?.substring(0, 10) + "...",
+            sid: `${sid?.substring(0, 10)  }...`,
             error: err?.message,
             success: !err,
           });
@@ -227,13 +227,13 @@ export async function createSessionConfig(): Promise<
       callback: (err: any, session?: session.SessionData | null) => void,
     ) {
       console.log("[MemoryStore] 🔍 GET operation:", {
-        sid: sid?.substring(0, 10) + "...",
+        sid: `${sid?.substring(0, 10)  }...`,
       });
       return originalMemGet(
         sid,
         (err: any, session: session.SessionData | null) => {
           console.log("[MemoryStore] 🔍 GET result:", {
-            sid: sid?.substring(0, 10) + "...",
+            sid: `${sid?.substring(0, 10)  }...`,
             hasSession: !!session,
             error: err?.message,
             sessionKeys: session ? Object.keys(session) : [],
@@ -250,14 +250,14 @@ export async function createSessionConfig(): Promise<
       callback?: (err?: any) => void,
     ) {
       console.log("[MemoryStore] 🔍 SET operation:", {
-        sid: sid?.substring(0, 10) + "...",
+        sid: `${sid?.substring(0, 10)  }...`,
         sessionKeys: Object.keys(sess || {}),
         hasPassport: !!(sess as any)?.passport,
         passportUser: (sess as any)?.passport?.user,
       });
       return originalMemSet(sid, sess, (err: any) => {
         console.log("[MemoryStore] 🔍 SET result:", {
-          sid: sid?.substring(0, 10) + "...",
+          sid: `${sid?.substring(0, 10)  }...`,
           error: err?.message,
           success: !err,
         });
@@ -270,11 +270,11 @@ export async function createSessionConfig(): Promise<
       callback?: (err?: any) => void,
     ) {
       console.log("[MemoryStore] 🔍 DESTROY operation:", {
-        sid: sid?.substring(0, 10) + "...",
+        sid: `${sid?.substring(0, 10)  }...`,
       });
       return originalMemDestroy(sid, (err: any) => {
         console.log("[MemoryStore] 🔍 DESTROY result:", {
-          sid: sid?.substring(0, 10) + "...",
+          sid: `${sid?.substring(0, 10)  }...`,
           error: err?.message,
           success: !err,
         });

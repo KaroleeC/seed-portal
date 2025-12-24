@@ -1,5 +1,5 @@
 // Automatic Redis session application at startup
-import { Express } from "express";
+import type { Express } from "express";
 import Redis from "ioredis";
 import RedisStore from "connect-redis";
 import session from "express-session";

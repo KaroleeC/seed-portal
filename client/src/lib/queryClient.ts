@@ -1,4 +1,4 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient, type QueryFunction } from "@tanstack/react-query";
 
 // Get the base API URL from environment variables
 // Prefer relative URLs in development/same-origin to avoid CORS & SSL issues
@@ -64,7 +64,7 @@ async function throwIfResNotOk(res: Response) {
       status: res.status,
       statusText: res.statusText,
       url: res.url,
-      text: text,
+      text,
       headers: Object.fromEntries(res.headers.entries()),
       cookiesInResponse: res.headers.get("set-cookie"),
       timestamp: new Date().toISOString(),

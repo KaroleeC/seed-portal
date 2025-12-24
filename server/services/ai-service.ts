@@ -187,7 +187,7 @@ Format as JSON with fields: insights (array), riskScore (number), recommendation
       } catch {
         // Fallback if AI doesn't return valid JSON
         result = {
-          insights: [content.slice(0, 200) + "..."],
+          insights: [`${content.slice(0, 200)  }...`],
           riskScore: 50,
           recommendations: ["Review manually due to parsing error"],
           confidence: 30,

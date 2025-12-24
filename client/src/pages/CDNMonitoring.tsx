@@ -175,7 +175,7 @@ export default function CDNMonitoring() {
             ratio: stats.averageCompressionRatio,
             requests: stats.requests,
             savings:
-              Math.round((1 - stats.averageCompressionRatio) * 100) + "%",
+              `${Math.round((1 - stats.averageCompressionRatio) * 100)  }%`,
           },
         });
       } catch (error: any) {
@@ -238,7 +238,7 @@ export default function CDNMonitoring() {
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
   };
 
   const compressionSavings = compressionStats
@@ -513,7 +513,7 @@ export default function CDNMonitoring() {
                         style={{
                           width: `${Math.round((1 - compressionStats.averageCompressionRatio) * 100)}%`,
                         }}
-                      ></div>
+                       />
                     </div>
                   </div>
 

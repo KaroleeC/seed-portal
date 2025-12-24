@@ -1,4 +1,4 @@
-import { Job } from "bullmq";
+import type { Job } from "bullmq";
 import { GoogleAdminService } from "../google-admin";
 import { storage } from "../storage";
 import type { InsertWorkspaceUser } from "@shared/schema";

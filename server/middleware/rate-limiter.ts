@@ -2,7 +2,7 @@
  * Rate limiting middleware to prevent abuse and improve performance
  */
 
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 interface RateLimitStore {
   [key: string]: {

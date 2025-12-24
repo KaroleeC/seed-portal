@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Crown, Star, Users } from "lucide-react";
 import { FormControl, FormField, FormItem } from "@/components/ui/form";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
 import { KbCard } from "@/components/seedkb/KbCard";
 

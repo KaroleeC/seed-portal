@@ -53,14 +53,14 @@ export function LazySalesInbox(props: any) {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-orange-500/20 rounded-lg">
-                  <div className="h-6 w-6 bg-orange-300/50 rounded"></div>
+                  <div className="h-6 w-6 bg-orange-300/50 rounded" />
                 </div>
                 <div>
-                  <div className="h-5 w-24 bg-white/30 rounded mb-1"></div>
-                  <div className="h-3 w-40 bg-white/20 rounded"></div>
+                  <div className="h-5 w-24 bg-white/30 rounded mb-1" />
+                  <div className="h-3 w-40 bg-white/20 rounded" />
                 </div>
               </div>
-              <div className="h-8 w-20 bg-orange-500/30 rounded"></div>
+              <div className="h-8 w-20 bg-orange-500/30 rounded" />
             </div>
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
@@ -70,13 +70,13 @@ export function LazySalesInbox(props: any) {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-white/30 rounded-full"></div>
+                      <div className="w-10 h-10 bg-white/30 rounded-full" />
                       <div>
-                        <div className="h-4 w-32 bg-white/30 rounded mb-1"></div>
-                        <div className="h-3 w-24 bg-white/20 rounded"></div>
+                        <div className="h-4 w-32 bg-white/30 rounded mb-1" />
+                        <div className="h-3 w-24 bg-white/20 rounded" />
                       </div>
                     </div>
-                    <div className="h-6 w-16 bg-white/20 rounded"></div>
+                    <div className="h-6 w-16 bg-white/20 rounded" />
                   </div>
                 </div>
               ))}
