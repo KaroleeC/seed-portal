@@ -73,7 +73,7 @@ function defaultSowTemplate(serviceKey: string): string {
     agent_of_service: `Additional States: {{agentOfService.additionalStates}}\nComplex Case: {{agentOfService.complexCase}}\n`,
     cfo_advisory: `Hours Bundle: {{cfo.bundleHours}}\n`,
   };
-  return `# ${title}\n` + common + (details[serviceKey] || "");
+  return `# ${title}\n${  common  }${details[serviceKey] || ""}`;
 }
 
 // Provide sensible defaults for Included Fields so the UI shows expected items even without prior data

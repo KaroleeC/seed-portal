@@ -95,7 +95,7 @@ export interface JobResult {
 }
 
 // Queue metrics
-let queueMetrics = {
+const queueMetrics = {
   jobsProcessed: 0,
   jobsFailed: 0,
   averageProcessingTime: 0,
@@ -132,7 +132,7 @@ function setupFailureMonitoring(): void {
     failureTracking.recentFailures.push({
       timestamp: now,
       error: failedReason || "Unknown error",
-      jobId: jobId,
+      jobId,
     });
 
     // Remove failures older than 5 minutes

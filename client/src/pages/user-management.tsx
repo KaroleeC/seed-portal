@@ -587,7 +587,7 @@ export default function UserManagement() {
           <CardContent className="p-0">
             {isLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
                 <p className="mt-3 text-gray-600 dark:text-gray-400 text-sm">
                   Loading users...
                 </p>

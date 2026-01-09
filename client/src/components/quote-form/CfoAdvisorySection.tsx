@@ -1,4 +1,4 @@
-import { Control, UseFormReturn } from "react-hook-form";
+import type { Control, UseFormReturn } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
 import {
   FormField,

@@ -5,12 +5,12 @@
  */
 
 import React from "react";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Send, CheckCircle } from "lucide-react";
 
-import {
+import type {
   QuoteFormData,
   PricingCalculationResult,
   HubSpotContact,

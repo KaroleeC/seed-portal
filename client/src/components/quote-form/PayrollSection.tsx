@@ -7,7 +7,7 @@ import {
 import { useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
 import { Users, MapPin, ChevronDown, ChevronUp } from "lucide-react";
 import { KbCard } from "@/components/seedkb/KbCard";

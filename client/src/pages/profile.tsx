@@ -740,7 +740,7 @@ export default function Profile() {
             </div>
 
             {/* Spacer for balance */}
-            <div className="w-32"></div>
+            <div className="w-32" />
           </div>
         </div>
       </header>

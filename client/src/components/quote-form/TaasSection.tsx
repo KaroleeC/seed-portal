@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Control, UseFormReturn, useWatch } from "react-hook-form";
+import { useWatch, type Control, UseFormReturn } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { KbCard } from "@/components/seedkb/KbCard";

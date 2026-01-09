@@ -5,7 +5,7 @@
  */
 
 import React from "react";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { QuoteFormData, HubSpotContact } from "../../types/QuoteTypes";
+import type { QuoteFormData, HubSpotContact } from "../../types/QuoteTypes";
 
 interface QuoteFormCoreProps {
   form: UseFormReturn<QuoteFormData>;

@@ -278,7 +278,7 @@ export class MSAGenerator {
     if (serviceTexts.length === 2) return serviceTexts.join(" and ");
 
     return (
-      serviceTexts.slice(0, -1).join(", ") + ", and " + serviceTexts.slice(-1)
+      `${serviceTexts.slice(0, -1).join(", ")  }, and ${  serviceTexts.slice(-1)}`
     );
   }
 }

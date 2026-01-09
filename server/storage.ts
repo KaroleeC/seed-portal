@@ -65,13 +65,13 @@ import {
   type InsertPricingHistory,
   type CalculatorServiceContent,
   type InsertCalculatorServiceContent,
-  updateQuoteSchema,
+  type updateQuoteSchema,
   type UpdateProfile,
 } from "@shared/schema";
 import { db } from "./db";
 import { safeDbQuery } from "./db-utils";
 import { eq, like, desc, asc, sql, and } from "drizzle-orm";
-import { z } from "zod";
+import type { z } from "zod";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import { getRedis, getRedisAsync } from "./redis";
@@ -556,7 +556,7 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     return await safeDbQuery(async () => {
       // Hash password if provided
-      let userToInsert = { ...insertUser };
+      const userToInsert = { ...insertUser };
       if (userToInsert.password) {
         const saltRounds = 12;
         const plain = String(userToInsert.password);
@@ -753,7 +753,7 @@ export class DatabaseStorage implements IStorage {
       await db
         .update(users)
         .set({
-          defaultDashboard: defaultDashboard,
+          defaultDashboard,
           updatedAt: new Date(),
         })
         .where(eq(users.id, userId));
@@ -1190,8 +1190,8 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(kbArticles.status, "published"),
             sql`(
-              ${kbArticles.title} ILIKE ${`%${query}%`} OR 
-              ${kbArticles.content} ILIKE ${`%${query}%`} OR 
+              ${kbArticles.title} ILIKE ${`%${query}%`} OR
+              ${kbArticles.content} ILIKE ${`%${query}%`} OR
               ${kbArticles.excerpt} ILIKE ${`%${query}%`}
             )`,
           ),

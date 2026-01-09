@@ -2,8 +2,8 @@
  * No more 'any' types - everything strongly typed for glorious maintainability!
  */
 
-import { z } from "zod";
-import { insertQuoteSchema } from "@shared/schema";
+import type { z } from "zod";
+import type { insertQuoteSchema } from "@shared/schema";
 
 // Core quote form data interface (eliminates 'any' usage)
 export interface QuoteFormData {

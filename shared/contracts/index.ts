@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DealsResultSchema } from "../deals";
+import type { DealsResultSchema } from "../deals";
 
 // Re-export existing shared contracts
 export { DealSchema, DealsResultSchema } from "../deals";

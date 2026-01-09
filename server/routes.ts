@@ -125,10 +125,10 @@ const upload = multer({
       }
     },
     filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const uniqueSuffix = `${Date.now()  }-${  Math.round(Math.random() * 1e9)}`;
       cb(
         null,
-        file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname),
+        `${file.fieldname  }-${  uniqueSuffix  }${path.extname(file.originalname)}`,
       );
     },
   }),
@@ -1158,7 +1158,7 @@ export async function registerRoutes(
       headers: {
         origin: req.headers.origin,
         host: req.headers.host,
-        userAgent: req.headers["user-agent"]?.substring(0, 50) + "...",
+        userAgent: `${req.headers["user-agent"]?.substring(0, 50)  }...`,
         cookies: !!req.headers.cookie,
         cookieCount: req.headers.cookie
           ? req.headers.cookie.split(";").length
@@ -1192,7 +1192,7 @@ export async function registerRoutes(
         userEmail: user?.email,
         userId: user?.id,
         userRole: user?.role,
-        info: info,
+        info,
         timestamp: new Date().toISOString(),
       });
 
@@ -1209,7 +1209,7 @@ export async function registerRoutes(
         console.log("[Login] ❌ Authentication failed - no user returned:", {
           providedEmail: req.body?.email,
           hasPassword: !!req.body?.password,
-          info: info,
+          info,
         });
         return res.status(401).json({ message: "Invalid email or password" });
       }
@@ -1298,7 +1298,7 @@ export async function registerRoutes(
         origin: req.headers.origin || "NO_ORIGIN",
         host: req.headers.host,
         cookies: !!req.headers.cookie,
-        userAgent: req.headers["user-agent"]?.substring(0, 30) + "...",
+        userAgent: `${req.headers["user-agent"]?.substring(0, 30)  }...`,
       },
       environment: {
         nodeEnv: process.env.NODE_ENV,
@@ -1596,7 +1596,7 @@ export async function registerRoutes(
       requestContext: {
         origin: req.headers.origin || "NO_ORIGIN",
         host: req.headers.host,
-        userAgent: req.headers["user-agent"]?.substring(0, 50) + "...",
+        userAgent: `${req.headers["user-agent"]?.substring(0, 50)  }...`,
         cookies: !!req.headers.cookie,
         cookieCount: req.headers.cookie
           ? req.headers.cookie.split(";").length
@@ -2230,7 +2230,7 @@ export async function registerRoutes(
         console.log("Quote monthly fee:", quote.monthlyFee);
         console.log(
           "Quote object stringified:",
-          JSON.stringify(quote).substring(0, 200) + "...",
+          `${JSON.stringify(quote).substring(0, 200)  }...`,
         );
 
         console.log("🚀 SENDING RESPONSE via res.json()");
@@ -2706,7 +2706,7 @@ export async function registerRoutes(
         res.json({
           success: true,
           message: "Contact data enhanced successfully",
-          airtableData: airtableData,
+          airtableData,
         });
       } catch (error) {
         console.error("Data enhancement error:", error);
@@ -2935,7 +2935,7 @@ export async function registerRoutes(
 
       // Fetch all revenue data from Stripe with pagination to get all transactions
       const fetchAllCharges = async (params: any) => {
-        let allCharges = [];
+        const allCharges = [];
         let hasMore = true;
         let startingAfter = undefined;
 
@@ -3614,7 +3614,7 @@ export async function registerRoutes(
             dealName: comm.service_names || `Invoice ${invoiceId}`,
             companyName: comm.company_name || "Unknown Company",
             salesRep: comm.sales_rep_name || "Unknown Rep",
-            serviceType: serviceType,
+            serviceType,
             type: "total",
             monthNumber: 1,
             amount: 0,
@@ -3839,7 +3839,7 @@ export async function registerRoutes(
       // Calculate what the commission amount should be based on the invoice
       // For now, we'll need to recalculate or use the original invoice amount
       // This is a simplified approach - you might want to store the original amount separately
-      let restoredAmount = originalCommission.total_amount
+      const restoredAmount = originalCommission.total_amount
         ? parseFloat(originalCommission.total_amount) * 0.2
         : 100; // Default fallback
 

@@ -179,8 +179,8 @@ export function useHubSpotSync(options: UseHubSpotSyncOptions) {
       toast({
         title: "Required Fields Missing",
         description:
-          "Please complete the following before pushing to HubSpot: " +
-          missing.join(", "),
+          `Please complete the following before pushing to HubSpot: ${ 
+          missing.join(", ")}`,
         variant: "destructive",
       });
       return;

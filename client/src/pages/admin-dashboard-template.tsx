@@ -347,7 +347,7 @@ export default function AdminDashboardTemplate() {
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-start space-x-3 p-3 bg-slate-50 rounded-lg">
-                    <div className="w-3 h-3 bg-slate-500 rounded-full mt-1 flex-shrink-0"></div>
+                    <div className="w-3 h-3 bg-slate-500 rounded-full mt-1 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-slate-900">
                         New lead: TechFlow Solutions
@@ -360,7 +360,7 @@ export default function AdminDashboardTemplate() {
                   </div>
 
                   <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-3 h-3 bg-gray-500 rounded-full mt-1 flex-shrink-0"></div>
+                    <div className="w-3 h-3 bg-gray-500 rounded-full mt-1 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">
                         Commission: +$450
@@ -373,7 +373,7 @@ export default function AdminDashboardTemplate() {
                   </div>
 
                   <div className="flex items-start space-x-3 p-3 bg-slate-50 rounded-lg">
-                    <div className="w-3 h-3 bg-slate-400 rounded-full mt-1 flex-shrink-0"></div>
+                    <div className="w-3 h-3 bg-slate-400 rounded-full mt-1 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-slate-900">
                         Document uploaded

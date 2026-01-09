@@ -239,7 +239,7 @@ export function AdminCommissionTracker() {
       console.log("🔄 Making fresh commissions API call...");
       const data = await apiRequest<any[]>(
         "GET",
-        "/api/commissions?v=" + Date.now(),
+        `/api/commissions?v=${  Date.now()}`,
       );
       console.log("📥 Raw commissions API response:", data);
       return data;
@@ -267,7 +267,7 @@ export function AdminCommissionTracker() {
       console.log("🔄 Making fresh pipeline projections API call...");
       const data = await apiRequest<any[]>(
         "GET",
-        "/api/pipeline-projections?v=" + Date.now(),
+        `/api/pipeline-projections?v=${  Date.now()}`,
       );
       console.log("📥 Raw pipeline projections API response:", data);
       return data;
@@ -742,7 +742,7 @@ export function AdminCommissionTracker() {
       } else {
         const error = await response.json();
         console.error("Failed to approve commission:", error);
-        alert("Failed to approve commission: " + error.message);
+        alert(`Failed to approve commission: ${  error.message}`);
       }
     } catch (error) {
       console.error("Approve commission error:", error);
@@ -779,7 +779,7 @@ export function AdminCommissionTracker() {
       } else {
         const error = await response.json();
         console.error("Failed to reject commission:", error);
-        alert("Failed to reject commission: " + error.message);
+        alert(`Failed to reject commission: ${  error.message}`);
       }
     } catch (error) {
       console.error("Reject commission error:", error);
@@ -833,7 +833,7 @@ export function AdminCommissionTracker() {
       } else {
         const error = await response.json();
         console.error("Failed to unreject commission:", error);
-        alert("Failed to unreject commission: " + error.message);
+        alert(`Failed to unreject commission: ${  error.message}`);
       }
     } catch (error) {
       console.error("Unreject commission error:", error);
@@ -881,7 +881,7 @@ export function AdminCommissionTracker() {
       } else {
         const error = await response.json();
         console.error("HubSpot sync failed:", error);
-        alert("Failed to sync HubSpot data: " + error.message);
+        alert(`Failed to sync HubSpot data: ${  error.message}`);
       }
     } catch (error) {
       console.error("HubSpot sync error:", error);
@@ -1890,7 +1890,7 @@ export function AdminCommissionTracker() {
                           <TableRow>
                             <TableCell colSpan={8} className="text-center py-8">
                               <div className="flex items-center justify-center">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
                                 <span className="ml-2">
                                   Loading pipeline projections...
                                 </span>

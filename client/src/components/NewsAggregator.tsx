@@ -137,9 +137,9 @@ export function NewsAggregator() {
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-4 bg-white/20 rounded mb-2"></div>
-                <div className="h-3 bg-white/10 rounded mb-1"></div>
-                <div className="h-3 bg-white/10 rounded w-3/4"></div>
+                <div className="h-4 bg-white/20 rounded mb-2" />
+                <div className="h-3 bg-white/10 rounded mb-1" />
+                <div className="h-3 bg-white/10 rounded w-3/4" />
               </div>
             ))}
           </div>

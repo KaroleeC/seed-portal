@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import compression from "compression";
 import { promises as fs } from "fs";
 import path from "path";
@@ -168,14 +168,14 @@ export function servePrecompressed(
       process.cwd(),
       "client",
       "dist",
-      originalUrl + ".br",
+      `${originalUrl  }.br`,
     );
 
     fs.access(brPath)
       .then(() => {
         res.setHeader("Content-Encoding", "br");
         res.setHeader("Content-Type", getContentType(originalUrl));
-        req.url = originalUrl + ".br";
+        req.url = `${originalUrl  }.br`;
         next();
       })
       .catch(() => {
@@ -193,14 +193,14 @@ export function servePrecompressed(
       process.cwd(),
       "client",
       "dist",
-      originalUrl + ".gz",
+      `${originalUrl  }.gz`,
     );
 
     fs.access(gzPath)
       .then(() => {
         res.setHeader("Content-Encoding", "gzip");
         res.setHeader("Content-Type", getContentType(originalUrl));
-        req.url = originalUrl + ".gz";
+        req.url = `${originalUrl  }.gz`;
         next();
       })
       .catch(() => {

@@ -73,7 +73,7 @@ export async function sendSystemAlert(
 
   try {
     await sendSlackMessage({
-      channel: channel, // Use custom channel if provided
+      channel, // Use custom channel if provided
       text: `${severityEmojis[severity]} ${title}`,
       attachments: [
         {

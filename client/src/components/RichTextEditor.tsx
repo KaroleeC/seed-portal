@@ -123,7 +123,7 @@ export function RichTextEditor({
           value={content}
           onEditorChange={handleEditorChange}
           init={{
-            height: height,
+            height,
             menubar: false,
             plugins: [
               "advlist",
@@ -161,7 +161,7 @@ export function RichTextEditor({
               h1 { border-bottom: 2px solid #f97316; padding-bottom: 10px; }
               h2 { border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
             `,
-            placeholder: placeholder,
+            placeholder,
             branding: false,
             resize: false,
             statusbar: false,

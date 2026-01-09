@@ -4,7 +4,7 @@ import "./disable-redis-instrumentation";
 import { loadEnv } from "./config/env";
 loadEnv();
 
-import express, { type Request, Response, NextFunction } from "express";
+import express,  { type Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import * as Sentry from "@sentry/node";
 import { registerRoutes } from "./routes";
@@ -89,7 +89,7 @@ app.use((req, res, next) => {
     const csrfValue = Array.isArray(rawCsrf) ? rawCsrf[0] : rawCsrf;
     const csrfPreview =
       typeof csrfValue === "string"
-        ? csrfValue.substring(0, 10) + "..."
+        ? `${csrfValue.substring(0, 10)  }...`
         : undefined;
     console.log(" [CSRF Debug] BEFORE CSRF middleware:", {
       url: req.originalUrl,
@@ -231,7 +231,7 @@ app.use((req, res, next) => {
       }
 
       if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+        logLine = `${logLine.slice(0, 79)  }…`;
       }
 
       log(logLine);
@@ -623,7 +623,7 @@ process.on("uncaughtException", (error) => {
     const msg = String(error?.message || "");
     const stack = String(error?.stack || "");
     if (
-      /vite|transformIndexHtml|plugin|pre-transform/i.test(msg + " " + stack)
+      /vite|transformIndexHtml|plugin|pre-transform/i.test(`${msg  } ${  stack}`)
     ) {
       console.warn(
         "[Dev] Non-fatal Vite error encountered. Keeping server alive.",

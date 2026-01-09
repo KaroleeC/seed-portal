@@ -116,7 +116,7 @@ export default function AdminHubspotPage() {
       queryClient.invalidateQueries({ queryKey: seedpayKeys.deals.root() });
       alert("SeedPay deals cache cleared.");
     } catch (e: any) {
-      alert("Failed to clear cache: " + (e?.message || String(e)));
+      alert(`Failed to clear cache: ${  e?.message || String(e)}`);
     } finally {
       setClearCacheLoading(false);
     }

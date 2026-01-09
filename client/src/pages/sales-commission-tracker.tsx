@@ -397,7 +397,7 @@ export function SalesCommissionTracker() {
       totalCommissionsEarned: totalPaidEarnings,
       totalClientsClosedMonthly: currentPeriodClients,
       totalClientsClosedAllTime: totalClientsAllTime,
-      currentPeriodCommissions: currentPeriodCommissions,
+      currentPeriodCommissions,
       projectedEarnings: projectedFromPipeline,
     };
   }, [

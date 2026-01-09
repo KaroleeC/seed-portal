@@ -1,4 +1,4 @@
-import { Queue, Worker, Job } from "bullmq";
+import { Queue, Worker, type Job } from "bullmq";
 import { getRedisAsync } from "../redis";
 import { workspaceSyncJob, type WorkspaceSyncJobData } from "./workspace-sync";
 

@@ -855,7 +855,7 @@ export class HubSpotService {
       const isStandardLeads = objectId === "leads";
 
       // Build search body for Leads object with correct property names
-      let leadsSearchBody: any = {
+      const leadsSearchBody: any = {
         filterGroups: [
           {
             filters: [],
@@ -869,7 +869,7 @@ export class HubSpotService {
             direction: "DESCENDING",
           },
         ],
-        limit: limit,
+        limit,
         properties: isStandardLeads
           ? [
               "hs_lead_name",
@@ -1028,7 +1028,7 @@ export class HubSpotService {
     limit: number = 20,
   ): Promise<any[]> {
     try {
-      let searchBody: any = {
+      const searchBody: any = {
         filterGroups: [
           {
             filters: [
@@ -1050,7 +1050,7 @@ export class HubSpotService {
             direction: "DESCENDING",
           },
         ],
-        limit: limit,
+        limit,
         properties: [
           "email",
           "firstname",
@@ -1737,7 +1737,7 @@ export class HubSpotService {
 
       // Get deal stage information to understand the stage IDs
       let dealStageInfo: any = {};
-      let pipelineInfo: any = {};
+      const pipelineInfo: any = {};
       try {
         const stagesResponse = await this.makeRequest(
           "/crm/v3/properties/deals/dealstage",

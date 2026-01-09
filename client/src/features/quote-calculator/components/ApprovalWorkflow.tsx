@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { AlertTriangle, Lock } from "lucide-react";
 
-import { QuoteFormData } from "../types/QuoteTypes";
+import type { QuoteFormData } from "../types/QuoteTypes";
 
 interface ApprovalWorkflowProps {
   formData: QuoteFormData;

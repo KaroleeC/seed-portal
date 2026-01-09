@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { usePermissions } from "@/hooks/use-permissions";
 import { type Permission } from "@shared/permissions";
 import { Alert, AlertDescription } from "@/components/ui/alert";

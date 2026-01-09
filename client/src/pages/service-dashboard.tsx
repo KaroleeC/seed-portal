@@ -762,7 +762,7 @@ export default function ServiceDashboard() {
                                           ? "bg-orange-500"
                                           : "bg-green-500"
                                     }`}
-                                  ></div>
+                                   />
                                   <span className="font-medium text-foreground text-sm">
                                     {channel.clientName}
                                   </span>

@@ -1,11 +1,11 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import type { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import type { User as SelectUser } from "@shared/schema";
 import type { HubSpotService } from "./hubspot";
 import { hubSpotService as hsSingleton } from "./hubspot";
 import type Redis from "ioredis";
@@ -51,7 +51,7 @@ async function comparePasswords(supplied: string, stored: string) {
 export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
   // Auth setup simplified with centralized session handling
   // Initialize HubSpot service for user verification (use singleton)
-  let hubSpotService: HubSpotService | null = hsSingleton;
+  const hubSpotService: HubSpotService | null = hsSingleton;
   if (!hubSpotService) {
     console.warn(
       "HubSpot service not available for user verification: missing HUBSPOT_ACCESS_TOKEN",
@@ -85,7 +85,7 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
           "[Passport LocalStrategy] 🔐 ===== AUTHENTICATION ATTEMPT =====",
         );
         console.log("[Passport LocalStrategy] 🔐 Credentials:", {
-          email: email,
+          email,
           hasPassword: !!password,
           passwordLength: password?.length,
           environment: {
@@ -452,7 +452,7 @@ export async function setupAuth(app: Express, sessionRedis?: Redis | null) {
           // IMPORTANT: pass plain password; storage.createUser will bcrypt-hash it
           user = await storage.createUser({
             email: userInfo.email,
-            password: "oauth-google-" + Date.now(),
+            password: `oauth-google-${  Date.now()}`,
             firstName: userInfo.given_name || "",
             lastName: userInfo.family_name || "",
             profilePhoto: userInfo.picture || null,

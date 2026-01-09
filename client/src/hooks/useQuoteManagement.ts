@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Quote } from "@shared/schema";
-import { QuoteFormFields as FormData } from "@/features/quote-calculator/schema";
+import type { Quote } from "@shared/schema";
+import type { QuoteFormFields as FormData } from "@/features/quote-calculator/schema";
 import { calculateCombinedFees } from "@shared/pricing";
 
 export function useQuoteManagement() {

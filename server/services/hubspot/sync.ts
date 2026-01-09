@@ -244,7 +244,7 @@ export async function syncQuoteToHubSpot(
         hubspotDealId: dealId,
         hubspotQuoteId: created.id,
         hubspotContactVerified: true,
-        companyName: companyName,
+        companyName,
       } as any);
       log.info(
         { quoteId, dealId, hubspotQuoteId: created.id },
@@ -325,7 +325,7 @@ export async function syncQuoteToHubSpot(
     await recordHubspotSync(
       Boolean(updatedOk),
       durationMs,
-      Boolean(updatedOk) ? undefined : "updateQuote returned false",
+      updatedOk ? undefined : "updateQuote returned false",
     );
 
     return {

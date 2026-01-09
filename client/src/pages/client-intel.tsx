@@ -419,7 +419,7 @@ export default function ClientIntel() {
             <CardContent className="space-y-3 max-h-96 overflow-y-auto">
               {isSearching ? (
                 <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto" />
                   <p className="text-white/70 mt-2">Searching...</p>
                 </div>
               ) : searchResults?.length > 0 ? (
@@ -519,7 +519,7 @@ export default function ClientIntel() {
                     >
                       {enhanceDataMutation.isPending ? (
                         <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                           Enhancing...
                         </div>
                       ) : (
@@ -596,7 +596,7 @@ export default function ClientIntel() {
                       >
                         {isGeneratingInsights ? (
                           <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                             {jobStatus === "queued"
                               ? "Queued..."
                               : jobStatus === "active"
@@ -793,7 +793,7 @@ export default function ClientIntel() {
                                   key={index}
                                   className="flex items-start gap-2"
                                 >
-                                  <div className="w-1.5 h-1.5 bg-orange-600 rounded-full mt-2"></div>
+                                  <div className="w-1.5 h-1.5 bg-orange-600 rounded-full mt-2" />
                                   <p className="text-sm text-muted-foreground">
                                     {point}
                                   </p>
@@ -820,7 +820,7 @@ export default function ClientIntel() {
                                   key={index}
                                   className="flex items-start gap-2"
                                 >
-                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2"></div>
+                                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2" />
                                   <p className="text-sm text-muted-foreground">
                                     {opp}
                                   </p>

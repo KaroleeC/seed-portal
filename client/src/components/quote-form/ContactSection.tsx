@@ -15,7 +15,7 @@ import {
   Lock,
   Unlock,
 } from "lucide-react";
-import { Control, useFormContext } from "react-hook-form";
+import { useFormContext, type Control } from "react-hook-form";
 import type { QuoteFormFields } from "@/features/quote-calculator/schema";
 import {
   Select,
@@ -77,7 +77,6 @@ export function ContactSection({
             Contact not found in HubSpot
           </span>
         );
-        return null;
     }
   };
 
